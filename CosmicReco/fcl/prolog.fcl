@@ -60,6 +60,15 @@ CosmicTrackFinder : {
 	TimeOffsets : {inputs : [ @sequence::DigiCompression.NoCosmicTimeMaps ]}
   }
 
+ CosmicTrackDetails : {
+	module_type : CosmicTrackDetails
+	ComboHitCollection : "makePH"
+	TimeClusterCollection : TimeClusterFinderCosmics
+        CosmicTrackSeedCollection : CosmicTrackFinder
+	StrawDigiMCCollection : "compressDigiMCs"
+	TimeOffsets : {inputs : [ @sequence::DigiCompression.NoCosmicTimeMaps ]}
+  }
+
 CosmicFitDisplay : {
 	module_type : CosmicFitDisplay
 	ComboHitCollection : "makePH"
@@ -98,6 +107,7 @@ CosmicTracking : {
       
       CosmicAnalysis : @local::CosmicAnalysis
       CosmicFitDisplay : @local::CosmicFitDisplay
+      CosmicTrackDetails : @local::CosmicTrackDetails
    }
   filters : {
 	CosmicMuonInfo: @local::CosmicMuonInfo

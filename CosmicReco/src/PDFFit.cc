@@ -204,7 +204,7 @@ double GaussianPDFFit::calculate_ambig(Straw const& straw, double a0, double a1,
 
 double GaussianPDFFit::TimeResidual(Straw straw, double doca, StrawResponse srep, double t0 ,  ComboHit hit)const{
 	double tres =  DriftFitUtils::TimeResidual( straw, doca, srep, t0, hit);
-	return tres;
+	return (tres);
 }
 
 //Gaussian PDF function:

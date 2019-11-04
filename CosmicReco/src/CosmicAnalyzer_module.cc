@@ -74,13 +74,14 @@ namespace mu2e
       virtual ~CosmicAnalyzer();
       virtual void beginJob();
       virtual void analyze(const art::Event& e) override;
+      virtual void endJob();
     private: 
       
       Config _conf;
 
       int  _diag;
       bool _mcdiag;
-
+      std::ofstream outputfile;
       art::InputTag   _chtag;//combo
       art::InputTag   _tctag;//timeclusters
       art::InputTag   _costag;//Striaght tracks
@@ -236,7 +237,7 @@ namespace mu2e
       Int_t _strawid; 
       vector<ComboHitInfoMC> _chinfomc;
       CosmicTrackMCInfo FitMC(const StrawDigiMCCollection*& _mcdigis);
-      void FillDriftMC(Straw const& straw, double reco_ambig, CosmicTrackMCInfo info);
+      CosmicTrackMCInfo FillDriftMC(Straw const& straw, double reco_ambig, CosmicTrackMCInfo info);
       bool findData(const art::Event& evt);
     };
 
@@ -263,7 +264,10 @@ namespace mu2e
     void CosmicAnalyzer::beginJob() {
       // create diagnostics if requested...
       if(_diag > 0){
-	 
+	if(_mcdiag) { 
+		
+		outputfile.open("doca.csv");
+	}
 	art::ServiceHandle<art::TFileService> tfs;
 	//Tree for detailed diagnostics
 	_cosmic_analysis=tfs->make<TTree>("cosmic_analysis"," Diagnostics for Cosmic Track Fitting");
@@ -778,8 +782,13 @@ namespace mu2e
 		    _FullFitEndTimeResiduals->Fill(st.DriftDiag.FullFitEndTimeResiduals[i]);
 		   	if(_mcdiag){
 				trueinfo = FitMC(_mcdigis);
-				FillDriftMC(sts._straws[i], st.DriftDiag.RecoAmbigs[i], trueinfo);	
+				trueinfo = FillDriftMC(sts._straws[i], st.DriftDiag.RecoAmbigs[i], trueinfo);
+			if(DriftFitUtils::GetTestDOCA(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<2.5 and st.DriftDiag.FullFitEndDOCAs[i]<2.5 and abs(trueinfo.TrueFitEquation.Pos.X() ) < 5000 and abs(trueinfo.TrueFitEquation.Pos.Y())<5000 and abs(trueinfo.TrueFitEquation.Dir.X())<5 and abs(trueinfo.TrueFitEquation.Dir.Y())<5){
+			outputfile<<DriftFitUtils::GetTestDOCA(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<st.DriftDiag.FullFitEndDOCAs[i]<<","<<st.DriftDiag.RecoAmbigs[i]/DriftFitUtils::GetAmbig(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<trueinfo.TrueTheta<<","<<st.MinuitFitParams.A0<<","<<st.MinuitFitParams.A1
+<<","<<st.MinuitFitParams.B0<<","<<st.MinuitFitParams.B1<<","<<trueinfo.TrueFitEquation.Pos.X()<<","<<trueinfo.TrueFitEquation.Dir.X()
+<<","<<trueinfo.TrueFitEquation.Pos.Y()<<","<<trueinfo.TrueFitEquation.Dir.Y()<<endl;
 			}      
+			}
 	        }
 
 		for(size_t i=0; i< st.DriftDiag.FullFitEndDOCAs.size();i++){
@@ -823,10 +832,14 @@ namespace mu2e
 	      cout<<"true - "<< _AMBIG->GetBinContent(1,1)/_AMBIG->Integral()<<endl;	
 	      cout<<"false + "<< _AMBIG->GetBinContent(2,1)/_AMBIG->Integral()<<endl;
 	      cout<<"false - "<< _AMBIG->GetBinContent(1,2)/_AMBIG->Integral()<<endl;
+	      
       }
+	
      }
 
-
+void CosmicAnalyzer::endJob() {
+	if(_diag and _mcdiag) outputfile.close();
+}
 
 CosmicTrackMCInfo CosmicAnalyzer::FitMC(const StrawDigiMCCollection*& _mcdigis){	
 	::BuildLinearFitMatrixSums S; 
@@ -885,14 +898,18 @@ CosmicTrackMCInfo CosmicAnalyzer::FitMC(const StrawDigiMCCollection*& _mcdigis){
      return TrackTrueInfo;
      }
 
-void CosmicAnalyzer::FillDriftMC(Straw const& straw, double RecoAmbig, CosmicTrackMCInfo info){
+CosmicTrackMCInfo CosmicAnalyzer::FillDriftMC(Straw const& straw, double RecoAmbig, CosmicTrackMCInfo info){
 
      double true_doca = DriftFitUtils::GetTestDOCA(straw, info.TrueFitEquation.Pos.X(), info.TrueFitEquation.Dir.X(), info.TrueFitEquation.Pos.Y(),info.TrueFitEquation.Dir.Y());
      double trueambig = DriftFitUtils::GetAmbig(straw, info.TrueFitEquation.Pos.X(), info.TrueFitEquation.Dir.X(), info.TrueFitEquation.Pos.Y(),info.TrueFitEquation.Dir.Y());
      double true_time_residual = true_doca/0.0625;
+     info.Ambig.push_back(trueambig);
+     info.TrueDOCA.push_back(true_doca);
+     info.TrueTimeResiduals.push_back(true_time_residual);
      _TrueDOCAs->Fill(true_doca);
      _TrueTimeResiduals->Fill(true_time_residual);
      _AMBIG->Fill(RecoAmbig, trueambig);
+     return info;
 }
 
 bool CosmicAnalyzer::findData(const art::Event& evt){
