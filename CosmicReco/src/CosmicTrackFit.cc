@@ -511,10 +511,11 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 
 	if(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size() >0){
 	for(unsigned i = 0; i< trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size()-1; i++){
-		if( trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i] > _maxTres ){ 
+		if( trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i] > _maxTres or isnan(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i])==true){ 
 			trackData._tseed._track.n_outliers +=1;
 			trackData._tseed._straw_chits[i]._flag.merge(_dontuseflag); 
 		}
+		
 	}
         if( trackData._tseed._track.n_outliers  > _n_outliers) {
 		trackData._tseed._track.minuit_converged = false;
