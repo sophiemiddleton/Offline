@@ -95,90 +95,35 @@ namespace mu2e
 
       	//TTree Info:
       TTree* _cosmic_tree;
-      /*
-      	//Seed Info:
-      double _seed_a1;
-      double _seed_b1;
-      double _seed_a0;
-      double _seed_b0;
-
-      	//Seed Info in Det Frame:
-      double _seed_a1XYZ;
-      double _seed_b1XYZ;
-      double _seed_a0XYZ;
-      double _seed_b0XYZ;
-      double _niters;
-*/
+     
     //True MC paramets in global coords:
-      double _TrueA1;
-      double _TrueB1;
-      double _TrueA0;
-      double _TrueB0;
+      Float_t _TrueA1;
+      Float_t _TrueB1;
+      Float_t _TrueA0;
+      Float_t _TrueB0;
       
       //Angles Info:
-      double _mc_phi_angle;
-      double _reco_phi_angle;
-      double _mc_theta_angle;
-      double _reco_theta_angle;
-/*
-     //Look at distributions of covarience of each seed parameter:
-      double _Seed_Cov_A0;
-      double _Seed_Cov_A1;
-      double _Seed_Cov_B0;
-      double _Seed_Cov_B1;
-      double _Seed_Cov_B0B1;
-      double _Seed_Cov_A0A1;
+      Float_t _mc_phi_angle;
+      Float_t _reco_phi_angle;
+      Float_t _mc_theta_angle;
+      Float_t _reco_theta_angle;
 
-      //Seed Diagnostics:
-      double _total_residualsX_init;
-      double _total_pullsX_init;
-      double _total_residualsY_init;
-      double _total_pullsY_init;
-      double _chisq_ndf_plot_final;
-      double _chisq_ndf_plot_finalX;
-      double _chisq_ndf_plot_finalY;
-      double _chisq_ndf_plot_initX;
-      double _chisq_ndf_plot_initY;
-      double _chisq_ndf_plot_init;
-      double _change_chisq_ndf_plot_X;
-      double _change_chisq_ndf_plot_Y;
-      double _change_chisq_ndf_plot_Total;
-      double _total_residualsX_final;
-      double _total_pullsX_final;
-      double _total_residualsY_final;
-      double _total_pullsY_final;
-      double _FinalErrX;
-      double _FinalErrY;
-      double _InitErrX;
-      double _InitErrY;
-      double _FinalErrTot;
-      double _InitErrTot;
-
-      	//Drift Parameters
-      double _total_residualsX_Minuit;
-      double _total_residualsY_Minuit;
-
-	*/
 	//Track Parameters from end of minuit minimzation rotuine:
-      double _MinuitA0;
-      double _MinuitA1;
-      double _MinuitB1;
-      double _MinuitB0;
-	/*
+      Float_t _MinuitA0;
+      Float_t _MinuitA1;
+      Float_t _MinuitB1;
+      Float_t _MinuitB0;
+	
       	//Drift diags:
-      double _FullFitEndDOCAs;
-      double _TrueDOCAs;
-      double _FullFitEndTimeResiduals;
-      double _StartTimeResiduals;
-      double _TrueTimeResiduals;
-      double _StartDOCAs;
-      double _GaussianEndDOCAs;
-      double _GaussianEndTimeResiduals;
-      double _minuit_pullsX_final;
-      double _minuit_pullsY_final;
-      double _NLL;
-      double _AMBIG;
-      */
+      Float_t _FullFitEndDOCAs;
+      Float_t _TrueDOCAs;
+      Float_t _FullFitTimeResiduals;
+      Float_t _TrueTimeResiduals;
+      Float_t _PullsX;
+      Float_t _PullsY;
+      Float_t _NLL;
+      Float_t _Ambig;
+      
       // add event id
       Int_t _evt; 
 
@@ -225,10 +170,7 @@ namespace mu2e
     void CosmicTrackDetails::beginJob() {
       // create diagnostics if requested...
       if(_diag > 0){
-	if(_mcdiag) { 
-		
-		outputfile.open("doca.csv");
-	}
+	
 	art::ServiceHandle<art::TFileService> tfs;
 	//Tree for detailed diagnostics
 	_cosmic_tree=tfs->make<TTree>("cosmic_tree"," Diagnostics for Cosmic Track Fitting");
@@ -244,8 +186,6 @@ namespace mu2e
         _cosmic_tree->Branch("TimeClustersInEvent", &_ntc, "TimeClusterInEvent/I"); 
         _cosmic_tree->Branch("hit_time", &_hit_time, "hit_time/F");
         _cosmic_tree->Branch("hit_drit_time", &_hit_drift_time, "hit_drift_time/F");
-        _cosmic_tree->Branch("cluster_time", &_cluster_time, "cluster_time/F");
-        _cosmic_tree->Branch("dt", &_dt, "dt/F");
         _cosmic_tree->Branch("hitsOK",&_hitsOK,"hitsOK/B");
         _cosmic_tree->Branch("StraightTrackInit",&_StraightTrackInit,"StraightTrackInit/B");
         _cosmic_tree->Branch("StraightTrackOK",&_StraightTrackOK,"StraightTrackOK/B");
@@ -258,8 +198,11 @@ namespace mu2e
 
        	_cosmic_tree->Branch("RecoPhi",&_reco_phi_angle, "RecoPhi/F");
 	_cosmic_tree->Branch("RecoTheta",&_reco_theta_angle, "RecoTheta/F");
-      double _mc_theta_angle;
-     
+      
+        _cosmic_tree->Branch("FitDOCAs",&_FullFitEndDOCAs,"FitDOCAs/F");
+	_cosmic_tree->Branch("FullFitTimeResiduals",&_FullFitTimeResiduals,"FullFitTimeResiduals/F");
+	_cosmic_tree->Branch("PullsX",&_PullsX,"PullsX/F");
+	_cosmic_tree->Branch("PullsY",&_PullsY,"PullsY/F");
 	//--------------------------------Truth----------------------------------------//
 	if(_mcdiag ){
 	_cosmic_tree->Branch("TrueA0",&_TrueA0,"TrueA0/F");
@@ -269,6 +212,10 @@ namespace mu2e
 
 	_cosmic_tree->Branch("TruePhi",&_mc_phi_angle, "TruePhi/F");
 	_cosmic_tree->Branch("TrueTheta",&_mc_theta_angle, "TrueTheta/F");
+	_cosmic_tree->Branch("TrueDOCAs",&_TrueDOCAs,"TrueDOCAs/F");
+	_cosmic_tree->Branch("TrueTimeResiduals",&_TrueTimeResiduals,"TrueTimeResiduals/F");
+	_cosmic_tree->Branch("Ambig",&_Ambig,"Ambig/F");
+	
 	}
 	
 	
@@ -299,28 +246,11 @@ namespace mu2e
 		TrkFitFlag const& status = sts._status;
         	if (!status.hasAllProperties(TrkFitFlag::helixOK) ){continue;}
 		if(st.converged == false or st.minuit_converged  == false) { continue;}
+		
 		std::vector<int> panels, planes, stations;
 
 		_reco_phi_angle=(st.get_fit_phi()); 
-		//_niters=(st.get_iter()); 
-		/*
-                _seed_a1=(st.FitParams.A1);
-                _seed_b1=(st.FitParams.B1);
-                _seed_a0=(st.FitParams.A0);
-                _seed_b0=(st.FitParams.B0);
-
-		_seed_a1XYZ=(st.FitEquationXYZ.Dir.X());
-                _seed_b1XYZ=(st.FitEquationXYZ.Dir.Y());
-                _seed_a0XYZ=(st.FitEquationXYZ.Pos.X());
-                _seed_b0XYZ=(st.FitEquationXYZ.Pos.Y());
-
-                _Seed_Cov_A0=(st.FitParams.Covarience.sigA0);
-                _Seed_Cov_A1=(st.FitParams.Covarience.sigA1);
-                _Seed_Cov_B0=(st.FitParams.Covarience.sigB0);
-                _Seed_Cov_B1=(st.FitParams.Covarience.sigB1);
-                _Seed_Cov_B0B1=(st.FitParams.Covarience.sigB1B0);
-		_Seed_Cov_A0A1=(st.FitParams.Covarience.sigA1A0);
-	*/
+		_reco_theta_angle=(st.get_fit_theta()); 
 	        _MinuitA0=(st.MinuitFitParams.A0);
 	        _MinuitA1=(st.MinuitFitParams.A1);
 	        _MinuitB1=(st.MinuitFitParams.B1);
@@ -336,80 +266,33 @@ namespace mu2e
 		        _TrueB1=(trueinfo.TrueFitEquation.Dir.Y());
 		        _TrueA0=(trueinfo.TrueFitEquation.Pos.X());
 		        _TrueB0=(trueinfo.TrueFitEquation.Pos.Y());
-
+ 		}
 			
-	    }
-		/*
-		_chisq_ndf_plot_init=(st.Diag.InitialChiTot);
-                _chisq_ndf_plot_final=(st.Diag.FinalChiTot);
-                
-                _chisq_ndf_plot_finalX=(st.Diag.FinalChiX);
-                _chisq_ndf_plot_finalY=(st.Diag.FinalChiY);
-               
-                _chisq_ndf_plot_initX=(st.Diag.InitialChiX);
-                _chisq_ndf_plot_initY=(st.Diag.InitialChiY);
-               
-                _change_chisq_ndf_plot_X=(st.Diag.InitialChiX-st.Diag.FinalChiX);
-                _change_chisq_ndf_plot_Y=(st.Diag.InitialChiY-st.Diag.FinalChiY);
-                _change_chisq_ndf_plot_Total=(st.Diag.InitialChiTot-st.Diag.FinalChiTot);
-		
-		_NLL=(st.DriftDiag.NLL);
-	        
-                for(size_t i=0; i< st.Diag.InitErrTot.size();i++){
-		    _InitErrTot=(st.Diag.InitErrTot[i]); 
-                    _total_residualsX_init=(st.Diag.InitialResidualsX[i]);        
-	            _total_pullsX_init=(st.Diag.InitialResidualsX[i]/st.Diag.InitErrX[i]);
-	            _InitErrX=(st.Diag.InitErrX[i]);     
-                    _total_residualsY_init=(st.Diag.InitialResidualsY[i]);            
-	            _total_pullsY_init=(st.Diag.InitialResidualsY[i]/st.Diag.InitErrY[i]);
-	            _InitErrY=(st.Diag.InitErrY[i]); 
-	        }
 
-		for(size_t i=0; i< st.Diag.FinalErrTot.size();i++){
-		    _FinalErrTot=(st.Diag.FinalErrTot[i]);
-                    _total_residualsX_final=(st.Diag.FinalResidualsX[i]);          
-	            _total_pullsX_final=(st.Diag.FinalResidualsX[i]/st.Diag.FinalErrX[i]);
-	            _FinalErrX=(st.Diag.FinalErrX[i]);
-                    _total_residualsY_final=(st.Diag.FinalResidualsY[i]);            
-	            _total_pullsY_final=(st.Diag.FinalResidualsY[i]/st.Diag.FinalErrY[i]);
-	            _FinalErrY=(st.Diag.FinalErrTot[i]);
-	            
-	        }   
-                for(size_t i=0; i<st.DriftDiag.GaussianEndDOCAs.size();i++){
-		    _GaussianEndDOCAs=(st.DriftDiag.GaussianEndDOCAs[i]);
-		    _GaussianEndTimeResiduals=(st.DriftDiag.GaussianEndTimeResiduals[i]);
-			
-		}
-		
 		for(size_t i=0; i<st.DriftDiag.FullFitEndDOCAs.size();i++){
-	            _StartDOCAs=(st.DriftDiag.StartDOCAs[i]);
-	            _StartTimeResiduals=(st.DriftDiag.StartTimeResiduals[i]);
+		    if(((_mcdiag and (DriftFitUtils::GetTestDOCA(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<2.5 and abs(trueinfo.TrueFitEquation.Pos.X() ) < 5000 and abs(trueinfo.TrueFitEquation.Pos.Y())<5000 and abs(trueinfo.TrueFitEquation.Dir.X())<5 and abs(trueinfo.TrueFitEquation.Dir.Y())<5 )) or !_mcdiag) and st.DriftDiag.FullFitEndDOCAs[i]<2.5 ){
+	            _PullsX=(st.DriftDiag.FinalResidualsX[i]/st.DriftDiag.FinalErrX[i]);          
+                    _PullsY=(st.DriftDiag.FinalResidualsY[i]/st.DriftDiag.FinalErrY[i]);      
 	            _FullFitEndDOCAs=(st.DriftDiag.FullFitEndDOCAs[i]);
-		    _FullFitEndTimeResiduals=(st.DriftDiag.FullFitEndTimeResiduals[i]);
+		    _FullFitTimeResiduals=(st.DriftDiag.FullFitEndTimeResiduals[i]);
 		   	if(_mcdiag){
 				trueinfo = FitMC(_mcdigis);
 				trueinfo = FillDriftMC(sts._straws[i], st.DriftDiag.RecoAmbigs[i], trueinfo);
-			if(DriftFitUtils::GetTestDOCA(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<2.5 and st.DriftDiag.FullFitEndDOCAs[i]<2.5 and abs(trueinfo.TrueFitEquation.Pos.X() ) < 5000 and abs(trueinfo.TrueFitEquation.Pos.Y())<5000 and abs(trueinfo.TrueFitEquation.Dir.X())<5 and abs(trueinfo.TrueFitEquation.Dir.Y())<5){
-			outputfile<<DriftFitUtils::GetTestDOCA(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<st.DriftDiag.FullFitEndDOCAs[i]<<","<<st.DriftDiag.RecoAmbigs[i]/DriftFitUtils::GetAmbig(sts._straws[i], trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<trueinfo.TrueTheta<<","<<st.MinuitFitParams.A0<<","<<st.MinuitFitParams.A1
-<<","<<st.MinuitFitParams.B0<<","<<st.MinuitFitParams.B1<<","<<trueinfo.TrueFitEquation.Pos.X()<<","<<trueinfo.TrueFitEquation.Dir.X()
-<<","<<trueinfo.TrueFitEquation.Pos.Y()<<","<<trueinfo.TrueFitEquation.Dir.Y()<<endl;
-			}      
+				_TrueDOCAs=trueinfo.TrueDOCA[i];
+     				_TrueTimeResiduals=trueinfo.TrueTimeResiduals[i];
+    
+			 }      
 			}
 	        }
 
-		for(size_t i=0; i< st.DriftDiag.FullFitEndDOCAs.size();i++){
-                    _total_residualsX_Minuit=(st.DriftDiag.FinalResidualsX[i]);          
-                    _total_residualsY_Minuit=(st.DriftDiag.FinalResidualsY[i]);   
-		    _minuit_pullsX_final=(st.DriftDiag.FinalResidualsX[i]/st.DriftDiag.FinalErrX[i]);          
-                    _minuit_pullsY_final=(st.DriftDiag.FinalResidualsY[i]/st.DriftDiag.FinalErrY[i]);           
-   		}   
-     */
-	        for(auto const& tseed : *_coscol) {   
-                	TrkFitFlag const& status = tseed._status;
-                	_hitsOK = status.hasAllProperties(TrkFitFlag::hitsOK);
-                	_StraightTrackOK = status.hasAllProperties(TrkFitFlag::helixOK);
-                	_StraightTrackConverged = status.hasAllProperties(TrkFitFlag::helixConverged);
-                	_StraightTrackInit = status.hasAllProperties(TrkFitFlag::circleInit);
+	    	
+		
+	      
+               _hitsOK = status.hasAllProperties(TrkFitFlag::hitsOK);
+		if(status.hasAllProperties(TrkFitFlag::Straight)){
+		      _StraightTrackOK = status.hasAllProperties(TrkFitFlag::helixOK);
+		      _StraightTrackConverged = status.hasAllProperties(TrkFitFlag::helixConverged);
+		      _StraightTrackInit = status.hasAllProperties(TrkFitFlag::circleInit);
         	}
 
 		for(size_t ich = 0;ich < _chcol->size(); ++ich){
@@ -424,21 +307,23 @@ namespace mu2e
 		//-----------Hit details:---------------//
 		        _hit_time = chit.time();
 			_hit_drift_time = chit.driftTime();
-                        _dt =  _hit_time - _cluster_time;
+                       
 			}
                 //----------------Get panels/planes/stations per track:------------------//
                 _n_panels = std::set<float>( panels.begin(), panels.end() ).size();
 		_n_planes = std::set<float>( planes.begin(), planes.end() ).size();
 		_n_stations = std::set<float>( stations.begin(), stations.end() ).size();
-	 
-      }//end analyze
-      _cosmic_tree->Fill();
+		if(st.minuit_converged == true){
+	 	_cosmic_tree->Fill();
+	       }
+      }
+      
       
 	
      }
 
 void CosmicTrackDetails::endJob() {
-	if(_diag and _mcdiag) outputfile.close();
+	
 }
 
 CosmicTrackMCInfo CosmicTrackDetails::FitMC(const StrawDigiMCCollection*& _mcdigis){	
@@ -506,9 +391,6 @@ CosmicTrackMCInfo CosmicTrackDetails::FillDriftMC(Straw const& straw, double Rec
      info.Ambig.push_back(trueambig);
      info.TrueDOCA.push_back(true_doca);
      info.TrueTimeResiduals.push_back(true_time_residual);
-     //_TrueDOCAs=(true_doca);
-     //_TrueTimeResiduals=(true_time_residual);
-    
      return info;
 }
 

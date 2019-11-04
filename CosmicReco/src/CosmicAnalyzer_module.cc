@@ -266,7 +266,7 @@ namespace mu2e
       if(_diag > 0){
 	if(_mcdiag) { 
 		
-		outputfile.open("doca.csv");
+		outputfile.open("CosmicAnalysis.csv");
 	}
 	art::ServiceHandle<art::TFileService> tfs;
 	//Tree for detailed diagnostics

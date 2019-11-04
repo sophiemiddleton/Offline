@@ -311,9 +311,17 @@ namespace mu2e{
 	     		}  
 	     		}
 	              
-                      if( _tfit.goodTrack(tmpResult._tseed._track) == false) continue;
+                      if( _tfit.goodTrack(tmpResult._tseed._track) == false){
+			tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
+			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
+			 continue;
+			}
 		      _tfit.DriftFit(tmpResult);
-		      
+		      if( tmpResult._tseed._track.minuit_converged == false){
+			tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
+			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
+			continue;
+			}
 		      //Add tmp to seed list:
 		      track_seed_vec.push_back(tmpResult._tseed);
 		     
