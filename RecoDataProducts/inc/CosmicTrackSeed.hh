@@ -37,8 +37,6 @@ namespace mu2e {
     std::vector<TrkStrawHitSeed>  _trkstrawhits; //vector of associated trkstrawhits
     
     std::vector<Straw> _straws; //vector of straw info 
-    std::vector<Panel> _panels; //vector of panel info  TODO
-    std::vector<Plane> _planes; //vector of plane info  TODO
    
   };
    typedef std::vector<mu2e::CosmicTrackSeed> CosmicTrackSeedCollection;

@@ -104,7 +104,7 @@ namespace MinuitDriftFitter{
 	  if(_diag > 1){
 	  for (size_t i=0;i<FitResult.names.size();i++){
 	    std::cout << i << FitResult.names[i] << " : " << FitResult.bestfit[i] << " +- " << FitResult.bestfiterrors[i] << std::endl;
-	    if(FitResult.bestfitcov.size() != 0 and i< 4) cout<<"cov "<<FitResult.bestfitcov[i]<<endl;
+	    if(FitResult.bestfitcov.size() != 0) cout<<"cov "<<FitResult.bestfitcov[i]<<endl;
 	
 	  }
        }

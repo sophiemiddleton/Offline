@@ -508,7 +508,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 	 trackData._tseed._track.DriftDiag.GaussianEndTimeResiduals = endresult.GaussianEndTimeResiduals;
 	 trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals = endresult.FullFitEndTimeResiduals;
 	 trackData._tseed._track.DriftDiag.RecoAmbigs = endresult.RecoAmbigs;
-
+	
 	if(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size() >0){
 	for(unsigned i = 0; i< trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size()-1; i++){
 		if( trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i] > _maxTres or isnan(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i])==true){ 
