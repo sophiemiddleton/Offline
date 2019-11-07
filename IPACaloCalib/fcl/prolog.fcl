@@ -1,0 +1,16 @@
+# -*- mode: tcl -*-
+BEGIN_PROLOG
+
+IPACaloCalib: {
+	module_type : IPACaloCalibAna
+	generatorModuleLabel   : generate
+}
+
+CaloCalib: {
+ analyzers : {IPACaloCalib: @local::IPACaloCalib}
+}
+
+CaloCalib.FindNegCalibIPA : [CaloCalib]
+
+
+END_PROLOG
