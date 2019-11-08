@@ -1,0 +1,21 @@
+# -*- mode: tcl -*-
+BEGIN_PROLOG
+
+IPACaloCalib: {
+	module_type : IPACaloCalibAna
+	#CaloHitCollection : "CaloCrystalHitFromHit" 
+        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+        #CaloHitMCTruthCollection :
+        CaloClusterCollection : "CaloClusterFast"
+        #CaloHitSimPartMCCollection :
+	
+}
+
+CaloCalib: {
+ analyzers : {IPACaloCalib: @local::IPACaloCalib}
+}
+
+CaloCalib.FindNegCalibIPA : [CaloCalib]
+
+
+END_PROLOG
