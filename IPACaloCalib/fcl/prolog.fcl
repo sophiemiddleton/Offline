@@ -6,7 +6,8 @@ IPACaloCalib: {
 	#CaloHitCollection : "CaloCrystalHitFromHit" 
         CaloCrystalHitCollection : "CaloCrystalHitFromHit"
         #CaloHitMCTruthCollection :
-        CaloClusterCollection : "CaloClusterFast"
+	KalRepPtrCollection : "KFFDeM"
+        CaloClusterCollection : "CaloClusterFromProtoCluster"
         #CaloHitSimPartMCCollection :
 	
 }
