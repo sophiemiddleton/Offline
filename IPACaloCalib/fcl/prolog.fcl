@@ -3,17 +3,31 @@ BEGIN_PROLOG
 
 IPACaloCalib: {
 	module_type : IPACaloCalibAna
-	#CaloHitCollection : "CaloCrystalHitFromHit" 
+	#CaloHitCollection : 
         CaloCrystalHitCollection : "CaloCrystalHitFromHit"
         #CaloHitMCTruthCollection :
 	KalRepPtrCollection : "KFFDeM"
         CaloClusterCollection : "CaloClusterFromProtoCluster"
-        #CaloHitSimPartMCCollection :
+        #TrackClusterMatchCollection : "TrackCaloMatching"
+	GenParticleCollection : "compressDigiMCs"  
+	
+}
+
+
+CaloEventDisplays: {
+	module_type : CaloEventDisplays
+	CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+        CaloClusterCollection : "CaloClusterFromProtoCluster"
+	
+        doDisplay            : true
 	
 }
 
 CaloCalib: {
- analyzers : {IPACaloCalib: @local::IPACaloCalib}
+ analyzers : {
+		IPACaloCalib: @local::IPACaloCalib
+		CaloEventDisplays: @local::CaloEventDisplays
+		}
 }
 
 CaloCalib.FindNegCalibIPA : [CaloCalib]

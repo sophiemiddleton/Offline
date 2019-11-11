@@ -36,7 +36,6 @@
 #include "RecoDataProducts/inc/TrkCaloIntersectCollection.hh"
 #include "RecoDataProducts/inc/TrackClusterMatch.hh"
 
-
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
@@ -55,10 +54,17 @@
 #include "RecoDataProducts/inc/KalRepPtrCollection.hh"
 #include "RecoDataProducts/inc/TrkFitDirection.hh"
 
+
 // BaBar Kalman filter includes
 #include "BTrk/KalmanTrack/KalRep.hh"
 #include "BTrk/TrkBase/HelixTraj.hh"
-
+#include "BTrk/ProbTools/ChisqConsistency.hh"
+#include "BTrk/BbrGeom/BbrVectorErr.hh"
+#include "BTrk/BbrGeom/TrkLineTraj.hh"
+#include "BTrk/TrkBase/TrkPoca.hh"
+#include "BTrk/KalmanTrack/KalHit.hh"
+#include "BTrk/TrkBase/HelixParams.hh"
+#include "BTrk/BaBar/BaBar.hh"
 
 #include <cmath>
 #include <iostream>
@@ -90,6 +96,7 @@
 #include "TStyle.h"
 #include "TText.h"
 #include "TRotMatrix.h"
+#include "TColor.h"
 
 using namespace std;
 using CLHEP::Hep3Vector;
@@ -105,12 +112,15 @@ namespace mu2e {
 	      using Name=fhicl::Name;
 	      using Comment=fhicl::Comment;
  	      fhicl::Atom<int> diagLevel{Name("diagLevel"),Comment("diag level"),0};
-	     fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("diag level"),0};
+	     fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("mc diag level"),0};
 	     //fhicl::Atom<art::InputTag> calohitsTag{Name("CaloHitCollection"), Comment("readout")};
 	     fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
 	     fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
 	     //fhicl::Atom<art::InputTag> calohitMCcrysTag{Name("CaloHitMCTruthCollection"),Comment("cal hit mc truth info")};
 	     fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
+	     //fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match")};
+	    
+	    fhicl::Atom<art::InputTag> genTag{Name("GenParticleCollection"), Comment("gen particle info")};
 	     //fhicl::Atom<art::InputTag> caloSimPartMCTag{Name("CaloHitSimPartMCCollection"), Comment("cal hit sim particle mc info")};
     };
        typedef art::EDAnalyzer::Table<Config> Parameters;
@@ -138,14 +148,15 @@ namespace mu2e {
        int _diagLevel;
        int _nProcess;
 	int _mcdiag;
-       //std::string _g4ModuleLabel;
-       //std::string _generatorModuleLabel;
+       
        art::InputTag _calohitsTag;
        art::InputTag _calocrysTag;
        art::InputTag _kalrepTag;
        art::InputTag _calohitMCcrysTag;
        art::InputTag _caloclusterTag;
        art::InputTag _caloSimPartMCTag;
+       art::InputTag _tcmatchTag;
+       art::InputTag _genTag;
 
        const CaloHitCollection* _calhitcol;
        const CaloCrystalHitCollection*  _calcryhitcol;
@@ -153,36 +164,50 @@ namespace mu2e {
        const CaloHitMCTruthCollection* _calhitMCtruecol;
        const CaloClusterCollection* _calclustercol;
        const CaloHitSimPartMCCollection* _simpartcol;
+       const TrackClusterMatchCollection* _tcmatchcol;
+       const GenParticleCollection *_gencol;
+
        TrkParticle _tpart;
        TrkFitDirection _fdir;
-       
+       TCanvas* canvas_;
        TH2F* _hviewxy;
        TH2F* _hviewxz;
        TH1F* _hfit;
        TTree* _Ntup;
+
+       std::vector<int> crystallist;
        
        int   _evt,_run;
-       int   _nEvents, _nHits, _nClusters, _nSim, _nGen;
+       int   _nEvents, _nHits, _nClusters, _nTracks, _nSim;
 
-//Crystel:
+//GenParticle:
+       int   _nGen,_genPdgId[16384],_genCrCode[16384];
+       float _genmomX[16384],_genmomY[16384],_genmomZ[16384], _genStartX[16384],_genStartY[16384],_genStartZ[16384],_genStartT[16384];
+
+//Crystal:
        int   _cryId[16384],_crySectionId[16384],_crySimIdx[16384],_crySimLen[16384];
-       float _cryTime[16384],_cryEdep[16384],_cryDose[16384],_cryPosX[16384],_cryPosY[16384],_cryPosZ[16384],_cryLeak[16384];
-	float _cryTotE[16384];
+       float _cryTime[16384],_cryEdep[16384],_cryDose[16384],_cryPosX[16384],_cryPosY[16384],_cryPosZ[16384],_cryLeak[16384], _cryTotE[16384],_cryTotSum[16384], _cryTotEErr[16384], _cryRadius[16384];
 
 //Cluster:
        int   _clusterId[16384],_clusterdiskId[16384];
-       float _clustertime[16384], _clustertimeErr[16384], _clusterEdep[16384], _clusterEDepErr[16384], _clusterangle[16384], _clustercog3VectorX[16384], _clustercog3VectorY[16384], _clustercog3VectorZ[16384];
-	float _EoP[16384];
+       float _clustertime[16384], _clustertimeErr[16384], _clusterEdep[16384], _clusterEDepErr[16384], _clusterangle[16384], _clustercog3VectorX[16384], _clustercog3VectorY[16384], _clustercog3VectorZ[16384],_clusterR[16384];
+	
 //Simparticle:
        float _simPartEdep[16384] , _simPartTime[16384], _simPartPosX[16384], _simPartPosY[16384], _simPartPosZ[16384];
 
 //KalFilter:
-       float _TrackMom[16382];
+       float _TrackT0[16384], _TrackT0Err[16384];
+       float _TrackMom[16384], _MaxEoP[16384], _EoP[16384];
+       float _TrackBackTime[16384] ,_TrackBackOmega[16384] ,_TrackBackD0[16384] , _TrackBackZ0[16384] ,_TrackBackPhi0[16384],_TrackBackTanDip[16384],_TrackChi2[16384] ;
+       int NCrystals =674;//TODO (should not be hard coded like this)
+
        bool findData(const art::Event& evt);
        double CrystalBall(double x, double alpha, double n, double sigma, double mean);
        double CrystalBall(const double *x, const double *p);
        double GetMax(TH1F* h);
        double GetTrackerMom(const art::Event& evt);
+       void FillXY();
+       void fitEoP(TH1F* h);
 };
 
 
@@ -194,16 +219,32 @@ namespace mu2e {
     _calocrysTag(conf().calocrysTag()),
     _kalrepTag(conf().kalrepTag()),
     //_calohitMCcrysTag(conf().calohitMCcrysTag()),
-    _caloclusterTag(conf().caloclusterTag())//,
+    _caloclusterTag(conf().caloclusterTag()),
     //_caloSimPartMCTag(conf().caloSimPartMCTag())
+    //_tcmatchTag(conf().tcmatchTag()),
+    _genTag(conf().genTag())
 {}
 
   void IPACaloCalibAna::beginJob(){
-
+    for(int i=0;i<NCrystals;i++){
+		crystallist.push_back(0);
+	}
     art::ServiceHandle<art::TFileService> tfs;
     _Ntup  = tfs->make<TTree>("CaloCalibAna", "CaloCalibAna");
     _Ntup->Branch("evt",          &_evt ,        "evt/I");
     _Ntup->Branch("run",          &_run ,        "run/I");
+
+    _Ntup->Branch("nGen",         &_nGen ,        "nGen/I");
+    _Ntup->Branch("genId",        &_genPdgId,     "genId[nGen]/I");
+    _Ntup->Branch("genCrCode",    &_genCrCode,    "genCrCode[nGen]/I");
+    _Ntup->Branch("genMomX",      &_genmomX,      "genMomX[nGen]/F");
+    _Ntup->Branch("genMomY",      &_genmomY,      "genMomX[nGen]/F");
+    _Ntup->Branch("genMomZ",      &_genmomZ,      "genMomX[nGen]/F");
+    _Ntup->Branch("genStartX",    &_genStartX,    "genStartX[nGen]/F");
+    _Ntup->Branch("genStartY",    &_genStartY,    "genStartY[nGen]/F");
+    _Ntup->Branch("genStartZ",    &_genStartZ,    "genStartZ[nGen]/F");
+    _Ntup->Branch("genStartT",    &_genStartT,    "genStartT[nGen]/F");
+
     _Ntup->Branch("nCry",         &_nHits ,       "nCry/I");
     _Ntup->Branch("cryId",        &_cryId ,       "cryId[nCry]/I");
     _Ntup->Branch("crySectionId", &_crySectionId, "crySectionId[nCry]/I");
@@ -213,34 +254,98 @@ namespace mu2e {
     _Ntup->Branch("cryEdep",      &_cryEdep ,     "cryEdep[nCry]/F");
     _Ntup->Branch("cryTime",      &_cryTime ,     "cryTime[nCry]/F");
     _Ntup->Branch("cryDose",      &_cryDose ,     "cryDose[nCry]/F");
-    _Ntup->Branch("crySimIdx",    &_crySimIdx ,   "crySimIdx[nCry]/I");
-    _Ntup->Branch("crySimLen",    &_crySimLen ,   "crySimLen[nCry]/I");
-    _Ntup->Branch("cryTotE",    &_cryTotE ,   "cryTotE[nCry]/F");
-    
-    _Ntup->Branch("nClu",         &_nClusters ,       "nClu/I");
-    _Ntup->Branch("clustertime", &_clustertime,"clustertime[nClu]/F");
-    _Ntup->Branch("clustertimeErr", &_clustertimeErr,"clustertimeErr[nClu]/F");
-    _Ntup->Branch("clusterEdep", &_clusterEdep,"clusterEdep[nClu]/F");
-    _Ntup->Branch("clusterEDepErr", &_clusterEDepErr, "clusterEdepErr[nClu]/F");
-    _Ntup->Branch("clusterangle", &_clusterangle, "clusterangle[nClu]/F");
-    _Ntup->Branch("clusterPosX",&_clustercog3VectorX, "clustercog3VectorX[nClu]/F");
-    _Ntup->Branch("clusterPosY",&_clustercog3VectorY, "clustercog3VectorY[nClu]/F");
-    _Ntup->Branch("clusterPosZ",&_clustercog3VectorZ, "clustercog3VectorZ[nClu]/F");
+    _Ntup->Branch("cryTotE",      &_cryTotE ,   "cryTotE[nCry]/F");
+    _Ntup->Branch("cryTotSum",    &_cryTotSum,   "cryTotSum/F");
+    _Ntup->Branch("cryTotEErr",   &_cryTotEErr 	,"cryTotEErr[nCry]/F");   
+    _Ntup->Branch("cryRadius",    &_cryRadius,"cruRadius[nCry]/F");
 
-    _Ntup->Branch("trackMom",&_TrackMom, "trackMom/F");
-    _Ntup->Branch("EoP", &_EoP,"EoP/F");
+
+    _Ntup->Branch("nClu",         	&_nClusters ,       	"nClu/I");
+    _Ntup->Branch("clustertime", 	&_clustertime,		"clustertime[nClu]/F");
+    _Ntup->Branch("clustertimeErr", 	&_clustertimeErr,	"clustertimeErr[nClu]/F");
+    _Ntup->Branch("clusterEdep", 	&_clusterEdep,		"clusterEdep[nClu]/F");
+    _Ntup->Branch("clusterEDepErr", 	&_clusterEDepErr, 	"clusterEdepErr[nClu]/F");
+    _Ntup->Branch("clusterangle", 	&_clusterangle, 	"clusterangle[nClu]/F");
+    _Ntup->Branch("clusterPosX",	&_clustercog3VectorX, 	"clustercog3VectorX[nClu]/F");
+    _Ntup->Branch("clusterPosY",	&_clustercog3VectorY, 	"clustercog3VectorY[nClu]/F");
+    _Ntup->Branch("clusterPosZ",	&_clustercog3VectorZ, 	"clustercog3VectorZ[nClu]/F");
+    _Ntup->Branch("clusterR", 		&_clusterR,		"clusterR[nClu]/F");
+
+    _Ntup->Branch("TrackT0", 		&_TrackT0, 		"TrackT0/F");
+    _Ntup->Branch("TrackT0Err", 	&_TrackT0Err,		"TrackT0Err/F");
+    _Ntup->Branch("TrackBackTime", 	&_TrackBackTime,   	"TrackBackTime/F"); 
+    _Ntup->Branch("TrackBackOmega", 	&_TrackBackOmega,	"TrackBackOmega/F");
+    _Ntup->Branch("TrackBackD0",  	&_TrackBackD0, 		"TrackBackD0/F"); 	
+    _Ntup->Branch("TrackBackZ0", 	&_TrackBackZ0, 		"TrackBackZ0/F");
+    _Ntup->Branch("TrackBackPhi0",	&_TrackBackPhi0,	"TrackBackPhi0/F");
+    _Ntup->Branch("TrackBackTanDip",	&_TrackBackTanDip,	"TrackBackTanDip/F");
+    _Ntup->Branch("TrackChi2"	,	&_TrackChi2,		"TrackChi2/F");
+
+    _Ntup->Branch("trackMom",		&_TrackMom, 		"trackMom/F");
+    _Ntup->Branch("EoP",		 &_EoP,			"EoP/F");
+    _Ntup->Branch("MaxEoP",		&_MaxEoP, 		"MaxEoP/F");
+
     _hviewxy = tfs->make<TH2F>("viewxy","StepPoint MC hits dist xy",100,-20.,20.,100,-20.,20.);
     _hviewxz = tfs->make<TH2F>("viewxz","StepPoint MC hits dist xz",230,-10.,220.,100,-20.,20.);
-    _hfit = tfs->make<TH1F>("fitEdep","FitEDep", 100, 0, 100);
-   
+    _hfit = tfs->make<TH1F>("EoP","EoP", 100, 0, 1);
+    canvas_ = tfs->make<TCanvas>("canvas XY", "XY" ,1300,800);
   }
 
   void IPACaloCalibAna::endJob(){
-	std::cout<<"Max bin"<<GetMax(_hfit)<<std::endl;
+   	//fitEoP(_hfit);
+	//FillXY();
   }
 
 
-
+void IPACaloCalibAna::FillXY(){
+	TBox box;
+	TArc arc;
+	auto xyplot = canvas_->DrawFrame(-1000,-1000, 1000,1000);
+	xyplot->GetYaxis()->SetTitleOffset(1.25);
+	xyplot->SetTitle( "XY; X(mm);Y(mm)");
+	art::ServiceHandle<GeometryService> geom;
+        if( ! geom->hasElement<Calorimeter>() ) return;
+        Calorimeter const & cal = *(GeomHandle<Calorimeter>());
+	canvas_->SetTitle("foo title");
+	Disk const & disk =  cal.disk(1);
+	double disk_outR = disk.outerRadius();
+	double disk_inR= disk.innerRadius();
+	arc.SetFillStyle(0);
+      	arc.DrawArc(0.,0., disk_inR);
+      	arc.DrawArc(0.,0., disk_outR);
+	for(int i=0;i<NCrystals;i++){
+	        Crystal const &crystal = cal.crystal(i);
+	   	double crystalXLen = crystal.size().x();
+		double crystalYLen = crystal.size().y();
+		CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(1,crystal.position());
+	  	if(crystallist[i] ==0) box.SetFillColor(0);
+		if(crystallist[i]>0 and crystallist[i]<11) box.SetFillColor(kViolet-10+crystallist[i]);
+		if(crystallist[i]>10 and crystallist[i]<21)box.SetFillColor(kBlue-20+crystallist[i]);
+		if(crystallist[i]>20 and crystallist[i]<31)box.SetFillColor(kAzure-30+crystallist[i]);
+		if(crystallist[i]>31 and crystallist[i]<41) box.SetFillColor(kAzure-30+crystallist[i]);
+		if(crystallist[i]>40 and crystallist[i]<51)box.SetFillColor(kTeal-50+crystallist[i]);
+		if(crystallist[i]>50 and crystallist[i]<61)box.SetFillColor(kTeal-50+crystallist[i]);
+		if(crystallist[i]>60 and crystallist[i]<71) box.SetFillColor(kGreen-70+crystallist[i]);
+		if(crystallist[i]>70 and crystallist[i]<81)box.SetFillColor(kGreen-70+crystallist[i]);
+		if(crystallist[i]>80 and crystallist[i]<91)box.SetFillColor(kYellow-90+crystallist[i]);
+		if(crystallist[i]>90 and crystallist[i]<101)box.SetFillColor(kYellow-90+crystallist[i]);
+		if(crystallist[i]>100 and crystallist[i]<111)box.SetFillColor(kOrange-110+crystallist[i]);
+		if(crystallist[i]>110 and crystallist[i]<121)box.SetFillColor(kOrange-110+crystallist[i]);
+		if(crystallist[i]>100) box.SetFillColor(kRed+4);
+		box.DrawBox(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,crystalPos.x()+crystalXLen/2, crystalPos.y()+crystalYLen/2);
+		if(crystallist[i] !=0){
+			TLatex latex;
+			stringstream crys;
+                	crys<<crystallist[i];
+                	const char* str_crys = crys.str().c_str();
+		   	latex.SetTextSize(0.02);
+		   	latex.DrawLatex(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,str_crys);
+		   }
+	}
+	canvas_->Update();
+	canvas_->SaveAs("AllCrystalsInAllEvents.root");
+	
+}
 
 double IPACaloCalibAna::CrystalBall(double x, double alpha, double n, double sigma, double mean) {
   // evaluate the crystal ball function
@@ -262,107 +367,115 @@ double IPACaloCalibAna::CrystalBall(double x, double alpha, double n, double sig
 }
 
 double IPACaloCalibAna::CrystalBall(const double *x, const double *p) {
-  return (p[0] * CrystalBall(x[0], p[3], p[4], p[2], p[1]));
+  return (p[0] * CrystalBall(x[0], p[4], p[3], p[2], p[1]));
 }
 
   void IPACaloCalibAna::analyze(const art::Event& event) {
-     /*
- 	TF1 *_fitF = new TF1("fitF","CrystalBall");
-        _fitF->SetParameter(0,1);
-	_fitF->SetParameter(1,1);
-	_fitF->SetParameter(2,1);
-	_fitF->SetParameter(3,1);
-	_fitF->SetParameter(4,1);
-*/
+    
        _evt = event.id().event();
        _run = event.run();
-
-       if(!findData(event)) // find data
+    
+       if(!findData(event)) 
       		throw cet::exception("RECO")<<"No data in  event"<< endl; 
-           
+       
+	_nGen = _gencol->size();
+       for (unsigned int i=0; i <_gencol->size(); ++i)
+       {
+           GenParticle const& gen = (*_gencol)[i];
+	   _genPdgId[i]   = gen.pdgId();
+	   _genCrCode[i]  = gen.generatorId().id();
+	   _genmomX[i]    = gen.momentum().vect().x();
+	   _genmomY[i]    = gen.momentum().vect().y();
+	   _genmomZ[i]    = gen.momentum().vect().z();
+	   _genStartX[i]  = gen.position().x()+ 3904;
+	   _genStartY[i]  = gen.position().y();
+	   _genStartZ[i]  = gen.position().z();
+	   _genStartT[i]  = gen.time();
+       } 
+
       ++_nProcess;
       if (_nProcess%1000==0) std::cout<<"Processing event "<<_nProcess<<std::endl;
       
-      
-      //Get handle to the calorimeter
+      double p = GetTrackerMom(event);
+	
       art::ServiceHandle<GeometryService> geom;
       if( ! geom->hasElement<Calorimeter>() ) return;
       Calorimeter const & cal = *(GeomHandle<Calorimeter>());
   //Utility to match  cloHits with MCtruth, simParticles and StepPoints
       //CaloHitMCNavigator caloHitNavigator(caloHits, caloHitsMCTruth, caloHitSimPartMC);
-   //--------------------------  Do generated particles --------------------------------
- 
-       //--------------------------  Do calorimeter hits --------------------------------
-       double p =GetTrackerMom(event);
-	_TrackMom[_evt] = p;
-       _nHits = _nSim = 0;
-	
+   
+        _nHits = _nSim = 0;
+	TH1F *histEoP = new TH1F("histEoP", "histEoP",100,0,1);//local hist for max bins
         std::cout<<"Number of Clusters"<< _calclustercol->size()<<std::endl;
         for (unsigned int tclu=0; tclu<_calclustercol->size();++tclu){
 	   CaloCluster const& cluster = (*_calclustercol)[tclu];
-	   //std::cout<<"crystal hits in cluster "<<cluster.caloCrystalHitsPtrVector().size()<<std::endl;
-
+	   
 	   _clusterdiskId[_nClusters]                    = cluster.diskId();
-           //CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(_clusterdiskId,cal.crystal(cluster.cog3Vector()); 
+           CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(cluster.diskId(),cluster.cog3Vector()); 
 	   _clustertime[_nClusters]      = cluster.time();
-	   _clusterEdep[_nClusters]      = cluster.energyDep();
+	   _clusterEdep[_nClusters]      = cluster.energyDep(); 
 	   _clusterEDepErr[_nClusters]      = cluster.energyDepErr();
            _clusterangle[_nClusters]      = cluster.angle();
-	   _clustercog3VectorX[_nHits]      = cluster.cog3Vector().x();
-	   _clustercog3VectorY[_nHits]      = cluster.cog3Vector().y();
-	   _clustercog3VectorZ[_nHits]      = cluster.cog3Vector().z();
+	   _clustercog3VectorX[_nClusters]      = cluster.cog3Vector().x();
+	   _clustercog3VectorY[_nClusters]      = cluster.cog3Vector().y();
+	   _clustercog3VectorZ[_nClusters]      = cluster.cog3Vector().z();
+	   _clusterR[_nClusters]  		=sqrt(cluster.cog3Vector().x()*cluster.cog3Vector().x()+cluster.cog3Vector().y()*cluster.cog3Vector().y());
+
 	   _EoP[_nHits] = cluster.energyDep()/p;
+	    histEoP->Fill(cluster.energyDep()/p);
+	   _hfit->Fill(cluster.energyDep()/p);
+
+	  //if(_nHits ==1){ _TrackMom[_nHits] = p;}
 	   _nClusters++;
 	}
-	std::cout<<"Crystel hit Collection Size "<<_calcryhitcol->size()<<std::endl;
-        _cryTotE[_evt] =0;
+
+	std::cout<<"Crystal hit Collection Size "<<_calcryhitcol->size()<<std::endl;
+        _cryTotSum[_evt] =0;
 	for (unsigned int ic=0; ic<_calcryhitcol->size();++ic) 
        {	   
-	   
 	   CaloCrystalHit const& hit      = (*_calcryhitcol)[ic];
 	   int diskId                     = cal.crystal(hit.id()).diskId();
            CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit.id()).position());  //in disk FF frame
            //CaloHit const& caloHit         = *(hit.readouts().at(0));
 	   //CaloHitSimPartMC const& hitSim = caloHitNavigator.sim(caloHit);
            //int nPartInside                = hitSim.simParticles().size();
+	   _cryId[_nHits] 	 =     hit.id();
 	   _cryTime[_nHits]      = hit.time();
 	   _cryEdep[_nHits]      = hit.energyDep();
-	   _cryTotE[_evt] 	 +=hit.energyDep();
-          
+	   _cryTotSum[_evt] 	+= hit.energyDep();
+	   _cryTotE[_nHits] 	= hit.energyDepTot();
+	   _cryTotEErr[_nHits] =hit.energyDepTotErr();
 	   _cryPosX[_nHits]      = crystalPos.x();
 	   _cryPosY[_nHits]      = crystalPos.y();
 	   _cryPosZ[_nHits]      = crystalPos.z();
 	   _nHits++;
+	   crystallist[hit.id()]+=1;
 	  
 	}
+	_MaxEoP[_evt] = GetMax(histEoP);
 	
-	if(_cryTotE[_evt] !=0){
-	    _hfit->Fill(_cryTotE[_evt]);
-         }
-
-	//_hfit->Fit("fitF");
-       
        _Ntup->Fill();
-       
-       
-  }
-double IPACaloCalibAna::GetMax(TH1F* h){
-	std::cout<<"getting maximum bin "<<std::endl;
-	/*int max_bin =0;
-	double Xmax_bin = 0;
-	for(int i=1;i<h->GetNbinsX();h++){
-		
-		if(h->GetBinContent(i) > max_bin){
-			max_bin = i;
-			Xmax_bin = h->GetBinCenter(i);
-		}
- 
-	}
 	
-	return Xmax_bin;*/
-	return h->GetMaximumBin();
 }
 
+double IPACaloCalibAna::GetMax(TH1F* h){
+	int maxBin = h->GetMaximumBin();
+	double maxEdep = h->GetBinCenter(maxBin);
+	std::cout<<maxBin<<" "<<maxEdep<<std::endl;
+	return maxEdep;
+}
+
+void IPACaloCalibAna::fitEoP(TH1F* h){
+ 	TF1 *_fitF = new TF1("fitF","CrystalBall");
+        _fitF->SetParameter(0,1);
+	_fitF->SetParameter(1,1);
+	_fitF->SetParameter(2,0.2);
+	_fitF->SetParameter(3,2);
+	_fitF->SetParameter(4,1);
+	h->Fit(_fitF);
+	h->SaveAs("fit.root");
+
+}
 
 
 double IPACaloCalibAna::GetTrackerMom(const art::Event& evt){
@@ -370,7 +483,7 @@ double IPACaloCalibAna::GetTrackerMom(const art::Event& evt){
 	art::ServiceHandle<mu2e::GeometryService>   geom;
   	mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
   	mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
-
+        _nTracks = 0;
 	double EndMom =0;
 	_kalrepcol =0;
 	auto kal = evt.getValidHandle<KalRepPtrCollection>(_kalrepTag);
@@ -419,29 +532,41 @@ double IPACaloCalibAna::GetTrackerMom(const art::Event& evt){
 
 		dzds   = (z01-z0)/ds;
 		sz1    = sz+(Z-z0)/dzds;	          // should be good enough
-	        EndMom= Krep->momentum(sz1).mag();
-		
+	        EndMom= Krep->momentum(sz1).mag();//TODO
+		_TrackT0[_nTracks] = Krep->t0().t0();
+    		_TrackT0Err[_nTracks] = Krep->t0().t0Err();
+		_TrackMom[_nTracks] = EndMom;
+		_TrackBackTime[_nTracks] =   Krep->arrivalTime(sz1);
+		 HelixParams helx  = Krep->helix(sz1);
+    		_TrackBackOmega[_nTracks]       = helx.omega(); // old
+    		_TrackBackD0[_nTracks]       = helx.d0();
+    		_TrackBackZ0[_nTracks]       = helx.z0();
+    		_TrackBackPhi0[_nTracks]     = helx.phi0();
+    		_TrackBackTanDip[_nTracks]   = helx.tanDip(); // old
+    		_TrackChi2[_nTracks] =Krep->chisq();
+		_nTracks ++;
 	}
 
 	return EndMom;
 }
-
-
-
 
 bool IPACaloCalibAna::findData(const art::Event& evt){
 
 	_calhitcol =0;
 	_calcryhitcol =0;
 	_calclustercol=0;
-	//auto calhit = evt.getValidHandle<CaloHitCollection>(_calohitsTag);
-	//_calhitcol = calhit.product();
+	_tcmatchcol=0;
+	_gencol=0;
+	auto genpart = evt.getValidHandle<GenParticleCollection>(_genTag);
+	_gencol = genpart.product();
 	auto cryhit = evt.getValidHandle<CaloCrystalHitCollection>(_calocrysTag);
 	_calcryhitcol =cryhit.product();
 	auto cluster= evt.getValidHandle<CaloClusterCollection>(_caloclusterTag);
 	_calclustercol =cluster.product();
         auto kalrep = evt.getValidHandle<KalRepPtrCollection>(_kalrepTag);
 	_kalrepcol =kalrep.product();
+	//auto tcmatch = evt.getValidHandle<TrackClusterMatchCollection>(_tcmatchTag);
+	//_tcmatchcol = tcmatch.product();
         if(_mcdiag){
 	    
 	   _calhitMCtruecol=0;
@@ -450,9 +575,9 @@ bool IPACaloCalibAna::findData(const art::Event& evt){
 	   _simpartcol =simpar.product();
 	   auto calhitMC = evt.getValidHandle<CaloHitMCTruthCollection>(_calohitMCcrysTag);
 	   _calhitMCtruecol =calhitMC.product();
-           //_toff.updateMap(evt);
+          
         }
-	return _kalrepcol!=0 && _calcryhitcol!=0 && _calclustercol !=0 && (_simpartcol != 0 || !_mcdiag);//_calhitcol != 0 && 
+	return  _gencol!=0 && _kalrepcol!=0 && _calcryhitcol!=0 && _calclustercol !=0 && (_simpartcol != 0 || !_mcdiag);// &&_tcmatchcol!=0;
        }
 
 
