@@ -118,8 +118,7 @@ namespace mu2e {
 	     fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
 	     //fhicl::Atom<art::InputTag> calohitMCcrysTag{Name("CaloHitMCTruthCollection"),Comment("cal hit mc truth info")};
 	     fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
-	     //fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match")};
-	    
+	     fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match"), "TrackCaloMatching"};
 	    fhicl::Atom<art::InputTag> genTag{Name("GenParticleCollection"), Comment("gen particle info")};
 	     //fhicl::Atom<art::InputTag> caloSimPartMCTag{Name("CaloHitSimPartMCCollection"), Comment("cal hit sim particle mc info")};
     };
@@ -178,7 +177,7 @@ namespace mu2e {
        std::vector<int> crystallist;
        
        int   _evt,_run;
-       int   _nEvents, _nHits, _nClusters, _nTracks, _nSim;
+       int   _nEvents, _nHits, _nClusters, _nTracks, _nSim, _nMatches;
 
 //GenParticle:
        int   _nGen,_genPdgId[16384],_genCrCode[16384];
@@ -200,12 +199,15 @@ namespace mu2e {
        float _TrackMom[16384], _MaxEoP[16384], _EoP[16384];
        float _TrackBackTime[16384] ,_TrackBackOmega[16384] ,_TrackBackD0[16384] , _TrackBackZ0[16384] ,_TrackBackPhi0[16384],_TrackBackTanDip[16384],_TrackChi2[16384] ;
        int NCrystals =674;//TODO (should not be hard coded like this)
-
+//TrackCaloMatch:
+	float _matchChi2[16384], _matchEDep[16384], _matchPosXCl[16384], _matchPosYCl[16384], _matchPosZCl[16384], _matchPathLen[16384];
+	 
        bool findData(const art::Event& evt);
        double CrystalBall(double x, double alpha, double n, double sigma, double mean);
        double CrystalBall(const double *x, const double *p);
        double GetMax(TH1F* h);
-       double GetTrackerMom(const art::Event& evt);
+       double GetKalInfo(const art::Event& evt);
+       void GetTrackClusterInfo(const art::Event& evt);
        void FillXY();
        void fitEoP(TH1F* h);
 };
@@ -221,7 +223,7 @@ namespace mu2e {
     //_calohitMCcrysTag(conf().calohitMCcrysTag()),
     _caloclusterTag(conf().caloclusterTag()),
     //_caloSimPartMCTag(conf().caloSimPartMCTag())
-    //_tcmatchTag(conf().tcmatchTag()),
+    _tcmatchTag(conf().tcmatchTag()),
     _genTag(conf().genTag())
 {}
 
@@ -281,12 +283,19 @@ namespace mu2e {
     _Ntup->Branch("TrackBackTanDip",	&_TrackBackTanDip,	"TrackBackTanDip/F");
     _Ntup->Branch("TrackChi2"	,	&_TrackChi2,		"TrackChi2/F");
 
+    _Ntup->Branch("matchChi2", 		&_matchChi2, 		"matchChi/F");
+    _Ntup->Branch("matchEDep", 		&_matchEDep, 		"matchEDep/F");
+    _Ntup->Branch("matchPosXcl", 	&_matchPosXCl, 		"matchPosXcl/F");
+    _Ntup->Branch("matchPosYCl", 	&_matchPosYCl, 		"matchPosYCl/F");
+    _Ntup->Branch("matchPosZCl", 	&_matchPosZCl, 		"matchPosZCl/F"); 
+    _Ntup->Branch("matchPathLen", 	&_matchPathLen,	        "matchPathLen/F");
+
     _Ntup->Branch("trackMom",		&_TrackMom, 		"trackMom/F");
     _Ntup->Branch("EoP",		 &_EoP,			"EoP/F");
     _Ntup->Branch("MaxEoP",		&_MaxEoP, 		"MaxEoP/F");
 
-    _hviewxy = tfs->make<TH2F>("viewxy","StepPoint MC hits dist xy",100,-20.,20.,100,-20.,20.);
-    _hviewxz = tfs->make<TH2F>("viewxz","StepPoint MC hits dist xz",230,-10.,220.,100,-20.,20.);
+    _hviewxy = tfs->make<TH2F>("hxy", "hxy",  350,-700,700,350,-700,700  );
+   
     _hfit = tfs->make<TH1F>("EoP","EoP", 100, 0, 1);
     canvas_ = tfs->make<TCanvas>("canvas XY", "XY" ,1300,800);
   }
@@ -396,8 +405,9 @@ double IPACaloCalibAna::CrystalBall(const double *x, const double *p) {
       ++_nProcess;
       if (_nProcess%1000==0) std::cout<<"Processing event "<<_nProcess<<std::endl;
       
-      double p = GetTrackerMom(event);
-	
+      double p = GetKalInfo(event);
+      GetTrackClusterInfo(event);
+
       art::ServiceHandle<GeometryService> geom;
       if( ! geom->hasElement<Calorimeter>() ) return;
       Calorimeter const & cal = *(GeomHandle<Calorimeter>());
@@ -448,9 +458,9 @@ double IPACaloCalibAna::CrystalBall(const double *x, const double *p) {
 	   _cryPosX[_nHits]      = crystalPos.x();
 	   _cryPosY[_nHits]      = crystalPos.y();
 	   _cryPosZ[_nHits]      = crystalPos.z();
-	   _nHits++;
+	   _hviewxy->Fill(crystalPos.x(),crystalPos.y(),hit.energyDep());
 	   crystallist[hit.id()]+=1;
-	  
+	   _nHits++;
 	}
 	_MaxEoP[_evt] = GetMax(histEoP);
 	
@@ -478,7 +488,7 @@ void IPACaloCalibAna::fitEoP(TH1F* h){
 }
 
 
-double IPACaloCalibAna::GetTrackerMom(const art::Event& evt){
+double IPACaloCalibAna::GetKalInfo(const art::Event& evt){
 
 	art::ServiceHandle<mu2e::GeometryService>   geom;
   	mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
@@ -538,17 +548,57 @@ double IPACaloCalibAna::GetTrackerMom(const art::Event& evt){
 		_TrackMom[_nTracks] = EndMom;
 		_TrackBackTime[_nTracks] =   Krep->arrivalTime(sz1);
 		 HelixParams helx  = Krep->helix(sz1);
-    		_TrackBackOmega[_nTracks]       = helx.omega(); // old
+    		_TrackBackOmega[_nTracks]       = helx.omega(); 
     		_TrackBackD0[_nTracks]       = helx.d0();
     		_TrackBackZ0[_nTracks]       = helx.z0();
     		_TrackBackPhi0[_nTracks]     = helx.phi0();
-    		_TrackBackTanDip[_nTracks]   = helx.tanDip(); // old
+    		_TrackBackTanDip[_nTracks]   = helx.tanDip(); 
     		_TrackChi2[_nTracks] =Krep->chisq();
 		_nTracks ++;
 	}
 
 	return EndMom;
 }
+
+void IPACaloCalibAna::GetTrackClusterInfo(const art::Event& evt){
+    	art::ServiceHandle<mu2e::GeometryService>   geom;
+    	const mu2e::Calorimeter* bc(NULL);
+    	if (geom->hasElement<mu2e::DiskCalorimeter>() ) {
+    		mu2e::GeomHandle<mu2e::DiskCalorimeter> h;
+    		bc = (const mu2e::Calorimeter*) h.get();
+  	}
+	_nMatches =0;
+	for(unsigned int i=0;i<_kalrepcol->size();i++){
+		art::Ptr<KalRep> const& ptr = _kalrepcol->at(i);
+		const KalRep* TrackKrep = ptr.get();
+    		const CaloCluster* ClosestCluster(NULL);
+		double best_chi2_match(1.e6); //high number to start
+		for(unsigned int c=0;i<_tcmatchcol->size();c++){
+			TrackClusterMatch const& tcm = (*_tcmatchcol)[c];
+			const TrkCaloIntersect* extrk = tcm.textrapol();
+	      	     	const KalRep* Krep  = extrk->trk().get();
+	      		if (Krep == TrackKrep) {
+				const mu2e::CaloCluster* cl = tcm.caloCluster();
+				int iv   = cl->diskId();
+				CLHEP::Hep3Vector x1   = bc->geomUtil().mu2eToDisk(iv,cl->cog3Vector());
+
+				if ((ClosestCluster == NULL) || (tcm.chi2() < best_chi2_match )) {
+					ClosestCluster = cl;
+		 			best_chi2_match    = tcm.chi2();
+				}
+			_matchChi2[_nMatches] = tcm.chi2();
+			_matchEDep[_nMatches] = cl->energyDep();
+			_matchPosXCl[_nMatches] =x1.x();
+			_matchPosYCl[_nMatches] =x1.y();
+		       _matchPosZCl[_nMatches] = x1.z();
+		       _matchPathLen[_nMatches] = tcm.ds();
+		       _nMatches++;
+			}
+		}
+      }
+    
+}
+
 
 bool IPACaloCalibAna::findData(const art::Event& evt){
 
@@ -565,8 +615,10 @@ bool IPACaloCalibAna::findData(const art::Event& evt){
 	_calclustercol =cluster.product();
         auto kalrep = evt.getValidHandle<KalRepPtrCollection>(_kalrepTag);
 	_kalrepcol =kalrep.product();
-	//auto tcmatch = evt.getValidHandle<TrackClusterMatchCollection>(_tcmatchTag);
-	//_tcmatchcol = tcmatch.product();
+	if(_calclustercol !=0 and _kalrepcol!=0){
+		auto tcmatch = evt.getValidHandle<TrackClusterMatchCollection>(_tcmatchTag);
+		_tcmatchcol = tcmatch.product();
+       }
         if(_mcdiag){
 	    
 	   _calhitMCtruecol=0;
@@ -577,7 +629,7 @@ bool IPACaloCalibAna::findData(const art::Event& evt){
 	   _calhitMCtruecol =calhitMC.product();
           
         }
-	return  _gencol!=0 && _kalrepcol!=0 && _calcryhitcol!=0 && _calclustercol !=0 && (_simpartcol != 0 || !_mcdiag);// &&_tcmatchcol!=0;
+	return  _gencol!=0 && _kalrepcol!=0 && _calcryhitcol!=0 && _calclustercol !=0 && (_simpartcol != 0 || !_mcdiag) &&_tcmatchcol!=0;
        }
 
 
