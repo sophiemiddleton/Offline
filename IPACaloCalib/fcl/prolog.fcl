@@ -10,6 +10,7 @@ IPACaloCalib: {
         CaloClusterCollection : "CaloClusterFromProtoCluster"
         #TrackClusterMatchCollection : "TrackCaloMatching"
 	GenParticleCollection : "compressDigiMCs"  
+	#PIDProductCollection :  "ParticleID"  
 	
 }
 
