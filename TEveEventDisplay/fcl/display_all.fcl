@@ -1,4 +1,12 @@
 
+# roneil: added some standard includes to get display running
+#include "TrkHitReco/fcl/prolog.fcl"
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+
+
 #include "TEveEventDisplay/fcl/prolog.fcl"
 
 process_name : Display
