@@ -102,10 +102,10 @@ TMatrixD BuildLinearFitMatrixSums::GetGammaX(){
 
 TMatrixD BuildLinearFitMatrixSums::GetCovX(){
 	TMatrixD GammaINV = GetGammaX();
-	double* det = NULL;                  
+	double* det = nullptr;                  
 	try {
     	        GammaINV.Invert(det);
-        } catch (std::exception exc) {
+        } catch (std::exception& exc) {
     
 	        std::stringstream message;
 		message << "Error in Cov Mat : Cannot fit due to singular matrix error on inversion!" << std::endl;
@@ -129,11 +129,11 @@ TMatrixD BuildLinearFitMatrixSums::GetBetaX(){
 TMatrixD BuildLinearFitMatrixSums::GetAlphaX(){
         TMatrixD Gamma = GetGammaX();
 	TMatrixD Beta  = GetBetaX();
-	double* det = NULL;                  
+	double* det = nullptr;                  
 	try {
     	        Gamma.Invert(det);
     
-  	   } catch (std::exception exc) {
+  	   } catch (std::exception& exc) {
     
 		    std::stringstream message;
 		    message << "Error in Alpha : Cannot fit due to singular matrix error on inversion!" << std::endl;
@@ -153,10 +153,10 @@ TMatrixD BuildLinearFitMatrixSums::GetGammaY(){
 }
 TMatrixD BuildLinearFitMatrixSums::GetCovY(){
 	TMatrixD GammaINV = GetGammaY();
-	double* det = NULL;                  
+	double* det = nullptr;                  
 	try {
     	        GammaINV.Invert(det);
-        } catch (std::exception exc) {
+        } catch (std::exception& exc) {
     
 	        std::stringstream message;
 		message << "Error in Cov Mat : Cannot fit due to singular matrix error on inversion!" << std::endl;
@@ -179,12 +179,12 @@ TMatrixD BuildLinearFitMatrixSums::GetBetaY(){
 TMatrixD BuildLinearFitMatrixSums::GetAlphaY(){
         TMatrixD Gamma = GetGammaY();
 	TMatrixD Beta  = GetBetaY();
-	double* det = NULL; 
+	double* det = nullptr; 
 	                 
 	try {
     	        Gamma.Invert(det);
     
-  	   } catch (std::exception exc) {
+  	   } catch (std::exception& exc) {
     
 		    std::stringstream message;
 		    message << "Error in Alpha : Cannot fit due to singular matrix error on inversion!" << std::endl;
@@ -197,10 +197,10 @@ double BuildLinearFitMatrixSums::GetChi2X(){
 	TMatrixD GammaX = GetGammaX();
 	TMatrixD BetaX  = GetBetaX();
 	//TMatrixD AlphaX = GetAlphaX();
-        double* det = NULL;                  
+        double* det = nullptr;                  
 	try {
     	        GammaX.Invert(det);
-  	   } catch (std::exception exc) {
+  	   } catch (std::exception& exc) {
 		    std::stringstream message;
 		    message << "Error in Chi2X : Cannot fit due to singular matrix error on inversion!" << std::endl;
           } 
@@ -219,11 +219,11 @@ double BuildLinearFitMatrixSums::GetChi2Y(){
 
 	TMatrixD GammaY = GetGammaY();
 	TMatrixD BetaY  = GetBetaY();
-        double* det = NULL;                  
+        double* det = nullptr;                  
 	try {
     	        GammaY.Invert(det);
     
-  	   } catch (std::exception exc) {
+  	   } catch (std::exception& exc) {
     
 		    std::stringstream message;
 		    message << "Error in Chi2Y : Cannot fit due to singular matrix error on inversion!" << std::endl;

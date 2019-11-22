@@ -49,7 +49,7 @@ namespace mu2e
 	      using Name=fhicl::Name;
 	      using Comment=fhicl::Comment;
 	      fhicl::Atom<int> Npara{Name("NParameters"),Comment("number of fit parameters used"), 4 };
-	      fhicl::Atom<int> diag{Name("diagLevel"), Comment("set to 1 for info"),1};
+	      fhicl::Atom<int> diag{Name("diagLevel"), Comment("set to 1 for info"),2};
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
 	      fhicl::Atom<string> dontuseflag {Name("DoNotUseFlag"),Comment("if set to OK then save the track"), "Outlier"};
               fhicl::Atom<unsigned> minnsh {Name("minNStrawHits"), Comment("minimum number of straw hits "),2};
@@ -94,10 +94,12 @@ namespace mu2e
     		void  setTracker    (const Tracker*    Tracker) { _tracker     = Tracker; }
                 StrawResponse _srep;
                 void  setStrawResponse (StrawResponse rep) {_srep = rep;}
+
+		bool use_hit(ComboHit const&) const;
+  		bool use_track(double length) const;
 	private:
 		Config _conf;
-  		bool use_hit(ComboHit const&) const;
-  		bool use_track(double length) const;
+  		
     		//void setOutlier(ComboHit&) const; TODO
                 unsigned _Npara;
 		int _diag;

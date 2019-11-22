@@ -39,7 +39,7 @@ namespace mu2e {
 
     // Cosine of angle between the two line directions.
     double c(_t1.Dot(_t2));
-
+   
     // Sine-squared corresponding to c.
     double sinsq(1.-c*c);
 
@@ -48,7 +48,7 @@ namespace mu2e {
       _closeToParallel = true;
       _pca1 = p1;
       _pca2 = p2;
-
+ 
       //Hep3Vector diff(_pca1-_pca2);
       //_dca   = diff.mag();
       //_dca2d = diff.perp();
@@ -60,14 +60,16 @@ namespace mu2e {
     else {
 
       XYZVec delta(_p1-_p2);
+      
       double dDotT1 = delta.Dot(_t1);
       double dDotT2 = delta.Dot(_t2);
-
+     
       _s1 =  (dDotT2*c-dDotT1)/sinsq;
       _s2 = -(dDotT1*c-dDotT2)/sinsq;
-
+     
       _pca1 = _p1 + _t1*_s1;
       _pca2 = _p2 + _t2*_s2;
+
       _LRambig = _s2 > 0 ? 1 : -1;//int ambig_sign= ambig > 0 ? 1 : -1;
     }
 

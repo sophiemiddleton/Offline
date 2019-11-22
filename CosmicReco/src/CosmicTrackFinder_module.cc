@@ -113,7 +113,10 @@ namespace mu2e{
     virtual void beginJob();
     virtual void beginRun(art::Run& run);
     virtual void produce(art::Event& event ) override;
-    
+     /*///NEW INFRASTRUCTURE////////
+    typedef art::Ptr<ComboHit>          ComboHitPtr;
+    typedef std::vector<ComboHitPtr>    ComboHitPtrVector;
+////////////////////////////*/
   private:
     
     Config _conf;
@@ -134,7 +137,7 @@ namespace mu2e{
     
     CosmicTrackFit     _tfit;
      
-    StrawHitFlag      _outlier;
+    StrawHitFlag      _dontuseflag;
    
     CosmicTrackFinderData                 _stResult;
     ProditionsHandle<StrawResponse> _strawResponse_h; 
@@ -218,12 +221,19 @@ namespace mu2e{
     _stResult.event   = &event;
     _stResult._chcol  = &chcol; 
     _stResult._tccol  = &tccol;
-    
-    
+  
+/*///////NEW INFRASTRUCTURE//////////
+    for(size_t i=0;i<chcol.size();i++){
+    //_stResult._tseed._panelHits = art::Ptr<ComboHitCollection>(chH,1);
+    ComboHitPtr chptr = art::Ptr<ComboHit>(chH,i);
+    _stResult._tseed._panelHits.push_back(chptr);
+}
+//////////////////////////////////*/
+
     for (size_t index=0;index< tccol.size();++index) {
       int   nGoodTClusterHits(0);
       const auto& tclust = tccol[index];
-      nGoodTClusterHits     = goodHitsTimeCluster(tclust,chcol );
+      nGoodTClusterHits     = goodHitsTimeCluster(tclust,chcol);
     
       if ( nGoodTClusterHits < _minNHitsTimeCluster)         continue;
       if (_debug > 0){
@@ -237,7 +247,7 @@ namespace mu2e{
       _stResult._tseed._panel_hits.setParent(chcol.parent());
       _stResult._tseed._t0          = tclust._t0;
       _stResult._tseed._timeCluster = art::Ptr<TimeCluster>(tcH,index);
-      
+
       OrderHitsY(_stResult); 
 
       if (_debug != 0){
@@ -291,17 +301,16 @@ namespace mu2e{
 		      	 //it = "_normal_iterator<const mu2e::ComboHit*, std::vector<mu2e::ComboHit> >"
 		      	  const mu2e::ComboHit chit = it[0];
 		      	  tmpResult._tseed._straw_chits.push_back(chit);
-		      	  Straw const& straw = _tfit._tracker->getStraw(chit.strawId()); 
-           		  tmpResult._tseed._straws.push_back(straw);
+		      	 
            		  
 	      	      }
 	
 	      	      for(size_t ich= 0; ich<tmpResult._tseed._straw_chits.size(); ich++) {  
-           	 
+           	        
            		std::vector<StrawHitIndex> shitids;          	          		
            	        tmpResult._tseed._straw_chits.fillStrawHitIndices(event, ich,shitids);  
                         tmpResult._tseed._strawHitIdxs.push_back(ich);
-               
+               	        
 			for(auto const& ids : shitids){ 
 				size_t    istraw   = (ids);
 			     	TrkStrawHitSeed tshs;
@@ -322,7 +331,19 @@ namespace mu2e{
 			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
 			continue;
 			}
-		      //Add tmp to seed list:
+		      ComboHitCollection tmpHits;
+			cout<<" hits before "<<tmpResult._tseed._straw_chits.size()<<endl;
+		      for(auto const &chit : tmpResult._tseed._straw_chits){
+		        
+			if(chit._flag.hasAnyProperty(StrawHitFlag::outlier)){cout<<"found outlier "<<endl;}
+			if(!chit._flag.hasAnyProperty(StrawHitFlag::outlier)){
+				
+				tmpHits.push_back(chit);
+			}
+			
+		      }
+		      tmpResult._tseed._straw_chits = tmpHits;
+			cout<<"temp hits size "<<tmpHits.size()<<" "<<tmpResult._tseed._straw_chits.size()<<endl;
 		      track_seed_vec.push_back(tmpResult._tseed);
 		     
 		      CosmicTrackSeedCollection* col = seed_col.get();
@@ -344,7 +365,7 @@ namespace mu2e{
     ComboHit*     hit(0);
     for (unsigned f=0; f<trackData._chHitsToProcess.size(); ++f){
       hit = &trackData._chHitsToProcess[f];
-      //if (hit->_flag.hasAnyProperty(_outlier))     continue;
+      if (hit->_flag.hasAnyProperty(_dontuseflag))     continue;
       
       ComboHit                thit(*hit);					
       trackData._tseed._panel_hits.push_back(thit);

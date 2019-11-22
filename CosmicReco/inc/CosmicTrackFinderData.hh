@@ -12,7 +12,7 @@
 #include "RecoDataProducts/inc/ComboHit.hh"
 #include "RecoDataProducts/inc/StrawHit.hh"
 #include "MCDataProducts/inc/StrawDigiMC.hh"
-#include "RecoDataProducts/inc/CosmicTrackSeed.hh" //CHANGE SEED
+#include "RecoDataProducts/inc/CosmicTrackSeed.hh" 
 #include "Mu2eUtilities/inc/BuildLinearFitMatrixSums.hh"
 #include "TrkReco/inc/TrkFaceData.hh"
 
@@ -25,6 +25,7 @@ using namespace ROOT::Math::VectorUtil;
 
 namespace mu2e {
   typedef ROOT::Math::XYVectorF  XYVec;
+  
   // struct for weighted positions
   class XYWVec : public XYVec {
   public :
@@ -66,12 +67,17 @@ namespace mu2e {
     int                               _nXYCh; //CH at start
     int                               _nFiltComboHits;  //ComboHits from the TimeCluster filtering 
     int                               _nFiltStrawHits;  //StrawHits from the TimeCluster filtering 
-    
+
     const ComboHitCollection*         _chcol;
     const StrawHitCollection*         _shcol;
     const TimeClusterCollection*      _tccol;
     const StrawDigiMCCollection*      _mccol;
-    ::BuildLinearFitMatrixSums         _S;//USED?
+
+    /*IN DEVELOPMENT: //NEW INFRASTRUCTURE///////
+    art::Ptr<ComboHitCollection>    ComboHitCollectionPtr;
+    art::Ptr<TimeClusterCollection> TimeClusterCollectionPtr;
+   ////////////////////*/
+    ::BuildLinearFitMatrixSums         _S;
 
 //-----------------------------------------------------------------------------
 // diagnostics, histogramming
