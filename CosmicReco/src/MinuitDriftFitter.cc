@@ -128,7 +128,7 @@ namespace MinuitDriftFitter{
 			
 		} else {
 			trackdata._tseed._straw_chits[i]._flag.merge(StrawHitFlag::outlier); 
-			cout<<"flag hit as outlier in minuit fit "<<endl;
+			
 		}
 	}
         
