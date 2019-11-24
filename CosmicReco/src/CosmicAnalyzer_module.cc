@@ -42,7 +42,7 @@
 //Geom
 #include "TrackerGeom/inc/Tracker.hh"
 #include "TrackerGeom/inc/Straw.hh"
-
+#include "TrackerConditions/inc/StrawResponse.hh"
 // ROOT incldues
 #include "TStyle.h"
 #include "Rtypes.h"
@@ -76,6 +76,7 @@ namespace mu2e
       explicit CosmicAnalyzer(const Parameters& conf);
       virtual ~CosmicAnalyzer();
       virtual void beginJob();
+      
       virtual void analyze(const art::Event& e) override;
       virtual void endJob();
     private: 
@@ -96,6 +97,7 @@ namespace mu2e
       const StrawDigiMCCollection* _mcdigis;
       CosmicTrackMCInfo trueinfo;
 
+    
       	//TTree Info:
       TTree* _cosmic_analysis;
 
@@ -233,7 +235,8 @@ namespace mu2e
       Int_t _n_planes; // # stations
       int n_analyze =0;
       Float_t _hit_time, _hit_drift_time, _cluster_time, _dt;
-	
+      StrawResponse _srep;
+
       //Flags:
 	Bool_t _StraightTrackInit, _StraightTrackConverged, _StraightTrackOK, _hitsOK;
       Int_t _strawid; 
@@ -262,6 +265,7 @@ namespace mu2e
     }
 
     CosmicAnalyzer::~CosmicAnalyzer(){}
+
 
     void CosmicAnalyzer::beginJob() {
       // create diagnostics if requested...
@@ -637,6 +641,7 @@ namespace mu2e
 	
 	}
       }
+	
       void CosmicAnalyzer::analyze(const art::Event& event) {
        
         _evt = event.id().event();  // add event id
@@ -750,60 +755,34 @@ namespace mu2e
                 _change_chisq_ndf_plot_Y->Fill(st.Diag.InitialChiY-st.Diag.FinalChiY);
                 _change_chisq_ndf_plot_Total->Fill(st.Diag.InitialChiTot-st.Diag.FinalChiTot);
 		
-		_NLL->Fill(st.DriftDiag.NLL);
-	        
-                for(size_t i=0; i< st.Diag.InitErrTot.size();i++){
-		    _InitErrTot->Fill(st.Diag.InitErrTot[i]); 
-                    _total_residualsX_init->Fill(st.Diag.InitialResidualsX[i]);        
-	            _total_pullsX_init->Fill(st.Diag.InitialResidualsX[i]/st.Diag.InitErrX[i]);
-	            _InitErrX->Fill(st.Diag.InitErrX[i]);     
-                    _total_residualsY_init->Fill(st.Diag.InitialResidualsY[i]);            
-	            _total_pullsY_init->Fill(st.Diag.InitialResidualsY[i]/st.Diag.InitErrY[i]);
-	            _InitErrY->Fill(st.Diag.InitErrY[i]); 
-	        }
-
-		for(size_t i=0; i< st.Diag.FinalErrTot.size();i++){
-		    _FinalErrTot->Fill(st.Diag.FinalErrTot[i]);
-                    _total_residualsX_final->Fill(st.Diag.FinalResidualsX[i]);          
-	            _total_pullsX_final->Fill(st.Diag.FinalResidualsX[i]/st.Diag.FinalErrX[i]);
-	            _FinalErrX->Fill(st.Diag.FinalErrX[i]);
-                    _total_residualsY_final->Fill(st.Diag.FinalResidualsY[i]);            
-	            _total_pullsY_final->Fill(st.Diag.FinalResidualsY[i]/st.Diag.FinalErrY[i]);
-	            _FinalErrY->Fill(st.Diag.FinalErrTot[i]);
-	            
-	        }   
-                for(size_t i=0; i<st.DriftDiag.GaussianEndDOCAs.size();i++){
-		    _GaussianEndDOCAs->Fill(st.DriftDiag.GaussianEndDOCAs[i]);
-		    _GaussianEndTimeResiduals->Fill(st.DriftDiag.GaussianEndTimeResiduals[i]);
-			
-		}
-		cout<<"sizes "<<sts._straw_chits.size()<<" "<<st.DriftDiag.FullFitEndDOCAs.size()<<endl;
-		for(size_t i=0; i<st.DriftDiag.FullFitEndDOCAs.size();i++){
+		for(size_t i=0; i<sts._straw_chits.size();i++){
 			    ComboHit chit = sts._straw_chits[i];
 			    cout<<"getting hits "<<endl;
-			    _StartDOCAs->Fill(st.DriftDiag.StartDOCAs[i]);
-			    _StartTimeResiduals->Fill(st.DriftDiag.StartTimeResiduals[i]);
-			    _FullFitEndDOCAs->Fill(st.DriftDiag.FullFitEndDOCAs[i]);
-			    _FullFitEndTimeResiduals->Fill(st.DriftDiag.FullFitEndTimeResiduals[i]);
+			    double StartDOCA = DriftFitUtils::GetTestDOCA(chit, st.FitParams.A0,st.FitParams.A1, st.FitParams.B0, st.FitParams.B1);
+			    _StartDOCAs->Fill(StartDOCA);
+			    //double StartTOCA = DriftFitUtils::TimeResidual(StartDOCA, srep, sts._t0.t0(), chit);
+			    //_FullFitEndTimeResiduals->Fill(TOCA);
+			    ///_StartTimeResiduals->Fill(st.DriftDiag.StartTimeResiduals[i]);
+
+			    double DOCA = DriftFitUtils::GetTestDOCA(chit, st.MinuitFitParams.A0,st.MinuitFitParams.A1, st.MinuitFitParams.B0, st.MinuitFitParams.B1);
+			    _FullFitEndDOCAs->Fill(DOCA);
+			    //double TOCA = DriftFitUtils::TimeResidual(DOCA, srep, sts._t0.t0(), chit);
+			    //_FullFitEndTimeResiduals->Fill(TOCA);
+			   int RecoAmbig = DriftFitUtils::GetAmbig(chit, st.MinuitFitParams.A0,st.MinuitFitParams.A1, st.MinuitFitParams.B0, st.MinuitFitParams.B1);
+			    _FullFitEndDOCAs->Fill(DOCA);
+
 		   	if(_mcdiag){
 				trueinfo = FitMC(_mcdigis);
-				trueinfo = FillDriftMC(chit, st.DriftDiag.RecoAmbigs[i], trueinfo);
-			if(DriftFitUtils::GetTestDOCA(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<2.5 and st.DriftDiag.FullFitEndDOCAs[i]<2.5 and abs(trueinfo.TrueFitEquation.Pos.X() ) < 5000 and abs(trueinfo.TrueFitEquation.Pos.Y())<5000 and abs(trueinfo.TrueFitEquation.Dir.X())<5 and abs(trueinfo.TrueFitEquation.Dir.Y())<5){
+				trueinfo = FillDriftMC(chit, RecoAmbig, trueinfo);
+		                if(DriftFitUtils::GetTestDOCA(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<2.5 and DOCA<2.5 and abs(trueinfo.TrueFitEquation.Pos.X() ) < 5000 and abs(trueinfo.TrueFitEquation.Pos.Y())<5000 and abs(trueinfo.TrueFitEquation.Dir.X())<5 and abs(trueinfo.TrueFitEquation.Dir.Y())<5){
 
-			outputfile<<DriftFitUtils::GetTestDOCA(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<st.DriftDiag.FullFitEndDOCAs[i]<<","<<st.DriftDiag.RecoAmbigs[i]/DriftFitUtils::GetAmbig(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<trueinfo.TrueTheta<<","<<st.MinuitFitParams.A0<<","<<st.MinuitFitParams.A1
+					outputfile<<DriftFitUtils::GetTestDOCA(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<DOCA<<","<<RecoAmbig/DriftFitUtils::GetAmbig(chit, trueinfo.TrueFitEquation.Pos.X(), trueinfo.TrueFitEquation.Dir.X(), trueinfo.TrueFitEquation.Pos.Y(),trueinfo.TrueFitEquation.Dir.Y())<<","<<trueinfo.TrueTheta<<","<<st.MinuitFitParams.A0<<","<<st.MinuitFitParams.A1
 <<","<<st.MinuitFitParams.B0<<","<<st.MinuitFitParams.B1<<","<<trueinfo.TrueFitEquation.Pos.X()<<","<<trueinfo.TrueFitEquation.Dir.X()
 <<","<<trueinfo.TrueFitEquation.Pos.Y()<<","<<trueinfo.TrueFitEquation.Dir.Y()<<endl;
 			}      
 			}
 	        }
 
-		for(size_t i=0; i< st.DriftDiag.FullFitEndDOCAs.size();i++){
-		
-                    _total_residualsX_Minuit->Fill(st.DriftDiag.FinalResidualsX[i]);          
-                    _total_residualsY_Minuit->Fill(st.DriftDiag.FinalResidualsY[i]);   
-		    _minuit_pullsX_final->Fill(st.DriftDiag.FinalResidualsX[i]/st.DriftDiag.FinalErrX[i]);          
-                    _minuit_pullsY_final->Fill(st.DriftDiag.FinalResidualsY[i]/st.DriftDiag.FinalErrY[i]);           
-   		}   
      
 	        for(auto const& tseed : *_coscol) {   
                 	TrkFitFlag const& status = tseed._status;
@@ -909,12 +888,12 @@ CosmicTrackMCInfo CosmicAnalyzer::FillDriftMC(ComboHit chit, double RecoAmbig, C
 
      double true_doca = DriftFitUtils::GetTestDOCA(chit, info.TrueFitEquation.Pos.X(), info.TrueFitEquation.Dir.X(), info.TrueFitEquation.Pos.Y(),info.TrueFitEquation.Dir.Y());
      double trueambig = DriftFitUtils::GetAmbig(chit, info.TrueFitEquation.Pos.X(), info.TrueFitEquation.Dir.X(), info.TrueFitEquation.Pos.Y(),info.TrueFitEquation.Dir.Y());
-     double true_time_residual = true_doca/0.0625;
+     //double true_time_residual = DriftFitUtils::TimeResidual(true_doca, _srep, sts._t0.t0(), chit);
      info.Ambig.push_back(trueambig);
      info.TrueDOCA.push_back(true_doca);
-     info.TrueTimeResiduals.push_back(true_time_residual);
+     //info.TrueTimeResiduals.push_back(true_time_residual);
      _TrueDOCAs->Fill(true_doca);
-     _TrueTimeResiduals->Fill(true_time_residual);
+     //_TrueTimeResiduals->Fill(true_time_residual);
      _AMBIG->Fill(RecoAmbig, trueambig);
      return info;
 }

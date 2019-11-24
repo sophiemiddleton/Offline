@@ -26,6 +26,7 @@
 #include "GeometryService/inc/GeomHandle.hh"
 #include "Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "TrkDiag/inc/TrkMCTools.hh"
+#include "Mu2eUtilities/inc/ParametricFit.hh"
 
 //Mu2e Tracker Geom:
 #include "TrackerGeom/inc/Tracker.hh"
@@ -167,7 +168,12 @@ namespace mu2e
         plot2dDriftCompare(event);
       }
      
-//----------Below here are a series of macros -  they are not glamorous but they produce useful debugging plots ----//
+/*
+==============================NOTE:============================================//
+Below here are a series of macros -  they are not glamorous but they produce useful debugging plots 
+================================================================================//
+
+*/
 
       void CosmicFitDisplay::plot2dDriftCompare(const art::Event& event){
         _evt = event.id().event();  
@@ -515,15 +521,8 @@ namespace mu2e
 			initchi_dof_XDoublePrimeZPrime.push_back(track._track.Diag.InitialChiX);
 			initchi_dof_YDoublePrimeZPrime.push_back(track._track.Diag.InitialChiY);
 			
-			for(size_t i = 0 ; i < track._track.Diag.FinalResidualsX.size(); i++ ){
-				
-				pullsx.push_back(track._track.Diag.FinalResidualsX[i]/track._track.Diag.FinalErrX[i]);
-				pullsy.push_back(track._track.Diag.FinalResidualsY[i]/track._track.Diag.FinalErrY[i]);
-				initpullsx.push_back(track._track.Diag.InitialResidualsX[i]/track._track.Diag.InitErrX[i]);
-				initpullsy.push_back(track._track.Diag.InitialResidualsY[i]/track._track.Diag.InitErrY[i]);
-			}
 			
-	       	    //}
+			
         }
       if(xprimes.size() >0){
         // loop over combo hits
@@ -642,7 +641,7 @@ namespace mu2e
 			
 			major_error_line.DrawLine( major_z1, major_x1, major_z2, major_x2);
 			minor_error_line.DrawLine( minor_z1, minor_x1, minor_z2, minor_x2);
-			
+			/*
 			TLatex latex;
 			stringstream pulls;
                 	pulls<<pullsx[ihit-1];
@@ -658,7 +657,7 @@ namespace mu2e
 		   	if(i%2 != 0){
 		   	latex.DrawLatex(z0prime-10, x0prime-75,str_pulls);
 		   	}
-			
+			*/
               }
               
 	      if(a1.size() > 0){
@@ -706,7 +705,7 @@ namespace mu2e
 			double z1 = p.Dot(zprimes[0])+s*w.Dot(zprimes[0]);
 			double z2 = p.Dot(zprimes[0])-s*w.Dot(zprimes[0]);
 			major_error_line.DrawLine( z1, y1, z2, y2);
-			
+			/*
 			TLatex latex;
 			stringstream pulls;
                 	pulls<<pullsy[ihit-1];
@@ -722,7 +721,7 @@ namespace mu2e
 		   	if(i%2 != 0){
 		   	latex.DrawLatex(z0prime-10, y0prime-75,str_pulls);
 		   	}
-		   	
+		   	*/
               }
 	      if(b1.size() > 0){
 	        
@@ -770,7 +769,7 @@ namespace mu2e
 			double z1 = p.Dot(zprimesinit[0])+s*w.Dot(zprimesinit[0]);
 			double z2 = p.Dot(zprimesinit[0])-s*w.Dot(zprimesinit[0]);
 			major_error_line.DrawLine( z1, x1, z2, x2);
-			
+			/*
 			TLatex latex;
 			stringstream pulls;
                 	pulls<<initpullsx[ihit-1];
@@ -786,7 +785,7 @@ namespace mu2e
 		   	if(i%2 != 0){
 		   	latex.DrawLatex(z0primeinit-10, x0primeinit-75,str_pulls);
 		   	}
-		   	
+		   	*/
               }
 	      if(a1.size() > 0){
 	        
@@ -834,7 +833,7 @@ namespace mu2e
 			double z1 = p.Dot(zprimesinit[0])+s*w.Dot(zprimesinit[0]);
 			double z2 = p.Dot(zprimesinit[0])-s*w.Dot(zprimesinit[0]);
 			major_error_line.DrawLine( z1, y1, z2, y2);
-			
+			/*
 			TLatex latex;
 			stringstream pulls;
                 	pulls<<initpullsy[ihit-1];
@@ -849,7 +848,7 @@ namespace mu2e
 		   	if(i%2 != 0){
 		   	latex.DrawLatex(z0prime-10, y0prime-75,str_pulls);
 		   	}
-		   	
+		   	*/
               }
 	      if(b1.size() > 0){
 	        

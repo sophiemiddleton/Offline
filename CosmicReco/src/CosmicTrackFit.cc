@@ -57,58 +57,6 @@ struct ycomp : public std::binary_function<XYZVec,XYZVec,bool> {
     bool operator()(XYZVec const& p1, XYZVec p2) { return p1.y() > p2.y(); }
   };
   
-/*Struct to store Diagnostics associated with seed fit:
-struct TrackSeedDiag{
-   	double FinalChiX;
-   	double FinalChiY;
-   	double FinalChiTot;
-   	
-   	double InitialChiX;
-   	double InitialChiY;
-   	double InitialChiTot;
-   	
-   	std::vector<double> InitialResidualsX;
-   	std::vector<double> InitialResidualsY;
-   	std::vector<double> FinalResidualsX;
-   	std::vector<double> FinalResidualsY;
-	 
-	std::vector<double> InitErrX;
-	std::vector<double> InitErrY;
-	std::vector<double> FinalErrX;
-	std::vector<double> FinalErrY; 
-	std::vector<double> FinalErrTot;
-	std::vector<double> InitErrTot;
-	TrackSeedDiag();
-
-};
-  
-struct TrackDriftDiag{
-        double FinalChiX;
-   	double FinalChiY;
-   	double FinalChiTot;
-   	double NLL;
-   	
-   	std::vector<double> StartDOCAs;
-   	std::vector<double> FullFitEndDOCAs;
-	std::vector<double> GaussianEndDOCAs;
-	
-   	std::vector<double> StartTimeResiduals;
-   	std::vector<double> FullFitEndTimeResiduals;
-	std::vector<double> GaussianEndTimeResiduals;
-	
-   	std::vector<double> RecoAmbigs;
-	
-   	std::vector<double> FinalResidualsX;
-   	std::vector<double> FinalResidualsY;
-	 
-	std::vector<double> FinalErrX;
-	std::vector<double> FinalErrY; 
-	std::vector<double> FinalErrTot;
-
-   	TrackDriftDiag();
-   
-   };
-*/
 
 namespace mu2e
 {
@@ -259,22 +207,6 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
 	cosmictrack->set_initchisq_dofY(S.GetChi2Y()/abs(DOF));
 	cosmictrack->set_initchisq_dofX(S.GetChi2X()/abs(DOF));
 	cosmictrack->set_initchisq_dof(S.GetTotalChi2()/abs(DOF));
-	for (size_t f2=0; f2<nHits; ++f2){
-         	  
-         	hitP1 = &trackData._chHitsToProcess[f2];  
-		if (!use_hit(*hitP1) && hitP1->nStrawHits() < _minnsh)  continue;  
-	        XYZVec point(hitP1->pos().x(),hitP1->pos().y(),hitP1->pos().z());
-		XYZVec point_prime(point.Dot(Axes._XDoublePrime), point.Dot(Axes._YDoublePrime), point.Dot(ZPrime));
-		
-		std::vector<double> ErrorsXY = ParametricFit::GetErrors(hitP1, Axes._XDoublePrime,Axes._YDoublePrime);   
-		float Rx = ParametricFit::GetResidualX(a0,a1, point_prime);
-		float Ry = ParametricFit::GetResidualY(b0,b1, point_prime);
-		
-		cosmictrack->set_init_fit_residualsX(Rx);
-		cosmictrack->set_init_fit_residualsY(Ry); 
-		cosmictrack->SetInitErrors(ErrorsXY[0],ErrorsXY[1]); 
-		     
-		} 
       }
       
       //Step 6: Begin iteration for finding the best track fit possible.
@@ -283,6 +215,7 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
       bool converged = false;
       CosmicTrack* BestTrack = cosmictrack;	 
       double chi2_best_track = 10000000;//chosen arbitary high number
+
       //Step 7: find best prev chi2
       while(niter < _maxniter && converged==false){                 
       	niter +=1; 
@@ -339,7 +272,7 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
 	  
            if (updated_chi2 < chi2_best_track  ){
 		
-		BestTrack->clear_diag();
+		//BestTrack->clear_diag();
 		TrackParams FitParams(a0,a1,b0,b1);
 	   	BestTrack->SetFitParams(FitParams);
 	        BestTrack->SetFitTrackCoOrdSystem(Axes);
@@ -381,18 +314,16 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
                 if (((!use_hit(*hitP2) ) && (hitP2->nStrawHits() < _minnsh) )) continue;
 		XYZVec point(hitP2->pos().x(),hitP2->pos().y(),hitP2->pos().z());
 		XYZVec point_prime(point.Dot(BestTrack->TrackCoordSystem._XDoublePrime), point.Dot(BestTrack->TrackCoordSystem._YDoublePrime), point.Dot(BestTrack->TrackCoordSystem._ZPrime));
-
+		
 		std::vector<double> ErrorsXY = ParametricFit::GetErrors(hitP1, BestTrack->TrackCoordSystem._XDoublePrime, BestTrack->TrackCoordSystem._YDoublePrime);  
-		BestTrack->SetFinalErrors(ErrorsXY[0], ErrorsXY[1]);
-
+		
 	      	float newRx = ParametricFit::GetResidualX(BestTrack->FitParams.A0, BestTrack->FitParams.A1, point_prime);
 		float newRy = ParametricFit::GetResidualY(BestTrack->FitParams.B0, BestTrack->FitParams.B1, point_prime);
 		// Remove bad tracks:
 		if(abs(newRx)/ErrorsXY[0] > _maxpull or abs(newRy)/ErrorsXY[1] > _maxpull ){ cosmictrack->converged = false;}
 
 		BestTrack->SetCovarience(S_niteration.GetCovX()[0][0],S_niteration.GetCovX()[0][1], S_niteration.GetCovX()[1][0], S_niteration.GetCovX()[1][1], S_niteration.GetCovY()[0][0], S_niteration.GetCovY()[0][1], S_niteration.GetCovY()[1][0], S_niteration.GetCovY()[1][1]);
-		BestTrack->Diag.FinalResidualsX.push_back(newRx);
-	      	BestTrack->Diag.FinalResidualsY.push_back(newRy);
+		
 	      	cosmictrack = BestTrack;  
                      		
       	}	                	
@@ -526,9 +457,7 @@ bool CosmicTrackFit::use_track(double track_length) const //not used but keep fo
 This is were the fitter "talks" to the Minuit fitter. "EndResult" is the minimzed track parameters 
 //------------------------------------------------*/
 void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
-
-	 
-         FitResult endresult = MinuitDriftFitter::DoFit(_diag, trackData._tseed, _srep, _maxHitDOCA, _minnch, _maxLogL, _gaussTres, _maxTres);
+	 FitResult endresult = MinuitDriftFitter::DoFit(_diag, trackData, _srep, _maxHitDOCA, _minnch, _maxLogL, _gaussTres, _maxTres);
          
 
          trackData._tseed._track.MinuitFitParams.A0 =  endresult.bestfit[0];//a0
@@ -547,7 +476,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 		 TrackCov Cov(endresult.bestfitcov[0], 0., 0., endresult.bestfitcov[1], endresult.bestfitcov[2],0.,0., endresult.bestfitcov[3]);
 		 trackData._tseed._track.MinuitFitParams.Covarience = Cov;
          }
-         if(endresult.NLL !=0){ trackData._tseed._track.minuit_converged = true;}
+         if(endresult.NLL !=0){ trackData._tseed._track.minuit_converged = true; }
 	
 	 XYZVec X(1,0,0);
 	 XYZVec Y(0,1,0);
@@ -555,48 +484,21 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 
 	 TrackAxes XYZ(X,Y,Z);
 	 trackData._tseed._track.MinuitCoordSystem = XYZ; 
-
-	 trackData._tseed._track.DriftDiag.FullFitEndDOCAs = endresult.FullFitEndDOCAs;
-	 trackData._tseed._track.DriftDiag.GaussianEndDOCAs = endresult.GaussianEndDOCAs;
-	 trackData._tseed._track.DriftDiag.StartDOCAs = endresult.StartDOCAs;
-	 trackData._tseed._track.DriftDiag.NLL = endresult.NLL;
-	 trackData._tseed._track.DriftDiag.StartTimeResiduals = endresult.StartTimeResiduals;
-	 trackData._tseed._track.DriftDiag.GaussianEndTimeResiduals = endresult.GaussianEndTimeResiduals;
-	 trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals = endresult.FullFitEndTimeResiduals;
-	 trackData._tseed._track.DriftDiag.RecoAmbigs = endresult.RecoAmbigs;
-	
-	if(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size() >0){
-	for(unsigned i = 0; i< trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals.size()-1; i++){
-		if( trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i] > _maxTres or isnan(trackData._tseed._track.DriftDiag.FullFitEndTimeResiduals[i])==true){ 
-			trackData._tseed._track.n_outliers +=1;
-			trackData._tseed._straw_chits[i]._flag.merge(StrawHitFlag::outlier); 
-			cout<<"flag hit i as outlier in trac fit "<<endl;
+         
+	if(endresult.FullFitEndTimeResiduals.size() >0){
+		for(unsigned i = 0; i< endresult.FullFitEndTimeResiduals.size()-1; i++){
+			if( endresult.FullFitEndTimeResiduals[i] > _maxTres or isnan(endresult.FullFitEndTimeResiduals[i])==true){ 
+				trackData._tseed._track.n_outliers +=1;
+				trackData._tseed._straw_chits[i]._flag.merge(StrawHitFlag::outlier); 
+				cout<<"flag hit i as outlier in trac fit "<<endl;
+		}
 		}
 		
 	}
         if( trackData._tseed._track.n_outliers  > _n_outliers) {
 		trackData._tseed._track.minuit_converged = false;
 	  }
-	}
-	 if(_diag > 0){
-		ComboHit *chit(0);
-		for(size_t j=0; j<(trackData._tseed._straw_chits.size()); j++){
-		  
-		    chit = &trackData._tseed._straw_chits[j];
-		    if (((!use_hit(*chit) ) && (chit->nStrawHits() < _minnsh) )) continue;
-		    XYZVec point(chit->pos().x(),chit->pos().y(),chit->pos().z());
-		   
-trackData._tseed._track.DriftDiag.FinalResidualsX.push_back(ParametricFit::GetResidualX(trackData._tseed._track.MinuitFitParams.A0,  trackData._tseed._track.MinuitFitParams.A1, point));
-	trackData._tseed._track.DriftDiag.FinalResidualsY.push_back(ParametricFit::GetResidualY( trackData._tseed._track.MinuitFitParams.B0,  trackData._tseed._track.MinuitFitParams.B1, point));
-
-		  std::vector<double> ErrorsXY = ParametricFit::GetErrors(chit, X, Y);	 
-trackData._tseed._track.DriftDiag.FinalErrX.push_back(ErrorsXY[0]);
-
-trackData._tseed._track.DriftDiag.FinalErrY.push_back(ErrorsXY[1]);	          
-		   
-		}       
-      }  
-     
+	
 }
 
 }//end namespace

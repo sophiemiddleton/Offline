@@ -70,47 +70,10 @@ using namespace std;
    	double InitialChiY;
    	double InitialChiTot;
    	
-   	std::vector<double> InitialResidualsX;
-   	std::vector<double> InitialResidualsY;
-   	std::vector<double> FinalResidualsX;
-   	std::vector<double> FinalResidualsY;
-	 
-	std::vector<double> InitErrX;
-	std::vector<double> InitErrY;
-	std::vector<double> FinalErrX;
-	std::vector<double> FinalErrY; 
-	std::vector<double> FinalErrTot;
-	std::vector<double> InitErrTot;
 	TrackSeedDiag();
 
    };
-  
-   struct TrackDriftDiag{
-        double FinalChiX;
-   	double FinalChiY;
-   	double FinalChiTot;
-   	double NLL;
-   	
-   	std::vector<double> StartDOCAs;
-   	std::vector<double> FullFitEndDOCAs;
-	std::vector<double> GaussianEndDOCAs;
-	
-   	std::vector<double> StartTimeResiduals;
-   	std::vector<double> FullFitEndTimeResiduals;
-	std::vector<double> GaussianEndTimeResiduals;
-	
-   	std::vector<double> RecoAmbigs;
-	
-   	std::vector<double> FinalResidualsX;
-   	std::vector<double> FinalResidualsY;
-	 
-	std::vector<double> FinalErrX;
-	std::vector<double> FinalErrY; 
-	std::vector<double> FinalErrTot;
 
-   	TrackDriftDiag();
-   
-   };
 namespace mu2e {
   
   class CosmicTrack{
@@ -223,29 +186,6 @@ namespace mu2e {
 	    void set_initchisq_dofX(double initchisq_dofX) { Diag.InitialChiX = initchisq_dofX; }
 	    void set_initchisq_dofY(double initchisq_dofY) { Diag.InitialChiY = initchisq_dofY; }
 	    
-	    void set_init_fit_residualsX(double residual)  { Diag.InitialResidualsX.push_back(residual); }
-	    void set_final_fit_residualsX(double residual) { Diag.FinalResidualsX.push_back(residual); }
-	    
-	    void set_init_fit_residualsY(double residual)  { Diag.InitialResidualsY.push_back(residual); }
-	    void set_final_fit_residualsY(double residual) { Diag.FinalResidualsY.push_back(residual); }
-	    
-	    void SetFinalErrorsX(double residual_err){ Diag.FinalErrX.push_back(residual_err); }
-	    void SetInitErrorsX(double residual_err) { Diag.InitErrX.push_back(residual_err); }
-	    
-	    void SetInitErrors(double residual_errX, double residual_errY) {
-	      Diag.InitErrX.push_back(residual_errX);
-	      Diag.InitErrY.push_back(residual_errY); 
-	      Diag.InitErrTot.push_back(sqrt((residual_errX*residual_errX)+(residual_errY*residual_errY)));
-	     }
-	     void SetFinalErrors(double residual_errX, double residual_errY) {
-	      Diag.FinalErrX.push_back(residual_errX);
-	      Diag.FinalErrY.push_back(residual_errY); 
-	      Diag.FinalErrTot.push_back(sqrt((residual_errX*residual_errX)+(residual_errY*residual_errY)));
-	     }
-	     
-	    void SetInitErrorsY(double residual_err) { Diag.InitErrY.push_back(residual_err); }
-	    void SetFinalErrorsY(double residual_err) { Diag.FinalErrY.push_back(residual_err); }
-            
             //------------End Diag Fill---------------//
 	    void set_niter(int iter){_niters= (iter);}
 	    
@@ -263,8 +203,7 @@ namespace mu2e {
 	     TrackEquation MinuitFitEquation;
 
 	     TrackSeedDiag Diag;
-	     TrackDriftDiag DriftDiag;
-             
+	     
 	     XYZVec sigmaPos;
 	     XYZVec sigmaDir;
 	     

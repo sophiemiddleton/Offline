@@ -20,7 +20,6 @@ namespace mu2e {
 
     TrkT0 const& t0() const { return _t0; }//from the Time cluster
     const std::vector<StrawHitIndex>& _shits       () const { return _strawHitIdxs; }
-    
     std::vector<TrkStrawHitSeed> const& trkstrawhits() const { return _trkstrawhits;}
     ComboHitCollection const& hits() const { return _panel_hits; }
     CosmicTrack const& track() const { return _track; }
@@ -39,11 +38,12 @@ namespace mu2e {
     ComboHitPtrVector	     _strawHits;
 //////////////////////////*/
     CosmicTrack              _track;	     // Cosmic track created from these hits  
+   
     TrkFitFlag	             _status;      // status of processes used to create this seed
     art::Ptr<TimeCluster>    _timeCluster; // associated time cluster
     std::vector<StrawHitIndex> _strawHitIdxs; // associated straw hits: can be empty
     std::vector<TrkStrawHitSeed>  _trkstrawhits; //vector of associated trkstrawhits
-    
+   
    
   };
    typedef std::vector<mu2e::CosmicTrackSeed> CosmicTrackSeedCollection;

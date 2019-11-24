@@ -332,7 +332,7 @@ namespace mu2e{
 			continue;
 			}
 		      ComboHitCollection tmpHits;
-			cout<<" hits before "<<tmpResult._tseed._straw_chits.size()<<endl;
+		      cout<<" hits before "<<tmpResult._tseed._straw_chits.size()<<endl;
 		      for(auto const &chit : tmpResult._tseed._straw_chits){
 		        
 			if(chit._flag.hasAnyProperty(StrawHitFlag::outlier)){cout<<"found outlier "<<endl;}
@@ -343,12 +343,12 @@ namespace mu2e{
 			
 		      }
 		      tmpResult._tseed._straw_chits = tmpHits;
-			cout<<"temp hits size "<<tmpHits.size()<<" "<<tmpResult._tseed._straw_chits.size()<<endl;
+		      cout<<"temp hits size "<<tmpHits.size()<<" size stored "<<tmpResult._tseed._straw_chits.size()<<endl;
 		      track_seed_vec.push_back(tmpResult._tseed);
 		     
 		      CosmicTrackSeedCollection* col = seed_col.get();
 		      
-		      if (track_seed_vec.size() == 0)     continue;
+		      if (tmpHits.size() == 0 or track_seed_vec.size() == 0)     continue;
 		      col->push_back(tmpResult._tseed);  
 			          
               }

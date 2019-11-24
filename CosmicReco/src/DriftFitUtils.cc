@@ -77,7 +77,7 @@ double DriftFitUtils::GetTestDOCA(ComboHit chit, XYZVec track_position, XYZVec t
 	return dca;
 }
 
-double DriftFitUtils::GetTAmbig(ComboHit chit, XYZVec track_position, XYZVec track_direction) {
+int DriftFitUtils::GetAmbig(ComboHit chit, XYZVec track_position, XYZVec track_direction) {
 	mu2e::GeomHandle<mu2e::Tracker> th;
         const Tracker* tracker = th.get();
 	Straw const& straw = tracker->getStraw(chit.strawId());
