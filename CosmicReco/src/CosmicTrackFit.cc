@@ -490,7 +490,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 			if( endresult.FullFitEndTimeResiduals[i] > _maxTres or isnan(endresult.FullFitEndTimeResiduals[i])==true){ 
 				trackData._tseed._track.n_outliers +=1;
 				trackData._tseed._straw_chits[i]._flag.merge(StrawHitFlag::outlier); 
-				cout<<"flag hit i as outlier in trac fit "<<endl;
+				
 		}
 		}
 		
@@ -499,6 +499,21 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
 		trackData._tseed._track.minuit_converged = false;
 	  }
 	
+	//This code was built to help transofrm into BTrk - it didnt work but may be useful:
+ 	std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
+        cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
+     	for(auto const& ths : trkseeds ){
+      	
+     	 	size_t index = ths.index();
+     		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
+      		const Straw& straw = _tracker->getStraw(strawhit.strawId());
+        	StrawResponse::cptr_t strawResponse;
+        	cout<<"nSH "<<strawhit.nStrawHits()<<endl;
+        	TrkStrawHit* trkhit = new TrkStrawHit(strawResponse, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
+        	cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
+        
+ 		}
+     
 }
 
 }//end namespace

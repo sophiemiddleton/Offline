@@ -40,14 +40,17 @@ namespace mu2e
     if(_combohit.nStrawHits() != 1 || _combohit.driftEnd() == StrawEnd::unknown)
       throw cet::exception("RECO")<<"mu2e::TrkStrawHit: ComboHit > 1 StrawHit"<< endl;
     // The StrawResponse should be passsed in from outside FIXME!
+    cout<<" getting wire info "<<endl;
     Hep3Vector const& wiredir = straw.getDirection();
     Hep3Vector const& mid = straw.getMidPoint();
     // cache the propagation velocity: this depends just on the pulseheight
-    _vprop = 2.0*_strawResponse->halfPropV(_combohit.strawId(),1000.0*_combohit.energyDep()); // edep in KeV, FIXME!
+    cout<<"getting vprop "<<endl;
+    //_vprop = 2.0*_strawResponse->halfPropV(_combohit.strawId(),1000.0*_combohit.energyDep()); // edep in KeV, FIXME!
     // initialize wire position using time difference
     _wpos = mid +_combohit.wireDist()*wiredir;
 // the hit trajectory is defined as a line segment directed along the wire direction starting from the wire center
 // ugly conversion to HepPoint FIXME!
+   cout<<"getting traj "<<endl;
     _hittraj = new TrkLineTraj(HepPoint(mid.x(),mid.y(),mid.z()),wiredir,
       timeDiffDist()-timeDiffDistErr(),
       timeDiffDist()+timeDiffDistErr());
