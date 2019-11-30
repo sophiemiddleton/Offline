@@ -36,7 +36,7 @@ using namespace mu2e;
 
 
 namespace MinuitDriftFitter{
-	 FitResult DoFit(int _diag, CosmicTrackFinderData& trackdata, StrawResponse srep, double max_doca, unsigned int minChits, int MaxLogL, double _gaussTres, double maxTres){
+	 FitResult DoFit(int _diag, CosmicTrackFinderData& trackdata, StrawResponse::cptr_t srep, double max_doca, unsigned int minChits, int MaxLogL, double _gaussTres, double maxTres){
 	  
 	
 	  std::vector<double> errors(5,0);

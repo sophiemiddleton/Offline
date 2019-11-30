@@ -45,7 +45,7 @@ const int N_sbins = 50;
 float wireradius = 12.5/1000.; //12.5 um in mm 
 float strawradius = 2.5; //2.5 mm in mm 
 
-FullDriftFit::FullDriftFit(ComboHitCollection _chits, StrawResponse _srep, CosmicTrack _track, std::vector<double> &_constraint_means, std::vector<double> &_constraints, double _sigma_t, int _k) : GaussianPDFFit(_chits,  _srep, _track,  _constraint_means, _constraints, _sigma_t, _k)
+FullDriftFit::FullDriftFit(ComboHitCollection _chits, StrawResponse::cptr_t _srep, CosmicTrack _track, std::vector<double> &_constraint_means, std::vector<double> &_constraints, double _sigma_t, int _k) : GaussianPDFFit(_chits,  _srep, _track,  _constraint_means, _constraints, _sigma_t, _k)
 {
   //create pdf bins using pre defined numbers:
   pdf_times = new double[N_tbins];
@@ -202,7 +202,7 @@ double GaussianPDFFit::calculate_ambig(ComboHit chit, double a0, double a1, doub
         return (ambig);
 }
 
-double GaussianPDFFit::TimeResidual(double doca, StrawResponse srep, double t0 ,  ComboHit hit)const{
+double GaussianPDFFit::TimeResidual(double doca, StrawResponse::cptr_t srep, double t0 ,  ComboHit hit)const{
 	double tres =  DriftFitUtils::TimeResidual(doca, srep, t0, hit);
 	return (tres);
 }

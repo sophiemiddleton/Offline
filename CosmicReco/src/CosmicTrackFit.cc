@@ -456,7 +456,7 @@ bool CosmicTrackFit::use_track(double track_length) const //not used but keep fo
  /*-------------Drift Fit Diagnotics--------------//
 This is were the fitter "talks" to the Minuit fitter. "EndResult" is the minimzed track parameters 
 //------------------------------------------------*/
-void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
+void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse::cptr_t _srep){
 	 FitResult endresult = MinuitDriftFitter::DoFit(_diag, trackData, _srep, _maxHitDOCA, _minnch, _maxLogL, _gaussTres, _maxTres);
          
 
@@ -507,9 +507,9 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData){
      	 	size_t index = ths.index();
      		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
       		const Straw& straw = _tracker->getStraw(strawhit.strawId());
-        	StrawResponse::cptr_t strawResponse;
+        	
         	cout<<"nSH "<<strawhit.nStrawHits()<<endl;
-        	TrkStrawHit* trkhit = new TrkStrawHit(strawResponse, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
+        	TrkStrawHit* trkhit = new TrkStrawHit(_srep, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
         	cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
         
  		}

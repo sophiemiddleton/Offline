@@ -190,13 +190,16 @@ namespace mu2e{
    const Tracker* tracker = th.get();
   
    _stResult.run = &run;
-   auto const& srep = _strawResponse_h.get(run.id());
    _tfit.setTracker  (tracker);
-   _tfit.setStrawResponse (srep);
+   
+
    }
 
   void CosmicTrackFinder::produce(art::Event& event ) {
-     
+
+     auto _srep = _strawResponse_h.getPtr(event.id());
+   
+
      if (_debug != 0) std::cout<<"Producing Cosmic Track in  Finder..."<<std::endl;
      unique_ptr<CosmicTrackSeedCollection> seed_col(new CosmicTrackSeedCollection());
      
@@ -325,7 +328,7 @@ namespace mu2e{
 			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
 			 continue;
 			}
-		      _tfit.DriftFit(tmpResult);
+		      _tfit.DriftFit(tmpResult, _srep);
 		      if( tmpResult._tseed._track.minuit_converged == false){
 			tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
 			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);

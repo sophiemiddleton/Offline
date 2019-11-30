@@ -128,8 +128,8 @@ int DriftFitUtils::GetAmbig(ComboHit chit, double a0, double a1, double b0, doub
 
 }
 	
-double DriftFitUtils::GetPropVelocity(StrawResponse rep, ComboHit chit){
-	   	double vprop = 2.0*rep.halfPropV(chit.strawId(),1000.0*chit.energyDep());
+double DriftFitUtils::GetPropVelocity(StrawResponse::cptr_t rep, ComboHit chit){
+	   	double vprop = 2.0*rep->halfPropV(chit.strawId(),1000.0*chit.energyDep());
 		return vprop; 
 }
 
@@ -157,17 +157,17 @@ double DriftFitUtils::TimeResidualTrans( double doca){
 		return drift_time;
 }
         
-double DriftFitUtils::TimeResidualLong(double doca, StrawResponse srep,  double t0, ComboHit hit){
+double DriftFitUtils::TimeResidualLong(double doca, StrawResponse::cptr_t srep,  double t0, ComboHit hit){
 		mu2e::GeomHandle<mu2e::Tracker> th;
                 const Tracker* tracker = th.get();
 	        Straw const& straw = tracker->getStraw(hit.strawId());
 		StrawId strawid = straw.id();
-      	        double _vprop = 2.0*srep.StrawResponse::halfPropV(strawid,1000.0*hit.energyDep());
+      	        double _vprop = 2.0*srep->halfPropV(strawid,1000.0*hit.energyDep());
       	        double propagation_time = GetPropTime(hit, _vprop);
 		return propagation_time;
 }
 
-double DriftFitUtils::TimeResidual(double doca, StrawResponse srep, double t0, ComboHit hit){
+double DriftFitUtils::TimeResidual(double doca, StrawResponse::cptr_t srep, double t0, ComboHit hit){
 		double time_residual_long = TimeResidualLong(doca, srep,  t0,  hit);
 		double time_residual_trans = TimeResidualTrans(doca); 
 		return time_residual_trans + time_residual_long;// + hitlen/299 + fltlen/299;

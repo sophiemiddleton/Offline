@@ -38,11 +38,11 @@ namespace DriftFitUtils{
 	double GetTestDOCA(ComboHit chit,double a0, double a1, double b0, double b1);
         int GetAmbig(ComboHit chit, XYZVec pos, XYZVec dir);
         int GetAmbig(ComboHit chit, double a0, double a1, double b0, double b1);
-  	double GetPropVelocity(StrawResponse rep, ComboHit chit); 
+  	double GetPropVelocity(StrawResponse::cptr_t srep, ComboHit chit); 
 	double GetPropTime(ComboHit chit, double vprop);
   	double TimeResidualTrans(double doca);
-  	double TimeResidualLong(double doca, StrawResponse srep, double t0, ComboHit chit);
-  	double TimeResidual(double doca, StrawResponse srep, double t0, ComboHit hit);
+  	double TimeResidualLong(double doca, StrawResponse::cptr_t srep, double t0, ComboHit chit);
+  	double TimeResidual(double doca, StrawResponse::cptr_t srep, double t0, ComboHit hit);
   	
   
  }
