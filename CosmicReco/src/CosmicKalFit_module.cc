@@ -1,10 +1,10 @@
 // Author: S Middleton
-// Purpose: Cosmic Track finder- module calls seed fitting routine to begin cosmic track analysis. The module can call the seed fit and drift fit. Producing a "CosmicTrackSeed" list.
+// Purpose: Use Kalman BTrk for the cosmic fit
+// Date: Dec 2019
+#include "CosmicReco/inc/CosmicKalFit.hh"
+#include "CosmicReco/inc/CosmicKalFinderData.hh"
 
-#include "CosmicReco/inc/CosmicTrackFit.hh"
-#include "CosmicReco/inc/CosmicTrackFinderData.hh"
-
-#include "RecoDataProducts/inc/CosmicTrackSeed.hh"
+#include "RecoDataProducts/inc/CosmicKalSeed.hh"
 //Mu2e General:
 #include "GeometryService/inc/GeomHandle.hh"
 #include "GeometryService/inc/DetectorSystem.hh"
@@ -69,28 +69,13 @@ namespace{
     struct ycomp : public std::binary_function<mu2e::ComboHit,mu2e::ComboHit,bool> {
     bool operator()(mu2e::ComboHit const& p1, mu2e::ComboHit const& p2) { return p1._pos.y() > p2._pos.y(); }
   };
-  
-    struct ycomp_digi : public std::binary_function<mu2e::StrawDigiMC,mu2e::StrawDigiMC,bool> {
-    bool operator()(mu2e::StrawDigiMC const& p1, mu2e::StrawDigiMC const& p2) {
-    art::Ptr<mu2e::StepPointMC> const& spmcp1 = p1.stepPointMC(mu2e::StrawEnd::cal); 
-    art::Ptr<mu2e::StepPointMC> const& spmcp2 = p2.stepPointMC(mu2e::StrawEnd::cal);
-    
-    return spmcp1->position().y() > spmcp2->position().y(); }
-  };
-  //For MC StrawDigis:
-  struct ycomp_MC : public std::binary_function<mu2e::StrawDigiMC,mu2e::StrawDigiMC,bool> {
-    bool operator()(art::Ptr<mu2e::StepPointMC> const& spmcp1, art::Ptr<mu2e::StepPointMC> const& spmcp2) {
-    return spmcp1->position().y() > spmcp2->position().y(); }
-  };
-   struct zcomp : public std::binary_function<mu2e::ComboHit,mu2e::ComboHit,bool> {
-    bool operator()(mu2e::ComboHit const& p1, mu2e::ComboHit const& p2) { return p1._pos.z() < p2._pos.z(); }
-  }; 
+
 
 }//end namespace
 
 namespace mu2e{
 
-  class CosmicTrackFinder : public art::EDProducer {
+  class CosmicKalFit : public art::EDProducer {
   public:
     struct Config{
 	      using Name=fhicl::Name;
@@ -99,25 +84,20 @@ namespace mu2e{
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
               fhicl::Atom<int> printfreq{Name("printFrequency"), Comment("print frquency"), 101};
     	      fhicl::Atom<int> minnsh {Name("minNStrawHits"), Comment("minimum number of straw hits "),2};
-    	      fhicl::Atom<int> minnch {Name("minNComboHits"), Comment("number of combohits allowed"),8};
     	      fhicl::Atom<TrkFitFlag> saveflag {Name("SaveTrackFlag"),Comment("if set to OK then save the track"), TrkFitFlag::helixOK};
               fhicl::Atom<int> minNHitsTimeCluster{Name("minNHitsTimeCluster"),Comment("minium allowed time cluster"), 1 };
     	      fhicl::Atom<art::InputTag> chToken{Name("ComboHitCollection"),Comment("tag for combo hit collection")};
 	      fhicl::Atom<art::InputTag> tcToken{Name("TimeClusterCollection"),Comment("tag for time cluster collection")};
 	      fhicl::Atom<art::InputTag> mcToken{Name("StrawDigiMCCollection"),Comment("StrawDigi collection tag")};
-	      fhicl::Atom<bool> DoDrift{Name("SDoDrift"),Comment("turn on for drift fit")};
-	      fhicl::Table<CosmicTrackFit::Config> tfit{Name("CosmicTrackFit"), Comment("fit")};
+	      fhicl::Table<CosmicTrackFit::Config> tfit{Name("CosmicKalFit"), Comment("fit")};
     };
     typedef art::EDProducer::Table<Config> Parameters;
-    explicit CosmicTrackFinder(const Parameters& conf);
-    virtual ~CosmicTrackFinder();
+    explicit CosmicKalFit(const Parameters& conf);
+    virtual ~CosmicKalFit();
     virtual void beginJob();
     virtual void beginRun(art::Run& run);
     virtual void produce(art::Event& event ) override;
-     /*///NEW INFRASTRUCTURE////////
-    typedef art::Ptr<ComboHit>          ComboHitPtr;
-    typedef std::vector<ComboHitPtr>    ComboHitPtrVector;
-////////////////////////////*/
+    
   private:
     
     Config _conf;
@@ -135,22 +115,22 @@ namespace mu2e{
     art::InputTag  _chToken;
     art::InputTag  _tcToken;
     art::InputTag  _mcToken;
-    bool 	   _DoDrift;
-    CosmicTrackFit     _tfit;
+    
+    CosmicKalFit     _kfit;
      
     StrawHitFlag      _dontuseflag;
    
-    CosmicTrackFinderData                 _stResult;
+    CosmicKalFinderData                 _stResult;//TODO
     ProditionsHandle<StrawResponse> _strawResponse_h; 
-    void     OrderHitsY(CosmicTrackFinderData& TrackData); //Order in height
-    void     OrderHitsYMC(CosmicTrackFinderData& TrackData, art::Event& event); //Same but for MCDigis
-    void     fillGoodHits(CosmicTrackFinderData& TrackData);//apply "good" cut
+    void     OrderHitsY(CosmicKalFitData& TrackData); //Order in height
+    void     OrderHitsYMC(CosmicKalFitData& TrackData, art::Event& event); //Same but for MCDigis
+    void     fillGoodHits(CosmicKalFitData& TrackData);//apply "good" cut
     int      goodHitsTimeCluster(const TimeCluster TCluster, ComboHitCollection chcol);
    
 };
 
 
- CosmicTrackFinder::CosmicTrackFinder(const Parameters& conf) :
+ CosmicKalFit::CosmicKalFit(const Parameters& conf) :
    art::EDProducer(conf),
    	_mcdiag (conf().mcdiag()),
 	_debug  (conf().debug()),
@@ -162,54 +142,45 @@ namespace mu2e{
     	_chToken (conf().chToken()),
 	_tcToken (conf().tcToken()),
 	_mcToken (conf().mcToken()),
-	_DoDrift (conf().DoDrift()),
-	_tfit (conf().tfit())
+	_kfit (conf().tfit())
 {
 	    consumes<ComboHitCollection>(_chToken);
 	    consumes<TimeClusterCollection>(_tcToken);
 	    consumes<StrawDigiMCCollection>(_mcToken);
-	    produces<CosmicTrackSeedCollection>();
-	    
+	    consumes<CosmicTrackSeedCollection>();
+	    produces<CosmicKalSeedCollection>();
  }
 
- CosmicTrackFinder::~CosmicTrackFinder(){}
+ CosmicKalFit::~CosmicKalFit(){}
 
 /* ------------------------Begin JOb--------------------------//
 //         Sets Up Historgram Book For Diag Plots            //
 //----------------------------------------------------------*/
 
-  void CosmicTrackFinder::beginJob() {
-   
-    art::ServiceHandle<art::TFileService> tfs;
+  void CosmicKalFit::beginJob() {
+   art::ServiceHandle<art::TFileService> tfs;
     
   }
 /* ------------------------Begin Run--------------------------//
 //                   sets up the tracker                     //
 //----------------------------------------------------------*/
-  void CosmicTrackFinder::beginRun(art::Run& run) {
+  void CosmicKalFit::beginRun(art::Run& run) {
     
-   mu2e::GeomHandle<mu2e::Tracker> th;
-   const Tracker* tracker = th.get();
-  
+   //mu2e::GeomHandle<mu2e::Tracker> th;
+   //const Tracker* tracker = th.get();
    _stResult.run = &run;
-   _tfit.setTracker  (tracker);
+   //_kfit.setTracker  (tracker);
    
 
    }
 
-  void CosmicTrackFinder::produce(art::Event& event ) {
+  void CosmicKalFit::produce(art::Event& event ) {
 
      auto _srep = _strawResponse_h.getPtr(event.id());
-   
-
-     if (_debug != 0) std::cout<<"Producing Cosmic Track in  Finder..."<<std::endl;
-     unique_ptr<CosmicTrackSeedCollection> seed_col(new CosmicTrackSeedCollection());
+     unique_ptr<CosmicKalSeedCollection> seed_col(new CosmicKalSeedCollection());
      
-     _stResult.clearMCVariables();
+    
      int _iev=event.id().event();
-      if (_debug > 0){
-          std::cout<<"ST Finder Event #"<<_iev<<std::endl;
-      } 
      
      auto const& chH = event.getValidHandle<ComboHitCollection>(_chToken);
      const ComboHitCollection& chcol(*chH);
@@ -221,19 +192,10 @@ namespace mu2e{
            const StrawDigiMCCollection& mccol(*mcdH);
            _stResult._mccol =  &mccol;
        }
-    
-    
+
     _stResult.event   = &event;
     _stResult._chcol  = &chcol; 
     _stResult._tccol  = &tccol;
-  
-/*///////NEW INFRASTRUCTURE//////////
-    for(size_t i=0;i<chcol.size();i++){
-    //_stResult._tseed._panelHits = art::Ptr<ComboHitCollection>(chH,1);
-    ComboHitPtr chptr = art::Ptr<ComboHit>(chH,i);
-    _stResult._tseed._panelHits.push_back(chptr);
-}
-//////////////////////////////////*/
 
     for (size_t index=0;index< tccol.size();++index) {
       int   nGoodTClusterHits(0);
@@ -241,9 +203,7 @@ namespace mu2e{
       nGoodTClusterHits     = goodHitsTimeCluster(tclust,chcol);
     
       if ( nGoodTClusterHits < _minNHitsTimeCluster)         continue;
-      if (_debug > 0){
-          std::cout<<"time clusters "<<_iev<<std::endl;
-      }
+      
        CosmicTrackSeed tseed ;
       _stResult.clearTempVariables();
       _stResult._tseed              = tseed;
@@ -255,9 +215,6 @@ namespace mu2e{
 
       OrderHitsY(_stResult); 
 
-      if (_debug != 0){
-	 std::cout<<"#filtered SHits"<<_stResult._nFiltStrawHits<<" #filter CHits "<<_stResult._nFiltComboHits<<std::endl;
-      }
       if (_stResult._nFiltComboHits < _minnch ) 	continue;
       if (_stResult._nFiltStrawHits < _minnsh)          continue;
       _stResult._tseed._status.merge(TrkFitFlag::Straight);
@@ -266,29 +223,15 @@ namespace mu2e{
       _stResult._tseed._status.merge(TrkFitFlag::hitsOK);
       _stResult._tseed._panel_hits = _stResult._chHitsToProcess;
       
-      if(_mcdiag > 0 && _stResult._chHitsToProcess.size() > 0){
-		OrderHitsYMC(_stResult, event);
-		for(auto const & mcd : _stResult._mcDigisToProcess){
-			art::Ptr<StepPointMC> const& spmcp = mcd.stepPointMC(StrawEnd::cal);
-            		XYZVec posN(spmcp->position().x(), spmcp->position().y(), spmcp->position().z());
-                	
-		}
-			
-             
-	     }
-
-     ostringstream title;
-     title << "Run: " << event.id().run()
-     << "  Subrun: " << event.id().subRun()
-     << "  Event: " << event.id().event()<<".root";
-     _tfit.BeginFit(title.str().c_str(), _stResult);
+     
+     _kfit.BeginFit(_stResult);
 
       if (_stResult._tseed._status.hasAnyProperty(TrkFitFlag::helixOK) && _stResult._tseed._status.hasAnyProperty(TrkFitFlag::helixConverged) && _stResult._tseed._track.converged == true ) { 
 	       std::vector<CosmicTrackSeed>          track_seed_vec;
 	       
 	      fillGoodHits(_stResult);
 	      
-	      CosmicTrackFinderData tmpResult(_stResult);
+	      CosmicKalFitData tmpResult(_stResult);
 	      _stResult._tseed._status.merge(TrkFitFlag::helixOK);
               if (tmpResult._tseed.status().hasAnyProperty(_saveflag)){
               	
@@ -325,31 +268,32 @@ namespace mu2e{
 	     		}  
 	     		}
 	              
-                      if( _tfit.goodTrack(tmpResult._tseed._track) == false){
+                      if( _kfit.goodTrack(tmpResult._tseed._track) == false){
 			tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
 			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
 			 continue;
 			}
-		      if(_doDrift){
-		      _tfit.DriftFit(tmpResult, _srep);
-			      if( tmpResult._tseed._track.minuit_converged == false){
-				tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
-				tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
-				continue;
-				}
-			      ComboHitCollection tmpHits;
-			     
-			      for(auto const &chit : tmpResult._tseed._straw_chits){
+
+		      _kfit.DriftFit(tmpResult, _srep);
+
+		      if( tmpResult._tseed._track.minuit_converged == false){
+			tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
+			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
+			continue;
+			}
+		      ComboHitCollection tmpHits;
+		     
+		      for(auto const &chit : tmpResult._tseed._straw_chits){
+		        
+			
+			if(!chit._flag.hasAnyProperty(StrawHitFlag::outlier)){
 				
-				
-				if(!chit._flag.hasAnyProperty(StrawHitFlag::outlier)){
-					
-					tmpHits.push_back(chit);
-				}
-				
-			      }
-			      tmpResult._tseed._straw_chits = tmpHits;
+				tmpHits.push_back(chit);
+			}
+			
 		      }
+		      tmpResult._tseed._straw_chits = tmpHits;
+		    
 		      track_seed_vec.push_back(tmpResult._tseed);
 		     
 		      CosmicTrackSeedCollection* col = seed_col.get();
@@ -364,7 +308,7 @@ namespace mu2e{
   event.put(std::move(seed_col));    
   }
 
-  void CosmicTrackFinder::fillGoodHits(CosmicTrackFinderData& trackData){
+  void CosmicKalFit::fillGoodHits(CosmicKalFitData& trackData){
     if (_debug != 0) {
 	std::cout<<"Filling good hits..."<<std::endl;
     }
@@ -377,35 +321,13 @@ namespace mu2e{
       trackData._tseed._panel_hits.push_back(thit);
     }
   }
-void CosmicTrackFinder::OrderHitsYMC(CosmicTrackFinderData& TrackData, art::Event& event){
-    int     size  = _stResult._chHitsToProcess.size();
-    StrawDigiMCCollection ordDigiCol;
-    ordDigiCol.reserve(size);
- 
-    for (int i=0; i<size; ++i) {
-     std::vector<StrawDigiIndex> shids;  
-     _stResult._chHitsToProcess.fillStrawDigiIndices(event,i,shids);    
-     StrawDigiMC const& mcd1 = _stResult._mccol->at(shids[0]);  
-      ordDigiCol.push_back(mcd1); 
-    }
-   
-    if (_debug != 0) std::cout<<"Number of Digis: "<<ordDigiCol.size()<<std::endl;
-    std::sort(ordDigiCol.begin(), ordDigiCol.end(),ycomp_digi());
 
-    for (unsigned i=0; i<ordDigiCol.size(); ++i) { 
-      StrawDigiMC const& mcd1 = ordDigiCol[i]; 
-     _stResult._mcDigisToProcess.push_back(mcd1);
-
-    }
-
-}
-
-  void CosmicTrackFinder::OrderHitsY(CosmicTrackFinderData& TrackData){
+  void CosmicKalFit::OrderHitsY(CosmicKalFitData& TrackData){
     if (_debug != 0){
 	 std::cout<<"Ordering Hits..."<<std::endl;
     }
     const vector<StrawHitIndex>& shIndices = TrackData._timeCluster->hits();
-    mu2e::CosmicTrackFinderData::ChannelID cx, co;
+    mu2e::CosmicKalFitData::ChannelID cx, co;
 
     int	    h;
     int     size  = shIndices.size();
@@ -445,7 +367,7 @@ void CosmicTrackFinder::OrderHitsYMC(CosmicTrackFinderData& TrackData, art::Even
     TrackData._nFiltStrawHits = nFiltStrawHits;  //StrawHit counter
   }
   
-int  CosmicTrackFinder::goodHitsTimeCluster(const TimeCluster TCluster, ComboHitCollection chcol){
+int  CosmicKalFit::goodHitsTimeCluster(const TimeCluster TCluster, ComboHitCollection chcol){
     int   nhits         = TCluster.nhits();
     int   ngoodhits(0);
     double     minT(500.), maxT(2000.);
@@ -462,5 +384,5 @@ int  CosmicTrackFinder::goodHitsTimeCluster(const TimeCluster TCluster, ComboHit
 
 ///////////////////////////////////////////////////
 }//end mu2e namespace
-using mu2e::CosmicTrackFinder;
-DEFINE_ART_MODULE(CosmicTrackFinder);
+using mu2e::CosmicKalFit;
+DEFINE_ART_MODULE(CosmicKalFit);

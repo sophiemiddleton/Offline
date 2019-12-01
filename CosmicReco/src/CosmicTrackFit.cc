@@ -499,7 +499,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse::c
 		trackData._tseed._track.minuit_converged = false;
 	  }
 	
-	//This code was built to help transofrm into BTrk - it didnt work but may be useful:
+	/*This code was built to help transofrm into BTrk - it didnt work but may be useful:
  	std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
         cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
      	for(auto const& ths : trkseeds ){
@@ -512,7 +512,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse::c
         	TrkStrawHit* trkhit = new TrkStrawHit(_srep, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
         	cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
         
- 		}
+ 		}*/
      
 }
 
