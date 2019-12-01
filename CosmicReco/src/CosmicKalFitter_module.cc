@@ -2,12 +2,10 @@
 // Purpose: Use Kalman BTrk for the cosmic fit
 // Date: Dec 2019
 #include "CosmicReco/inc/CosmicKalFit.hh"
-#include "CosmicReco/inc/CosmicKalFitterData.hh"
+#include "CosmicReco/inc/CosmicKalFitData.hh"
 #include "RecoDataProducts/inc/CosmicKalSeed.hh"
-
 #include "CosmicReco/inc/CosmicTrackFit.hh"
 #include "CosmicReco/inc/CosmicTrackFinderData.hh"
-
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 //Mu2e General:
 #include "GeometryService/inc/GeomHandle.hh"
@@ -92,8 +90,7 @@ namespace mu2e{
 	      using Comment=fhicl::Comment;
 	      fhicl::Atom<int> diag{Name("diag"), Comment("set on for MC info"),2};
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
-              fhicl::Atom<int> printfreq{Name("printFrequency"), Comment("print frquency"), 101};
-    	      fhicl::Atom<art::InputTag> seedToken{Name("CosmicTrackSeedCollection"),Comment("tag for combo hit collection")};
+              fhicl::Atom<art::InputTag> seedToken{Name("CosmicTrackSeedCollection"),Comment("tag for combo hit collection")};
 	      fhicl::Table<CosmicKalFitter::Config> kfit{Name("CosmicKalFitter"), Comment("fit")};
     };
     typedef art::EDProducer::Table<Config> Parameters;
@@ -107,9 +104,7 @@ namespace mu2e{
     
     Config _conf;
 
-  //config parameters:
     int 			        _diag, _debug;
-    int                                 _printfreq;
     art::InputTag 		        _seedToken;
     //For Kalman:
     Helicity _helicity; // cached value of helicity expected for this fit
@@ -127,7 +122,7 @@ namespace mu2e{
     StrawHitFlag     _dontuseflag;
    
     
-    CosmicKalFinderData               _kalResult;//TODO
+    CosmicKalFitData               _kalResult;
     CosmicTrackSeedCollection	     *_seedcol;
     ProditionsHandle<StrawResponse> _strawResponse_h; 
     ProditionsHandle<Mu2eMaterial> _mu2eMaterial_h;
@@ -199,49 +194,22 @@ namespace mu2e{
      for (size_t index=0;index< seedcol.size();++index) {
        
        CosmicKalSeed kalseed;
-      _kalResult.clearTempVariables();
-      _kalResult._kalseed            = kalseed;
+       _kalResult._kalseed            = kalseed;
      
-      _kalResult._kalseed._status.merge(TrkFitFlag::Straight);
+      //_kalResult._kalseed._status.merge(TrkFitFlag::KalmanOK);//TODO
       
       _kfit.BeginFit(_kalResult);
 
-      if (......track.converged == true ) { 
-	       std::vector<CosmicTrackSeed>   track_seed_vec;
+      if (seedcol.tseed.track.converged == true ) { //TODO
+	      std::vector<CosmciKalSeed>   kal_vec;
 	      
-              CosmicKalFitterData tmpResult(_kalResult);
+              CosmicKalFitData tmpResult(_kalResult);
 	      
-              if (tmpResult._kalseed.status().hasAnyProperty(_saveflag)){
+              if (tmpResult._kalseed.status().hasAnyProperty(_saveflag)){ //TODO
               	
-		      std::vector<uint16_t> chindices;
-		      if(tmpResult._kalseed._track.converged == false) continue;
-
-		      for(size_t ich= 0; ich<_kalResult._chHitsToProcess.size(); ich++) { 
-		   	 chindices.push_back(ich);
-	              }
-	             
-	              std::vector<ComboHitCollection::const_iterator> chids;  
-		      tmpResult._chHitsToProcess.fillComboHits(event, chindices, chids); 
-		      std::vector<ComboHitCollection::const_iterator> StrawLevelCHitIndices = chids;
-		      for (auto const& it : chids){
-		      	  const mu2e::ComboHit chit = it[0];
-		      	  tmpResult._kalseed._straw_chits.push_back(chit);
-	      	      }
-	
-	      	      for(size_t ich= 0; ich<tmpResult._kalseed._straw_chits.size(); ich++) {  
-           		std::vector<StrawHitIndex> shitids;          	          		
-           	        tmpResult._kalseed._straw_chits.fillStrawHitIndices(event, ich,shitids);  
-                        tmpResult._kalseed._strawHitIdxs.push_back(ich);
-			for(auto const& ids : shitids){ 
-				size_t    istraw   = (ids);
-			     	TrkStrawHitSeed tshs;
-			     	tshs._index  = istraw;
-			     	tshs._t0 = tclust._t0;
-			     	tmpResult._kalseed._trkstrawhits.push_back(tshs); 
-			}
-			std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
-        		cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
-     			for(auto const& ths : trkseeds ){
+		      std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
+        	      cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
+     		      for(auto const& ths : trkseeds ){
       	
 		     	 	size_t index = ths.index();
 		     		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
@@ -253,32 +221,19 @@ namespace mu2e{
 			}  
 	     	      }
 	              
-                      if(_kfit.goodTrack(tmpResult._kalseed._track) == false){
-			tmpResult._kalseed._status.clear(TrkFitFlag::helixConverged);
-			tmpResult._kalseed._status.clear(TrkFitFlag::helixOK);
-			 continue;
-			}
+		      _kfit.Fit(tmpResult, _srep); //NEED TO ADD FLAGS IN THIS FIT --> this will be done in CosmicKalFit
 
-		      _kfit.DriftFit(tmpResult, _srep);
-
-		      if( tmpResult._kalseed._track.minuit_converged == false){
+		      if( tmpResult._kalseed.SOMECONVERGEDTAG == false){//TODO
 			tmpResult._kalseed._status.clear(TrkFitFlag::helixConverged);
 			tmpResult._kalseed._status.clear(TrkFitFlag::helixOK);
 			continue;
 			}
 
-		      ComboHitCollection tmpHits;
-		     
-		      for(auto const &chit : tmpResult._kalseed._straw_chits){
-		        if(!chit._flag.hasAnyProperty(StrawHitFlag::outlier)){
-				tmpHits.push_back(chit);
-			}
-		      }
-		      tmpResult._kalseed._straw_chits = tmpHits;
-		      track_seed_vec.push_back(tmpResult._kalseed);
+		      
+		      kal_vec.push_back(tmpResult._kalseed);
 		      CosmicKalSeedCollection* col = kal_col.get();
 		      
-		      if (tmpHits.size() == 0 or track_seed_vec.size() == 0)     continue;
+		      if (track_seed_vec.size() == 0)     continue;
 		      col->push_back(tmpResult._kalseed);  
 			          
               }
