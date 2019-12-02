@@ -51,7 +51,7 @@ namespace mu2e {
     std::vector<TrkStraw>	    _straws; // straws interesected by this fit
    
     art::Ptr<CosmicTrackSeed>       _cosmicseed; // associated Cosmic Seed (for seed fits); can be null
-    art::Ptr<CosmicKalSeed>         _kal; // associated Kalman Seed (for final fits); can be null
+    art::Ptr<CosmicKalSeed>         _kalseed; // associated Kalman Seed (for final fits); can be null
   };
   typedef std::vector<mu2e::CosmicKalSeed> CosmicKalSeedCollection;
 }

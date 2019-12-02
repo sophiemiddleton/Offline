@@ -91,6 +91,7 @@ namespace mu2e{
 	      fhicl::Atom<int> diag{Name("diag"), Comment("set on for MC info"),2};
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
               fhicl::Atom<art::InputTag> seedToken{Name("CosmicTrackSeedCollection"),Comment("tag for combo hit collection")};
+              fhicl::Atom<unsigned> minnhits{Name("minnhits"), Comment("min number of trkstrawhits"), 10},
 	      fhicl::Table<CosmicKalFitter::Config> kfit{Name("CosmicKalFitter"), Comment("fit")};
     };
     typedef art::EDProducer::Table<Config> Parameters;
@@ -106,22 +107,18 @@ namespace mu2e{
 
     int 			        _diag, _debug;
     art::InputTag 		        _seedToken;
-    //For Kalman:
-    Helicity _helicity; // cached value of helicity expected for this fit
-    double _upz, _downz; // z positions to extend the segment
+    unsigned				_minnhits;
+
     double _amsign; // cached sign of angular momentum WRT the z axis 
     double _bz000;        // sign of the magnetic field at (0,0,0)
     HepSymMatrix _hcovar; // cache of parameter error covariance matrix
 
-   
-    
     CosmicTrackFit   _tfit;
     CosmicKalFit     _kfit;
 
     TrkParticle      _tpart; //TODO --> mu+/-
     StrawHitFlag     _dontuseflag;
    
-    
     CosmicKalFitData               _kalResult;
     CosmicTrackSeedCollection	     *_seedcol;
     ProditionsHandle<StrawResponse> _strawResponse_h; 
@@ -139,7 +136,6 @@ namespace mu2e{
    art::EDProducer(conf),
    	_diag (conf().mcdiag()),
 	_debug  (conf().debug()),
-    	_printfreq  (conf().printfreq()),
 	_seedToken (conf().seedToken()),
 	_kfit (conf().kfit())
 {
@@ -183,10 +179,12 @@ namespace mu2e{
      int _iev=event.id().event();
 
      auto _srep = _strawResponse_h.getPtr(event.id());
+     auto detmodel = _mu2eDetector_h.getPtr(event.id());
+
      unique_ptr<CosmicKalSeedCollection> kal_col(new CosmicKalSeedCollection());
      
      auto const& seedH = event.getValidHandle<CosmicTrackSeedCollection>(_seedToken);
-     const CosmicTrackSeedCollection& seedcol(*chH);
+     const CosmicTrackSeedCollection& seedcol(*seedH);
 
      _kalResult.event   = &event;
      _kalResult._seedcol  = &seedcol; 
@@ -196,20 +194,49 @@ namespace mu2e{
        CosmicKalSeed kalseed;
        _kalResult._kalseed            = kalseed;
      
-      //_kalResult._kalseed._status.merge(TrkFitFlag::KalmanOK);//TODO
-      
-      _kfit.BeginFit(_kalResult);
+      _kalResult._kalseed._status.merge(TrkFitFlag::kalmanOK);//TODO
 
-      if (seedcol.tseed.track.converged == true ) { //TODO
+      CosmicTrackSeed sts =(*seedcol)[ist];
+
+      if (sts.track().converged == true ) { //TODO
 	      std::vector<CosmciKalSeed>   kal_vec;
 	      
               CosmicKalFitData tmpResult(_kalResult);
 	      
-              if (tmpResult._kalseed.status().hasAnyProperty(_saveflag)){ //TODO
-              	
-		      std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
-        	      cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
-     		      for(auto const& ths : trkseeds ){
+		/*
+	       CosmicTraj cosmictraj(hpvec,_hcovar);
+	      
+		if(_debug > 1){
+	 
+	  		cout << "CosmicTraj parameters " << cosmictraj.parameters()->parameter()
+	       		<< "and covariance " << cosmictraj.parameters()->covariance() <<  endl;
+	        }
+			TimeCluster tclust;
+			tclust._t0 = sts._t0;
+			for(uint16_t ihit=0;ihit < sts.hits().size(); ++ihit){
+	  			ComboHit const& ch = sts.hits()[ihit];
+	  			sts.hits().fillStrawHitIndices(event,ihit,tclust._strawHitIdxs);
+			}
+	
+	
+			TrkDef seeddef(tclust,cosmictraj,tpart,_fdir);
+	
+			const CosmicTraj* traj = &seeddef.cosmic();
+			double           flt0  = cosmictraj->zFlight(0.0);
+			double           mom   = TrkMomCalculator::vecMom(*cosmictraj, _kfit.bField(), flt0).mag();
+			double           vflt  = seeddef.particle().beta(mom)*CLHEP::c_light;
+			double           helt0 = sts.t0().t0();
+			
+	
+			CosmicKalSeed kf(tpart,_fdir, sts.t0(), flt0, sts.status());
+	                auto hsH = event.getValidHandle(_hsToken);
+	                kf._cosmicseed = art::Ptr<CosmicTrackSeed>(hsH,iseed);
+	
+			*/
+
+			std::vector<TrkStrawHitSeed>const trkseeds = sts.trkstrawhits();
+              		cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
+     	      		for(auto const& ths : trkseeds ){
       	
 		     	 	size_t index = ths.index();
 		     		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
@@ -218,23 +245,64 @@ namespace mu2e{
 				cout<<"nSH "<<strawhit.nStrawHits()<<endl;
 				TrkStrawHit* trkhit = new TrkStrawHit(_srep, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
 				cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
-			}  
-	     	      }
-	              
-		      _kfit.Fit(tmpResult, _srep); //NEED TO ADD FLAGS IN THIS FIT --> this will be done in CosmicKalFit
+				}  
+			     }
+				
+			     if(kf._hits.size() >= _minnhits) kf._status.merge(TrkFitFlag::hitsOK);
+	                     _result.kalSeed = &kf;		      
+			     _kfit.Fit(tmpResult, _srep, detmodel);  
 
-		      if( tmpResult._kalseed.SOMECONVERGEDTAG == false){//TODO
-			tmpResult._kalseed._status.clear(TrkFitFlag::helixConverged);
-			tmpResult._kalseed._status.clear(TrkFitFlag::helixOK);
-			continue;
-			}
 
-		      
-		      kal_vec.push_back(tmpResult._kalseed);
-		      CosmicKalSeedCollection* col = kal_col.get();
-		      
-		      if (track_seed_vec.size() == 0)     continue;
-		      col->push_back(tmpResult._kalseed);  
+         /*
+
+	
+	if(_result.krep != 0 && (_result.krep->fitStatus().success() || _saveall)){
+	 
+	  KalSeed kseed(_result.krep->particleType(),_fdir,_result.krep->t0(),_result.krep->flt0(),kf.status());
+	  kseed._status.merge(_ksf);
+
+	  // fill ptr to the helix seed
+          auto hsH = event.getValidHandle(_hsToken);
+	  kseed._helix = art::Ptr<HelixSeed>(hsH,iseed);
+	  // extract the hits from the rep and put the hitseeds into the KalSeed
+	  TrkUtilities::fillStrawHitSeeds(_result.krep,*_chcol,kseed._hits);
+	  if(_result.krep->fitStatus().success())kseed._status.merge(TrkFitFlag::kalmanOK);
+	  if(_result.krep->fitStatus().success()==1)kseed._status.merge(TrkFitFlag::kalmanConverged);
+	  if(kseed._hits.size() >= _minnhits)kseed._status.merge(TrkFitFlag::hitsOK);
+	  kseed._chisq = _result.krep->chisq();
+
+	  // use the default consistency calculation, as t0 is not fit here
+	  kseed._fitcon = _result.krep->chisqConsistency().significanceLevel();
+	  // extract the helix trajectory from the fit (there is just 1)
+	  double locflt;
+	  const HelixTraj* htraj = dynamic_cast<const HelixTraj*>(_result.krep->localTrajectory(_result.krep->flt0(),locflt));
+	  // use this to create segment.  This will be the only segment in this track
+	  if(htraj != 0){
+	    KalSegment kseg;
+	    // sample the momentum at this point
+	    BbrVectorErr momerr = _result.krep->momentumErr(_result.krep->flt0());
+	    TrkUtilities::fillSegment(*htraj,momerr,locflt-_result.krep->flt0(),kseg);
+	    // extend the segment
+	    double upflt(0.0), downflt(0.0);
+	    TrkHelixUtils::findZFltlen(*htraj,_upz,upflt);
+	    TrkHelixUtils::findZFltlen(*htraj,_downz,downflt);
+	    
+	    kscol->push_back(kseed);
+	   } 
+	}
+	
+        _result.deleteTrack();
+      }
+    }
+   
+    event.put(move(kscol));
+  }
+*/
+	      kal_vec.push_back(tmpResult._kalseed);
+	      CosmicKalSeedCollection* col = kal_col.get();
+	      
+	      if (kal_vec.size() == 0)     continue;
+	      col->push_back(tmpResult._kalseed);  
 			          
               }
         }

@@ -2,12 +2,6 @@
 //Date: Nov 2019
 //Purpose: To allow cosmic fitting to be compatible with Kalman/BTrk
 
-/*What we need: 
-need to store parameters, positon, direction, 6 element convarience matrix
-
-
-
-*/
 #ifndef COSMICLINETRAJ_HH
 #define COSMICLINETRAJ_HH
 
@@ -15,6 +9,7 @@ need to store parameters, positon, direction, 6 element convarience matrix
 #include "BTrk/TrkBase/TrkKalDeriv.hh"
 #include "BTrk/TrkBase/TrkParams.hh"
 #include "BTrk/BbrGeom/HepPoint.h"
+#include "CosmicReco/inc/CosmicLineParams.hh" 
 #include <vector>
 
 class TrkVisitor;
@@ -22,72 +17,76 @@ class TrkVisitor;
 #include "CLHEP/Matrix/SymMatrix.h"
 #include <iosfwd>
 
+#include "BTrk/TrkBase/TrkSimpTraj.hh"
 
-class CosmicLineTraj : public TrkDifTraj, public TrkKalDeriv {
+class CosmicLineParams;
 
+class CosmicLineTraj : public TrkSimpTraj {
 public:
 
-  static HepPoint _theOrigin; // define the origin as a HepPoint
+  enum ParIndex {d0Index=0, phi0Index, thetaIndex, phiIndex,  NHLXPRM};
 
+  CosmicLineTraj(const CLHEP::HepVector&,const CLHEP::HepSymMatrix&, double lowlim=-99999.,
+	    double hilim=99999., const HepPoint& refpoint = _theOrigin);
+  CosmicLineTraj(const CosmicLineParams&, double lowlim=-99999.,
+	    double hilim=99999., const HepPoint& refpoint = _theOrigin);
+  CosmicLineTraj(const TrkParams&, double lowlim=-99999.,
+	    double hilim=99999., const HepPoint& refpoint = _theOrigin);
+  CosmicLineTraj( const CosmicLineTraj&  );  
+  CosmicLineTraj* clone() const;
 
-public:
-
-  //-----------------------
-  // Constructors and such
-  //-----------------------
-  CosmicLineTraj(const CLHEP::HepVector& params, const CLHEP::HepSymMatrix& cov,
-              const double startRange = -99999.,const double endRange =99999.,
-              const HepPoint& refpoint = _theOrigin);
-  CosmicLineTraj(const TrkParams& params,
-              const double startRange = -99999.,const double endRange =99999.,
-              const HepPoint& refpoint = _theOrigin);
   virtual ~CosmicLineTraj();
 
-  virtual CosmicLineTraj* clone() const = 0;
+  CosmicLineTraj& operator=(const CosmicLineTraj&);
+  virtual HepPoint   position(double fltLen)  const;
+  virtual CLHEP::Hep3Vector direction(double fltLen) const;
+  virtual CLHEP::Hep3Vector delDirect(double)        const;
+  virtual void       getInfo(double fltLen, HepPoint& pos, 
+			     CLHEP::Hep3Vector& dir) const;
+  virtual void       getInfo(double fltLen, HepPoint& , CLHEP::Hep3Vector& dir, 
+			     CLHEP::Hep3Vector& delDir) const;
+  virtual void       getDFInfo(double fltLen, DifPoint& , DifVector& dir, 
+			       DifVector& delDir) const;
+  virtual void       getDFInfo2(double fltLen, DifPoint& pos, DifVector& 
+			       dir) const;
 
-  //--------------------------------------------------
-  //  Access to parameters, errors and reference point
-  //--------------------------------------------------
-  TrkParams*                 parameters()                   {return &_dtparams;}
-  const TrkParams*           parameters() const             {return &_dtparams;}
-  virtual const CosmicLineTraj* localTrajectory(double fltLen, double& localFlt)
-    const;
-  const HepPoint&            referencePoint() const         {return _refpoint;}
+  virtual double distTo1stError(double s, double tol, int pathDir) const;
+  virtual double distTo2ndError(double s, double tol, int pathDir) const;
+
+
+  double curvature( double fltLen) const;
+  CLHEP::HepMatrix derivDeflect(double fltlen,deflectDirection) const;
+  CLHEP::HepMatrix derivDisplace(double fltlen,deflectDirection idir) const;
+  CLHEP::HepMatrix derivPFract(double fltlen) const;
+
+  TranslateParams paramFunction() const { return CosmicLineTraj::paramFunc; }
+  
+  void invertParams(TrkParams* params, std::vector<bool>& flags) const;
+  
+  double d0() const {return parameters()->parameter()[d0Index];}
+  double phi0() const{  return parameters()->parameter()[phi0Index]; }
+  
+  double theta() const {return parameters()->parameter()[thetaIndex]; }
+  double phi() const {  return parameters()->parameter()[phiIndex]; }
+
+  virtual void visitAccept(TrkVisitor* vis) const;
+
   virtual void               print(std::ostream& os) const;
   virtual                    void printAll(std::ostream& os) const;
 
-  //--------------------------------------------------
-  // Change contents
-  //--------------------------------------------------
-  // Change the reference point and the parameters
-  void           changePoint(const HepPoint& newpoint,double& fltlen);
-  // Set the ref point and don't change the params
-  void           setPoint(const HepPoint& newpoint)    {_refpoint = newpoint;}
-  // inversion function: this inverts both the flight range and the parameters
-  // so that the same traj is described but going in the opposite direction.
-  CosmicLineTraj& invert();
-  // invert the track parameters passed in newparams.
-  // Returns true in flags if the inversion requires a sign change in the
-  // covariance matrix as well.
-  virtual void invertParams(TrkParams* newparams, std::vector<bool>& flags) const = 0;
-  // Provide function which translates the reference point of parameters
-  virtual TranslateParams paramFunction() const = 0;
-
-  //--------------------------------------------------
-  // Visitor access for momentum functions
-  //--------------------------------------------------
-
-  virtual void visitAccept(TrkVisitor* vis) const = 0;
-
-  bool operator==(const CosmicLineTraj&) const; // return equivalence, not identy
-
-
-protected:
-  TrkParams _dtparams;
-  HepPoint _refpoint; // reference point for parameters
+  double z( const double& ) const;
+  double zFlight(double zpos) const;
+  //double dip() const {return atan(tanDip());}
+  //double cosDip() const {return 1./sqrt(1.+(tanDip()*tanDip())); }
+  //double sinDip() const {return tanDip()*cosDip(); }
+  //double translen(const double& f) const {return cosDip()*f;}
+  //double arc( const double& f) const {return translen(f)*omega();}
+  double angle(const double& f) const;
 private:
-  // Preempt 
-  CosmicLineTraj(const CosmicLineTraj &);
-  CosmicLineTraj&   operator= (const CosmicLineTraj&);
+
+  static void paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
+			const CLHEP::HepVector& oldpar,const CLHEP::HepSymMatrix& oldcov,
+			CLHEP::HepVector& newpar,CLHEP::HepSymMatrix& newcov,
+			double fltlen);
 };
 #endif
