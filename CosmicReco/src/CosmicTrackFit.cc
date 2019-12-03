@@ -430,7 +430,8 @@ void CosmicTrackFit::ConvertFitToDetectorFrame(CosmicTrackFinderData& trackData,
 	else{
 	TrackEquation XYZTrack(Pos, Dir);
 	cosmictrack->SetMinuitTrackEquation(XYZTrack);
-
+        cosmictrack->set_fit_phi(atan(Dir.y()/Dir.x()));
+        cosmictrack->set_fit_theta(acos(Dir.x()/sqrt(Dir.Mag2())));
 	}
 
 }

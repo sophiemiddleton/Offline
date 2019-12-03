@@ -5,7 +5,7 @@
 /*
 Provisional parameterization of the KF linear trajectory class. The (geometric) components will be:
  	-theta and phi of the direction vector WRT to the tracker coordinate system -->Track direction (called theta and phi here)
-	-signed distance of closest approach (DOCA) to the tracker system origin ---->Signed distance (called d0 here)
+	-signed distance of closest approach (DOCA) to the tracker system origin ---->Signed distance (called d0 here, signed by ang mom)
 	- azimuth of the point of closest approach (POCA) vector --> Measure of Distance (called phi0 here)
 
 */
@@ -27,7 +27,7 @@ public:
   //position: --> DOCA, POCA
   double d0() const                              {return parvec[d0Index];}
   double phi0() const                            {return parvec[phi0Index];}
-  //direction: ---> angles
+  //direction: ---> angles Phi = (atan(y/x)) Theta = (acos(x/r));
   double theta() const                              {return parvec[thetaIndex];}
   double phi() const                          {return parvec[phiIndex];}
 

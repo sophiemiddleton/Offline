@@ -3,6 +3,7 @@
 // Date: Dec 2019
 
 #include "CosmicReco/inc/CosmicKalFit.hh"
+#include "CosmicReco/inc/CosmicTrkUtils.hh"
 /*
 void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep, 
 			 Mu2eDetector::cptr_t detmodel,

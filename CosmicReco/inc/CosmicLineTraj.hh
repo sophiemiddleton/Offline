@@ -55,12 +55,8 @@ public:
 
 
   double curvature( double fltLen) const;
-  CLHEP::HepMatrix derivDeflect(double fltlen,deflectDirection) const;
-  CLHEP::HepMatrix derivDisplace(double fltlen,deflectDirection idir) const;
-  CLHEP::HepMatrix derivPFract(double fltlen) const;
-
-  TranslateParams paramFunction() const { return CosmicLineTraj::paramFunc; }
   
+  TranslateParams paramFunction() const { return CosmicLineTraj::paramFunc; }
   void invertParams(TrkParams* params, std::vector<bool>& flags) const;
   
   double d0() const {return parameters()->parameter()[d0Index];}

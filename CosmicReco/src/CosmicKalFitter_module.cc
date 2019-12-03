@@ -91,7 +91,8 @@ namespace mu2e{
 	      fhicl::Atom<int> diag{Name("diag"), Comment("set on for MC info"),2};
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
               fhicl::Atom<art::InputTag> seedToken{Name("CosmicTrackSeedCollection"),Comment("tag for combo hit collection")};
-              fhicl::Atom<unsigned> minnhits{Name("minnhits"), Comment("min number of trkstrawhits"), 10},
+              fhicl::Atom<unsigned> minnhits{Name("minnhits"), Comment("min number of trkstrawhits"), 10};
+	      fhicl::Atom<std::vector<double>> perr{Name("ParameterErrors"), Comment("Parameter Error")};
 	      fhicl::Table<CosmicKalFitter::Config> kfit{Name("CosmicKalFitter"), Comment("fit")};
     };
     typedef art::EDProducer::Table<Config> Parameters;
@@ -108,7 +109,7 @@ namespace mu2e{
     int 			        _diag, _debug;
     art::InputTag 		        _seedToken;
     unsigned				_minnhits;
-
+    double 				_perr;
     double _amsign; // cached sign of angular momentum WRT the z axis 
     double _bz000;        // sign of the magnetic field at (0,0,0)
     HepSymMatrix _hcovar; // cache of parameter error covariance matrix
@@ -137,10 +138,16 @@ namespace mu2e{
    	_diag (conf().mcdiag()),
 	_debug  (conf().debug()),
 	_seedToken (conf().seedToken()),
+	_perr (conf().perr()),
 	_kfit (conf().kfit())
 {
 	    consumes<CosmicTrackSeedCollection>();
 	    produces<CosmicKalSeedCollection>();
+	     if(_perr.size() != HelixTraj::NHLXPRM)
+      		throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<< endl;
+    	     _hcovar = HepSymMatrix(CosmicLinesTraj::NHLXPRM,0);
+    		for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
+      			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];   
  }
 
  CosmicKalFitter::~CosmicKalFitter(){}
@@ -204,7 +211,8 @@ namespace mu2e{
               CosmicKalFitData tmpResult(_kalResult);
 	      
 		/*
-	       CosmicTraj cosmictraj(hpvec,_hcovar);
+ 		HepVector hpvec(CosmicLineTraj::NHLXPRM);
+	       CosmicLineTraj cosmictraj(hpvec,_hcovar);
 	      
 		if(_debug > 1){
 	 
@@ -250,7 +258,7 @@ namespace mu2e{
 				
 			     if(kf._hits.size() >= _minnhits) kf._status.merge(TrkFitFlag::hitsOK);
 	                     _result.kalSeed = &kf;		      
-			     _kfit.Fit(tmpResult, _srep, detmodel);  
+			     _kfit.MakeTrack(tmpResult, _srep, detmodel);  
 
 
          /*

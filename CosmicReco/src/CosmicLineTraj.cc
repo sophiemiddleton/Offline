@@ -19,9 +19,8 @@ using std::endl;
 using std::ostream;
 using namespace CLHEP;
 
-#ifndef M_2PI
-#define M_2PI 2*M_PI
-#endif
+
+//reference point --> is this the center of the tracker system?
 
 CosmicLineTraj::CosmicLineTraj(const HepVector& pvec, const HepSymMatrix& pcov,
                      double lowlim, double hilim, const HepPoint& refpoint) :
@@ -79,129 +78,65 @@ CosmicLineTraj::~CosmicLineTraj()
 }
 
 double
-CosmicLineTraj::z(const double& f) const //TODO
+CosmicLineTraj::z(const double& f) const //TODO 
 {
-  return z0() + f*sinDip() + referencePoint().z();
+  return  f + referencePoint().z();
 }
 
 double
-CosmicLineTraj::zFlight(double zpos) const { //TODO
-  return (zpos - z0())/sinDip();
+CosmicLineTraj::zFlight(double zpos) const { //TODO 
+  return (zpos);
 }
 
 HepPoint
-CosmicLineTraj::position( double f) const //TODO
+CosmicLineTraj::position( double f) const //TODO check this maths makes sense
 {
-  double cDip = cosDip();
-  double sDip = tanDip() * cDip;
-  double phi00 = parameters()->parameter()[phi0Index];  // Don't normalize
-  double ang = phi00 + cDip*f*omega();
-  double cang = cos(ang);
-  double sang = sin(ang);
-  double sphi0 = sin(phi00);
-  double cphi0 = cos(phi00);
-
-  return HepPoint((sang - sphi0)/omega() - d0()*sphi0+referencePoint().x(),
-                 -(cang - cphi0)/omega() + d0()*cphi0+referencePoint().y(),
-                 z0() + f*sDip                       +referencePoint().z());
+  double sphi0 = sin(phi0());
+  double cphi0 = cos(phi0());
+ 
+  double x_pos = d0()*cphi0+referencePoint().x();
+  double y_pos = sphi0+referencePoint().y();
+  double z_pos = f+referencePoint().z();
+  return HepPoint(x_pos, y_pos, z_pos);
 }
 
 
 Hep3Vector
-CosmicLineTraj::direction( double f) const //TODO
+CosmicLineTraj::direction( double f) const //TODO - check maths
 {
-  // Angle formed by tangent vector after
-  // being rotated 'arclength' around orbit.
-  double alpha = angle( f );
-  // Construct 3-D tangent vector of unit magnitude.
-  double cDip = cosDip();
-  return Hep3Vector ( cos(alpha)*cDip,
-                      sin(alpha)*cDip,
-                      cDip*tanDip() );
+ double x_dir = cos(theta());
+ double y_dir = cos(theta())/tan(phi());
+ double z_dir = sqrt(pow(sin(theta()),2) - pow(cos(theta()),2)/pow(tan(phi()),2));
+ return Hep3Vector (x_dir, y_dir, z_dir);
 }
 
 Hep3Vector
-CosmicLineTraj::delDirect( double fltLen ) const //TODO
+CosmicLineTraj::delDirect( double fltLen ) const 
 {
-  double ang = angle(fltLen);
-  double cDip = cosDip();
-  double delX = -omega() * cDip * cDip * sin(ang);
-  double delY =  omega() * cDip * cDip * cos(ang);
-  return Hep3Vector(delX, delY, 0.0);
+ return Hep3Vector(0,0, 0.0);
 }
 
 double
-CosmicLineTraj::distTo1stError(double s, double tol, int pathDir) const //TODO
+CosmicLineTraj::distTo1stError(double s, double tol, int pathDir) const 
 {
-  return sqrt(2.*tol/fabs(omega())*(1.+pow(tanDip(),2)));
+  return 9999;
 }
 
 double
-CosmicLineTraj::distTo2ndError(double s, double tol, int pathDir) const //TODO
+CosmicLineTraj::distTo2ndError(double s, double tol, int pathDir) const 
 {
-  return sqrt(1.+pow(tanDip(),2))*cbrt(6.*tol/pow(omega(),2));
+  return 9999;
 }
 
 void
 CosmicLineTraj::getInfo(double fltLen, HepPoint& pos, Hep3Vector& dir, //TODO
                    Hep3Vector& delDir) const
 {
-  //  double ang = angle(fltLen);
-  double cDip = cosDip();
-  double sDip = tanDip() * cDip;
-  double phi00 = parameters()->parameter()[phi0Index];  // Don't normalize
-  double ang = phi00 + cDip*fltLen*omega(); 
-  double cang = cos(ang);
-  double sang = sin(ang);
-  double sphi0 = sin(phi00);
-  double cphi0 = cos(phi00);
-
-  double xt = (sang - sphi0)/omega() - d0()*sphi0 +
-    referencePoint().x();
-  double yt = -(cang - cphi0)/omega() + d0()*cphi0 +
-    referencePoint().y();
-  double zt = z0() + fltLen*sDip + referencePoint().z();
-  pos.setX(xt);
-  pos.setY(yt);
-  pos.setZ(zt);
-
-  dir.setX(cang * cDip);
-  dir.setY(sang * cDip);
-  dir.setZ(sDip);
-
-  double delX = -omega() * cDip * cDip * sang;
-  double delY =  omega() * cDip * cDip * cang;
-  delDir.setX(delX);
-  delDir.setY(delY);
-  delDir.setZ(0.0);
+  pos = position(fltLen);
+  dir = direction(fltLen);
 }
 
-void
-CosmicLineTraj::getInfo( double fltLen, HepPoint& pos, Hep3Vector& dir ) const //TODO
-{
-  //  double ang = angle(fltLen);
-  double cDip = cosDip();
-  double sDip = tanDip() * cDip;
-  double phi00 = parameters()->parameter()[phi0Index];  // Don't normalize
-  double ang = phi00 + cDip*fltLen*omega(); 
-  double cang = cos(ang);
-  double sang = sin(ang);
-  double sphi0 = sin(phi00);
-  double cphi0 = cos(phi00);
 
-  double xt = (sang - sphi0)/omega() - d0()*sphi0 +
-    referencePoint().x();
-  double yt = -(cang - cphi0)/omega() + d0()*cphi0 +
-    referencePoint().y();
-  double zt = z0() + fltLen*sDip + referencePoint().z();
-  pos.setX(xt);
-  pos.setY(yt);
-  pos.setZ(zt);
-
-  dir.setX(cang * cDip);
-  dir.setY(sang * cDip);
-  dir.setZ(sDip);
-}
 
 void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const //TODO
 {
@@ -209,20 +144,15 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
   //  All arithmetic operations have been replaced by +=, etc. versions 
   //  for speed.
 
-  // Create difNumber versions of parameters
   DifNumber phi0Df(phi0(), phi0Index+1, NHLXPRM);
   phi0Df.setIndepPar( parameters() );
   DifNumber d0Df(d0(), d0Index+1, NHLXPRM);
   d0Df.setIndepPar( parameters() );
-  DifNumber z0Df(z0(), z0Index+1, NHLXPRM);
-  z0Df.setIndepPar( parameters() );
-  DifNumber tanDipDf(tanDip(), tanDipIndex+1, NHLXPRM);
-  tanDipDf.setIndepPar( parameters() );
-  DifNumber omegaDf(omega(), omegaIndex+1, NHLXPRM);
-  omegaDf.setIndepPar( parameters() );
-
-  DifNumber dipDf = atan(tanDipDf);
-
+  DifNumber thetaDf(theta(), thetaIndex+1, NHLXPRM);
+  thetaDf.setIndepPar( parameters() );
+  DifNumber phiDf(phi(), phiIndex+1, NHLXPRM);
+  phiDf.setIndepPar( parameters() );
+  
   static DifNumber cDip;
   dipDf.cosAndSin(cDip, dir.z);
   static DifNumber sinPhi0, cosPhi0;
@@ -230,19 +160,14 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
 
   bool lref = (referencePoint().x() != 0. || referencePoint().y() != 0. ||
                referencePoint().z() != 0.);
-
+//TODO---> what is alpha?
   DifNumber alphaDf = cDip;
   alphaDf *= omegaDf;
   alphaDf *= flt;
   alphaDf += phi0Df;
 
-  // This is not the prettiest line imaginable for this operation:
   alphaDf.mod(-Constants::pi, Constants::pi);
-  //  DifNumber sinAlpha, cosAlpha;
   alphaDf.cosAndSin(dir.x, dir.y);
-
-  //  DifNumber x =   (sinAlpha - sinPhi0) / omegaDf - d0Df * sinPhi0 + px;
-  //  DifNumber y =  -(cosAlpha - cosPhi0) / omegaDf + d0Df * cosPhi0 + py;
 
   pos.x = dir.y;
   pos.x -= sinPhi0;
@@ -286,15 +211,14 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir, //TODO
   // Create difNumber versions of parameters
   DifNumber phi0Df(phi0(), phi0Index+1, NHLXPRM);
   DifNumber d0Df(d0(), d0Index+1, NHLXPRM);
-  DifNumber z0Df(z0(), z0Index+1, NHLXPRM);
-  DifNumber tanDipDf(tanDip(), tanDipIndex+1, NHLXPRM);
-  DifNumber omegaDf(omega(), omegaIndex+1, NHLXPRM);
+  DifNumber thetaDf(theta(), thetaIndex+1, NHLXPRM);
+  DifNumber phiDf(phi(), phiIndex+1, NHLXPRM);
+  
   phi0Df.setIndepPar( parameters() );
   d0Df.setIndepPar( parameters() );
-  z0Df.setIndepPar( parameters() );
-  tanDipDf.setIndepPar( parameters() );
-  omegaDf.setIndepPar( parameters() );
-  DifNumber dipDf = atan(tanDipDf);
+  thetaDf.setIndepPar( parameters() );
+  phiDf.setIndepPar( parameters() );
+  
 
   static DifNumber cDip;
   dipDf.cosAndSin(cDip, dir.z);
@@ -308,14 +232,8 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir, //TODO
   alphaDf *= omegaDf;
   alphaDf *= flt;
   alphaDf += phi0Df;
-
-  // This is not the prettiest line imaginable for this operation:
-  alphaDf.mod(-Constants::pi, Constants::pi);
-  //  DifNumber sinAlpha, cosAlpha;
+alphaDf.mod(-Constants::pi, Constants::pi);
   alphaDf.cosAndSin(dir.x, dir.y);
-
-  //  DifNumber x =   (sinAlpha - sinPhi0) / omegaDf - d0Df * sinPhi0 + px;
-  //  DifNumber y =  -(cosAlpha - cosPhi0) / omegaDf + d0Df * cosPhi0 + py;
 
   pos.x = dir.y;
   pos.x -= sinPhi0;
@@ -360,150 +278,14 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir, //TODO
   dir.y *= cDip;
 }
 
-HepMatrix
-CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TODO
-{
-//
-//  This function computes the column matrix of derrivatives for the change
-//  in parameters for a change in the direction of a track at a point along
-//  its flight, holding the momentum and position constant.  The effects for
-//  changes in 2 perpendicular directions (theta1 = dip and
-//  theta2 = phi*cos(dip)) can sometimes be added, as scattering in these
-//  are uncorrelated.
-//
-  HepMatrix ddflct(NHLXPRM,1);
-//
-//  Compute some common things
-//
-  double omeg = omega();
-  double tand = tanDip();
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double cosd = cosDip();
-  double darc = omeg*d0();
-//
-//  Go through the parameters
-//
-  switch (idirect) {
-  case theta1:
-    ddflct(omegaIndex+1,1) = omeg*tand;
-    ddflct(tanDipIndex+1,1) = 1.0/pow(cosd,2);
-    ddflct(d0Index+1,1) = (1-dx)*tand/omeg;
-    ddflct(phi0Index+1,1) =  -dy*tand/(1+darc);
-    ddflct(z0Index+1,1) = - translen(fltlen) - pow(tand,2)*dy/(omeg*(1+darc));
-    break;
-  case theta2:
-    ddflct(omegaIndex+1,1) = 0;
-    ddflct(tanDipIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = -dy/(cosd*omeg);
-    ddflct(phi0Index+1,1) = dx/(cosd*(1+darc));
-    ddflct(z0Index+1,1) = -tand*(1- dx/(1+darc))/(cosd*omeg);
-    break;
-  }
-
-  return ddflct;
-}
-
-
-HepMatrix
-CosmicLineTraj::derivDisplace(double fltlen,deflectDirection idirect) const //TODO
-{
-//
-//  This function computes the column matrix of derrivatives for the change
-//  in parameters for a change in the position of a track at a point along
-//  its flight, holding the momentum and direction constant.  The effects for
-//  changes in 2 perpendicular directions 'theta1' = (-sin(l)cos(p),-sin(l)sin(p),cos(l)) and
-//  'theta2' = (-sin(p),cos(p),0).  These are by definition orthogonal and uncorrelated.
-//  these displacements are correlated with the angular change above
-//
-  HepMatrix ddflct(NHLXPRM,1);
-//
-//  Compute some common things
-//
-  double omeg = omega();
-  double tand = tanDip();
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double cosd = cosDip();
-  double sind = sinDip();
-  double darc_1 = 1.0+omeg*d0();
-//
-//  Go through the parameters
-//
-  switch (idirect) {
-  case theta1:
-    ddflct(omegaIndex+1,1) = 0.0;
-    ddflct(tanDipIndex+1,1) = 0.0;
-    ddflct(d0Index+1,1) = -sind*dy;
-    ddflct(phi0Index+1,1) = sind*dx*omeg/darc_1;
-    ddflct(z0Index+1,1) = sind*tand*dx/darc_1 + cosd;
-    break;
-  case theta2:
-    ddflct(omegaIndex+1,1) = 0;
-    ddflct(tanDipIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = dx;
-    ddflct(phi0Index+1,1) = dy*omeg/darc_1;
-    ddflct(z0Index+1,1) = tand*dy/darc_1;
-    break;
-  }
-
-  return ddflct;
-}
-
-
-HepMatrix
-CosmicLineTraj::derivPFract(double fltlen) const
-{
-//
-//  This function computes the column matrix of derrivatives for the change
-//  in parameters from a (fractional) change in the track momentum,
-//  holding the direction and position constant.  The momentum change can
-//  come from energy loss.
-//
-//  For a helix, dp/P = -domega/omega,
-//  dParam/d(domega/omega) = -omega*dParam/ddomega
-//
-  HepMatrix dmomfrac(NHLXPRM,1);
-//
-//  Compute some common things
-
-  double omeg = omega();
-  double tand = tanDip();
-  double tranl = translen(fltlen);
-  double arcl = tranl*omeg;
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double darc = omeg*d0();
-
-//  Go through the parameters
-// omega
-  dmomfrac(omegaIndex+1,1) = -omeg;
-// tanDip
-  dmomfrac(tanDipIndex+1,1) = 0.0;
-// d0
-  dmomfrac(d0Index+1,1) = -(1-dx)/omeg;
-// phi0
-  dmomfrac(phi0Index+1,1) = dy/(1+darc);
-// z0
-  dmomfrac(z0Index+1,1) = -tand*(tranl-dy/((1+darc)*omeg));
-//
-  return dmomfrac;
-}
-
 double
 CosmicLineTraj::curvature(double ) const   //TODO
 {
-//  Compute the curvature as the magnitude of the 2nd derivative
-//  of the position function with respect to the 3-d flight distance
-//
-  double cosd = cosDip();
-  return pow(cosd,2)*fabs(omega());
+return 1;
 }
 
 double
-CosmicLineTraj::phi0() const //TODO
+CosmicLineTraj::phi0() const 
 {
   return BbrAngle(parameters()->parameter()[phi0Index]).rad();
 }
@@ -514,20 +296,29 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
                      HepVector& newvec,HepSymMatrix& newcov,
                      double fltlen) //TODO
 {
-// copy the input parameter vector, in case the input and output are the same
+
   HepVector parvec(oldvec);
-// start with the input: omega and tandip don't change
   newvec = parvec;
-//
+
   double delx = newpoint.x()-oldpoint.x();
   double dely = newpoint.y()-oldpoint.y();
   double delz = newpoint.z()-oldpoint.z();
-//
-  double rad = 1./parvec[omegaIndex];
+/*
+
+ double cos0 = cos(parvec[phi0Index]);
+  double sin0 = sin(parvec[phi0Index]);
+  double perp = delx*sin0-dely*cos0;
+  double para = delx*cos0+dely*sin0;
+  double tand = parvec[thetaIndex;
+
+
+*/
+  double rad = 1./parvec[omegaIndex];//TODO
   double rad2 = rad*rad;
   double delta = rad + parvec[d0Index];
   double cos0 = cos(parvec[phi0Index]);
   double sin0 = sin(parvec[phi0Index]);
+
   double perp = delx*sin0-dely*cos0;
   double para = delx*cos0+dely*sin0;
   double tand = parvec[tanDipIndex];
@@ -556,64 +347,26 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
 // now covariance: first, compute the rotation matrix
 // start with 0: lots of terms are zero
   static HepMatrix covrot(NHLXPRM,NHLXPRM,0);
-//
-// omega is diagonal
-  covrot(omegaIndex+1,omegaIndex+1) = 1.0;
-// tandip is diagonal
-  covrot(tanDipIndex+1,tanDipIndex+1) = 1.0;
+
+//theta:
+  covrot(thetaIndex+1,thetaIndex+1) = 1.0;
 // d0
-  covrot(d0Index+1,omegaIndex+1) = rad2*(1.0 - invdelta*(delta + perp));
-  covrot(d0Index+1,d0Index+1) = invdelta*(delta + perp);
-  covrot(d0Index+1,phi0Index+1) = delta*para*invdelta;
+  covrot(d0Index+1,d0Index+1) = 1;
+  covrot(d0Index+1,phi0Index+1) = ?;
 // phi0
-  covrot(phi0Index+1,omegaIndex+1) = rad2*para*invdelta2;
-  covrot(phi0Index+1,d0Index+1) = -para*invdelta2;
-  covrot(phi0Index+1,phi0Index+1) = delta*(delta + perp)*invdelta2;
+  covrot(phi0Index+1,d0Index+1) = ?;
+  covrot(phi0Index+1,phi0Index+1) = 1.0;
 // z0
-  covrot(z0Index+1,omegaIndex+1) = tand*
-    (rad*covrot(phi0Index+1,omegaIndex+1) - rad2*delphi);
-  covrot(z0Index+1,d0Index+1) = tand*rad*covrot(phi0Index+1,d0Index+1);
-  covrot(z0Index+1,phi0Index+1) = 
-    tand*rad*(covrot(phi0Index+1,phi0Index+1) - 1.0);
-  covrot(z0Index+1,tanDipIndex+1) = rad*delphi;
-  covrot(z0Index+1,z0Index+1) = 1.0;
-//
+  covrot(phiIndex+1,phiIndex+1) = 1.0;
+
 //  Apply the rotation
   newcov = oldcov.similarity(covrot);
-// done
+
 }
 
-void
-CosmicLineTraj::visitAccept(TrkVisitor* vis) const //TODO
+void CosmicLineTraj::invertParams(TrkParams* params, std::vector<bool>& flags) const
 {
-// Visitor access--just use the Visitor class member function
-  vis->trkVisitCosmicLineTraj(this);
-}
-
-void
-CosmicLineTraj::invertParams(TrkParams* params, std::vector<bool>& flags) const //TODO
-{
-  // Inverts parameters and returns true if the parameter inversion
-  // requires a change in sign of elements in the covariance matrix
-
-  for (unsigned iparam = 0; iparam < NHLXPRM; iparam++) {
-    switch ( iparam ) {
-    case d0Index:  // changes sign
-    case omegaIndex:  // changes sign
-    case tanDipIndex:  // changes sign
-      params->parameter()[iparam] *= -1.0;
-      flags[iparam] = true;
-      break;
-    case phi0Index:  // changes by pi, but covariance matrix shouldn't change
-      params->parameter()[iparam] =
-        BbrAngle(params->parameter()[iparam] + Constants::pi);
-      flags[iparam] = false;
-      break;
-    case z0Index:  // nochange
-      flags[iparam] = false;
-    }
-  }
-  return;
+  assert(1==0);
 }
 
 double

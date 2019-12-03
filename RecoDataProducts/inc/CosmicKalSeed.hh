@@ -28,7 +28,7 @@ namespace mu2e {
     std::vector<TrkStrawHitSeed> const& hits() const { return _hits;}
    
     std::vector<TrkStraw> const& straws() const { return _straws;}
-    
+    std::vector<KalSegment> const& segments() const { return _segments; }
     TrkFitFlag const& status() const { return _status; }
     Float_t flt0() const { return _flt0; }
     HitT0 const& t0() const { return _t0; }
