@@ -160,7 +160,7 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
 
   bool lref = (referencePoint().x() != 0. || referencePoint().y() != 0. ||
                referencePoint().z() != 0.);
-//TODO---> what is alpha?
+/*TODO---> what is alpha?
   DifNumber alphaDf = cDip;
   alphaDf *= omegaDf;
   alphaDf *= flt;
@@ -198,6 +198,7 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
 
   dir.x *= cDip;
   dir.y *= cDip;
+*/
 }
 
 void
@@ -219,7 +220,7 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir, //TODO
   thetaDf.setIndepPar( parameters() );
   phiDf.setIndepPar( parameters() );
   
-
+/*
   static DifNumber cDip;
   dipDf.cosAndSin(cDip, dir.z);
   static DifNumber sinPhi0, cosPhi0;
@@ -276,6 +277,7 @@ alphaDf.mod(-Constants::pi, Constants::pi);
 
   dir.x *= cDip;
   dir.y *= cDip;
+*/ //TODO
 }
 
 double
@@ -305,14 +307,6 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
   double delz = newpoint.z()-oldpoint.z();
 /*
 
- double cos0 = cos(parvec[phi0Index]);
-  double sin0 = sin(parvec[phi0Index]);
-  double perp = delx*sin0-dely*cos0;
-  double para = delx*cos0+dely*sin0;
-  double tand = parvec[thetaIndex;
-
-
-*/
   double rad = 1./parvec[omegaIndex];//TODO
   double rad2 = rad*rad;
   double delta = rad + parvec[d0Index];
@@ -361,7 +355,7 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
 
 //  Apply the rotation
   newcov = oldcov.similarity(covrot);
-
+*/ //TODO
 }
 
 void CosmicLineTraj::invertParams(TrkParams* params, std::vector<bool>& flags) const

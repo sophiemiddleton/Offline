@@ -9,6 +9,7 @@
 #define RecoDataProducts_KalSegment_HH
 #include <Rtypes.h>
 #include "RecoDataProducts/inc/HelixVal.hh"
+#include "RecoDataProducts/inc/CosmicVal.hh"
 #include "DataProducts/inc/XYZVec.hh"
 
 namespace mu2e {
@@ -18,6 +19,8 @@ namespace mu2e {
     Float_t fmax() const { return _fmax; }
     HelixVal const& helix() const { return _helix; }
     HelixCov const& covar() const { return _hcov; }
+    CosmicVal const& cosmic() const { return _cosmic; }
+    CosmicCov const& cosmic_cov() const { return _coscov; }
     Float_t mom() const { return _mom; }
     Float_t momerr() const { return _momerr; }
     void mom(float fltlen, XYZVec& momvec) const { helix().direction(fltlen,momvec); momvec *= mom(); } // momentum as a function of local flightlength
@@ -28,6 +31,8 @@ namespace mu2e {
     Float_t _dflt; // difference between local and global flight length
     HelixVal _helix; // helix valid for this segment
     HelixCov _hcov; // covariance matrix for this helix
+    CosmicVal _cosmic; // cosmic valid for this segment
+    CosmicCov _coscov; // covariance matrix for this cosmic
     Float_t _mom; // scalar momentum of this helix segment
     Float_t _momerr; // error on the scalar momentum
   };

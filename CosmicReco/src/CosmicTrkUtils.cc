@@ -42,11 +42,11 @@ namespace mu2e {
 	// phi0 is the azimuthal angle of the particle velocity vector at the point
 	// of closest approach to the origin.  It's sign also depends on the angular
 	// momentum.  To translate from the center, we need to reverse coordinates
-	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.posx(),amsign*track.posy().centery());//TODO
+	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.posx(),amsign*track.posy());//TODO
 	// d0 describes the distance to the origin at closest approach.
 	// It is signed by the particle angular momentum WRT the origin.
 	// The Helix fit radial bias is anti-correlated with d0; correct for it here.
-	hpvec[CosmicLineTraj::d0Index] = amsign*(origin - track.radius()); //TODO
+	hpvec[CosmicLineTraj::d0Index] = amsign*(origin - track.radius()); //TODO ---> use point to line DOCA util?
 	
 	hpvec[CosmicLineTraj::thetaIndex] = acos(track.dir().x()/sqrt(track.dir().mag2()));
 	hpvec[CosmicLineTraj::phiIndex] = atan(track.dir().x()/track.dir().y());
@@ -61,7 +61,7 @@ namespace mu2e {
       kseg._fmin = htraj.lowRange();
       kseg._fmax = htraj.hiRange();
       kseg._dflt = dflt;
-      kseg._helix = htraj.parameters()->parameter();
+      kseg._cosmic = htraj.parameters()->parameter(); //added cosmic option to Kseg
       kseg._hcov = htraj.parameters()->covariance();
       kseg._mom = momerr.mag();
       Hep3Vector md = momerr.unit();
