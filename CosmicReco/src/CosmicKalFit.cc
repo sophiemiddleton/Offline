@@ -68,7 +68,7 @@ namespace mu2e
 {
   class CosmicKalFit : public art::EDProducer
   {
-
+ _minnstraws
 }
 
 void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep, 
@@ -77,9 +77,9 @@ void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,
 
     if(fitable(*kalData.cosmicKalSeed)){
       
-      double flt0 = kalData.kalSeed->flt0(); //TODO
-      auto kseg = kalData.kalSeed->nearestSegment(flt0);
-      if(kseg->fmin() > kseg->localFlt(flt0) || //TODO - need to check that seed has this funcitonality
+      double flt0 = kalData.cosmicKalSeed->flt0();
+      auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
+      if(kseg->fmin() > kseg->localFlt(flt0) || 
 	kseg->fmax() < kseg->localFlt(flt0) ){
 	
       }
@@ -96,15 +96,15 @@ void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,
       makeTrkStrawHits(srep,kalData, tshv);
       
       std::vector<DetIntersection> detinter;
-      if(_matcorr)makeMaterials(detmodel, tshv,*kalData.helixTraj,detinter);
+      if(_matcorr)makeMaterials(detmodel, tshv,*kalData.cosmicTraj,detinter);
    
       std::vector<TrkHit*> thv(0);
       for(auto ihit = tshv.begin(); ihit != tshv.end(); ++ihit){
         thv.push_back(*ihit);
       }
       
-      TrkT0 t0(kalData.kalSeed->t0()); //TODO check on what seed actually has 
-      kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.kalSeed->particle(), t0, flt0); //TODO KalRep
+      TrkT0 t0(kalData.cosmicKalSeed->t0()); 
+      kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); //TODO KalRep
       assert(kalData.krep != 0);
     
       kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
@@ -125,7 +125,7 @@ CosmicKalFit::fitable(CosmicKalSeed const& kseed){
 
   void CosmicKalFit::makeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, TrkStrawHitVector& tshv ) {
 
-    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicSeed->trkstrawhits();
+    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicseed->trkstrawhits();
     CosmicLineTraj const htraj = *kalData.cosmicTraj;
     
     for(auto ths : hseeds ){
@@ -143,7 +143,7 @@ CosmicKalFit::fitable(CosmicKalSeed const& kseed){
       }
       tshv.push_back(trkhit);
     }
- // sort the hits by flightlength
+
     std::sort(tshv.begin(),tshv.end(),fcomp());
   }
 

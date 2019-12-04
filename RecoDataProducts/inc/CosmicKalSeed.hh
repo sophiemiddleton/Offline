@@ -29,6 +29,8 @@ namespace mu2e {
    
     std::vector<TrkStraw> const& straws() const { return _straws;}
     std::vector<KalSegment> const& segments() const { return _segments; }
+    std::vector<KalSegment>::const_iterator nearestSegment(float fltlen)  const;
+    std::vector<KalSegment>::const_iterator nearestSegment(const XYZVec& pos)  const; // find nearest segment to a GLOBAL position
     TrkFitFlag const& status() const { return _status; }
     Float_t flt0() const { return _flt0; }
     HitT0 const& t0() const { return _t0; }

@@ -1,3 +1,4 @@
+//This is the code from Babar, I have just added osme features so we can use it for the Cosmic tracks
 
 #ifndef KALREP_HH
 #define KALREP_HH
@@ -44,7 +45,7 @@ public:
 // Local helix parameters and trajectory access
 //******************************************
   HelixParams helix(double fltLen) const;
-  osmicLineParams cosmic(double fltLen) const;
+  CosmicLineParams cosmic(double fltLen) const;
   const TrkSimpTraj* localTrajectory(double fltlen,double& loclen) const;
   const TrkDifTraj& traj() const { return (TrkDifTraj&)pieceTraj(); }
   const TrkDifPieceTraj& pieceTraj() const;

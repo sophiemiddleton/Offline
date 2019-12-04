@@ -14,7 +14,7 @@
 #include "BTrk/BaBar/BaBar.hh"
 
 #include "BTrkData/inc/TrkStrawHit.hh"
-#include "BTrk/KalmanTrack/KalRep.hh"
+#include "CosmicReco/inc/KalRep.hh"//TODO - note new version used
 #include "BTrk/TrkBase/TrkParticle.hh"
 #include "CosmicReco/inc/CosmicLineTraj.hh"
 
@@ -30,12 +30,15 @@ namespace mu2e {
     };
     
     const art::Event*                 event;
-    
+    KalRep*                           krep;           // Kalman rep, owned by the collection
+    const ComboHitCollection*         chcol;          // 
+
+    const StrawHitFlagCollection*     shfcol;         //
     TrkFitDirection                   fdir; //TODO --> do we need this?
     CosmicTrackSeedCollection	      cosmictrackseedcol;
     const CosmicSeedTrack*            cosmicSeed;      
     const CosmicKalSeed*              cosmicKalSeed;       
-    CosmicLineTraj*                   cosmicTraj;      // initial parameterization of the track
+    CosmicLineTraj*                   cosmicTraj;      
     
     int                               fitType;        // 0:seed 1:final TODO ---> do we need this?
     

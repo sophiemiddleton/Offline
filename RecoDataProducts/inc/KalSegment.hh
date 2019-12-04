@@ -19,7 +19,7 @@ namespace mu2e {
     Float_t fmax() const { return _fmax; }
     HelixVal const& helix() const { return _helix; }
     HelixCov const& covar() const { return _hcov; }
-    CosmicVal const& cosmic() const { return _cosmic; }
+    CosmicVal const& cosmic() const { return _cosmic; } //added for cosmics fitting
     CosmicCov const& cosmic_cov() const { return _coscov; }
     Float_t mom() const { return _mom; }
     Float_t momerr() const { return _momerr; }

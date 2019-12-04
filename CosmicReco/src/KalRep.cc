@@ -220,10 +220,7 @@ CosmicLineParams KalRep::cosmic(double fltlen) const {
   }
 }
 
-
-
-//
-//  Chisquared function; allow this to work even with 1-directional fits
+//Chisquared function; allow this to work even with 1-directional fits
 double
 KalRep::chisq() const {
   if(hasFit(trkIn))
@@ -232,8 +229,7 @@ KalRep::chisq() const {
     return chisquared(trkOut);
 }
 //
-double
-KalRep::chisquared(trkDirection tdir) const {
+double KalRep::chisquared(trkDirection tdir) const {
 //  See if the cache is valid (it's self-flagging)
   if(_chisq[tdir] < 0.0) {
     if(hasFit(tdir)){
@@ -247,8 +243,7 @@ int nsites = _sites.size();
   return _chisq[tdir];
 }
 
-double
-KalRep::chisquared(int startsite,int nsites,trkDirection tdir) const {
+double KalRep::chisquared(int startsite,int nsites,trkDirection tdir) const {
   int sitestep = tdir==trkOut ? 1 : -1;
   int isite(startsite);
   const KalSite* prevsite = _sites[isite];
@@ -266,7 +261,6 @@ KalRep::chisquared(int startsite,int nsites,trkDirection tdir) const {
   return chisum;
 }
 
-//
 double
 KalRep::chisquared(double fltlen,trkDirection tdir) const {
 // first, find the sites; I really want 1 past the one found by this function
