@@ -29,7 +29,7 @@ namespace mu2e {
     void fillStrawHitSeeds(const KalRep* krep, ComboHitCollection const& chits, std::vector<TrkStrawHitSeed>& hitseeds); 
     void fillStraws(const KalRep* krep, std::vector<TrkStraw>& straws);
     // compute overlap between 2 time clusters
-    double overlap(TimeCluster const& tc1, TimeCluster const& tc2);
+    double overlap(TimeCluster const& tc1, TimeCluster const& tc2);//TODO - no calo cluster needed for us
     double overlap(CosmicKalSeed const& ks1, CosmicKalSeed const& ks2);
     double overlap(CosmicKalSeed const& ks, CosmicTrackSeed const& hs);
     double overlap(CosmicTrackSeed const& hs,TimeCluster const& tc);

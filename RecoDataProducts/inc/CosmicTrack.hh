@@ -6,7 +6,7 @@
 #include "DataProducts/inc/XYZVec.hh"
 #include "RecoDataProducts/inc/ComboHit.hh"
 #include "Mu2eUtilities/inc/BuildLinearFitMatrixSums.hh"
-
+#include "Mu2eUtilities/inc/PointLinePCA_XYZ.hh"
 #include<vector>
 #include<bitset>
 
@@ -88,12 +88,8 @@ namespace mu2e {
 	    
 	 //---------------Accessors:--------------//
 	  
-	    double GetSagitta() const {return _Sagitta;}
-	   
 	    double get_fit_phi() const { return FitPhi;}
-	    
 	    double get_fit_theta() const { return FitTheta;}
-	    
 	    int get_N() const { return _Nhits;}
 	    int get_iter(){return _niters;}
 	    
@@ -103,12 +99,8 @@ namespace mu2e {
 	    TrackParams GetInitParams()const{ 
 	    	return InitParams;
 	    }
-	    
-	    void SetTrackDirection(XYZVec dir){
-	    	this->Direction = dir;
-	    }
-	 
-	    XYZVec GetTrackDirection() const{
+
+	    XYZVec GetTrackDirection() const{ //TODO use private direction 🙈
 	    	XYZVec Direction(FitParams.A1, FitParams.B1, 1);
 	    	return Direction;
 	    }
@@ -118,11 +110,19 @@ namespace mu2e {
 	    	return Direction.Unit();
 	    }
 	    
-	    XYZVec GetTrackPosition() const{
+	    XYZVec GetTrackPosition() const{ //TODO use private positon?
 	    	XYZVec Position(FitParams.A0, FitParams.B0, 0);
 	    	return Position;
 	    }
-  
+
+ 	     XYZVec GetPOCA() const{
+		return POCA;
+             }
+
+	     XYZVec GetDOCA() const{
+		return DOCA;
+             }
+
 	     void clear_errors(); //clears track info and diagnostics
 	     void clear_parameters(); //clears just track info
 	     void clear_diag();
@@ -134,8 +134,7 @@ namespace mu2e {
 	    void SetInitParams(TrackParams par){ 
 	    	this->InitParams = par;
 	    }
-	   
-	    
+
 	    void SetMinuitParams(double par_a0, double par_a1, double par_b0, double par_b1, double par_t0 ){
 	    	this->MinuitFitParams.A0 = par_a0;
 	 	this->MinuitFitParams.A1 = par_a1;
@@ -173,11 +172,32 @@ namespace mu2e {
 	        this->MinuitFitEquation = Track;
 	     }
 	    
-	    
+	    void SetTrackPosition(XYZVec dir){
+	    	this->Direction = dir;
+	    }
+
+	    void SetTrackPosition(XYZVec pos){
+	    	this->Position = pos;
+	    }
+	   void SetFirstHitVec(double x, double y, double z) {
+		this->FirstHitVec.SetXYZ(x,y,z);
+
+	    }
+  	    void SetLastHitVec(double x, double y, double z) {
+		this->LastHitVec.SetXYZ(x,y,z);
+	    }
+
+	    void SetTrackPOCA() {
+		XYZVec TrackerCenter(0,0,0);//TODO 🙄
+        	PointLinePCA_XYZ PCA = PointLinePCA_XYZ(TrackerCenter, this->FirstHitVec, this->LastHitVec);
+		this->POCA = PCA.pca();
+		this->DOCA = PCA.dca();
+	    }
+  
 	    void set_fit_theta(double track_angle){ FitTheta = track_angle;}
-	    void set_mom(XYZVec mom){ _track_mommentum = mom;}
 	    void set_fit_phi(double track_angle){ FitPhi = track_angle;}
-	    //-----------Fill Diag info----------//
+
+	    //-----------Fill Diag info this is legacy it will probably be removed soon----------//
 	    void set_finalchisq_dof(double finalchisq_dof)   { Diag.FinalChiTot = finalchisq_dof; }
 	    void set_finalchisq_dofX(double finalchisq_dofX) { Diag.FinalChiX = finalchisq_dofX; }
 	    void set_finalchisq_dofY(double finalchisq_dofY) { Diag.FinalChiY = finalchisq_dofY; }
@@ -185,19 +205,16 @@ namespace mu2e {
 	    void set_initchisq_dof(double initchisq_dof)   { Diag.InitialChiTot = initchisq_dof; }
 	    void set_initchisq_dofX(double initchisq_dofX) { Diag.InitialChiX = initchisq_dofX; }
 	    void set_initchisq_dofY(double initchisq_dofY) { Diag.InitialChiY = initchisq_dofY; }
-	    
-            //------------End Diag Fill---------------//
-	    void set_niter(int iter){_niters= (iter);}
-	    
-    	     TrackParams FitParams; //Seed Fit
-             TrackParams InitParams; //Initial fit
-	     TrackParams MinuitFitParams; // Minuit Params
+	    void set_niter(int iter){ _niters= (iter); }
+            //----------------------------End Diag Fill---------------------------------//
+    	     TrackParams FitParams; //From Iterative Seed Fit (not drift)
+             TrackParams InitParams; //Initial fit (first estimate)
+	     TrackParams MinuitFitParams; // Minuit Params (seed drift final)
 
 	     TrackAxes MinuitCoordSystem;//Result from Minuit Fit
 	     TrackAxes TrackCoordSystem;//Seed Fit Result Axes
 	     TrackAxes InitTrackCoordSystem;//Initial Axes (start->end line)
 	     
-	     //These will become track representations LineFitTraj eventually TODO
 	     TrackEquation FitEquation;
 	     TrackEquation FitEquationXYZ;
 	     TrackEquation MinuitFitEquation;
@@ -211,18 +228,20 @@ namespace mu2e {
 	     bool minuit_converged = false;
 	     unsigned n_outliers = 0;
 
+	     double FitPhi;
+	     double FitTheta;
+	     XYZVec POCA;
+	     double DOCA;
+
   private:
 	    
 	    unsigned _Nhits;
-	    
-	    double FitPhi;
-	    double FitTheta;
-	   
-	    double _Sagitta;//TODO
-	    XYZVec _track_mommentum;//TODO
 	   
 	    int _niters;
 	    XYZVec Direction;
+	    XYZVec Positon;
+	    XYZVec FirstHitVec;
+	    XYZVec LastHitVec; 
 	    
   };
   

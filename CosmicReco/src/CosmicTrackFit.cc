@@ -168,7 +168,8 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
      int DOF = (nHits);// - (_Npara);
      const ComboHit* ch0 = &trackData._chHitsToProcess[0]; 
      const ComboHit* chN = &trackData._chHitsToProcess[trackData._chHitsToProcess.size()-1]; 
-     
+     cosmictrack.SetFirstHitVec(ch0->pos().x(), ch0->pos().y(), ch0->pos().z());
+     cosmictrack.SetLastHitVec(chN->pos().x(), chN->pos().y(), chN->pos().z());
      cosmictrack->Set_N(nHits);
 
      //Step 1: Get Initial Estimate of track direction
@@ -428,10 +429,10 @@ void CosmicTrackFit::ConvertFitToDetectorFrame(CosmicTrackFinderData& trackData,
 			
 		}}
 	else{
-	TrackEquation XYZTrack(Pos, Dir);
-	cosmictrack->SetMinuitTrackEquation(XYZTrack);
-        cosmictrack->set_fit_phi(atan(Dir.y()/Dir.x()));
-        cosmictrack->set_fit_theta(acos(Dir.x()/sqrt(Dir.Mag2())));
+		TrackEquation XYZTrack(Pos, Dir);
+		cosmictrack->SetMinuitTrackEquation(XYZTrack);
+		cosmictrack->set_fit_phi(acos(Dir.x()/Dir.Mag2()));
+		cosmictrack->set_fit_theta(acos(Dir.y()/sqrt(Dir.Mag2())));
 	}
 
 }

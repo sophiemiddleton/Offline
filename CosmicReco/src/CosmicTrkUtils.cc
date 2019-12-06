@@ -1,6 +1,6 @@
 //Author: S Middleotn
 //Date: Dec 2019
-//Purpose:
+//Purpose: this is a slitghly refactorized version of Helix TrkUtilities, they could probably be combined in future.
 // Mu2e
 #include "TrkReco/inc/TrkUtilities.hh"
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
@@ -26,6 +26,7 @@
 #include "CLHEP/Vector/ThreeVector.h"
 #include "CLHEP/Matrix/Vector.h"
 #include "CLHEP/Matrix/SymMatrix.h"
+#include "DataProducts/inc/XYZVec.hh"
 //C++
 #include <math.h>
 using CLHEP::Hep3Vector;
@@ -33,7 +34,7 @@ using CLHEP::HepSymMatrix;
 using CLHEP::HepVector;
 using namespace std;
 namespace mu2e {
-  namespace TrkUtilities {
+  namespace CosmicTrkUtils {
 
     bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, float amsign) {
       bool retval(false);
@@ -42,20 +43,21 @@ namespace mu2e {
 	// phi0 is the azimuthal angle of the particle velocity vector at the point
 	// of closest approach to the origin.  It's sign also depends on the angular
 	// momentum.  To translate from the center, we need to reverse coordinates
-	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.posx(),amsign*track.posy());//TODO
+	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.GetPOCA().x(),amsign*track.GetPOCA().y());
 	// d0 describes the distance to the origin at closest approach.
 	// It is signed by the particle angular momentum WRT the origin.
 	// The Helix fit radial bias is anti-correlated with d0; correct for it here.
-	hpvec[CosmicLineTraj::d0Index] = amsign*(origin - track.radius()); //TODO ---> use point to line DOCA util?
+	hpvec[CosmicLineTraj::d0Index] = amsign*(track.GetDOCA()); 
 	
-	hpvec[CosmicLineTraj::thetaIndex] = acos(track.dir().x()/sqrt(track.dir().mag2()));
-	hpvec[CosmicLineTraj::phiIndex] = atan(track.dir().x()/track.dir().y());
+	hpvec[CosmicLineTraj::thetaIndex] = asin(track.GetTrackDirection.y()/sqrt(track.GetTrackDirection().Mag2()));
+	hpvec[CosmicLineTraj::phiIndex] = acos(track.GetTrackDirection.x()/track.GetTrackDirection.Mag2());
 	
 	retval = true;
       }
       return retval;
     }
 
+   
 
     void fillSegment(CosmicLineTraj const& htraj, BbrVectorErr const& momerr,double dflt, KalSegment& kseg) {
       kseg._fmin = htraj.lowRange();

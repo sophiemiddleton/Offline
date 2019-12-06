@@ -25,7 +25,7 @@ namespace mu2e {
   }
 
   CosmicCov::CosmicCov()  {
-    for(size_t ipar=0;ipar<12;++ipar) //TODO
+    for(size_t ipar=0;ipar<12;++ipar) //TODO - this number --> is it correct?
       _cov[ipar]=0;
   }
 
@@ -64,17 +64,15 @@ namespace mu2e {
 
 
   void CosmicVal::direction(float fltlen, XYZVec& dir) const { 
-    double x_dir = cos(theta());
-    double y_dir = cos(theta())/tan(phi());
-    double z_dir = sqrt(pow(sin(theta()),2) - pow(cos(theta()),2)/pow(tan(phi()),2));
-    dir(x_dir, y_dir, z_dir);
+   double x_dir = cos(phi());
+   double y_dir = cos(theta());
+   double z_dir = cos(phi())*tan(phi());
+ 
+   dir(x_dir, y_dir, z_dir);
   }
 
-  void CosmicVal::position(float fltlen, XYZVec& pos) const { 
-   	double x_pos = d0()*cphi0+referencePoint().x();
-  	double y_pos = sphi0+referencePoint().y();
-  	double z_pos = f+referencePoint().z();
-  	pos(x_pos, y_pos, z_pos);
+  void CosmicVal::position(float fltlen, XYZVec& pos) const { //TODO
+   	pos(0,0,0);
   }
 
 }

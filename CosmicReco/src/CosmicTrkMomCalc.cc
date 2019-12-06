@@ -1,4 +1,4 @@
-//This is TrkMomCalculator from BTrk, I have just added a few cosmic functions
+//This is TrkMomCalculator from BTrk, I have just added a few cosmic functions eventually ....this is not th finsihed article, we need ot decide which bits we can migrate...TODO 
 
 #include "BTrk/BaBar/BaBar.hh"
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
@@ -59,7 +59,12 @@ CosmicTrkMomCalc::ptMom(const TrkSimpTraj& theTraj, const BField&
 
      return cosdip * ptot; 
 
-  } else {
+  } else if (theVisitor.cosmic) {
+
+
+//TODO TODO TODO!!!
+
+   } else {
 
 // particle must be a plain line--no way to calculate momentum
     return 999999.99;
@@ -90,6 +95,12 @@ CosmicTrkMomCalc::vecMom(const TrkSimpTraj& theTraj, const BField&
      theMom.setMag(theTraj.parameters()->parameter()[NeutParams::_p]);
      return theMom;
 
+  } else if (theVisitor.cosmic() !=0){
+
+
+//TODO TODO TODO
+
+
   } else {
 
 // particle must be a plain line--no way to calculate momentum
@@ -117,7 +128,9 @@ CosmicTrkMomCalc::errMom(const TrkSimpTraj& theTraj, const BField&
 // treat as neutral particle, same as curve in this case
      return calcNeutErrMom(theTraj, theField, fltlen);
 
-  } else {
+  }  else if (theVisitor.cosmic() !=0){
+//TODO TODO TODO
+ } else {
 
 // particle must be a plain line--no way to calculate momentum or err
 // The matrix is initialized to zero (see BbrError constructor)
@@ -159,7 +172,12 @@ CosmicTrkMomCalc::charge(const TrkSimpTraj& theTraj, const BField&
 // treat as neutral particle, so charge is zero
      return 0;
 
-  } else {
+  } else if (theVisitor.cosmic() !=0 ){
+
+//TODO TODO TODO
+
+
+}else {
 
 // particle must be a plain line--take charge as zero
     return 0;
@@ -185,7 +203,11 @@ CosmicTrkMomCalc::posmomCov(const TrkSimpTraj& theTraj,const BField& theField,
 // treat as neutral particle, same as curve in this case
     return calcNeutPosmomCov(theTraj, theField, fltlen);
 
-  } else {
+  } else if (theVisitor.cosmic()!=0){
+
+//TODO TODO TODO 
+
+ }else {
 
 // particle must be a plain line--no way to calculate momentum or err
 // The matrix is initialized to zero (see BbrError constructor)
@@ -221,7 +243,7 @@ CosmicTrkMomCalc::getAllCovs(const TrkSimpTraj& theTraj,
     // treat as neutral particle, same as curve in this case
     calcNeutAllCovs(theTraj,theField,fltlen,xxCov,ppCov,xpCov);
 
-  } else {
+  } else { //TODO TODO I think maybe the else option is ok for cosmics ?
 
     // particle must be a plain line--no way to calculate momentum or err
     // The matrix is initialized to zero (see BbrError constructor)
@@ -270,7 +292,7 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
     calcNeutAllWeights(theTraj,theField,fltlen,
 		       pos,mom,xxWeight,ppWeight,xpWeight);
 
-  } else {
+  } else { //TODO TODO 
 
     // particle must be a plain line--no way to calculate momentum or err
     // temporary: initialize everything to 0 
@@ -292,7 +314,7 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
 
 //------------------------------------------------------------------------
 double
-CosmicTrkMomCalc::calcCurvPtMom(const Hep3Vector& direction,
+CosmicTrkMomCalc::calcCurvPtMom(const Hep3Vector& direction, //TODO need an instance like this for the Cosmics...
                                 double curvature,
                                 const BField& theField) {
 //------------------------------------------------------------------------
@@ -304,7 +326,7 @@ CosmicTrkMomCalc::calcCurvPtMom(const Hep3Vector& direction,
 
 //------------------------------------------------------------------------
 Hep3Vector
-CosmicTrkMomCalc::calcCurvVecMom(const Hep3Vector& direction,
+CosmicTrkMomCalc::calcCurvVecMom(const Hep3Vector& direction, //TODO need an instance like this for the Cosmics....
                                  double curvature,
                                  const BField& theField) {
 //------------------------------------------------------------------------
@@ -346,6 +368,27 @@ CosmicTrkMomCalc::momMag(const HelixTraj& theTraj,
   return momMag;
 }
 
+DifNumber
+CosmicTrkMomCalc::momMag(const CosmicLineTraj& theTraj,
+			 const BField& theField) {
+  DifNumber d0Df(theTraj.d0(), CosmicLineTraj::d0Index+1, CosmicLineTraj::NHLXPRM);
+  DifNumber phi0Df(theTraj.phi0(), CosmicLineTraj::phi0Index+1, CosmicLineTraj::NHLXPRM);
+  DifNumber thetaDf(theTraj.theta(), CosmicLineTraj::thetaIndex+1, CosmicLineTraj::NHLXPRM);
+  DifNumber phiDf(theTraj.phi(), CosmicLineTraj::phiIndex+1, CosmicLineTraj::NHLXPRM);
+  phi0Df.setIndepPar( theTraj.parameters() );
+  d0Df.setIndepPar( theTraj.parameters() );
+  thetaDf.setIndepPar( theTraj.parameters() );
+  phiDf.setIndepPar( theTraj.parameters() );
+ 
+  DifNumber dipDf = atan(tanDipDf);//TODO
+  DifNumber cosdip = cos(dipDf);//TODO
+  DifNumber momMag =
+    BField::mmTeslaToMeVc*theField.bFieldNominal() / (cosdip * omegaDf);//TODO
+  momMag.absolute();
+  return momMag;
+}
+
+
 //------------------------------------------------------------------------
 BbrVectorErr
 CosmicTrkMomCalc::calcCurvErrMom(const TrkSimpTraj& theTraj,
@@ -363,7 +406,7 @@ CosmicTrkMomCalc::calcCurvErrMom(const TrkSimpTraj& theTraj,
   }
   else {
     DifNumber sindip=DirDif.z;
-    DifNumber arg = 1.0-sindip*sindip;
+    DifNumber arg = 1.0-sindip*sindip; //TODO
     if (arg.number() < 0.0) {arg.setNumber(0.0);}
     DifNumber cosdip = sqrt(arg);
     
@@ -375,7 +418,7 @@ CosmicTrkMomCalc::calcCurvErrMom(const TrkSimpTraj& theTraj,
     MomDif = DirDif * momMag;
 
     if (ErrLogging(debugging) && 0) {
-      HepMatrix e1 = DirDif.errorMatrix(MomDif.x.indepPar()->covariance());
+      HepMatrix e1 = DirDif.errorMatrix(MomDif.x.indepPar()->covariance());//TODO --> need an instance when we have 4 x 4 covarience....
       double e2 = momMag.error(MomDif.x.indepPar()->covariance());
       HepMatrix e3 = MomDif.errorMatrix(MomDif.x.indepPar()->covariance());
       const HepMatrix& c1 = MomDif.x.indepPar()->covariance();
@@ -456,6 +499,80 @@ CosmicTrkMomCalc::calcNeutErrMom(const TrkSimpTraj& theTraj,
 // The following functions may be used at a later date (if and when we
 // ever want to drop the assumption that all recon'ed charges are 0, +1,
 // or -1):
+//------------------------------------------------------------------------
+BbrVectorErr
+CosmicTrkMomCalc::calcCosmicErrMom(const TrkSimpTraj& theTraj,
+                                 const BField& theField,
+                                 double fltlen) {
+//------------------------------------------------------------------------
+if (delDirDif.length() == 0.) {   
+  }
+  else {
+    DifNumber sindip=DirDif.z;
+    DifNumber arg = 1.0-sindip*sindip; //TODO
+    if (arg.number() < 0.0) {arg.setNumber(0.0);}
+    DifNumber cosdip = sqrt(arg);
+    
+    DifNumber momMag =
+      BField::mmTeslaToMeVc*theField.bFieldNominal()*cosdip /
+      delDirDif.length();
+    momMag.absolute();
+
+    MomDif = DirDif * momMag;
+
+    if (ErrLogging(debugging) && 0) {
+      HepMatrix e1 = DirDif.errorMatrix(MomDif.x.indepPar()->covariance());//TODO --> need an instance when we have 4 x 4 covarience....
+      double e2 = momMag.error(MomDif.x.indepPar()->covariance());
+      HepMatrix e3 = MomDif.errorMatrix(MomDif.x.indepPar()->covariance());
+      const HepMatrix& c1 = MomDif.x.indepPar()->covariance();
+      
+      ErrMsg(debugging) << endl << endl << "Start" << endl
+      << "param cov: " << endl
+      << c1(1,1) << endl
+      << c1(2,1) << "  " << c1(2,2) << endl
+      << c1(3,1) << "  " << c1(3,2) << "  " << c1(3,3) << endl
+      << c1(4,1) << "  " << c1(4,2) << "  " << c1(4,3) 
+      << "  " << c1(4,4) << endl
+      << c1(5,1) << "  " << c1(5,2) << "  " << c1(5,3) 
+      << "  " << c1(5,4) << "  " << c1(5,5) << endl
+      
+      << "Dir " << e1.num_row() << " " << e1.num_col() << endl
+      << "output:" << endl
+      << e1(1,1) << endl
+      << e1(2,1) << "  " << e1(2,2) << endl
+      << e1(3,1) << "  " << e1(3,2) << "  " << e1(3,3) << endl
+      << "deriv: " << endl
+      << DirDif.x.derivatives() << endl
+      << endl
+      
+      << "Mag " << endl
+      << "output:" << endl
+      << e2 << endl
+      << "deriv: " << endl
+      << momMag.derivatives() << endl
+      << endl
+      
+      << "Momdif " << e3.num_row() << " " << e3.num_col() << endl
+      << "output:" << endl
+      << e3(1,1) << endl
+      << e3(2,1) << "  " << e3(2,2) << endl
+      << e3(3,1) << "  " << e3(3,2) << "  " << e3(3,3) << endl
+      << "deriv: " << endl
+      << MomDif.x.derivatives() << endl
+      << endl
+      
+      << "End" << endl << endmsg; 
+    }
+  }
+  BbrError  symErr(MomDif.errorMatrix(
+                              MomDif.x.indepPar()->covariance()));
+  return BbrVectorErr(Hep3Vector(MomDif.x.number(), MomDif.y.number(),
+                    MomDif.z.number()), symErr);
+}
+
+// The following functions may be used at a later date (if and when we
+// ever want to drop the assumption that all recon'ed charges are 0, +1,
+// or -1):
 
 //------------------------------------------------------------------------
 int
@@ -491,7 +608,7 @@ CosmicTrkMomCalc::nearestInt(double floatPt) {
  * vertexing interface (M.Bondioli)
  */
 
-//------------------------------------------------------------------------
+//------------------------------------------------------------------------ 
 HepMatrix
 CosmicTrkMomCalc::calcCurvPosmomCov(const TrkSimpTraj& theTraj,
 				    const BField& theField,
@@ -574,6 +691,55 @@ CosmicTrkMomCalc::calcNeutPosmomCov(const TrkSimpTraj& theTraj,
   return HepMatrix(3,3,0);
 }
 
+
+
+//------------------------------------------------------------------------ //TODO --need one like this for cosmics
+HepMatrix
+CosmicTrkMomCalc::calcCosmicPosmomCov(const TrkSimpTraj& theTraj,
+				    const BField& theField,
+				    double fltlen) {
+//------------------------------------------------------------------------
+
+  DifPoint  PosDif;
+  DifVector DirDif;
+  DifVector delDirDif;
+  DifVector MomDif(0., 0., 0.);
+
+  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif);
+  if (delDirDif.length() == 0.) {   
+  }
+  else {
+    DifNumber sindip=DirDif.z;
+    DifNumber arg = 1.0-sindip*sindip;
+    if (arg.number() < 0.0) {arg.setNumber(0.0);}
+    DifNumber cosdip = sqrt(arg);
+
+
+    DifNumber momMag =
+      BField::mmTeslaToMeVc*theField.bFieldNominal()*cosdip /
+      delDirDif.length();
+    momMag.absolute();
+
+    MomDif = DirDif * momMag;
+
+  }
+
+  // computes the correlation among position and momentum
+  HepMatrix xpCov(3,3);
+  const HepSymMatrix& nnCov=MomDif.x.indepPar()->covariance();
+  xpCov(1,1)=correlation(PosDif.x,MomDif.x,nnCov);
+  xpCov(1,2)=correlation(PosDif.x,MomDif.y,nnCov);
+  xpCov(1,3)=correlation(PosDif.x,MomDif.z,nnCov);
+  xpCov(2,1)=correlation(PosDif.y,MomDif.x,nnCov);
+  xpCov(2,2)=correlation(PosDif.y,MomDif.y,nnCov);
+  xpCov(2,3)=correlation(PosDif.y,MomDif.z,nnCov);
+  xpCov(3,1)=correlation(PosDif.z,MomDif.x,nnCov);
+  xpCov(3,2)=correlation(PosDif.z,MomDif.y,nnCov);
+  xpCov(3,3)=correlation(PosDif.z,MomDif.z,nnCov);
+
+  return xpCov;
+}
+
 bool CosmicTrkMomCalc::weightToCov(const HepSymMatrix& inXX,const HepSymMatrix& inPP,const HepMatrix& inXP,
 				      HepSymMatrix& outXX,HepSymMatrix& outPP,HepMatrix& outXP){
   assert(inXX.num_row()==outXX.num_row());
@@ -593,6 +759,7 @@ bool CosmicTrkMomCalc::weightToCov(const HepSymMatrix& inXX,const HepSymMatrix& 
   outXX.assign(alpha);
   return true;
 }
+
 
 //------------------------------------------------------------------------
 void
@@ -628,7 +795,7 @@ CosmicTrkMomCalc::calcCurvAllCovs(const TrkSimpTraj& theTraj,
   double pt = fabs( BField::mmTeslaToMeVc * theField.bFieldNominal() / omega );
   double r = 1.0/omega;
   
-  // Calculate derivatives for Jacobian matrix
+  // Calculate derivatives for Jacobian matrix //
   double d_x_d0 = -sinphi0;
   double d_x_phi0 = r*cosphi - (r+d0)*cosphi0;
   double d_x_omega = -r*r*sinphi + r*r*sinphi0 + l*r*cosphi;
@@ -867,6 +1034,159 @@ CosmicTrkMomCalc::calcNeutAllCovs(const TrkSimpTraj& theTraj,
   xpCov(3,3)=correlation(PosDif.z,MomDif.z,nnCov);
 
 }
+
+
+//------------------------------------------------------------------------ //TODO
+void
+CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
+				  const BField& theField,
+				  double fltlen,
+				  HepSymMatrix& xxCov,
+				  HepSymMatrix& ppCov,
+				  HepMatrix&    xpCov) {
+//------------------------------------------------------------------------
+
+  const HepVector& v = theTraj.parameters()->parameter();
+  const HepSymMatrix& m = theTraj.parameters()->covariance();
+
+  double d0 = v[CosmicLineParams::d0Index];
+  double phi0 = v[CosmicLineParams::phi0Index];
+  double theta = v[CosmicLineParams::thetaIndex];
+  double phi = v[CosmicLineParams::phiIndex];
+  //double cosDip = 1/sqrt(1.0+s*s);
+  //double l = fltlen*cosDip ;
+
+  // calculate some sin,cos etc..
+  double dlds = -fltlen*tanDip*(cosDip*cosDip*cosDip) ;
+  /*
+  double phi = phi0 + omega*l;
+  double sinphi0 = sin(phi0);
+  double cosphi0 = cos(phi0);
+  double sinphi = sin(phi);
+  double cosphi = cos(phi);
+*/
+  double pt = fabs( BField::mmTeslaToMeVc * theField.bFieldNominal() / omega );
+  
+  // Calculate derivatives for Jacobian matrix //
+  double d_x_d0 = -sinphi0;
+  double d_x_phi0 = r*cosphi - (r+d0)*cosphi0;
+  double d_x_theta = -r*r*sinphi + r*r*sinphi0 + l*r*cosphi;
+  double d_x_phi = cosphi*dlds;
+
+  double d_y_d0 = cosphi0;
+  double d_y_phi0 = r*sinphi - (r+d0)*sinphi0;
+  double d_y_theta = r*r*cosphi - r*r*cosphi0 + l*r*sinphi;
+  double d_y_phi = sinphi*dlds;
+
+  double d_z_theta = ;
+  double d_z_phi = ;
+  //double d_z_z0 = 1.0;
+  //double d_z_tanDip = l + dlds*s;
+  double d_px_phi0 = -pt*sinphi;
+  //double d_px_omega = -pt*cosphi/omega - pt*l*sinphi;
+  //double d_px_tanDip = -pt*omega*sinphi*dlds;
+  double d_py_phi0 = pt*cosphi;
+  //double d_py_omega = -pt*sinphi/omega + pt*l*cosphi;
+  //double d_py_tanDip = pt*omega*cosphi*dlds;
+  //double d_pz_omega = -pt*s/omega;
+  //double d_pz_tanDip = pt;
+
+  // Fill temporary variables for m
+  double m_d0_d0 =  m[CosmicLineParams::d0Index][CosmicLineParams::d0Index];
+  double m_phi0_d0 =  m[CosmicLineParams::phi0Index][CosmicLineParams::d0Index];
+  double m_phi0_phi0 =  m[CosmicLineParams::phi0Index][CosmicLineParams::phi0Index];
+
+  double m_d0_d0 =  m[CosmicLineParams::d0Index][CosmicLineParams::d0Index];
+  double m_phi0_d0 =  m[CosmicLineParams::phi0Index][CosmicLineParams::d0Index];
+  double m_phi0_phi0 =  m[CosmicLineParams::phi0Index][CosmicLineParams::phi0Index];
+  
+  // Fill xxCov,xpCov,ppCov -TODO
+  xxCov(1,1) = 
+    d_x_d0* (  d_x_d0*m_d0_d0 + d_x_phi0*m_phi0_d0 + d_x_omega*m_omega_d0 + d_x_tanDip*m_tanDip_d0  )   + 
+    d_x_phi0* (  d_x_d0*m_phi0_d0 + d_x_phi0*m_phi0_phi0 + d_x_omega*m_omega_phi0 + d_x_tanDip*m_tanDip_phi0  )   + 
+    d_x_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
+    d_x_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xxCov(2,1) = 
+    d_y_d0* (  d_x_d0*m_d0_d0 + d_x_phi0*m_phi0_d0 + d_x_omega*m_omega_d0 + d_x_tanDip*m_tanDip_d0  )   + 
+    d_y_phi0* (  d_x_d0*m_phi0_d0 + d_x_phi0*m_phi0_phi0 + d_x_omega*m_omega_phi0 + d_x_tanDip*m_tanDip_phi0  )   + 
+    d_y_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
+    d_y_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xxCov(2,2) = 
+    d_y_d0* (  d_y_d0*m_d0_d0 + d_y_phi0*m_phi0_d0 + d_y_omega*m_omega_d0 + d_y_tanDip*m_tanDip_d0  )   + 
+    d_y_phi0* (  d_y_d0*m_phi0_d0 + d_y_phi0*m_phi0_phi0 + d_y_omega*m_omega_phi0 + d_y_tanDip*m_tanDip_phi0  )   + 
+    d_y_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
+    d_y_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
+  xxCov(3,1) = 
+    d_z_z0* (  d_x_d0*m_z0_d0 + d_x_phi0*m_z0_phi0 + d_x_omega*m_z0_omega + d_x_tanDip*m_tanDip_z0  )   + 
+    d_z_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xxCov(3,2) = 
+    d_z_z0* (  d_y_d0*m_z0_d0 + d_y_phi0*m_z0_phi0 + d_y_omega*m_z0_omega + d_y_tanDip*m_tanDip_z0  )   + 
+    d_z_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
+  xxCov(3,3) = 
+    d_z_z0* (  d_z_z0*m_z0_z0 + d_z_tanDip*m_tanDip_z0  )   + 
+    d_z_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
+
+  xpCov(1,1) = 
+    d_px_phi0* (  d_x_d0*m_phi0_d0 + d_x_phi0*m_phi0_phi0 + d_x_omega*m_omega_phi0 + d_x_tanDip*m_tanDip_phi0  )   + 
+    d_px_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
+    d_px_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(2,1) = 
+    d_px_phi0* (  d_y_d0*m_phi0_d0 + d_y_phi0*m_phi0_phi0 + d_y_omega*m_omega_phi0 + d_y_tanDip*m_tanDip_phi0  )   + 
+    d_px_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
+    d_px_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(3,1) = 
+    d_px_phi0* (  d_z_z0*m_z0_phi0 + d_z_tanDip*m_tanDip_phi0  )   + 
+    d_px_omega* (  d_z_z0*m_z0_omega + d_z_tanDip*m_tanDip_omega  )   + 
+    d_px_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(1,2) = 
+    d_py_phi0* (  d_x_d0*m_phi0_d0 + d_x_phi0*m_phi0_phi0 + d_x_omega*m_omega_phi0 + d_x_tanDip*m_tanDip_phi0  )   + 
+    d_py_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
+    d_py_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(2,2) = 
+    d_py_phi0* (  d_y_d0*m_phi0_d0 + d_y_phi0*m_phi0_phi0 + d_y_omega*m_omega_phi0 + d_y_tanDip*m_tanDip_phi0  )   + 
+    d_py_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
+    d_py_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(3,2) = 
+    d_py_phi0* (  d_z_z0*m_z0_phi0 + d_z_tanDip*m_tanDip_phi0  )   + 
+    d_py_omega* (  d_z_z0*m_z0_omega + d_z_tanDip*m_tanDip_omega  )   + 
+    d_py_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(1,3) = 
+    d_pz_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(2,3) = 
+    d_pz_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
+  xpCov(3,3) = 
+    d_pz_omega* (  d_z_z0*m_z0_omega + d_z_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
+
+  ppCov(1,1) = 
+    d_px_phi0* (  d_px_phi0*m_phi0_phi0 + d_px_omega*m_omega_phi0 + d_px_tanDip*m_tanDip_phi0  )   + 
+    d_px_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
+    d_px_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
+  ppCov(2,1) = 
+    d_py_phi0* (  d_px_phi0*m_phi0_phi0 + d_px_omega*m_omega_phi0 + d_px_tanDip*m_tanDip_phi0  )   + 
+    d_py_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
+    d_py_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
+  ppCov(2,2) = 
+    d_py_phi0* (  d_py_phi0*m_phi0_phi0 + d_py_omega*m_omega_phi0 + d_py_tanDip*m_tanDip_phi0  )   + 
+    d_py_omega* (  d_py_phi0*m_omega_phi0 + d_py_omega*m_omega_omega + d_py_tanDip*m_tanDip_omega  )   + 
+    d_py_tanDip* (  d_py_phi0*m_tanDip_phi0 + d_py_omega*m_tanDip_omega + d_py_tanDip*m_tanDip_tanDip  )   ; 
+  ppCov(3,1) = 
+    d_pz_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
+  ppCov(3,2) = 
+    d_pz_omega* (  d_py_phi0*m_omega_phi0 + d_py_omega*m_omega_omega + d_py_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_py_phi0*m_tanDip_phi0 + d_py_omega*m_tanDip_omega + d_py_tanDip*m_tanDip_tanDip  )   ; 
+  ppCov(3,3) = 
+    d_pz_omega* (  d_pz_omega*m_omega_omega + d_pz_tanDip*m_tanDip_omega  )   + 
+    d_pz_tanDip* (  d_pz_omega*m_tanDip_omega + d_pz_tanDip*m_tanDip_tanDip  )   ; 
+  
+
+}
+
+
+
 
 //------------------------------------------------------------------------
 void

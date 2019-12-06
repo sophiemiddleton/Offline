@@ -89,24 +89,26 @@ CosmicLineTraj::zFlight(double zpos) const { //TODO
 }
 
 HepPoint
-CosmicLineTraj::position( double f) const //TODO check this maths makes sense
+CosmicLineTraj::position(double f) const //TODO check this maths makes sense
 {
   double sphi0 = sin(phi0());
   double cphi0 = cos(phi0());
  
   double x_pos = d0()*cphi0+referencePoint().x();
-  double y_pos = sphi0+referencePoint().y();
+  double y_pos = d0()*sphi0+referencePoint().y();
   double z_pos = f+referencePoint().z();
   return HepPoint(x_pos, y_pos, z_pos);
 }
 
 
 Hep3Vector
-CosmicLineTraj::direction( double f) const //TODO - check maths
+CosmicLineTraj::direction( double f) const 
 {
- double x_dir = cos(theta());
- double y_dir = cos(theta())/tan(phi());
- double z_dir = sqrt(pow(sin(theta()),2) - pow(cos(theta()),2)/pow(tan(phi()),2));
+
+double x_dir = cos(phi());
+double y_dir = sin(theta());
+double z_dir = cos(phi())*tan(phi());
+ 
  return Hep3Vector (x_dir, y_dir, z_dir);
 }
 

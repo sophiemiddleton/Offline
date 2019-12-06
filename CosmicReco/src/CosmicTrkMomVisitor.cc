@@ -62,7 +62,6 @@ CosmicTrkMomVisitor::trkVisitNeutTraj(const NeutTraj* theTraj) {
   _cos = 0;
 }
 
-
 //------------------------------------------------------------------------
 void
 CosmicTrkMomVisitor::trkVisitCosmicLineTraj(const CosmicLineTraj* theTraj) {

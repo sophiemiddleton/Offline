@@ -307,7 +307,7 @@ private:
   TrkDifPieceTraj* _ptraj; // piecewise trajectory
   TrkDifPieceTraj* _reftraj; // reference for derivatives + residuals
   KalContext const& _kalcon; // context for this rep
-  TrkSimpTraj* _seedtraj; // seed trajectory for the fit
+  TrkSimpTraj* _seedtraj; // seed trajectory for the fit //TODO this can be either cosmic or helix as both inherit the TrkSimpTrj
   KalMaterial* _stopsite;// stopping info
 
   std::vector<KalSite*> _sites; // sorted list of sites

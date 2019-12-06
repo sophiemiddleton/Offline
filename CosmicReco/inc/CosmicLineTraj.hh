@@ -72,11 +72,7 @@ public:
 
   double z( const double& ) const;
   double zFlight(double zpos) const;
-  //double dip() const {return atan(tanDip());}
-  //double cosDip() const {return 1./sqrt(1.+(tanDip()*tanDip())); }
-  //double sinDip() const {return tanDip()*cosDip(); }
-  //double translen(const double& f) const {return cosDip()*f;}
-  //double arc( const double& f) const {return translen(f)*omega();}
+  
   double angle(const double& f) const;
 private:
 

@@ -86,6 +86,8 @@ private:
                                      double flt); 
   static BbrVectorErr calcNeutErrMom(const TrkSimpTraj&, const BField&,  
                                      double flt);
+  static BbrVectorErr calcCosmicErrMom(const TrkSimpTraj&, const BField&,  
+                                     double flt);
   static int          calcCurvCharge(const CLHEP::Hep3Vector&, 
                                      double curvature, 
 				     const BField&);        
@@ -94,7 +96,8 @@ private:
 					double fltlen);
   static CLHEP::HepMatrix    calcNeutPosmomCov(const TrkSimpTraj&,const BField&,
 					double fltlen);
-
+  static CLHEP::HepMatrix    calcCosmicPosmomCov(const TrkSimpTraj&,const BField&,
+					double fltlen);
   static void         calcCurvAllCovs(const TrkSimpTraj&,const BField&,
 				      double fltlen,
 				      CLHEP::HepSymMatrix& xxCov,
@@ -119,6 +122,13 @@ private:
 				      CLHEP::HepSymMatrix& xxCov,
 				      CLHEP::HepSymMatrix& ppCov,
 				      CLHEP::HepMatrix&    xpCov);
+
+ static void         calcCosmicAllCovs(const TrkSimpTraj&,const BField&,
+				      double fltlen,
+				      CLHEP::HepSymMatrix& xxCov,
+				      CLHEP::HepSymMatrix& ppCov,
+				      CLHEP::HepMatrix&    xpCov);
+
 
   static void         calcCurvAllWeights(const TrkSimpTraj&,const BField&,
 					 double fltlen,
