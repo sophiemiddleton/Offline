@@ -30,8 +30,8 @@ public:
 
 // calculate the df form of the momentum magnitude.  This can be done for generic
 // trajectories, but is hideously inefficient
-  static DifNumber momMag(const CosmicLineTraj& theTraj, const BField&);
-
+  static DifNumber momMag(const HelixTraj& theTraj, const BField&);
+  static DifNumber momMagCosmic(const CosmicLineTraj& theTraj, const BField&);
   // Interface to vertexing algorithms (M.Bondioli 7/17/98)
   // covariance matrices of the track at fixed flight length 
   static CLHEP::HepMatrix    posmomCov(const TrkSimpTraj&,const BField&,
@@ -81,6 +81,9 @@ private:
   static CLHEP::Hep3Vector   calcCurvVecMom(const CLHEP::Hep3Vector&, 
                                      double curvature, 
 				     const BField&);
+    static CLHEP::Hep3Vector   calcCosmicVecMom(const CLHEP::Hep3Vector&, 
+                                     double curvature, 
+				     const BField&);
   static BbrVectorErr calcCurvErrMom(const TrkSimpTraj&, 
 				     const BField&,  
                                      double flt); 
@@ -111,6 +114,12 @@ private:
 				      CLHEP::HepMatrix&    xpCov);
 
   static void         calcNeutAllCovs(const TrkSimpTraj&,const BField&,
+				      double fltlen,
+				      CLHEP::HepSymMatrix& xxCov,
+				      CLHEP::HepSymMatrix& ppCov,
+				      CLHEP::HepMatrix&    xpCov);
+
+ static void         calcCosmicAllCovs(const TrkSimpTraj&,const BField&,
 				      double fltlen,
 				      CLHEP::HepSymMatrix& xxCov,
 				      CLHEP::HepSymMatrix& ppCov,
@@ -147,6 +156,13 @@ private:
 					 CLHEP::HepMatrix&    xpWeight);
 
   static void         calcNeutAllWeights(const TrkSimpTraj&,const BField&,
+					 double fltlen,
+					 CLHEP::HepVector& pos,
+					 CLHEP::HepVector& mom,
+					 CLHEP::HepSymMatrix& xxWeight,
+					 CLHEP::HepSymMatrix& ppWeight,
+					 CLHEP::HepMatrix&    xpWeight);
+  static void         calcCosmicAllWeights(const TrkSimpTraj&,const BField&,
 					 double fltlen,
 					 CLHEP::HepVector& pos,
 					 CLHEP::HepVector& mom,

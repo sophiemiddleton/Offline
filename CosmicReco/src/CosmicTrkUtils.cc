@@ -36,14 +36,14 @@ using namespace std;
 namespace mu2e {
   namespace CosmicTrkUtils {
 
-    bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, float amsign) {
+    bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, float amsign) { //TODO - do we need amsign?
       bool retval(false);
       
       if(hpvec.num_row() == CosmicLineTraj::NHLXPRM) {
 	// phi0 is the azimuthal angle of the particle velocity vector at the point
 	// of closest approach to the origin.  It's sign also depends on the angular
 	// momentum.  To translate from the center, we need to reverse coordinates
-	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.GetPOCA().x(),amsign*track.GetPOCA().y());
+	hpvec[CosmicLineTraj::phi0Index] = atan2(-amsign*track.GetPOCA().y(),amsign*track.GetPOCA().x());
 	// d0 describes the distance to the origin at closest approach.
 	// It is signed by the particle angular momentum WRT the origin.
 	// The Helix fit radial bias is anti-correlated with d0; correct for it here.

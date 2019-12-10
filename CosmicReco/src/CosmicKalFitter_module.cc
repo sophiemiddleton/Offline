@@ -270,8 +270,7 @@ namespace mu2e{
 
           auto hsH = event.getValidHandle(_seedToken);
 	  kseed._cosmicSeed = art::Ptr<CosmicTrackSeed>(hsH,index);
-
-	  CosmicTrkUtils::fillStrawHitSeeds(_result.krep,*_chcol,kseed._hits);
+          CosmicTrkUtils::fillStrawHitSeeds(_result.krep,*_chcol,kseed._hits);
 	  if(_result.krep->fitStatus().success())kseed._status.merge(TrkFitFlag::kalmanOK);
 	  if(_result.krep->fitStatus().success()==1)kseed._status.merge(TrkFitFlag::kalmanConverged);
 	  if(kseed._hits.size() >= _minnhits)kseed._status.merge(TrkFitFlag::hitsOK);

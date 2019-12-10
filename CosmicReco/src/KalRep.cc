@@ -1,6 +1,6 @@
 #include "BTrk/BaBar/BaBar.hh"
 #include "BTrk/BaBar/BbrCollectionUtils.hh"
-#include "CosmicReco/inc/KalRep.hh" //TODO
+
 #include "BTrk/KalmanTrack/KalHit.hh"
 #include "BTrk/KalmanTrack/KalMaterial.hh"
 #include "BTrk/KalmanTrack/KalEndSite.hh"
@@ -17,15 +17,16 @@
 #include "BTrk/TrkBase/TrkVolume.hh"
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
 #include "BTrk/TrkBase/HelixTraj.hh"
-#include "BTrk/TrkBase/TrkMomCalculator.hh"
+
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
 #include "BTrk/BaBar/ErrLog.hh"
 #include "BTrk/BbrGeom/BbrVectorErr.hh"
 
 #include "CLHEP/Vector/ThreeVector.h"
-
+#include "CosmicReco/inc/CosmicTrkMomCalc.hh"
 #include "CosmicReco/inc/CosmicLineTraj.hh"
 #include "CosmicReco/inc/CosmicLineParams.hh"
+#include "CosmicReco/inc/KalRep.hh" //TODO
 
 #include <math.h>
 #include <algorithm>
@@ -90,9 +91,9 @@ KalRep::initRep() {
 // set the seed mom to the begining of the hit range
   _refmomfltlen = _fitrange[0];
 // compute the seed momentum from this (+ the bfield)
-  Hep3Vector momvec = TrkMomCalculator::vecMom(*_seedtraj,_kalcon.bField(),_refmomfltlen);
+  Hep3Vector momvec = CosmicTrkMomCalc::vecMom(*_seedtraj,_kalcon.bField(),_refmomfltlen);
   _refmom = momvec.mag();
-  _charge = TrkMomCalculator::charge(*_seedtraj,_kalcon.bField(),_refmomfltlen);
+  _charge = CosmicTrkMomCalc::charge(*_seedtraj,_kalcon.bField(),_refmomfltlen);
 // build the initial reference trajectory
   if(_reftraj == 0)buildRefTraj();
 // Initialize _ptraj to _reftraj. This is needed
@@ -483,7 +484,7 @@ KalRep::fit(){
       ErrMsg(error) << "Can't find local trajectory for charge measurement!" << endmsg;
       loctraj = _seedtraj;
     }
-    _charge = TrkMomCalculator::charge(*loctraj,_kalcon.bField(),loclen);
+    _charge = CosmicTrkMomCalc::charge(*loctraj,_kalcon.bField(),loclen);
   }  else {
    // make sure a failed fit is neither valid nor current
        setValid(false);
@@ -922,7 +923,7 @@ KalRep::extendThrough(double newf) {
 	    localTrajectory(_sites.front()->globalLength(),loclen);
 	  if(reftraj != 0){
 // get the momentum from this using the mom calculator
-	    Hep3Vector momvec = TrkMomCalculator::vecMom(*reftraj,_kalcon.bField(),loclen);
+	    Hep3Vector momvec = CosmicTrkMomCalc::vecMom(*reftraj,_kalcon.bField(),loclen);
 	    extendmom = momvec.mag();
 	  } else
 	    return TrkErrCode(TrkErrCode::fail,KalCodes::momentum,
@@ -1231,7 +1232,7 @@ KalRep::momentum(double fltL) const {
 //  static const BField* theField = new BFieldFixed(0.0,0.0,1.0);
   double localFlt = 0.;
   const TrkSimpTraj* locTraj = localTrajectory(fltL,localFlt);
-  return TrkMomCalculator::vecMom(*locTraj, _kalcon.bField(), localFlt);
+  return CosmicTrkMomCalc::vecMom(*locTraj, _kalcon.bField(), localFlt);
 }
 
 //----------------------------------------------------------------------
@@ -1251,7 +1252,7 @@ KalRep::momentumErr(double fltL) const {
   
   double localFlt = 0.;
   const TrkSimpTraj* locTraj = localTrajectory(fltL,localFlt);
-  return TrkMomCalculator::errMom(*locTraj, _kalcon.bField(), localFlt);
+  return CosmicTrkMomCalc::errMom(*locTraj, _kalcon.bField(), localFlt);
 }
 
 
@@ -1303,7 +1304,7 @@ KalRep::posmomCov(double fltL) const {
   const BField& theField = _kalcon.bField();
   double localFlt = 0.;
   const TrkSimpTraj* locTraj = localTrajectory(fltL,localFlt);
-  return TrkMomCalculator::posmomCov(*locTraj, theField, localFlt);
+  return CosmicTrkMomCalc::posmomCov(*locTraj, theField, localFlt);
 }
 
 //------------------------------------------------------------------------
@@ -1316,7 +1317,7 @@ KalRep::getAllCovs(double fltL,
   const BField& theField = _kalcon.bField();
   double localFlt = 0.;
   const TrkSimpTraj* locTraj = localTrajectory(fltL,localFlt);
-  TrkMomCalculator::getAllCovs(*locTraj, theField, localFlt,
+  CosmicTrkMomCalc::getAllCovs(*locTraj, theField, localFlt,
 			      xxCov,ppCov,xpCov); 
 }
 
@@ -1332,7 +1333,7 @@ KalRep::getAllWeights(double fltL,
   const BField& theField = _kalcon.bField();
   double localFlt = 0.;
   const TrkSimpTraj* locTraj = localTrajectory(fltL,localFlt);
-  TrkMomCalculator::getAllWeights(*locTraj, theField, localFlt,
+  CosmicTrkMomCalc::getAllWeights(*locTraj, theField, localFlt,
 			      pos,mom,xxWeight,ppWeight,xpWeight); 
 
 }
@@ -1656,7 +1657,7 @@ KalRep::updateRefMom() {
   const TrkSimpTraj* reftraj = localTrajectory(_refmomfltlen,loclen);
   if(reftraj != 0){
 // get the momentum from this using the mom calculator
-    Hep3Vector momvec = TrkMomCalculator::vecMom(*reftraj,_kalcon.bField(),loclen);
+    Hep3Vector momvec = CosmicTrkMomCalc::vecMom(*reftraj,_kalcon.bField(),loclen);
     double delmom = momvec.mag()-_refmom;
     double momfac = 1.0;
     double floor = 0.5 ;

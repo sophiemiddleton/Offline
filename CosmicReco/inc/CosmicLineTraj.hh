@@ -10,6 +10,7 @@
 #include "BTrk/TrkBase/TrkParams.hh"
 #include "BTrk/BbrGeom/HepPoint.h"
 #include "CosmicReco/inc/CosmicLineParams.hh" 
+#include "CosmicReco/inc/CosmicTrkMomVisitor.hh"
 #include <vector>
 
 class TrkVisitor;
@@ -58,20 +59,23 @@ public:
   
   TranslateParams paramFunction() const { return CosmicLineTraj::paramFunc; }
   void invertParams(TrkParams* params, std::vector<bool>& flags) const;
-  
+
+  CLHEP::HepMatrix derivDeflect(double fltlen,deflectDirection) const;
+  CLHEP::HepMatrix derivDisplace(double fltlen,deflectDirection idir) const;
+  CLHEP::HepMatrix derivPFract(double fltlen) const;
+
   double d0() const {return parameters()->parameter()[d0Index];}
   double phi0() const{  return parameters()->parameter()[phi0Index]; }
-  
   double theta() const {return parameters()->parameter()[thetaIndex]; }
   double phi() const {  return parameters()->parameter()[phiIndex]; }
 
-  virtual void visitAccept(TrkVisitor* vis) const;
+  virtual void visitAccept(CosmicTrkMomVisitor* vis) const;
 
   virtual void               print(std::ostream& os) const;
   virtual                    void printAll(std::ostream& os) const;
 
   double z( const double& ) const;
-  double zFlight(double zpos) const;
+  double zFlight(double zpos, double POCAz) const;
   
   double angle(const double& f) const;
 private:

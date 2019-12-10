@@ -24,10 +24,11 @@ public:
 
   CosmicLineParams(const CLHEP::HepVector&, const CLHEP::HepSymMatrix&);
   ~CosmicLineParams();
-  //position: --> DOCA, POCA
+ 
+  
   double d0() const                              {return parvec[d0Index];}
   double phi0() const                            {return parvec[phi0Index];}
-  //direction: ---> angles Phi = (atan(y/x)) Theta = (acos(x/r));
+ 
   double theta() const                              {return parvec[thetaIndex];}
   double phi() const                          {return parvec[phiIndex];}
 
