@@ -119,7 +119,7 @@ namespace mu2e {
 		return POCA;
              }
 
-	     XYZVec GetDOCA() const{
+	     double GetDOCA() const{
 		return DOCA;
              }
 
@@ -172,7 +172,7 @@ namespace mu2e {
 	        this->MinuitFitEquation = Track;
 	     }
 	    
-	    void SetTrackPosition(XYZVec dir){
+	    void SetTrackDirection(XYZVec dir){
 	    	this->Direction = dir;
 	    }
 
@@ -239,7 +239,7 @@ namespace mu2e {
 	   
 	    int _niters;
 	    XYZVec Direction;
-	    XYZVec Positon;
+	    XYZVec Position;
 	    XYZVec FirstHitVec;
 	    XYZVec LastHitVec; 
 	    

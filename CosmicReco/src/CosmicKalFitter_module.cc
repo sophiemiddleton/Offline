@@ -9,14 +9,10 @@
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 #include "CosmicReco/inc/CosmicTrkMomCalc.hh"
 #include "CosmicReco/inc/CosmicTrkUtils.hh"
-//Mu2e General:
-#include "GeometryService/inc/GeomHandle.hh"
-#include "GeometryService/inc/DetectorSystem.hh"
-#include "TrackerGeom/inc/Tracker.hh"
+
 // ART:
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Principal/Event.h"
-#include "GeometryService/inc/GeomHandle.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Core/EDProducer.h"
@@ -24,7 +20,17 @@
 #include "art_root_io/TFileService.h"
 #include "GeneralUtilities/inc/Angles.hh"
 #include "art/Utilities/make_tool.h"
-//MC:
+// conditions
+#include "ConditionsService/inc/ConditionsHandle.hh"
+#include "TrackerGeom/inc/Tracker.hh"
+#include "GeometryService/inc/GeometryService.hh"
+#include "GeometryService/inc/GeomHandle.hh"
+#include "BFieldGeom/inc/BFieldManager.hh"
+#include "GeometryService/inc/DetectorSystem.hh"
+#include "ProditionsService/inc/ProditionsHandle.hh"
+#include "TrackerConditions/inc/StrawResponse.hh"
+#include "TrackerConditions/inc/Mu2eMaterial.hh"
+#include "TrackerConditions/inc/Mu2eDetector.hh"
 // art
 #include "canvas/Persistency/Common/Ptr.h"
 // MC data
@@ -73,16 +79,12 @@ using namespace std;
 using namespace ROOT::Math::VectorUtil;
 using CLHEP::Hep3Vector;
 using CLHEP::HepVector;
-
 namespace{
     //create a compare struct to allow height ordering of the hits in an event. 
     struct ycomp : public std::binary_function<mu2e::ComboHit,mu2e::ComboHit,bool> {
     bool operator()(mu2e::ComboHit const& p1, mu2e::ComboHit const& p2) { return p1._pos.y() > p2._pos.y(); }
   };
-
-
-}//end namespace
-
+}
 namespace mu2e{
 
   class CosmicKalFitter : public art::EDProducer {
@@ -94,8 +96,7 @@ namespace mu2e{
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
               fhicl::Atom<art::InputTag> seedToken{Name("CosmicTrackSeedCollection"),Comment("tag for combo hit collection")};
               fhicl::Atom<unsigned> minnhits{Name("minnhits"), Comment("min number of trkstrawhits"), 10};
-	      fhicl::Atom<std::vector<double>> perr{Name("ParameterErrors"), Comment("Parameter Error")};
-	      fhicl::Table<CosmicKalFitter::Config> kfit{Name("CosmicKalFitter"), Comment("fit")};
+	      fhicl::Table<CosmicKalFit::Config> kfit{Name("CosmicKalFit"), Comment("fit")};
     };
     typedef art::EDProducer::Table<Config> Parameters;
     explicit CosmicKalFitter(const Parameters& conf);
@@ -111,12 +112,11 @@ namespace mu2e{
     int 			        _diag, _debug;
     art::InputTag 		        _seedToken;
     unsigned				_minnhits;
-    double 				_perr;
+    std::vector<double> 		_perr;
     double _amsign; // cached sign of angular momentum WRT the z axis 
     double _bz000;        // sign of the magnetic field at (0,0,0)
     HepSymMatrix _hcovar; // cache of parameter error covariance matrix
 
-    CosmicTrackFit   _tfit;
     CosmicKalFit     _kfit;
 
     TrkParticle      _tpart; //TODO --> mu+/-
@@ -128,35 +128,27 @@ namespace mu2e{
     ProditionsHandle<Mu2eMaterial> _mu2eMaterial_h;
     ProditionsHandle<Mu2eDetector> _mu2eDetector_h;
 
-    void     OrderHitsY(CosmicKalFitterData& TrackData); //Order in height
-    void     fillGoodHits(CosmicKalFitterData& TrackData);//apply "good" cut
-    int      goodHitsTimeCluster(const TimeCluster TCluster, ComboHitCollection chcol);
-   
 };
 
 
  CosmicKalFitter::CosmicKalFitter(const Parameters& conf) :
    art::EDProducer(conf),
-   	_diag (conf().mcdiag()),
+   	_diag (conf().diag()),
 	_debug  (conf().debug()),
 	_seedToken (conf().seedToken()),
-	_perr (conf().perr()),
+        _minnhits (conf().minnhits()),
 	_kfit (conf().kfit())
 {
 	    consumes<CosmicTrackSeedCollection>();
 	    produces<CosmicKalSeedCollection>();
 	     if(_perr.size() != HelixTraj::NHLXPRM)
-      		throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<< endl;
-    	     _hcovar = HepSymMatrix(CosmicLinesTraj::NHLXPRM,0);
+      		throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<<std::endl;
+    	     _hcovar = HepSymMatrix(CosmicLineTraj::NHLXPRM,0);
     		for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
       			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];   
  }
 
- CosmicKalFitter::~CosmicKalFitter(){}
-
-/* ------------------------Begin Job--------------------------//
-//         Sets Up Historgram Book For Diag Plots            //
-//----------------------------------------------------------*/
+ //CosmicKalFitter::~CosmicKalFitter(){}
 
   void CosmicKalFitter::beginJob() {
    art::ServiceHandle<art::TFileService> tfs;
@@ -216,11 +208,7 @@ namespace mu2e{
  		HepVector hpvec(CosmicLineTraj::NHLXPRM);
 	       CosmicLineTraj cosmictraj(hpvec,_hcovar);
 	      
-		if(_debug > 1){
-	 
-	  		cout << "CosmicTraj parameters " << cosmictraj.parameters()->parameter()
-	       		<< "and covariance " << cosmictraj.parameters()->covariance() <<  endl;
-	        	}
+		
 			TimeCluster tclust;
 			tclust._t0 = sts._t0;
 			for(uint16_t ihit=0;ihit < sts.hits().size(); ++ihit){
@@ -243,16 +231,16 @@ namespace mu2e{
 	                kf._cosmicseed = art::Ptr<CosmicTrackSeed>(hsH,iseed);
 	
 			std::vector<TrkStrawHitSeed>const trkseeds = sts.trkstrawhits();
-              		cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
+              		//cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
      	      		for(auto const& ths : trkseeds ){
       	
 		     	 	size_t index = ths.index();
 		     		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
 		      		const Straw& straw = _tracker->getStraw(strawhit.strawId());
 				
-				cout<<"nSH "<<strawhit.nStrawHits()<<endl;
+				//std::cout<<"nSH "<<strawhit.nStrawHits()<<std::endl;
 				TrkStrawHit* trkhit = new TrkStrawHit(_srep, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
-				cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
+				//std::cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<std::endl;
 				}  
 			     }
 				
@@ -304,7 +292,8 @@ namespace mu2e{
   event.put(std::move(kal_col));    
   }
 
+}
+}
 
-}//end mu2e namespace
 using mu2e::CosmicKalFitter;
 DEFINE_ART_MODULE(CosmicKalFitter);

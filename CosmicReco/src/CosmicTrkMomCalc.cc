@@ -3,7 +3,6 @@
 #include "BTrk/BaBar/BaBar.hh"
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
 #include "CosmicReco/inc/CosmicTrkMomCalc.hh"
-#include "BTrk/TrkBase/TrkMomVisitor.hh"
 #include "CosmicReco/inc/CosmicTrkMomVisitor.hh"
 #include "CosmicReco/inc/CosmicLineParams.hh"
 #include "BTrk/TrkBase/HelixParams.hh"
@@ -39,7 +38,7 @@ CosmicTrkMomCalc::ptMom(const TrkSimpTraj& theTraj, const BField&
                         theField, double fltlen) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0 || theVisitor.circle() != 0) {
 
@@ -82,7 +81,7 @@ CosmicTrkMomCalc::vecMom(const TrkSimpTraj& theTraj, const BField&
                          theField, double fltlen) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0 || theVisitor.circle() != 0) {
 
@@ -118,7 +117,7 @@ CosmicTrkMomCalc::errMom(const TrkSimpTraj& theTraj, const BField&
                          theField, double fltlen) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0 || theVisitor.circle() != 0) {
 
@@ -149,7 +148,7 @@ CosmicTrkMomCalc::charge(const TrkSimpTraj& theTraj, const BField&
                          theField, double fltlen) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0 || theVisitor.circle() != 0) {
 
@@ -194,7 +193,7 @@ CosmicTrkMomCalc::posmomCov(const TrkSimpTraj& theTraj,const BField& theField,
 			    double fltlen) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0 || theVisitor.circle() != 0) {
 
@@ -230,7 +229,7 @@ CosmicTrkMomCalc::getAllCovs(const TrkSimpTraj& theTraj,
 			     HepMatrix&    xpCov) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0) {
 
@@ -282,7 +281,7 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
 				HepMatrix&    xpWeight) {
 //------------------------------------------------------------------------
 
-  TrkMomVisitor theVisitor(theTraj);
+  CosmicTrkMomVisitor theVisitor(theTraj);
 
   if (theVisitor.helix() != 0){
 

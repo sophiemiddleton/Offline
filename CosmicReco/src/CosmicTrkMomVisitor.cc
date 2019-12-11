@@ -11,7 +11,7 @@
 //
 //------------------------------------------------------------------------
 #include "BTrk/BaBar/BaBar.hh"
-#include "BTrk/TrkBase/CosmicTrkMomVisitor.hh"
+#include "CosmicReco/inc/CosmicTrkMomVisitor.hh"
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
 
 

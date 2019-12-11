@@ -2,7 +2,7 @@
 //Date: Dec 2019
 //Purpose: this is a slitghly refactorized version of Helix TrkUtilities, they could probably be combined in future.
 // Mu2e
-#include "TrkReco/inc/TrkUtilities.hh"
+#include "CosmicReco/inc/CosmicTrkUtils.hh"
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 #include "RecoDataProducts/inc/CosmicKalSeed.hh"
 #include "RecoDataProducts/inc/CosmicTrack.hh"

@@ -1,10 +1,11 @@
 
-#ifndef COSMICTRKMOMCALCULATOR_HH
-#define COSMICTRKMOMCALCULATOR_HH
+#ifndef COSMICTRKMOMCALC_HH
+#define COSMICTRKMOMCALC_HH
 
 class TrkSimpTraj;
 class CosmicLineTraj;
 class BField;
+class HelixTraj;
 
 #include "CLHEP/Vector/ThreeVector.h"
 
@@ -12,7 +13,7 @@ class BbrVectorErr;
 class DifNumber;
 
 // Class interface //
-class TrkMomCalculator {
+class CosmicTrkMomCalc{
 
 public:
 
@@ -78,6 +79,9 @@ private:
   static double       calcCurvPtMom(const CLHEP::Hep3Vector&,  
                                     double curvature, 
 				    const BField&);
+  static double       calcCosmicPtMom(const CLHEP::Hep3Vector&,  
+                                    double curvature, 
+				    const BField&);
   static CLHEP::Hep3Vector   calcCurvVecMom(const CLHEP::Hep3Vector&, 
                                      double curvature, 
 				     const BField&);
@@ -119,12 +123,7 @@ private:
 				      CLHEP::HepSymMatrix& ppCov,
 				      CLHEP::HepMatrix&    xpCov);
 
- static void         calcCosmicAllCovs(const TrkSimpTraj&,const BField&,
-				      double fltlen,
-				      CLHEP::HepSymMatrix& xxCov,
-				      CLHEP::HepSymMatrix& ppCov,
-				      CLHEP::HepMatrix&    xpCov);
-
+ 
   static void         calcNeutAllCovs(const TrkSimpTraj&,const BField&,
 				      double fltlen,
 				      CLHEP::HepVector& x0,CLHEP::HepVector& p0,

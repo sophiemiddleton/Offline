@@ -40,8 +40,8 @@ public:
   void setD0(double in)                          {parvec[d0Index] = in;} 
   void setPhi0(double in)                        {parvec[phi0Index] = in;} 
 //Direction Parameters:
-  void setTheta(double in)                          {parvec[ThetaIndex] = in;} 
-  void setPhi(double in)                      {parvec[PhiIndex] = in;} 
+  void setTheta(double in)                          {parvec[thetaIndex] = in;} 
+  void setPhi(double in)                      {parvec[phiIndex] = in;} 
 
   void setError(const CLHEP::HepSymMatrix& in)          {parcov = in;}
 

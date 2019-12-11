@@ -39,7 +39,21 @@ namespace mu2e
   class CosmicKalFit : public KalContext
   {
   public:
-virtual ~CosmicKalFit();
+
+	struct Config{
+	      using Name=fhicl::Name;
+	      using Comment=fhicl::Comment;
+	     
+	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
+	      fhicl::Atom<float> maxpull{Name("MaxHitPullSForeed"),Comment("The maxiumum allowed combo hit pull from fit")};
+	      fhicl::Atom<float> strHitW{Name("strHitW"),Comment("strW")};
+    	      fhicl::Atom<float> minnstraws{Name("MinStraws"),Comment("min straws")};
+  
+    	};
+		
+    explicit CosmicKalFit(const Config& conf);
+    		
+    virtual ~CosmicKalFit();
    
     void makeTrack(StrawResponse::cptr_t srep, 
 		   Mu2eDetector::cptr_t detmodel,

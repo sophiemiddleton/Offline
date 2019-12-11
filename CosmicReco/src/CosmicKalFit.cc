@@ -4,6 +4,7 @@
 
 #include "CosmicReco/inc/CosmicKalFit.hh"
 #include "CosmicReco/inc/CosmicTrkUtils.hh"
+#include "CosmicReco/inc/CosmicKalFitData.hh"
 
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
@@ -36,8 +37,6 @@
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 #include "RecoDataProducts/inc/CosmicKalSeed.hh"
 #include "RecoDataProducts/inc/TrkFitFlag.hh"
-// Diagnostic data objects
-#include "TrkReco/inc/CosmicKalFitData.hh"
 
 // BaBar
 #include "BTrk/BbrGeom/BbrVectorErr.hh"
@@ -66,10 +65,19 @@ using CLHEP::HepVector;
 
 namespace mu2e
 {
-  class CosmicKalFit : public art::EDProducer
-  {
- _minnstraws
-}
+  // comparison functor for ordering hits.  This should operate on TrkHit, FIXME!
+  struct fcomp : public binary_function<TrkHit*, TrkHit*, bool> {
+    bool operator()(TrkHit* x, TrkHit* y) {
+      return x->fltLen() < y->fltLen();
+    }
+  };
+
+    CosmicKalFit::CosmicKalFit(const Config& conf) :
+       _debug(conf.debug()),
+       _maxpull(conf.maxpull()),
+       _strHitW(conf.strHitW()),
+       _minnstraws(conf.minnstraws())
+	{}
 
 void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep, 
 			 Mu2eDetector::cptr_t detmodel,
@@ -146,10 +154,6 @@ CosmicKalFit::fitable(CosmicKalSeed const& kseed){
 
     std::sort(tshv.begin(),tshv.end(),fcomp());
   }
-
-
-
-
 
 }
 

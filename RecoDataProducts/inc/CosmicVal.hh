@@ -32,7 +32,7 @@ namespace mu2e {
     Float_t& d0() { return _pars[CosmicLineParams::d0Index]; }
     Float_t& phi0() { return _pars[CosmicLineParams::phi0Index]; }
     Float_t& theta() { return _pars[CosmicLineParams::thetaIndex]; }
-    Float_t& phi()() { return _pars[CosmicLineParams::phiIndex]; }
+    Float_t& phi() { return _pars[CosmicLineParams::phiIndex]; }
     
     void hepVector(CLHEP::HepVector& pvec) const;
     Float_t _pars[4]; 

@@ -1,6 +1,6 @@
 
 #include "BTrk/BaBar/BbrCollectionUtils.hh"
-#include "TrkReco/inc/CosmicKalFitData.hh"
+#include "CosmicReco/inc/CosmicKalFitData.hh"
 
 namespace mu2e {
 
@@ -9,7 +9,7 @@ namespace mu2e {
     cosmicTraj   = NULL;
     //    tpart       = TrkParticle::muons;        // TODO --> need both types...
     fdir        = TrkFitDirection::downstream; // TODO ---> do we need this?
-    cosmictrackseedcol       = 0;
+    //cosmictrackseedcol       = 0;
     cosmicKalSeed 	  = 0;
     cosmicSeed     = 0;
    
@@ -20,7 +20,7 @@ namespace mu2e {
 
 //-----------------------------------------------------------------------------
   void CosmicKalFitData::deleteTrack() {
-      cosmicrep = NULL; 
+      krep = NULL; 
   } 
 
 //-----------------------------------------------------------------------------

@@ -15,8 +15,8 @@
 #ifndef COSMICTRKMOMVISITOR_HH
 #define COSMICTRKMOMVISITOR_HH
 
-#include "BTrk/TrkBase/TrkVisitor.hh"
-
+#include "CosmicReco/inc/CosmicTrkVisitor.hh"
+#include "CosmicReco/inc/CosmicLineTraj.hh"
 class TrkSimpTraj;
 class HelixTraj;
 class TrkCircleTraj;
@@ -24,13 +24,13 @@ class NeutTraj;
 class CosmicLineTraj;
 
 // Class interface //
-class CosmicTrkMomVisitor : public TrkVisitor {
+class CosmicTrkMomVisitor : public CosmicTrkVisitor {
 
 public:
 
-  TrkMomVisitor(const TrkSimpTraj&);
+  CosmicTrkMomVisitor(const TrkSimpTraj&);
 
-  virtual ~TrkMomVisitor();
+  virtual ~CosmicTrkMomVisitor();
 
   // ******************
   // data member access
@@ -55,7 +55,7 @@ private:
   const HelixTraj*      _ht;
   const TrkCircleTraj*  _ct;
   const NeutTraj*       _nt;
-  const CosmicLineTraj  _cos;
+  const CosmicLineTraj*  _cos;
 
 };
 

@@ -8,6 +8,7 @@
 #include "RecoDataProducts/inc/TrkStraw.hh"
 #include "RecoDataProducts/inc/TrkFitFlag.hh"
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
+#include "RecoDataProducts/inc/KalSegment.hh"
 #include "canvas/Persistency/Common/Ptr.h"
 // BTrk
 #include "BTrk/TrkBase/TrkParticle.hh"
@@ -38,7 +39,7 @@ namespace mu2e {
     Float_t fitConsistency() const { return _fitcon; }
     
     art::Ptr<CosmicTrackSeed> const& cosmicseed() const { return _cosmicseed; }
-    art::Ptr<CosmicKalSeed> const& cosmickalseed() const { return _kal; }
+    art::Ptr<CosmicKalSeed> const& cosmickalseed() const { return _kalseed; }
 
     // global information about the track
     TrkParticle			    _tpart; // particle assumed for this fit
@@ -48,7 +49,7 @@ namespace mu2e {
     Float_t			    _flt0; // flight distance where the track crosses the tracker midplane (z=0)
     Float_t			    _chisq; // fit chisquared value
     Float_t			    _fitcon; // fit consistency
-    
+    std::vector<KalSegment>	    _segments; // segments of the Kalman filter fit result
     std::vector<TrkStrawHitSeed>    _hits; // hit seeds for all the hits used in this fit
     std::vector<TrkStraw>	    _straws; // straws interesected by this fit
    

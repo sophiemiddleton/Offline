@@ -10,10 +10,10 @@
 #include "BTrk/TrkBase/TrkParams.hh"
 #include "BTrk/BbrGeom/HepPoint.h"
 #include "CosmicReco/inc/CosmicLineParams.hh" 
-#include "CosmicReco/inc/CosmicTrkMomVisitor.hh"
+#include "CosmicReco/inc/CosmicTrkVisitor.hh"
 #include <vector>
 
-class TrkVisitor;
+class CosmicTrkVisitor;
 #include "CLHEP/Matrix/Vector.h"
 #include "CLHEP/Matrix/SymMatrix.h"
 #include <iosfwd>
@@ -69,7 +69,7 @@ public:
   double theta() const {return parameters()->parameter()[thetaIndex]; }
   double phi() const {  return parameters()->parameter()[phiIndex]; }
 
-  virtual void visitAccept(CosmicTrkMomVisitor* vis) const;
+  //void visitAccept(CosmicTrkVisitor* vis) const;
 
   virtual void               print(std::ostream& os) const;
   virtual                    void printAll(std::ostream& os) const;

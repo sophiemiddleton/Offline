@@ -7,18 +7,22 @@
 #include "BTrk/BbrGeom/HepPoint.h"
 #include "CLHEP/Vector/ThreeVector.h"
 #include "CLHEP/Matrix/SymMatrix.h"
-#include "BTrk/TrkBase/CosmicLineTraj.hh"
-#include "BTrk/TrkBase/TrkVisitor.hh"
+#include "BTrk/TrkBase/HelixTraj.hh"
+#include "CosmicReco/inc/CosmicTrkVisitor.hh"
 #include "BTrk/difAlgebra/DifNumber.hh"
 #include "BTrk/difAlgebra/DifPoint.hh"
 #include "BTrk/difAlgebra/DifVector.hh"
 #include "BTrk/BbrGeom/BbrAngle.hh"
-#include "BTrk/TrkBase/CosmicLineParams.hh"
+#include "CosmicReco/inc/CosmicLineParams.hh"
+#include "CosmicReco/inc/CosmicLineTraj.hh"
+#include "CosmicReco/inc/CosmicTrkMomVisitor.hh"
 #include "BTrk/BaBar/ErrLog.hh"
 using std::endl;
 using std::ostream;
 using namespace CLHEP;
-
+#ifndef M_2PI
+#define M_2PI 2*M_PI
+#endif
 
 //reference point --> is this the center of the tracker system?
 
@@ -144,7 +148,7 @@ CosmicLineTraj::getInfo(double fltLen, HepPoint& pos, Hep3Vector& dir,
   pos = position(fltLen);
   dir = direction(fltLen);
 }
-
+/*
 HepMatrix
 CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TODO
 {
@@ -160,30 +164,30 @@ CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TOD
 //
 //  Compute some common things
 //
-  double omeg = omega();
-  double tand = tanDip();
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double cosd = cosDip();
-  double darc = omeg*d0();
+  //double omeg = omega();
+  //double tand = tanDip();
+  double arcl = 1;//arc(fltlen);
+  double dx = 1;//cos(arcl);
+  double dy = 1;//sin(arcl);
+  //double cosd = cosDip();
+  //double darc = omeg*d0();
 //
 //  Go through the parameters
 //
   switch (idirect) {
   case theta1:
     
-    ddflct(thetaIndex+1,1) = 1.0/pow(cosd,2);
-    ddflct(d0Index+1,1) = (1-dx)*tand/omeg;
-    ddflct(phi0Index+1,1) =  -dy*tand/(1+darc);
-    ddflct(phiIndex+1,1) = - translen(fltlen) - pow(tand,2)*dy/(omeg*(1+darc));
+    ddflct(thetaIndex+1,1) = 1;//1.0/pow(cosd,2);
+    ddflct(d0Index+1,1) = 1;//(1-dx)*tand/omeg;
+    ddflct(phi0Index+1,1) =  1;//-dy*tand/(1+darc);
+    ddflct(phiIndex+1,1) = 1;//- translen(fltlen) - pow(tand,2)*dy/(omeg*(1+darc));
     break;
   case theta2:
     
     ddflct(thetaIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = -dy/(cosd*omeg);
-    ddflct(phi0Index+1,1) = dx/(cosd*(1+darc));
-    ddflct(phiIndex+1,1) = -tand*(1- dx/(1+darc))/(cosd*omeg);
+    ddflct(d0Index+1,1) = 1;//-dy/(cosd*omeg);
+    ddflct(phi0Index+1,1) = 1;//dx/(cosd*(1+darc));
+    ddflct(phiIndex+1,1) = 1;//-tand*(1- dx/(1+darc))/(cosd*omeg);
     break;
   }
 
@@ -206,39 +210,39 @@ CosmicLineTraj::derivDisplace(double fltlen,deflectDirection idirect) const //TO
 //
 //  Compute some common things
 //
-  double omeg = omega();
-  double tand = tanDip();
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double cosd = cosDip();
-  double sind = sinDip();
-  double darc_1 = 1.0+omeg*d0();
+  double omeg = 1;//omega();
+  double tand = 1;//tanDip();
+  double arcl = 1;//arc(fltlen);
+  double dx = 1;//cos(arcl);
+  double dy =1;//in(arcl);
+  double cosd = 1;//cosDip();
+  double sind = 1;//sinDip();
+  double darc_1 = 1;//1.0+omeg*d0();
 //
 //  Go through the parameters
 //
   switch (idirect) {
   case theta1:
    
-    ddflct(thetaIndex+1,1) = ;
-    ddflct(d0Index+1,1) = -sind*dy;
-    ddflct(phi0Index+1,1) = sind*dx*omeg/darc_1;
-    ddflct(phiIndex+1,1) = sind*tand*dx/darc_1 + cosd;
+    ddflct(thetaIndex+1,1) = 1;
+    ddflct(d0Index+1,1) = 1;//-sind*dy;
+    ddflct(phi0Index+1,1) = 1;//sind*dx*omeg/darc_1;
+    ddflct(phiIndex+1,1) = 1;//sind*tand*dx/darc_1 + cosd;
     break;
   case theta2:
     
-    ddflct(thetaIndex+1,1) = ;
-    ddflct(d0Index+1,1) = dx;
-    ddflct(phi0Index+1,1) = dy*omeg/darc_1;
-    ddflct(phiIndex+1,1) = tand*dy/darc_1;
+    ddflct(thetaIndex+1,1) = 1;
+    ddflct(d0Index+1,1) = 1;//dx;
+    ddflct(phi0Index+1,1) = 1;//dy*omeg/darc_1;
+    ddflct(phiIndex+1,1) = 1;//tand*dy/darc_1;
     break;
   }
 
   return ddflct;
 }
-
+*/
 void
-HelixTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
+CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
                      DifVector& delDir) const
 {
   //Provides difNum version of information for calculation of derivatives.
@@ -284,7 +288,7 @@ HelixTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
 
   pos.z = flt;
   pos.z *= dir.z;
-  pos.z += z0Df;
+  //pos.z += z0Df;
 
   if (lref) {
     DifNumber px(referencePoint().x());
@@ -341,7 +345,7 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
 
   pos.z = flt;
   pos.z *= dir.z;
-  pos.z += z0Df;
+  //pos.z += z0Df;
 
   if (lref) {
     DifNumber px(referencePoint().x());
@@ -367,11 +371,11 @@ CosmicLineTraj::curvature(double ) const   //TODO - we assume curvature not pres
 return 1;
 }
 
-double
-CosmicLineTraj::phi0() const 
-{
-  return BbrAngle(parameters()->parameter()[phi0Index]).rad();
-}
+//double
+//CosmicLineTraj::angle() const 
+//{
+//  return BbrAngle(parameters()->parameter()[phi0Index]).rad();
+//}
 
 void
 CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
@@ -384,7 +388,7 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
 
   double delx = newpoint.x()-oldpoint.x();
   double dely = newpoint.y()-oldpoint.y();
-  double delz = newpoint.z()-oldpoint.z();
+  //double delz = newpoint.z()-oldpoint.z();
 
 
   double delta = parvec[d0Index];
@@ -404,7 +408,7 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
   double invdelta2 = 1.0/newdelta2;
 
 // d0
-  newvec[d0Index] = newdelta - rad;
+  newvec[d0Index] = newdelta;//-rad
 
 // phi0; check that we don't get the wrong wrapping. Atan2 has 2Pi ambiguity, not pi
   double newphi = atan2(sin0+delx/delta,cos0-dely/delta);
@@ -414,7 +418,7 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
     else
       newphi += M_2PI;
   newvec[phi0Index] = newphi;
-  double delphi = newphi-parvec[phi0Index];
+  //double delphi = newphi-parvec[phi0Index];
 
 
 // now covariance: first, compute the rotation matrix
@@ -439,12 +443,12 @@ CosmicLineTraj::paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,
   newcov = oldcov.similarity(covrot);
 
 }
-void
-CosmicLineTraj::visitAccept(CosmicMomTrkVisitor* vis) const
-{
+//void
+//CosmicLineTraj::visitAccept(CosmicTrkVisitor* vis) const
+//{
 // Visitor access--just use the Visitor class member function
-  vis->trkVisitCosmicLineTraj(this);
-}
+ // vis->trkVisitCosmicTraj(this);
+//}
 
 
 
@@ -478,7 +482,7 @@ void CosmicLineTraj::invertParams(TrkParams* params, std::vector<bool>& flags) c
 double
 CosmicLineTraj::angle(const double& f) const //TODO
 {
-  return BbrAngle(phi0() + arc(f));
+  return BbrAngle(phi0() );//+ arc(f));
 }
 
 void

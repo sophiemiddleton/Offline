@@ -330,14 +330,15 @@ namespace mu2e{
 			tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
 			 continue;
 			}
-		      if(_doDrift){
+ 		      ComboHitCollection tmpHits;
+		      if(_DoDrift){
 		      _tfit.DriftFit(tmpResult, _srep);
 			      if( tmpResult._tseed._track.minuit_converged == false){
 				tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
 				tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
 				continue;
 				}
-			      ComboHitCollection tmpHits;
+			      ;
 			     
 			      for(auto const &chit : tmpResult._tseed._straw_chits){
 				
@@ -354,7 +355,7 @@ namespace mu2e{
 		     
 		      CosmicTrackSeedCollection* col = seed_col.get();
 		      
-		      if (tmpHits.size() == 0 or track_seed_vec.size() == 0)     continue;
+		      if ((_DoDrift and tmpHits.size() == 0) or track_seed_vec.size() == 0)     continue;
 		      col->push_back(tmpResult._tseed);  
 			          
               }
