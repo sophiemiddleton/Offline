@@ -3,7 +3,12 @@ BEGIN_PROLOG
 
 IPACaloCalib: {
 	module_type : IPACaloCalibAna
-	generatorModuleLabel   : generate
+	#CaloHitCollection : "CaloCrystalHitFromHit" 
+        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+        #CaloHitMCTruthCollection :
+        CaloClusterCollection : "CaloClusterFast"
+        #CaloHitSimPartMCCollection :
+	
 }
 
 CaloCalib: {
