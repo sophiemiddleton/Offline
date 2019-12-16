@@ -31,7 +31,6 @@ CosmicLineTraj::CosmicLineTraj(const HepVector& pvec, const HepSymMatrix& pcov,
   TrkSimpTraj(pvec, pcov, lowlim,hilim,refpoint)
 {
   //  Make sure the dimensions of the input matrix and vector are correct
-
   if( pvec.num_row() != NHLXPRM || pcov.num_row() != NHLXPRM ){
     ErrMsg(fatal) 
       << "CosmicLineTraj: incorrect constructor vector/matrix dimension" << endmsg;
@@ -61,7 +60,7 @@ CosmicLineTraj::CosmicLineTraj( const CosmicLineTraj& h )
 }
 
 CosmicLineTraj*
-CosmicLineTraj::clone() const
+CosmicLineTraj::clone() const //TODO-causing compilation errors due to non-complete type
 {
   return new CosmicLineTraj(*this);
 }
@@ -82,36 +81,36 @@ CosmicLineTraj::~CosmicLineTraj()
 }
 
 double
-CosmicLineTraj::z(const double& f) const //TODO 
+CosmicLineTraj::z(const double& f) const  
 {
-  return  f + referencePoint().z();
+  return  referencePoint().z()+f*cos(theta());
 }
 
 double
-CosmicLineTraj::zFlight(double zpos, double z0) const { //TODO 
-  return (zpos - z0);
+CosmicLineTraj::zFlight(double zpos, double z0) const { 
+  return (zpos - z0)/cos(theta());
 }
 
 HepPoint
-CosmicLineTraj::position(double POCA_Z) const //TODO f ->>POCA_Z
+CosmicLineTraj::position(double f) const  
 {
   double sphi0 = sin(phi0());
   double cphi0 = cos(phi0());
  
   double x_pos = -1*d0()*sphi0+referencePoint().x();
   double y_pos = d0()*cphi0+referencePoint().y();
-  double z_pos = POCA_Z+referencePoint().z();
+  double z_pos = f+referencePoint().z();
   return HepPoint(x_pos, y_pos, z_pos);
 }
 
 
 Hep3Vector
-CosmicLineTraj::direction( double f) const 
+CosmicLineTraj::direction(double f) const //TODO - f --> r (Arc)
 {
 
-double x_dir = cos(phi());
-double y_dir = sin(theta());
-double z_dir = cos(theta());
+double x_dir = cos(phi())*f;
+double y_dir = sin(theta())*f;
+double z_dir = cos(theta())*f;
  
  return Hep3Vector (x_dir, y_dir, z_dir);
 }
@@ -119,7 +118,11 @@ double z_dir = cos(theta());
 Hep3Vector
 CosmicLineTraj::delDirect( double fltLen ) const  //assume cosntant at the moment
 {
- return Hep3Vector(0,0, 0.0);
+  double ang = angle(fltLen);
+  double cDip = cosDip();
+  double delX = -1/R * cDip * cDip * sin(ang);
+  double delY =  1/R * cDip * cDip * cos(ang);
+  return Hep3Vector(delX, delY, 0.0);
 }
 
 double
@@ -480,9 +483,9 @@ void CosmicLineTraj::invertParams(TrkParams* params, std::vector<bool>& flags) c
 }
 
 double
-CosmicLineTraj::angle(const double& f) const //TODO
+CosmicLineTraj::angle(const double& f) const //TODO arc(f) = f*rad()
 {
-  return BbrAngle(phi0() );//+ arc(f));
+  return BbrAngle(phi0() + f*phi0());
 }
 
 void

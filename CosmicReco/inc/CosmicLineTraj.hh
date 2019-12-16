@@ -72,7 +72,7 @@ public:
   //void visitAccept(CosmicTrkVisitor* vis) const;
 
   virtual void               print(std::ostream& os) const;
-  virtual                    void printAll(std::ostream& os) const;
+  virtual void 		     printAll(std::ostream& os) const;
 
   double z( const double& ) const;
   double zFlight(double zpos, double POCAz) const;

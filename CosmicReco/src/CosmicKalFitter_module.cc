@@ -148,7 +148,7 @@ namespace mu2e{
       			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];   
  }
 
- //CosmicKalFitter::~CosmicKalFitter(){}
+ CosmicKalFitter::~CosmicKalFitter(){}
 
   void CosmicKalFitter::beginJob() {
    art::ServiceHandle<art::TFileService> tfs;
