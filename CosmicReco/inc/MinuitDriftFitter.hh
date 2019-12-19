@@ -8,6 +8,7 @@
 #include "DataProducts/inc/XYZVec.hh"
 #include "TrackerGeom/inc/Tracker.hh"
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
+#include "CosmicReco/inc/CosmicTrackFinderData.hh"
 //For Drift:
 #include "BTrk/BaBar/BaBar.hh"
 #include "BTrk/BbrGeom/Trajectory.hh"
@@ -51,7 +52,8 @@ struct FitResult{
 
 namespace MinuitDriftFitter {
 	
-	FitResult DoFit(int diag, CosmicTrackSeed trackseed, StrawResponse srep, double doca_cut, unsigned int MinNCh_cut, int LogLcut, double _gaussTres, double _maxTres);
+	FitResult DoFit(int diag, CosmicTrackFinderData& trackdata, StrawResponse::cptr_t srep, double doca_cut, unsigned int MinNCh_cut, int LogLcut, double _gaussTres, double _maxTres);
+	
 
 }
 

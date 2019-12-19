@@ -10,7 +10,7 @@
 #include "canvas/Persistency/Common/Assns.h"
 #include "RecoDataProducts/inc/CosmicTrack.hh" 
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
-
+#include "RecoDataProducts/inc/CosmicKalSeed.hh"
 // calorimeter
 #include "RecoDataProducts/inc/CaloDigi.hh"
 #include "RecoDataProducts/inc/CaloRecoDigiCollection.hh"
