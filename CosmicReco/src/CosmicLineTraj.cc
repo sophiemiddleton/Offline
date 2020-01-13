@@ -87,7 +87,7 @@ CosmicLineTraj::z(const double& f) const
 }
 
 CosmicLineTraj::z0() const {
- return (d0()*sin(theta())*cos(theta()))/cos(phi() - phi0())
+ return (d0()*tan(theta())*cos(phi() - phi0())
 
 }
 double
