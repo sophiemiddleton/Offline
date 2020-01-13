@@ -168,8 +168,7 @@ CosmicTrkMomCalc::charge(const TrkSimpTraj& theTraj, const BField&
 
   } else if (theVisitor.cosmic() !=0 ){
 
-//TODO 
-return calcCosmicCurvCharge(theTraj.direction(fltlen), theTraj.curvature(fltlen), theField);
+	return calcCosmicCurvCharge(theTraj.direction(fltlen), theTraj.curvature(fltlen), theField);
 
 }else {
 
@@ -199,8 +198,7 @@ CosmicTrkMomCalc::posmomCov(const TrkSimpTraj& theTraj,const BField& theField,
 
   } else if (theVisitor.cosmic()!=0){
 
-//TODO TODO TODO 
-   return calcCosmicPosmomCov(theTraj, theField, fltlen);
+    return calcCosmicPosmomCov(theTraj, theField, fltlen);
 
  }else {
 

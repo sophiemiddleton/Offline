@@ -10,7 +10,7 @@ using namespace CLHEP;
 CosmicLineParams::CosmicLineParams(const HepVector& params, const HepSymMatrix& pcov) 
   :  TrkParams(params,pcov) { 
 
-    assert(parvec.num_row() == NHLXPRM); //TODO
+    assert(parvec.num_row() == NHLXPRM); 
     assert(parcov.num_row() == NHLXPRM);
     parvec[phi0Index] = BbrAngle(parvec[phi0Index]).rad();//TODO--> is this ok still?
 }

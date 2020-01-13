@@ -76,7 +76,7 @@ public:
   
   double angle(const double& f) const;
 
-  double mom() const;
+  double mom() const; //Added --> will remove need for the CosmicTrkMom Calculations
 private:
 
   static void paramFunc(const HepPoint& oldpoint,const HepPoint& newpoint,

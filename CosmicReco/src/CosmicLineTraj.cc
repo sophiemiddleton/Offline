@@ -97,8 +97,8 @@ CosmicLineTraj::position(double f) const
   double sphi0 = sin(phi0());
   double cphi0 = cos(phi0());
  
-  double x_pos = -1*d0()*sphi0+referencePoint().x();
-  double y_pos = d0()*cphi0+referencePoint().y();
+  double x_pos = d0()*cphi0+referencePoint().x();
+  double y_pos = d0()*sphi0+referencePoint().y();
   double z_pos = f+referencePoint().z();
   return HepPoint(x_pos, y_pos, z_pos);
 }
