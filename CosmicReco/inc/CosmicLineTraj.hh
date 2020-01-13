@@ -72,6 +72,7 @@ public:
   virtual void 		     printAll(std::ostream& os) const;
 
   double z( const double& ) const;
+  double z0() const; //Added to get z0 from exisiting parameters
   double zFlight(double zpos, double POCAz) const;
   
   double angle(const double& f) const;

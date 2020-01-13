@@ -86,6 +86,10 @@ CosmicLineTraj::z(const double& f) const
   return  referencePoint().z()+f*cos(theta());
 }
 
+CosmicLineTraj::z0() const {
+ return (d0()*sin(theta())*cos(theta()))/cos(phi() - phi0())
+
+}
 double
 CosmicLineTraj::zFlight(double zpos, double z0) const { 
   return (zpos - z0)/cos(theta());
