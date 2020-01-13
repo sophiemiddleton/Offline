@@ -132,7 +132,8 @@ namespace mu2e {
       return over/norm;
     }
 
-    double overlap(KalSeed const& ks1, KalSeed const& ks2) {
+
+    double overlap(CosmicKalSeed const& ks1, CosmicKalSeed const& ks2) {
   // translate hit info into a simple index array.  Only count active hits
       SHIV shiv1, shiv2;
       for(auto tshs : ks1.hits()){
@@ -150,7 +151,7 @@ namespace mu2e {
       return over/norm;
     }
 
-    double overlap(KalSeed const& ks, HelixSeed const& hs){
+    double overlap(CosmicKalSeed const& ks, HelixSeed const& hs){
       SHIV shiv1, shiv2;
       for(auto tshs : ks.hits()){
 	if(tshs.flag().hasAllProperties(StrawHitFlag::active))
