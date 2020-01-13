@@ -1,6 +1,7 @@
-#ifndef TEveEventDisplay_inc_NavState_h
-#define TEveEventDisplay_inc_NavState_h
+#ifndef NavState_h
+#define NavState_h
 
+namespace mu2e{
 
 	enum nav_states_ {
 	    kNEXT_EVENT,
@@ -23,6 +24,6 @@
 	    NavState() {};
 	  
 	};
-
+}
 #endif
 

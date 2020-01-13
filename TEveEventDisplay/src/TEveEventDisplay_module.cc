@@ -49,8 +49,8 @@
 #include "fstream"
 
 //TEveEventDisplay Headers:
-#include  "TEveEventDisplay/inc/NavState.h"
-#include  "TEveEventDisplay/inc/EvtDisplayUtils.h"
+#include  "TEveEventDisplay/src/dict_classes/NavState.h"
+#include  "TEveEventDisplay/src/dict_classes/EvtDisplayUtils.h"
 
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
@@ -73,6 +73,7 @@
 #include "RecoDataProducts/inc/StrawDigiCollection.hh"
 // Mu2e diagnostics
 using namespace std;
+using namespace mu2e;
 
 class point {
 	public:
@@ -251,12 +252,12 @@ void TEveEventDisplay::MakeNavPanel()
     b = new TGPictureButton(navFrame, gClient->GetPicture("TEveEventDisplay/src/Icons/Previous.png"));
     //Add button to frame:
     navFrame->AddFrame(b);
-    b->Connect("Clicked()", "EvtDisplayUtils", visutil_, "EvtDisplayUtils::PrevEvent()");
+    b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
     
     //Create forward button and connect to "NextEvent" utils
     f = new TGPictureButton(navFrame, gClient->GetPicture("TEveEventDisplay/src/Icons/Next.png"));
     navFrame->AddFrame(f);
-    f->Connect("Clicked()", "EvtDisplayUtils", visutil_, "EvtDisplayUtilsNextEvent()");
+    f->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
     //Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
     TGHorizontalFrame* runFrame = new TGHorizontalFrame(evtidFrame);
@@ -267,7 +268,7 @@ void TEveEventDisplay::MakeNavPanel()
     
     fTeRun = new TGTextEntry(runFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
     visutil_->fTbRun->AddText(0, "1");
-    fTeRun->Connect("ReturnPressed()","EvtDisplayUtils", visutil_,"GotoEvent()");
+    fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
     runFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
 
     //Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
@@ -279,7 +280,7 @@ void TEveEventDisplay::MakeNavPanel()
 
     fTeEvt = new TGTextEntry(evtFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
     visutil_->fTbEvt->AddText(0, "1");
-    fTeEvt->Connect("ReturnPressed()","EvtDisplayUtils", visutil_,"GotoEvent()");
+    fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
     evtFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
 
     // Add horizontal run & event number subframes to vertical evtidFrame
@@ -367,20 +368,23 @@ void TEveEventDisplay::beginJob(){
 }
 
 void TEveEventDisplay::beginRun(const art::Run& run){
-
+  cout<<"Begin Run "<<endl;
   if(gGeoManager){
     gGeoManager->GetListOfNodes()->Delete();
     gGeoManager->GetListOfVolumes()->Delete();
     gGeoManager->GetListOfShapes()->Delete();
+    cout<<"GeomMAnager"<<endl;
   }
   gEve->GetGlobalScene()->DestroyElements();
   fDetXYScene->DestroyElements();
   fDetRZScene->DestroyElements();
+  cout<<"importing GDML "<<endl;
   // Import the GDML of entire Mu2e Geometry
   TGeoManager* geom = TGeoManager::Import("TEveEventDisplay/src/mu2e.gdml");
   //Get Top Volume
   TGeoVolume* topvol = geom->GetTopVolume();
   //Set Top Volume for gGeoManager:
+  cout<<"setting top "<<endl;
   gGeoManager->SetTopVolume(topvol);
   gGeoManager->SetTopVisible(kTRUE);
   int nn = gGeoManager->GetNNodes();
@@ -393,6 +397,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   //Set colours to allow transparency:
   setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
   //This is a basic function to allow us to just see tracker and calo, it needs fixing:
+  cout<<"extracting"<<endl;
   InsideDS( topnode, false );
   hideBuilding(topnode);
   hideTop(topnode);
@@ -412,6 +417,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   GeomHandle<Tracker> th; 
   const Tracker* tracker_mu2e = th.get(); 
   TubsParams envelope(tracker_mu2e->getInnerTrackerEnvelopeParams());
+  cout<<"tracker bits "<<endl;
   //double rmax = envelope.outerRadius();
   //double rmin = envelope.innerRadius();
   //double dz = envelope.zHalfLength();
@@ -492,6 +498,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
 
 
 void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
+  cout<<"In side DS"<<endl;
   std::string _name = (node->GetVolume()->GetName());
   if ( node->GetMotherVolume() ) {
     std::string motherName(node->GetMotherVolume()->GetName());
@@ -516,6 +523,7 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
+  cout<<"Analyze "<<endl;
   _evt = event.id().event();
   FindData(event);
   std::ostringstream sstr;

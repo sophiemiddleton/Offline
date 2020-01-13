@@ -1,5 +1,5 @@
-#ifndef TEveEventDisplay_inc_EvtDisplayUtils_h
-#define TEveEventDisplay_inc_EvtDisplayUtils_h
+#ifndef EvtDisplayUtils_h
+#define EvtDisplayUtils_h
 
 #include <TObject.h>
 #include <TApplication.h>
@@ -7,6 +7,7 @@
 #include <iostream>
 #include "TROOT.h"
 
+namespace mu2e {
  class EvtDisplayUtils  : public TObject
   {
 #ifndef __CINT__
@@ -23,5 +24,5 @@
 #endif
      ClassDef(EvtDisplayUtils,0);
   };
-
-#endif /*TEveEventDisplay_inc_EvtDisplayUtils */
+}
+#endif /*TEveEventDisplay_inc_dict_classes_EvtDisplayUtils */

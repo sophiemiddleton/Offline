@@ -10,8 +10,8 @@
 #include <iostream>
 
 #include "TROOT.h"
-#include "TEveEventDisplay/inc/NavState.h"
-
+#include "TEveEventDisplay/src/dict_classes/NavState.h"
+using namespace mu2e;
 
   static int gsNavState    = 0;
   static int gsTargetRun   = 0;

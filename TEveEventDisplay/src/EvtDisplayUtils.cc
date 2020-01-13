@@ -1,9 +1,11 @@
-#include  "TEveEventDisplay/inc/NavState.h"
-#include  "TEveEventDisplay/inc/EvtDisplayUtils.h"
+#include  "TEveEventDisplay/src/dict_classes/NavState.h"
+#include  "TEveEventDisplay/src/dict_classes/EvtDisplayUtils.h"
 #include <string>
 
+using namespace mu2e;
 
   EvtDisplayUtils::EvtDisplayUtils():fTbRun(0),fTbEvt(0){}
+
   void EvtDisplayUtils::PrevEvent(){
     NavState::Set(kPREV_EVENT);
   }
