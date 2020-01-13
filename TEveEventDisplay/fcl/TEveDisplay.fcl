@@ -1,0 +1,46 @@
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+#include "CommonMC/fcl/prolog.fcl"
+
+process_name : TEveDisplay
+
+source :
+{
+	module_type : RootInput
+	inputCommands: ["keep *",
+	"drop *KalRepPayload*_*_*_*",
+	"drop *CaloCrystalOnlyHit*_*_*_*"]
+}
+	
+services :
+{
+	GeometryService : { inputFile : "Mu2eG4/geom/geom_common.txt" }
+	GlobalConstantsService : { inputFile : "Mu2eG4/test/globalConstants_01.txt" }
+}
+	
+physics :
+{
+	analyzers:
+	{
+		eventdisplay:
+		{
+			module_type : TEveEventDisplay
+			g4ModuleLabel : "g4run"
+			//generatorsModuleLabel : "compressPV"
+		        //hitMakerModuleLabel : "makePH"
+			strawDigisTag : StrawDigiCollection
+			strawHitsTag : StrawHitCollection
+        		minEnergyDep : 70
+        		minHits : 2
+			//timeOffsets : { inputs : 		[ @sequence::RecoCompression.TimeMaps ] }
+		}
+	}
+	
+	e1 : [eventdisplay]
+	
+	end_paths : [e1]
+}
+	
+services.GeometryService.simulatedDetector.tool_type : "Mu2e"
+source.readParameterSets : false
