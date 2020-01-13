@@ -59,7 +59,7 @@ CosmicTrkMomCalc::ptMom(const TrkSimpTraj& theTraj, const BField&
      return cosdip * ptot; 
 
   } else if (theVisitor.cosmic) {
-     return theTraj.mom()*theTraj.sin(theTraj.theta()) ;
+     return theTraj.mom()*sin(theTraj.theta()) ; //TODO: check
    } else {
 
 // particle must be a plain line--no way to calculate momentum
@@ -92,7 +92,7 @@ CosmicTrkMomCalc::vecMom(const TrkSimpTraj& theTraj, const BField&
      return theMom;
 
   } else if (theVisitor.cosmic() !=0){
-      return theTraj.mom()*theTraj.direction(fltlen);
+      return theTraj.mom()*theTraj.direction(fltlen); //TODO - check
 
   } else {
 
@@ -168,7 +168,7 @@ CosmicTrkMomCalc::charge(const TrkSimpTraj& theTraj, const BField&
 
   } else if (theVisitor.cosmic() !=0 ){
 
-	return calcCosmicCurvCharge(theTraj.direction(fltlen), theTraj.curvature(fltlen), theField);
+     return calcCurvCharge(theTraj.direction(fltlen), theTraj.curvature(fltlen), theField); //TODO - use old function
 
 }else {
 
@@ -539,12 +539,12 @@ CosmicTrkMomCalc::calcCosmicErrMom(const TrkSimpTraj& theTraj,
 if (delDirDif.length() == 0.) {   
   }
   else {
-    DifNumber sindip=DirDif.z;
+    DifNumber sindip=DirDif.z; //TODO
     DifNumber arg = 1.0-sindip*sindip; //TODO
     if (arg.number() < 0.0) {arg.setNumber(0.0);}
     DifNumber cosdip = sqrt(arg);
     
-    DifNumber momMag =
+    DifNumber momMag = //TODO
       BField::mmTeslaToMeVc*theField.bFieldNominal()*cosdip /
       delDirDif.length();
     momMag.absolute();
@@ -736,12 +736,12 @@ CosmicTrkMomCalc::calcCosmicPosmomCov(const TrkSimpTraj& theTraj,
   DifVector delDirDif;
   DifVector MomDif(0., 0., 0.);
 
-  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif);
+  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif); //TODO - write this in Traj
   if (delDirDif.length() == 0.) {   
   }
   else {
-    DifNumber cosTheta=DirDif.z;
-    DifNumber arg = 1.0-cosTheta*cosTheta;
+    DifNumber cosTheta=DirDif.z; //TODO - check
+    DifNumber arg = 1.0-cosTheta*cosTheta; //TODO - check
     if (arg.number() < 0.0) {arg.setNumber(0.0);}
     DifNumber sinTheta = sqrt(arg);
 
@@ -1413,6 +1413,53 @@ CosmicTrkMomCalc::calcCurvAllWeights(const TrkSimpTraj& theTraj,
     dinv_pz_z0* ( dinv_pz_z0*w_z0_z0 +dinv_pz_tanDip*w_tanDip_z0  )   + 
     dinv_pz_tanDip* ( dinv_pz_z0*w_tanDip_z0 +dinv_pz_tanDip*w_tanDip_tanDip  )   ; 
 
+}
+
+//------------------------------------------------------------------------
+void
+CosmicTrkMomCalc::calcCosmicAllWeights(const TrkSimpTraj& theTraj,
+				     const BField& theField,
+				     double fltlen,
+				     HepVector& pos,
+				     HepVector& mom,
+				     HepSymMatrix& xxWeight,
+				     HepSymMatrix& ppWeight,
+				     HepMatrix&    xpWeight) {
+//------------------------------------------------------------------------
+  const HepVector&    v = theTraj.parameters()->parameter();
+  const HepSymMatrix& w = theTraj.parameters()->weightMatrix();
+
+  // fast inlined conversion from Helix to PX representation
+
+  // track parameters
+  double s = v[HelixParams::tanDipIndex];
+  double omega = v[HelixParams::omegaIndex];
+  double d0 = v[HelixParams::d0Index];
+  double z0 = v[HelixParams::z0Index];
+  double phi0 = v[HelixParams::phi0Index];
+  double l = fltlen / sqrt(1.0+s*s) ;
+
+  double phi = phi0 + omega*l;
+  double sinphi0 = sin(phi0);
+  double cosphi0 = cos(phi0);
+  double sinphi = sin(phi);
+  double cosphi = cos(phi);
+  double C = BField::mmTeslaToMeVc * theField.bFieldNominal();
+  double q(1.0); 
+  -omega>0 ? q=1.0: q=-1.0;
+  double qC = q*C;
+  double pt = fabs( -qC / omega );
+  double r = 1.0/omega;
+
+  /* calculate position and momentum
+  pos(1) = r*sinphi - (r + d0)*sinphi0;
+  pos(2) = -r*cosphi + (r + d0)*cosphi0;
+  pos(3) = z0 + l*s;
+  mom(1) = pt*cosphi;
+  mom(2) = pt*sinphi;
+  mom(3) = pt*s;
+ */ //TODO
+  
 }
 
 //------------------------------------------------------------------------

@@ -115,8 +115,7 @@ CosmicLineTraj::direction(double f) const //TODO - f --> r (Arc)
 double x_dir = cos(phi())*sin(theta());
 double y_dir = sin(theta())*sin(phi());
 double z_dir = cos(theta());
- 
- return Hep3Vector (x_dir, y_dir, z_dir);
+return Hep3Vector (x_dir, y_dir, z_dir);
 }
 
 Hep3Vector
@@ -152,7 +151,7 @@ CosmicLineTraj::getInfo(double fltLen, HepPoint& pos, Hep3Vector& dir,
   pos = position(fltLen);
   dir = direction(fltLen);
 }
-/*
+
 HepMatrix
 CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TODO
 {
@@ -165,19 +164,11 @@ CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TOD
 //  are uncorrelated.
 //
   HepMatrix ddflct(NHLXPRM,1);
-//
-//  Compute some common things
-//
-  //double omeg = omega();
-  //double tand = tanDip();
-  double arcl = 1;//arc(fltlen);
-  double dx = 1;//cos(arcl);
-  double dy = 1;//sin(arcl);
-  //double cosd = cosDip();
-  //double darc = omeg*d0();
-//
-//  Go through the parameters
-//
+
+  double arcl = arc(fltlen);
+  double dx = cos(arcl);
+  double dy = sin(arcl);
+
   switch (idirect) {
   case theta1:
     
@@ -211,20 +202,11 @@ CosmicLineTraj::derivDisplace(double fltlen,deflectDirection idirect) const //TO
 //  these displacements are correlated with the angular change above
 //
   HepMatrix ddflct(NHLXPRM,1);
-//
-//  Compute some common things
-//
-  double omeg = 1;//omega();
-  double tand = 1;//tanDip();
-  double arcl = 1;//arc(fltlen);
-  double dx = 1;//cos(arcl);
-  double dy =1;//in(arcl);
-  double cosd = 1;//cosDip();
-  double sind = 1;//sinDip();
-  double darc_1 = 1;//1.0+omeg*d0();
-//
-//  Go through the parameters
-//
+
+  double arcl = arc(fltlen);
+  double dx = cos(arcl);
+  double dy =sin(arcl);
+  
   switch (idirect) {
   case theta1:
    
@@ -244,7 +226,7 @@ CosmicLineTraj::derivDisplace(double fltlen,deflectDirection idirect) const //TO
 
   return ddflct;
 }
-*/
+
 void
 CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
                      DifVector& delDir) const
