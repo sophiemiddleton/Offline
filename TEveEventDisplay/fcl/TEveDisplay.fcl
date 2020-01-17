@@ -29,10 +29,10 @@ physics :
 			g4ModuleLabel : "g4run"
 			//generatorsModuleLabel : "compressPV"
 		        //hitMakerModuleLabel : "makePH"
-			strawDigisTag : StrawDigiCollection
-			strawHitsTag : StrawHitCollection
-        		minEnergyDep : 70
-        		minHits : 2
+			strawDigisTag : "makeSD"
+			//strawHitsTag : StrawHitCollection
+        		minEnergyDep : 0
+        		minHits : 1
 			//timeOffsets : { inputs : 		[ @sequence::RecoCompression.TimeMaps ] }
 		}
 	}
