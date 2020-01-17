@@ -112,6 +112,9 @@ struct Config{
 	       fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
 	       fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
                fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
+		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
+		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
+		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
     explicit TEveEventDisplay(const Parameters& conf);
@@ -175,6 +178,7 @@ struct Config{
       TEveTrackList *fTrackList;
       TEveElementList *fHitsList;
       
+      bool addHits_, addTracks_, addClusters_;
       EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
       
       bool foundEvent = false;
@@ -185,7 +189,8 @@ struct Config{
       void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
       void hideBuilding(TGeoNode* node);
       void AddTrack(const art::Event& event, std::vector<int> PDGToAdd);
-      void AddHits(const art::Event& event);
+      void AddHits(const art::Event& event, std::vector<int> PDGsToAdd);
+      void AddClusters(const art::Event& event, std::vector<int> PDGsToAdd);
       bool FindData(const art::Event& event);
 };
 
@@ -203,7 +208,10 @@ TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
         minHits_(conf().minHits()),
 	doDisplay_(conf().doDisplay()),
         clickToAdvance_(conf().clickToAdvance()),
-        showEvent_(conf().showEvent()){
+        showEvent_(conf().showEvent()),
+	addHits_(conf().addHits()),
+	addTracks_(conf().addTracks()),
+	addClusters_(conf().addClusters()){
 		visutil_ = new EvtDisplayUtils();
 	}
 
@@ -347,7 +355,7 @@ void TEveEventDisplay::beginJob(){
 
 
 void TEveEventDisplay::beginRun(const art::Run& run){
-  /*
+  
   if(gGeoManager){
     gGeoManager->GetListOfNodes()->Delete();
     gGeoManager->GetListOfVolumes()->Delete();
@@ -356,7 +364,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   gEve->GetGlobalScene()->DestroyElements();
   fDetXYScene->DestroyElements();
   fDetRZScene->DestroyElements();
-  */
+  
   cout<<"importing GDML "<<endl;
   // Import the GDML of entire Mu2e Geometry
   TGeoManager* geom = new TGeoManager("geom","Geom");
@@ -440,8 +448,9 @@ void TEveEventDisplay::analyze(const art::Event& event){
   gEve->GetCurrentEvent()->DestroyElements();
 
  /*
-  AddHits(event);
-  AddTracks(event, [11,13]);
+  if(addHits) AddHits(event, [11.13]);
+  if(addTracks) AddTracks(event, [11,13]);
+  if(addClusters) AddClusters(event, [11,13]);
   // Import event into ortho views and apply projections
   TEveElement* currevt = gEve->GetCurrentEvent();
 
@@ -543,7 +552,7 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 }
 
 void TEveEventDisplay::AddTrack(const art::Event& event, std::vector<int> PDGToAdd){
-    /*if (drawGenTracks_) {
+    /*
     auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
 
     if (fTrackList == 0) {
@@ -582,10 +591,10 @@ void TEveEventDisplay::AddTrack(const art::Event& event, std::vector<int> PDGToA
     }
     fTrackList->MakeTracks();
     gEve->AddElement(fTrackList);
-  }*/
+  */
 }
 
-void TEveEventDisplay::AddHits(const art::Event& event){
+void TEveEventDisplay::AddHits(const art::Event& event, std::vector<int> PDGsToAdd){
     
   /* // Draw the detector hits
    if (fHitsList == 0) {
@@ -607,6 +616,11 @@ void TEveEventDisplay::AddHits(const art::Event& event){
     fHitsList->AddElement(BkgHitsList);  
     gEve->AddElement(fHitsList);
   */
+}
+
+void AddClusters(const art::Event& evt, std::vector<int> PDGsToAdd){
+
+
 }
 
 
