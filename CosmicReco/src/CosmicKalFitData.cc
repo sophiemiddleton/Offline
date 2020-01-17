@@ -9,8 +9,8 @@ namespace mu2e {
     cosmicTraj   = NULL;
     //    tpart       = TrkParticle::muons;        // TODO --> need both types...
     fdir        = TrkFitDirection::downstream; // TODO ---> do we need this?
-    //cosmictrackseedcol       = 0;
-    cosmicKalSeed 	  = 0;
+    //seedcol       = 0;
+    cosmicKalSeed = 0;
     cosmicSeed     = 0;
    
   }

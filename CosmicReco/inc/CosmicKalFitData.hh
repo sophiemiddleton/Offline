@@ -34,7 +34,7 @@ namespace mu2e {
 
     const StrawHitFlagCollection*     shfcol;         //
     TrkFitDirection                   fdir; //TODO --> do we need this?
-    CosmicTrackSeedCollection	      cosmictrackseedcol;
+    CosmicTrackSeedCollection	      seedcol;
     const CosmicTrackSeed*            cosmicSeed;      
     const CosmicKalSeed*              cosmicKalSeed;       
     CosmicLineTraj*                   cosmicTraj;      
