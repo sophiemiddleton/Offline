@@ -56,7 +56,7 @@
 // BaBar
 #include "BTrk/BbrGeom/BbrVectorErr.hh"
 #include "BTrk/TrkBase/TrkPoca.hh"
-//#include "BTrk/TrkBase/TrkHelixUtils.hh" //TODO
+//#include "BTrk/TrkBase/TrkCosmicUtils.hh" //TODO
 #include "BTrk/ProbTools/ChisqConsistency.hh"
 #include "BTrk/TrkBase/TrkMomCalculator.hh"
 
@@ -101,8 +101,8 @@ namespace mu2e{
     typedef art::EDProducer::Table<Config> Parameters;
     explicit CosmicKalFitter(const Parameters& conf);
     virtual ~CosmicKalFitter();
-    virtual void beginJob();
-    virtual void beginRun(art::Run& run);
+    virtual void beginJob() override;
+    virtual void beginRun(art::Run& run) override ;
     virtual void produce(art::Event& event ) override;
     
   private:
@@ -139,7 +139,7 @@ namespace mu2e{
         _minnhits (conf().minnhits()),
 	_kfit (conf().kfit())
 {
-	    consumes<CosmicTrackSeedCollection>();
+	    consumes<CosmicTrackSeedCollection>(_seedToken);
 	    produces<CosmicKalSeedCollection>();
 	     if(_perr.size() != HelixTraj::NHLXPRM)
       		throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<<std::endl;
@@ -147,16 +147,14 @@ namespace mu2e{
     		for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
       			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];   
  }
-
- CosmicKalFitter::~CosmicKalFitter(){}
+}
+  CosmicKalFitter::~CosmicKalFitter(){}
 
   void CosmicKalFitter::beginJob() {
    art::ServiceHandle<art::TFileService> tfs;
     
   }
-/* ------------------------Begin Run--------------------------//
-//                   sets up the tracker                     //
-//----------------------------------------------------------*/
+
   void CosmicKalFitter::beginRun(art::Run& run) {
    mu2e::GeomHandle<mu2e::Tracker> th;
    mu2e::GeomHandle<BFieldManager> bfmgr;

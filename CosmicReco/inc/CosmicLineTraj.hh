@@ -64,9 +64,7 @@ public:
   double phi0() const{  return parameters()->parameter()[phi0Index]; }
   double theta() const {return parameters()->parameter()[thetaIndex]; }
   double phi() const {  return parameters()->parameter()[phiIndex]; }
-
-  //void visitAccept(CosmicTrkVisitor* vis) const;
-
+  virtual void visitAccept(TrkVisitor* vis) const;
   virtual void               print(std::ostream& os) const;
   virtual void 		     printAll(std::ostream& os) const;
 
@@ -75,6 +73,8 @@ public:
   double zFlight(double zpos, double POCAz) const;
   double angle(const double& f) const;
   double mom() const; //Added --> will remove need for the CosmicTrkMom Calculations
-
+  
+  TranslateParams paramFunction() const; //needed even though not used
+  void invertParams(TrkParams* newparams, std::vector<bool>& flags) const; //needed even though not used
 };
 #endif

@@ -73,11 +73,14 @@ namespace mu2e
   };
 
     CosmicKalFit::CosmicKalFit(const Config& conf) :
-       _debug(conf.debug()),
-       _maxpull(conf.maxpull()),
-       _strHitW(conf.strHitW()),
-       _minnstraws(conf.minnstraws())
-	{}
+       _debug(conf().debug()),
+       _maxpull(conf().maxpull()),
+       _strHitW(conf().strHitW()),
+       _minnstraws(conf().minnstraws())
+	{
+		_ttcalc(pset.get<fhicl::ParameterSet>("T0Calculator", fhicl::ParameterSet());
+		_bfield(0);
+	}
 
 void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep, 
 			 Mu2eDetector::cptr_t detmodel,
@@ -127,13 +130,13 @@ void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,
     }
   }
 
-CosmicKalFit::fitable(CosmicKalSeed const& kseed){
+bool CosmicKalFit::fitable(CosmicKalSeed const& kseed){
     return kseed.segments().size() > 0 && kseed.hits().size() >= _minnstraws;
   }
 
   void CosmicKalFit::makeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, TrkStrawHitVector& tshv ) {
 
-    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicseed->trkstrawhits();
+    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicSeed->trkstrawhits();
     CosmicLineTraj const htraj = *kalData.cosmicTraj;
     
     for(auto ths : hseeds ){

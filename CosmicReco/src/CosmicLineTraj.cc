@@ -119,9 +119,11 @@ return Hep3Vector (x_dir, y_dir, z_dir);
 }
 
 Hep3Vector
-CosmicLineTraj::delDirect( double fltLen ) const  //assume cosntant at the moment
-{
-  //TODO
+CosmicLineTraj::delDirect( double fltLen ) const
+{  //This is the derivative of the direction vector in XY
+  double ang = angle(fltLen); //BbrAngle(phi0()+arc(f))
+  double delX = 0;//TODO
+  double delY = 0; //TODO
   return Hep3Vector(delX, delY, 0.0);
 }
 
@@ -150,6 +152,7 @@ CosmicLineTraj::getInfo(double fltLen, HepPoint& pos, Hep3Vector& dir,
 {
   pos = position(fltLen);
   dir = direction(fltLen);
+  delDir = delDirect(fltLen);//TODO
 }
 
 HepMatrix
@@ -159,8 +162,8 @@ CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TOD
 //  This function computes the column matrix of derrivatives for the change
 //  in parameters for a change in the direction of a track at a point along
 //  its flight, holding the momentum and position constant.  The effects for
-//  changes in 2 perpendicular directions (theta1 = dip and
-//  theta2 = phi*cos(dip)) can sometimes be added, as scattering in these
+//  changes in 2 perpendicular directions (theta1 = theta and
+//  theta2 = phi*cos(theta)) can sometimes be added, as scattering in these
 //  are uncorrelated.
 //
   HepMatrix ddflct(NHLXPRM,1);
@@ -225,6 +228,19 @@ CosmicLineTraj::derivDisplace(double fltlen,deflectDirection idirect) const //TO
   }
 
   return ddflct;
+}
+
+HepMatrix CosmicLineTraj::derivPFract(double fltLen) const {
+//Function computes column marix of derivatives for parameters from a fractional change in the track momentium. Holds postion and direction constant. The momentum change could from energy loss.
+     HepMatrix dmomfrac(NHLXPRM,1);
+    
+     dmomfrac(phiIndex+1,1) = 0;
+     dmomfrac(theta0Index+1,1) = 0;
+     dmomfrac(d0Index+1,1) = 0;
+     dmomfrac(phi0Index+1,1) = 0;
+     return dmomfrac;
+     
+
 }
 
 void
@@ -347,23 +363,24 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
 
 
 double
-CosmicLineTraj::curvature(double ) const   //TODO - we assume curvature not present so return 1
+CosmicLineTraj::curvature(double ) const   //TODO 
 {
   
 return 1;
 }
 
-double CosmicLineTraj::angle() const 
-{
-  return BbrAngle(parameters()->parameter()[phi0Index]).rad();
+
+void CosmicLineTraj::visitAccept(TrkVisitor* vis) const
+{ 
+   //vis->trkVisitCosmicLineTraj(this); should work once migrated CosmicTrkVisitor to BTrk/TrkVisitor
 }
-/*
+
 double
-CosmicLineTraj::angle(const double& f) const //TODO arc(f) = f*rad()
+CosmicLineTraj::angle(const double& f) const 
 {
   return BbrAngle(phi0() + f*phi0());
 }
-*/
+
 void
 CosmicLineTraj::printAll(ostream& os) const
 {
