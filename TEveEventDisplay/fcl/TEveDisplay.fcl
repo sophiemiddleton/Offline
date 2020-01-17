@@ -23,21 +23,19 @@ physics :
 {
 	analyzers:
 	{
-		eventdisplay:
+		Teveeventdisplay:
 		{
 			module_type : TEveEventDisplay
 			g4ModuleLabel : "g4run"
 			//generatorsModuleLabel : "compressPV"
 		        //hitMakerModuleLabel : "makePH"
 			strawDigisTag : "makeSD"
-			//strawHitsTag : StrawHitCollection
         		minEnergyDep : 0
         		minHits : 1
-			//timeOffsets : { inputs : 		[ @sequence::RecoCompression.TimeMaps ] }
 		}
 	}
 	
-	e1 : [eventdisplay]
+	e1 : [Teveeventdisplay]
 	
 	end_paths : [e1]
 }
