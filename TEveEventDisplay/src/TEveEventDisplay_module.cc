@@ -184,6 +184,7 @@ struct Config{
       void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
       void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
       void hideBuilding(TGeoNode* node);
+      void AddTrack(const art::Event& event, std::vector<int> PDGToAdd);
       void AddHits(const art::Event& event);
       bool FindData(const art::Event& event);
 };
@@ -437,7 +438,20 @@ void TEveEventDisplay::analyze(const art::Event& event){
   // Delete visualization structures associated with previous event
   gEve->GetViewers()->DeleteAnnotations();
   gEve->GetCurrentEvent()->DestroyElements();
-  //AddHits(event);
+
+ /*
+  AddHits(event);
+  AddTracks(event, [11,13]);
+  // Import event into ortho views and apply projections
+  TEveElement* currevt = gEve->GetCurrentEvent();
+
+  fEvtXYScene->DestroyElements();
+  fXYMgr->ImportElements(currevt, fEvtXYScene);
+
+  fEvtRZScene->DestroyElements();
+  fRZMgr->ImportElements(currevt, fEvtRZScene);
+*/
+ 
 } 
 
 void TEveEventDisplay::hideTop(TGeoNode* node) {
@@ -528,10 +542,71 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 
 }
 
+void TEveEventDisplay::AddTrack(const art::Event& event, std::vector<int> PDGToAdd){
+    /*if (drawGenTracks_) {
+    auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
+
+    if (fTrackList == 0) {
+      fTrackList = new TEveTrackList("Tracks");
+      fTrackList->SetLineWidth(4);
+      fTrackList->IncDenyDestroy(); 
+    }
+    else {
+      fTrackList->DestroyElements();         
+    }
+
+    TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
+    trkProp->SetMagField(-geom_->bz()*1000.);
+    trkProp->SetMaxR(trkMaxR_);
+    trkProp->SetMaxZ(trkMaxZ_);
+    trkProp->SetMaxStep(trkMaxStepSize_);
+
+    int mcindex=-1;
+    for ( auto const& gen: *gens){
+      mcindex++;
+      if ( gen.hasChildren() ) continue;
+      TParticle mcpart;
+      mcpart.SetMomentum(gen.momentum().px(),gen.momentum().py(),gen.momentum().pz(),gen.momentum().e());
+      mcpart.SetProductionVertex(gen.position().x()*0.1,gen.position().y()*0.1,gen.position().z()*0.1,0.);
+      mcpart.SetPdgCode(gen.pdgId());
+      TEveTrack* track = new TEveTrack(&mcpart,mcindex,trkProp);
+      track->SetIndex(0);
+      track->SetStdTitle();
+      track->SetAttLineAttMarker(fTrackList);
+      if ( gen.pdgId() == 11 ){
+        track->SetMainColor(kGreen);
+      } else {
+        track->SetMainColor(kViolet+1);
+      }
+      fTrackList->AddElement(track);
+    }
+    fTrackList->MakeTracks();
+    gEve->AddElement(fTrackList);
+  }*/
+}
 
 void TEveEventDisplay::AddHits(const art::Event& event){
-	
-  
+    
+  /* // Draw the detector hits
+   if (fHitsList == 0) {
+      fHitsList = new TEveElementList("Hits");
+      fHitsList->IncDenyDestroy();     
+    }
+    else {
+      fHitsList->DestroyElements();  
+    }
+
+    TEveElementList* ElectronHitsList  = new TEveElementList("Electron Hits");
+    TEveElementList* BkgHitsList = new TEveElementList("Bkg Hits");
+    int ie = 0;
+    int ibkg = 0;
+    drawHit("e",kGreen,hitMarkerSize_,ie++,hit,ElectronHitsList);
+    drawHit("Bkg",kViolet+1,hitMarkerSize_,ibkg++,hit,BkgHitsList);
+        
+    fHitsList->AddElement(ElectronHitsList);  
+    fHitsList->AddElement(BkgHitsList);  
+    gEve->AddElement(fHitsList);
+  */
 }
 
 
