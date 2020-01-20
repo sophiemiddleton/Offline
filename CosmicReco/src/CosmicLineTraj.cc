@@ -178,16 +178,16 @@ CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TOD
   switch (idirect) {
   case theta1:
     
-    ddflct(thetaIndex+1,1) = 1;//1.0/pow(sind,2);
+    ddflct(thetaIndex+1,1) = 1.0/pow(sind,2);
     ddflct(d0Index+1,1) = 1;//(1-dx)*tand/omeg;
-    ddflct(phi0Index+1,1) =  1;//-dy*tand/(1+darc);
-    ddflct(phiIndex+1,1) = 1;//- translen(fltlen) - pow(tand,2)*dy/(omeg*(1+darc));
+    ddflct(phi0Index+1,1) = // -dy*tand/(1+darc);
+    ddflct(phiIndex+1,1) = 1;
     break;
   case theta2:
     
     ddflct(thetaIndex+1,1) = 0;
     ddflct(d0Index+1,1) = 1;//-dy/(cosd*omeg);
-    ddflct(phi0Index+1,1) = 1;//dx/(cosd*(1+darc));
+    ddflct(phi0Index+1,1) = ;//dx/(cosd*(1+darc));
     ddflct(phiIndex+1,1) = 1;//-tand*(1- dx/(1+darc))/(cosd*omeg);
     break;
   }
@@ -220,7 +220,7 @@ CosmicLineTraj::derivDisplace(double fltlen, deflectDirection idirect) const //T
    
     ddflct(thetaIndex+1,1) = 0;
     ddflct(d0Index+1,1) = -cosd*dy;
-    ddflct(phi0Index+1,1) = cosd*dx/(1+d0());
+    ddflct(phi0Index+1,1) = 0;
     ddflct(phiIndex+1,1) = 0;
     break;
   case theta2:
