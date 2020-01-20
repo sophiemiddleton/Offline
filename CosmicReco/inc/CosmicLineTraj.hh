@@ -56,7 +56,7 @@ public:
 
   double curvature( double fltLen) const;
 
-  CLHEP::HepMatrix derivDeflect(double fltlen,deflectDirection) const;
+  CLHEP::HepMatrix derivDeflect(double fltlen,deflectDirection idir) const;
   CLHEP::HepMatrix derivDisplace(double fltlen,deflectDirection idir) const;
   CLHEP::HepMatrix derivPFract(double fltlen) const;
 
@@ -74,7 +74,7 @@ public:
   double angle(const double& f) const;
   double mom() const; //Added --> will remove need for the CosmicTrkMom Calculations
   
-  TranslateParams paramFunction() const; //needed even though not used
-  void invertParams(TrkParams* newparams, std::vector<bool>& flags) const; //needed even though not used
+  TranslateParams paramFunction() const; //not used
+  void invertParams(TrkParams* newparams, std::vector<bool>& flags) const; // not used
 };
 #endif

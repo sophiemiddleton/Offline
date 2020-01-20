@@ -43,7 +43,7 @@ namespace mu2e {
 	// phi0 is the azimuthal angle of the particle velocity vector at the point
 	// of closest approach to the origin.  It's sign also depends on the angular
 	// momentum.  To translate from the center, we need to reverse coordinates
-	hpvec[CosmicLineTraj::phi0Index] = atan2(amsign*track.GetPOCA().x(),amsign*track.GetPOCA().y());
+	hpvec[CosmicLineTraj::phi0Index] = amsign*atan2(track.GetPOCA().x(),track.GetPOCA().y());
 	// d0 describes the distance to the origin at closest approach.
 	// It is signed by the particle angular momentum WRT the origin.
 	// The Helix fit radial bias is anti-correlated with d0; correct for it here.
