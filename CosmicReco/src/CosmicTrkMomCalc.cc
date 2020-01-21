@@ -92,7 +92,7 @@ CosmicTrkMomCalc::vecMom(const TrkSimpTraj& theTraj, const BField&
      return theMom;
 
   } else if (theVisitor.cosmic() !=0){
-      return theTraj.mom()*theTraj.direction(fltlen); //TODO - check
+      return theTraj.mom()*theTraj.direction(fltlen); 
 
   } else {
 
@@ -350,27 +350,6 @@ CosmicTrkMomCalc::calcCurvVecMom(const Hep3Vector& direction,
 
 }
 
-//------------------------------------------------------------------------
-Hep3Vector
-CosmicTrkMomCalc::calcCosmicVecMom(const Hep3Vector& direction, 
-                                 double curvature,
-                                 const BField& theField) {
-//------------------------------------------------------------------------
-  double cosTheta = direction.z(); //I think this might be ok?
-  double arg = 1.0-cosTheta*cosTheta;
-  if (arg < 0.0) arg = 0.0;
-  double sinTheta = sqrt(arg);
-
-  double momMag =
-           fabs( BField::mmTeslaToMeVc*theField.bFieldNominal()*
-		sinTheta/curvature );
-
-  Hep3Vector momVec = direction;
-  momVec.setMag(momMag); //directed along track
-
-  return momVec;
-
-}
 
 DifNumber
 CosmicTrkMomCalc::momMag(const HelixTraj& theTraj,
@@ -390,31 +369,6 @@ CosmicTrkMomCalc::momMag(const HelixTraj& theTraj,
   DifNumber cosdip = cos(dipDf);
   DifNumber momMag =
     BField::mmTeslaToMeVc*theField.bFieldNominal() / (cosdip * omegaDf);
-  momMag.absolute();
-  return momMag;
-}
-
-DifNumber
-CosmicTrkMomCalc::momMagCosmic(const CosmicLineTraj& theTraj,
-			 const BField& theField) {
-  DifNumber d0Df(theTraj.d0(), CosmicLineTraj::d0Index+1, CosmicLineTraj::NHLXPRM);
-  DifNumber phi0Df(theTraj.phi0(), CosmicLineTraj::phi0Index+1, CosmicLineTraj::NHLXPRM);
-  DifNumber thetaDf(theTraj.theta(), CosmicLineTraj::thetaIndex+1, CosmicLineTraj::NHLXPRM);
-  DifNumber phiDf(theTraj.phi(), CosmicLineTraj::phiIndex+1, CosmicLineTraj::NHLXPRM);
-  phi0Df.setIndepPar( theTraj.parameters() );
-  d0Df.setIndepPar( theTraj.parameters() );
-  thetaDf.setIndepPar( theTraj.parameters() );
-  phiDf.setIndepPar( theTraj.parameters() );
- 
-  DifNumber cosTheta = cos(theTraj.theta());
-  double arg = 1.0-cosTheta*cosTheta;
-  if (arg < 0.0) arg = 0.0;
-  double sinTheta = sqrt(arg);
-
-  DifNumber momMag =
-           fabs( BField::mmTeslaToMeVc*theField.bFieldNominal()*
-		sinTheta/1 ); //Assume curvature doesnt exist here i.e. fully straight
- 
   momMag.absolute();
   return momMag;
 }
@@ -1052,7 +1006,7 @@ CosmicTrkMomCalc::calcNeutAllCovs(const TrkSimpTraj& theTraj,
 }
 
 
-//------------------------------------------------------------------------ //TODO
+//------------------------------------------------------------------------ 
 void
 CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
 				  const BField& theField,
@@ -1078,7 +1032,8 @@ CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
   double sintheta = sin(theta);
 
   double pt = theTraj.mom()*sintheta;
-  
+  //px= pt*cosphi*sintheta, py=pt*sintheta*sinphi, pz=pt*costheta
+
   // Calculate derivatives for Jacobian matrix //
   double d_x_d0 = -1*sinphi0;
   double d_x_phi0 = -d0*cosphi0;
@@ -1092,11 +1047,14 @@ CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
 
   double d_z_theta = -1*fltlen*sintheta;
   double d_z_phi = 0;
-  
+  double d_z_d0 = 0;
+  double d_z_dphi0 = 0;
 
-  //double d_px_phi0 = -pt*sinphi;
-  //double d_py_phi0 = pt*cosphi;
-  //TODO Mom stuff!!
+  double d_px_phi = -pt*sinphi*sintheta;
+  double d_py_phi = pt*cosphi*sintheta;
+  double d_px_theta = pt*cosphi*costheta;
+  double d_py_theta = pt*sinphi*costheta;
+  
 
   // Fill temporary variables for m - Note: some of these will be 0!
   double m_d0_d0 =  m[CosmicLineParams::d0Index][CosmicLineParams::d0Index];
@@ -1112,7 +1070,6 @@ CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
   double m_phi_theta =  m[CosmicLineParams::phiIndex][CosmicLineParams::thetaIndex];
   double m_phi_phi =  m[CosmicLineParams::phiIndex][CosmicLineParams::phiIndex];
   
-  // Fill xxCov,xpCov,ppCov -TODO
   xxCov(1,1) = 
     d_x_d0* (  d_x_d0*m_d0_d0 + d_x_phi0*m_phi0_d0 + d_x_theta*m_theta_d0 + d_x_phi*m_phi_d0  )   + 
     d_x_phi0* (  d_x_d0*m_d0_phi0 + d_x_phi0*m_phi0_phi0 + d_x_theta*m_theta_phi0 + d_x_phi*m_phi_phi0  )   + 
@@ -1144,64 +1101,48 @@ CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
     dz_dphi0*(  d_z_d0*m_d0_phi0 + d_z_phi0*m_phi0_phi0 + d_z_theta*m_phi0_theta + d_z_phi*m_phi0_phi );  
     d_z_theta*(  d_z_d0*m_d0_theta + d_z_phi0*m_phi0_theta + d_z_theta*m_theta_theta + d_z_phi*m_phi_theta )+
    dz_phi*(  d_z_d0*m_d0_pho + d_z_phi0*m_phi0_phi + d_z_theta*m_phi_theta + d_z_phi*m_phi_phi );  
-///-------------------------------TODO-----------------------------------//
-  xpCov(1,1) = 
-    d_px_phi0* (  d_x_d0*m_d0_phi0 + d_x_phi0*m_phi0_phi0 + d_x_theta*m_theta_phi0 + d_x_phi*m_phi_phi0  )   + 
-    d_px_theta* (  d_x_d0*m_theta_d0 + d_x_phi0*m_theta_phi0 + d_x_theta*m_theta_theta + d_x_phi*m_phi_theta  )   + 
-    d_px_phi* (  d_x_d0*m_phi_d0 + d_x_phi0*m_phi_phi0 + d_x_theta*m_phi_theta + d_x_phi*m_phi_phi  )   ; 
-  xpCov(2,1) = 
-    d_px_phi0* (  d_y_d0*m_d0_phi0 + d_y_phi0*m_phi0_phi0 + d_y_theta*m_theta_phi0 + d_y_phi*m_phi_phi0  )   + 
-    d_px_theta* (  d_y_d0*m_theta_d0 + d_y_phi0*m_theta_phi0 + d_y_theta*m_theta_theta + d_y_phi*m_phi_theta  )   + 
-    d_px_phi* (  d_y_d0*m_phi_d0 + d_y_phi0*m_phi_phi0 + d_y_theta*m_phi_theta + d_y_phi*m_phi_phi  )   ; 
-  xpCov(3,1) =
-    d_px_phi0* (  d_z_z0*m_z0_phi0 + d_z_tanDip*m_tanDip_phi0  )   + 
-    d_px_theta* (  d_z_z0*m_z0_theta + d_z_tanDip*m_tanDip_theta  )   + 
-    d_px_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(1,2) = 
-    d_py_phi0* (  d_x_d0*m_d0_phi0 + d_x_phi0*m_phi0_phi0 + d_x_theta*m_theta_phi0 + d_x_tanDip*m_tanDip_phi0  )   + 
-    d_py_theta* (  d_x_d0*m_theta_d0 + d_x_phi0*m_theta_phi0 + d_x_theta*m_theta_theta + d_x_tanDip*m_tanDip_theta  )   + 
-    d_py_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_theta*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(2,2) = 
-    d_py_phi0* (  d_y_d0*m_d0_phi0 + d_y_phi0*m_phi0_phi0 + d_y_omega*m_omega_phi0 + d_y_tanDip*m_tanDip_phi0  )   + 
-    d_py_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
-    d_py_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(3,2) = 
-    d_py_phi0* (  d_z_z0*m_z0_phi0 + d_z_tanDip*m_tanDip_phi0  )   + 
-    d_py_omega* (  d_z_z0*m_z0_omega + d_z_tanDip*m_tanDip_omega  )   + 
-    d_py_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(1,3) = 
-    d_pz_omega* (  d_x_d0*m_omega_d0 + d_x_phi0*m_omega_phi0 + d_x_omega*m_omega_omega + d_x_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_x_d0*m_tanDip_d0 + d_x_phi0*m_tanDip_phi0 + d_x_omega*m_tanDip_omega + d_x_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(2,3) = 
-    d_pz_omega* (  d_y_d0*m_omega_d0 + d_y_phi0*m_omega_phi0 + d_y_omega*m_omega_omega + d_y_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_y_d0*m_tanDip_d0 + d_y_phi0*m_tanDip_phi0 + d_y_omega*m_tanDip_omega + d_y_tanDip*m_tanDip_tanDip  )   ; 
-  xpCov(3,3) = 
-    d_pz_omega* (  d_z_z0*m_z0_omega + d_z_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_z_z0*m_tanDip_z0 + d_z_tanDip*m_tanDip_tanDip  )   ; 
 
-  ppCov(1,1) = 
-    d_px_phi0* (  d_px_phi0*m_phi0_phi0 + d_px_omega*m_omega_phi0 + d_px_tanDip*m_tanDip_phi0  )   + 
-    d_px_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
-    d_px_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
-  ppCov(2,1) = 
-    d_py_phi0* (  d_px_phi0*m_phi0_phi0 + d_px_omega*m_omega_phi0 + d_px_tanDip*m_tanDip_phi0  )   + 
-    d_py_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
-    d_py_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
-  ppCov(2,2) = 
-    d_py_phi0* (  d_py_phi0*m_phi0_phi0 + d_py_omega*m_omega_phi0 + d_py_tanDip*m_tanDip_phi0  )   + 
-    d_py_omega* (  d_py_phi0*m_omega_phi0 + d_py_omega*m_omega_omega + d_py_tanDip*m_tanDip_omega  )   + 
-    d_py_tanDip* (  d_py_phi0*m_tanDip_phi0 + d_py_omega*m_tanDip_omega + d_py_tanDip*m_tanDip_tanDip  )   ; 
-  ppCov(3,1) = 
-    d_pz_omega* (  d_px_phi0*m_omega_phi0 + d_px_omega*m_omega_omega + d_px_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_px_phi0*m_tanDip_phi0 + d_px_omega*m_tanDip_omega + d_px_tanDip*m_tanDip_tanDip  )   ; 
-  ppCov(3,2) = 
-    d_pz_omega* (  d_py_phi0*m_omega_phi0 + d_py_omega*m_omega_omega + d_py_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_py_phi0*m_tanDip_phi0 + d_py_omega*m_tanDip_omega + d_py_tanDip*m_tanDip_tanDip  )   ; 
-  ppCov(3,3) = 
-    d_pz_omega* (  d_pz_omega*m_omega_omega + d_pz_tanDip*m_tanDip_omega  )   + 
-    d_pz_tanDip* (  d_pz_omega*m_tanDip_omega + d_pz_tanDip*m_tanDip_tanDip  )   ; 
+
+  xpCov(1,1) = d_px_theta* (  d_x_d0*m_theta_d0 + d_x_phi0*m_theta_phi0 + d_x_theta*m_theta_theta + d_x_phi*m_phi_theta  )   + 
+    d_px_phi* (  d_x_d0*m_phi_d0 + d_x_phi0*m_phi_phi0 + d_x_theta*m_phi_theta + d_x_phi*m_phi_phi  )   ; 
+
+  xpCov(2,1) = d_px_theta* (  d_y_d0*m_theta_d0 + d_y_phi0*m_theta_phi0 + d_y_theta*m_theta_theta + d_y_phi*m_phi_theta  )   + 
+    d_px_phi* (  d_y_d0*m_phi_d0 + d_y_phi0*m_phi_phi0 + d_y_theta*m_phi_theta + d_y_phi*m_phi_phi  )   ; 
+
+  xpCov(3,1) = d_px_theta* (  d_z_d0*m_theta_d0 + d_z_phi0*m_theta_phi0 + d_z_theta*m_theta_theta + d_z_phi*m_phi_theta  )   + 
+    d_px_phi* (  d_z_d0*m_phi_d0 + d_z_phi0*m_phi_phi0 + d_z_theta*m_phi_theta + d_z_phi*m_phi_phi  )   ;
+
+  xpCov(1,2) =  d_py_theta* (  d_x_d0*m_theta_d0 + d_x_phi0*m_theta_phi0 + d_x_theta*m_theta_theta + d_x_phi*m_phi_theta  )   + 
+    d_py_phi* (  d_x_d0*m_phi_d0 + d_x_phi0*m_phi_phi0 + d_x_theta*m_phi_theta + d_x_phi*m_phi_phi  )   ;
+
+  xpCov(2,2) =  d_py_theta* (  d_y_d0*m_theta_d0 + d_y_phi0*m_theta_phi0 + d_y_theta*m_theta_theta + d_y_phi*m_phi_theta  )   + 
+    d_py_phi* (  d_y_d0*m_phi_d0 + d_y_phi0*m_phi_phi0 + d_y_theta*m_phi_theta + d_y_phi*m_phi_phi  )   ;
+    
+  xpCov(3,2) =  d_py_theta* (  d_z_d0*m_theta_d0 + d_z_phi0*m_theta_phi0 + d_z_theta*m_theta_theta + d_y_phi*m_phi_theta  )   + 
+    d_py_phi* (  d_z_d0*m_phi_d0 + d_z_phi0*m_phi_phi0 + d_z_theta*m_phi_theta + d_z_phi*m_phi_phi  )   ;
+    
+  xpCov(1,3) =  d_pz_theta* (  d_x_d0*m_theta_d0 + d_x_phi0*m_theta_phi0 + d_x_theta*m_theta_theta + d_x_phi*m_phi_theta  )   + 
+    d_pz_phi* (  d_x_d0*m_phi_d0 + d_x_phi0*m_phi_phi0 + d_x_theta*m_phi_theta + d_x_phi*m_phi_phi  )   ;
+    
+  xpCov(2,3) =  d_pz_theta* (  d_y_d0*m_theta_d0 + d_y_phi0*m_theta_phi0 + d_y_theta*m_theta_theta + d_y_phi*m_phi_theta  )   + 
+    d_pz_phi* (  d_y_d0*m_phi_d0 + d_y_phi0*m_phi_phi0 + d_y_theta*m_phi_theta + d_y_phi*m_phi_phi  )   ;
+    
+  xpCov(3,3) =  d_pz_theta* (  d_z_d0*m_theta_d0 + d_z_phi0*m_theta_phi0 + d_z_theta*m_theta_theta + d_z_phi*m_phi_theta  )   + 
+    d_pz_phi* (  d_z_d0*m_phi_d0 + d_z_phi0*m_phi_phi0 + d_z_theta*m_phi_theta + d_z_phi*m_phi_phi  )   ;
+    
+
+  ppCov(1,1) = d_px_theta* ( d_px_theta*m_theta_theta + d_px_phi*m_phi_theta  )   + d_px_phi* (  d_px_theta*m_phi_theta + d_px_phi*m_phi_phi  );
+   
+  ppCov(2,1) = d_py_theta* ( d_px_theta*m_theta_theta + d_px_phi*m_phi_theta  )   + d_py_phi* (  d_px_theta*m_phi_theta + d_px_phi*m_phi_phi  );
+
+  ppCov(2,2) = d_py_theta* ( d_py_theta*m_theta_theta + d_py_phi*m_phi_theta  )   + d_py_phi* (  d_py_theta*m_phi_theta + d_py_phi*m_phi_phi  );
+    
+  ppCov(3,1) = d_pz_theta* ( d_px_theta*m_theta_theta + d_px_phi*m_phi_theta  )   + d_pz_phi* (  d_px_theta*m_phi_theta + d_px_phi*m_phi_phi  );
+     
+  ppCov(3,2) = d_pz_theta* ( d_py_theta*m_theta_theta + d_py_phi*m_phi_theta  )   + d_pz_phi* (  d_py_theta*m_phi_theta + d_py_phi*m_phi_phi  );
   
-//-----------------------end TODO----------------------//
+  ppCov(3,3) = d_pz_theta* ( d_pz_theta*m_theta_theta + d_pz_phi*m_phi_theta  )   + d_pz_phi* (  d_pz_theta*m_phi_theta + d_pz_phi*m_phi_phi  );
+   
 }
 
 
