@@ -49,13 +49,19 @@ namespace mu2e{
 	class Geom_Interface {
                 #ifndef __CINT__
 		explicit Geom_Interface();
+               public:
+		 virtual ~Geom_Interface(){};
+		 TGeoManager *_geom;
+		 TGeoManager* getGeom(TString filename) {
+			TGeoManager *geom;
+			geom = geom->TGeoManager::Import(filename);
+			return geom;
+ 		}
 		
-		public:
-		  virtual ~Geom_Interface(){};
 		private:
 		  art::Event  *_event;
 		  art::Run    *_run;
-	  	  TGeoManager *_geom;
+	
 		 
 		  void CreateGeomManager();
 		  void RemoveComponents();

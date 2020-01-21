@@ -7,10 +7,7 @@ process_name : TEveDisplay
 
 source :
 {
-	module_type : RootInput
-	inputCommands: ["keep *",
-	"drop *KalRepPayload*_*_*_*",
-	"drop *CaloCrystalOnlyHit*_*_*_*"]
+	module_type : EmptyEvent
 }
 	
 services :
@@ -27,8 +24,6 @@ physics :
 		{
 			module_type : TEveEventDisplay
 			g4ModuleLabel : "g4run"
-			//generatorsModuleLabel : "compressPV"
-		        //hitMakerModuleLabel : "makePH"
 			strawDigisTag : "makeSD"
         		minEnergyDep : 0
         		minHits : 1
@@ -41,4 +36,4 @@ physics :
 }
 	
 services.GeometryService.simulatedDetector.tool_type : "Mu2e"
-source.readParameterSets : false
+

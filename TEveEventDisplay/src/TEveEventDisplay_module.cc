@@ -111,7 +111,7 @@ struct Config{
 	       fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
 	       fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
 	       fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
-               fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
+               fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),false};     
 		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
 		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
 		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
@@ -122,7 +122,7 @@ struct Config{
      virtual void beginJob();
      virtual void beginRun(const art::Run& run);
      void analyze(const art::Event& e);
-     virtual void endJob();
+     //virtual void endJob();
  private:
      Config _conf;
      int _mcdiag;
@@ -140,9 +140,7 @@ struct Config{
      // Name of the tracker StepPoint collection
      //std::string trackerStepPoints_;
 
-     // Cuts used inside SimParticleWithHits:
-     //  - drop hits with too little energy deposited.
-     //  - drop SimParticles with too few hits.
+
       double minEnergyDep_;
       size_t minHits_;
 
@@ -222,57 +220,57 @@ TEveEventDisplay::~TEveEventDisplay(){}
 void TEveEventDisplay::MakeNavPanel()
 {
   TEveBrowser* browser = gEve->GetBrowser();
-  browser->StartEmbedding(TRootBrowser::kLeft); 
+  browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
 
   TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
   frmMain->SetWindowName("EVT NAV");
   frmMain->SetCleanup(kDeepCleanup);
-  
+
   TGHorizontalFrame* navFrame = new TGHorizontalFrame(frmMain);
   TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
   {
-    
+    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
     TGPictureButton* b = 0;
-    // Create back button and connect to "PrevEvent" in utils. The Buttons are images:
-    b = new TGPictureButton(navFrame, gClient->GetPicture("TEveEventDisplay/src/Icons/back.png"));
-    //Add button to frame:
+
+    // ... Create back button and connect to "PrevEvent" rcvr in visutils
+    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
     navFrame->AddFrame(b);
     b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
-    
-    //Create forward button and connect to "NextEvent" utils
-    b = new TGPictureButton(navFrame, gClient->GetPicture("TEveEventDisplay/src/Icons/forward.png"));
+
+    // ... Create forward button and connect to "NextEvent" rcvr in visutils
+    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
     navFrame->AddFrame(b);
     b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
-    //Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
-    TGHorizontalFrame* runFrame = new TGHorizontalFrame(evtidFrame);
-    fTlRun = new TGLabel(runFrame,"Run Number");
+    // ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
+    TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
+    fTlRun = new TGLabel(runoFrame,"Run Number");
     fTlRun->SetTextJustify(kTextLeft);
     fTlRun->SetMargins(5,5,5,0);
-    runFrame->AddFrame(fTlRun);
+    runoFrame->AddFrame(fTlRun);
     
-    fTeRun = new TGTextEntry(runFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
+    fTeRun = new TGTextEntry(runoFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
     visutil_->fTbRun->AddText(0, "1");
     fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
-    runFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
+    runoFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
 
-    //Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
-    TGHorizontalFrame* evtFrame = new TGHorizontalFrame(evtidFrame);
-    fTlEvt = new TGLabel(evtFrame,"Evt Number");
+    // ... Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
+    TGHorizontalFrame* evnoFrame = new TGHorizontalFrame(evtidFrame);
+    fTlEvt = new TGLabel(evnoFrame,"Evt Number");
     fTlEvt->SetTextJustify(kTextLeft);
     fTlEvt->SetMargins(5,5,5,0);
-    evtFrame->AddFrame(fTlEvt);
+    evnoFrame->AddFrame(fTlEvt);
 
-    fTeEvt = new TGTextEntry(evtFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
+    fTeEvt = new TGTextEntry(evnoFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
     visutil_->fTbEvt->AddText(0, "1");
     fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
-    evtFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
+    evnoFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
 
-    // Add horizontal run & event number subframes to vertical evtidFrame
-    evtidFrame->AddFrame(runFrame,new TGLayoutHints(kLHintsExpandX));
-    evtidFrame->AddFrame(evtFrame,new TGLayoutHints(kLHintsExpandX));
+    // ... Add horizontal run & event number subframes to vertical evtidFrame
+    evtidFrame->AddFrame(runoFrame,new TGLayoutHints(kLHintsExpandX));
+    evtidFrame->AddFrame(evnoFrame,new TGLayoutHints(kLHintsExpandX));
 
-    // Add navFrame and evtidFrame to MainFrame
+    // ... Add navFrame and evtidFrame to MainFrame
     frmMain->AddFrame(navFrame);
     TGHorizontal3DLine *separator = new TGHorizontal3DLine(frmMain);
     frmMain->AddFrame(separator, new TGLayoutHints(kLHintsExpandX));
@@ -281,7 +279,7 @@ void TEveEventDisplay::MakeNavPanel()
     frmMain->MapSubwindows();
     frmMain->Resize();
     frmMain->MapWindow();
-    cout<<" finsihing panel making "<<endl;
+
     browser->StopEmbedding();
     browser->SetTabTitle("Event Nav", 0);
   }
@@ -289,7 +287,7 @@ void TEveEventDisplay::MakeNavPanel()
 
 void TEveEventDisplay::beginJob(){
   cout<<"Beginning Job ... "<<endl;
-/*
+
   directory_ = gDirectory;
   // Create application environment:
    if ( !gApplication ){
@@ -350,7 +348,7 @@ void TEveEventDisplay::beginJob(){
   glv->SetGuideState(TGLUtil::kAxesEdge, kTRUE, kFALSE, 0);
   glv->CurrentCamera().RotateRad(camRotateCenterH_,camRotateCenterV_);
   glv->CurrentCamera().Dolly(camDollyDelta_,kFALSE,kFALSE);
-*/
+
 }
 
 
@@ -426,7 +424,7 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
- 
+ /*
   _evt = event.id().event();
   if(showEvent_ ){
   	FindData(event);
@@ -447,7 +445,6 @@ void TEveEventDisplay::analyze(const art::Event& event){
   gEve->GetViewers()->DeleteAnnotations();
   gEve->GetCurrentEvent()->DestroyElements();
 
- /*
   if(addHits) AddHits(event, [11.13]);
   if(addTracks) AddTracks(event, [11,13]);
   if(addClusters) AddClusters(event, [11,13]);
@@ -632,16 +629,16 @@ bool TEveEventDisplay::FindData(const art::Event& evt){
 	foundEvent = true;
 	return _stcol != 0;
        }
-
+/*
 void TEveEventDisplay::endJob(){
-	if(!foundEvent){
+	if(foundEvent){
 		char msg[300];
 		sprintf(msg, "Reached end of file but #%i has not been found", true);
 	        new TGMsgBox(gClient->GetRoot(), gClient->GetRoot(), "Event Not Found", msg, kMBIconExclamation,kMBOk);
 	}
 
 }  
-	
+*/	
 }
 
 using mu2e::TEveEventDisplay;
