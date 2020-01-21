@@ -32,7 +32,7 @@ public:
 // calculate the df form of the momentum magnitude.  This can be done for generic
 // trajectories, but is hideously inefficient
   static DifNumber momMag(const HelixTraj& theTraj, const BField&);
-  static DifNumber momMagCosmic(const CosmicLineTraj& theTraj, const BField&);
+  //static DifNumber momMagCosmic(const CosmicLineTraj& theTraj, const BField&);
   // Interface to vertexing algorithms (M.Bondioli 7/17/98)
   // covariance matrices of the track at fixed flight length 
   static CLHEP::HepMatrix    posmomCov(const TrkSimpTraj&,const BField&,
@@ -79,13 +79,8 @@ private:
   static double       calcCurvPtMom(const CLHEP::Hep3Vector&,  
                                     double curvature, 
 				    const BField&);
-  static double       calcCosmicPtMom(const CLHEP::Hep3Vector&,  
-                                    double curvature, 
-				    const BField&);
+
   static CLHEP::Hep3Vector   calcCurvVecMom(const CLHEP::Hep3Vector&, 
-                                     double curvature, 
-				     const BField&);
-    static CLHEP::Hep3Vector   calcCosmicVecMom(const CLHEP::Hep3Vector&, 
                                      double curvature, 
 				     const BField&);
   static BbrVectorErr calcCurvErrMom(const TrkSimpTraj&, 
@@ -95,6 +90,7 @@ private:
                                      double flt);
   static BbrVectorErr calcCosmicErrMom(const TrkSimpTraj&, const BField&,  
                                      double flt);
+
   static int          calcCurvCharge(const CLHEP::Hep3Vector&, 
                                      double curvature, 
 				     const BField&);        
@@ -105,6 +101,7 @@ private:
 					double fltlen);
   static CLHEP::HepMatrix    calcCosmicPosmomCov(const TrkSimpTraj&,const BField&,
 					double fltlen);
+
   static void         calcCurvAllCovs(const TrkSimpTraj&,const BField&,
 				      double fltlen,
 				      CLHEP::HepSymMatrix& xxCov,
