@@ -390,12 +390,13 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   //This is a basic function to allow us to just see tracker and calo, it needs fixing:
   cout<<"extracting"<<endl;
   //InsideDS( topnode, false );
-  //hideBuilding(topnode);
-  //hideTop(topnode);
+  hideBuilding(topnode);
+  hideTop(topnode);
  
   //Add static detector geometry to global scene
   gEve->AddGlobalElement(etopnode);
-  
+  geom->Draw("ogl");
+  gPad->WaitPrimitive();
 }
 
 void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
@@ -424,7 +425,7 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
- /*
+
   _evt = event.id().event();
   if(showEvent_ ){
   	FindData(event);
@@ -444,11 +445,12 @@ void TEveEventDisplay::analyze(const art::Event& event){
   // Delete visualization structures associated with previous event
   gEve->GetViewers()->DeleteAnnotations();
   gEve->GetCurrentEvent()->DestroyElements();
-
+/*
   if(addHits) AddHits(event, [11.13]);
   if(addTracks) AddTracks(event, [11,13]);
   if(addClusters) AddClusters(event, [11,13]);
   // Import event into ortho views and apply projections
+*/
   TEveElement* currevt = gEve->GetCurrentEvent();
 
   fEvtXYScene->DestroyElements();
@@ -456,12 +458,12 @@ void TEveEventDisplay::analyze(const art::Event& event){
 
   fEvtRZScene->DestroyElements();
   fRZMgr->ImportElements(currevt, fEvtRZScene);
-*/
+
  
 } 
 
 void TEveEventDisplay::hideTop(TGeoNode* node) {
-cout<<"hitde top "<<endl;
+  cout<<"hide top "<<endl;
   TString name = node->GetName();
   if(name.Index("Shield")>0) {
     std::cout << name << " " <<  name.Index("mBox_") << std::endl;
