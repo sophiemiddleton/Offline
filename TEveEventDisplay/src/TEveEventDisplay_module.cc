@@ -79,6 +79,8 @@
 using namespace std;
 using namespace mu2e;
 
+
+
 void setRecursiveColorTransp(TGeoVolume *vol, Int_t color, Int_t transp)
   {
      if(color>=0)vol->SetLineColor(color);
@@ -115,6 +117,7 @@ struct Config{
 		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
 		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
 		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
+		
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
     explicit TEveEventDisplay(const Parameters& conf);
@@ -186,9 +189,9 @@ struct Config{
       void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
       void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
       void hideBuilding(TGeoNode* node);
-      void AddTrack(const art::Event& event, std::vector<int> PDGToAdd);
-      void AddHits(const art::Event& event, std::vector<int> PDGsToAdd);
-      void AddClusters(const art::Event& event, std::vector<int> PDGsToAdd);
+      void AddTrack(const art::Event& event);
+      void AddHits(const art::Event& event);
+      void AddClusters(const art::Event& event);
       bool FindData(const art::Event& event);
 };
 
@@ -369,7 +372,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   geom->TGeoManager::SetNavigatorsLock(kFALSE);
   geom->TGeoManager::ClearNavigators();
 
-  geom = geom->TGeoManager::Import("TEveEventDisplay/src/mu2e.gdml");
+  geom = geom->TGeoManager::Import("TEveEventDisplay/src/fix.gdml");
   cout<<"Getting top volume "<<endl;
   //Get Top Volume
   TGeoVolume* topvol = geom->GetTopVolume();
@@ -445,12 +448,11 @@ void TEveEventDisplay::analyze(const art::Event& event){
   // Delete visualization structures associated with previous event
   gEve->GetViewers()->DeleteAnnotations();
   gEve->GetCurrentEvent()->DestroyElements();
-/*
-  if(addHits) AddHits(event, [11.13]);
-  if(addTracks) AddTracks(event, [11,13]);
-  if(addClusters) AddClusters(event, [11,13]);
+
+  if(addHits_) AddHits(event);
+  if(addTracks_) AddTrack(event);
+  if(addClusters_) AddClusters(event);
   // Import event into ortho views and apply projections
-*/
   TEveElement* currevt = gEve->GetCurrentEvent();
 
   fEvtXYScene->DestroyElements();
@@ -550,7 +552,7 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 
 }
 
-void TEveEventDisplay::AddTrack(const art::Event& event, std::vector<int> PDGToAdd){
+void TEveEventDisplay::AddTrack(const art::Event& event){
     /*
     auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
 
@@ -593,7 +595,7 @@ void TEveEventDisplay::AddTrack(const art::Event& event, std::vector<int> PDGToA
   */
 }
 
-void TEveEventDisplay::AddHits(const art::Event& event, std::vector<int> PDGsToAdd){
+void TEveEventDisplay::AddHits(const art::Event& event){
     
   /* // Draw the detector hits
    if (fHitsList == 0) {
@@ -617,7 +619,7 @@ void TEveEventDisplay::AddHits(const art::Event& event, std::vector<int> PDGsToA
   */
 }
 
-void AddClusters(const art::Event& evt, std::vector<int> PDGsToAdd){
+void TEveEventDisplay::AddClusters(const art::Event& evt){
 
 
 }

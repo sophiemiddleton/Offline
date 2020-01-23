@@ -7,7 +7,7 @@ process_name : TEveDisplay
 
 source :
 {
-	module_type : EmptyEvent
+	module_type : RootInput
 }
 	
 services :
