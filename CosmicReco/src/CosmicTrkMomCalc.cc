@@ -1,5 +1,3 @@
-//This is TrkMomCalculator from BTrk, I have just added a few cosmic functions eventually ....this is not th finsihed article, we need ot decide which bits we can migrate...TODO 
-
 #include "BTrk/BaBar/BaBar.hh"
 #include "BTrk/TrkBase/TrkSimpTraj.hh"
 #include "CosmicReco/inc/CosmicTrkMomCalc.hh"
@@ -59,7 +57,7 @@ CosmicTrkMomCalc::ptMom(const TrkSimpTraj& theTraj, const BField&
      return cosdip * ptot; 
 
   } else if (theVisitor.cosmic) {
-     return theTraj.mom()*sin(theTraj.theta()) ; //TODO: check
+     return theTraj.mom()*sin(theTraj.theta()) ; 
    } else {
 
 // particle must be a plain line--no way to calculate momentum
@@ -122,7 +120,7 @@ CosmicTrkMomCalc::errMom(const TrkSimpTraj& theTraj, const BField&
      return calcNeutErrMom(theTraj, theField, fltlen);
 
   }  else if (theVisitor.cosmic() !=0){
-//TODO TODO TODO
+
      return calcCosmicErrMom(theTraj,theField,fltlen);
  } else {
 
@@ -291,8 +289,6 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
 		       pos,mom,xxWeight,ppWeight,xpWeight);
 
   }else if (theVisitor.cosmic() != 0) {
-    
-    // treat as neutral particle, same as curve in this case
     calcCosmicAllWeights(theTraj,theField,fltlen,
 		       pos,mom,xxWeight,ppWeight,xpWeight);
    }else {  
@@ -317,7 +313,7 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
 
 //------------------------------------------------------------------------
 double
-CosmicTrkMomCalc::calcCurvPtMom(const Hep3Vector& direction, //TODO need an instance like this for the Cosmics...
+CosmicTrkMomCalc::calcCurvPtMom(const Hep3Vector& direction, 
                                 double curvature,
                                 const BField& theField) {
 //------------------------------------------------------------------------
@@ -391,7 +387,7 @@ CosmicTrkMomCalc::calcCurvErrMom(const TrkSimpTraj& theTraj,
   }
   else {
     DifNumber sindip=DirDif.z;
-    DifNumber arg = 1.0-sindip*sindip; //TODO
+    DifNumber arg = 1.0-sindip*sindip; 
     if (arg.number() < 0.0) {arg.setNumber(0.0);}
     DifNumber cosdip = sqrt(arg);
     

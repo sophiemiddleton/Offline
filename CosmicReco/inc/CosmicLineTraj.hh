@@ -64,6 +64,7 @@ public:
   double phi0() const{  return parameters()->parameter()[phi0Index]; }
   double theta() const {return parameters()->parameter()[thetaIndex]; }
   double phi() const {  return parameters()->parameter()[phiIndex]; }
+
   virtual void visitAccept(TrkVisitor* vis) const;
   virtual void               print(std::ostream& os) const;
   virtual void 		     printAll(std::ostream& os) const;

@@ -80,37 +80,41 @@ CosmicLineTraj::~CosmicLineTraj()
 {
 }
 
+//Z: returns the z position i.e. position along DS axis.
 double
 CosmicLineTraj::z(const double& f) const  
 {
-  return  (d0()*tan(theta())*cos(phi() - phi0())+referencePoint().z()+f*cos(theta()); // poz.z = z0+ref.z+f*cos(theta)
+  return  (d0()*tan(theta())*cos(phi() - phi0())+referencePoint().z()f*cos(theta()); 
 }
 
+//Z0: returns the POCA z0 value.
 CosmicLineTraj::z0() const {
  return (d0()*tan(theta())*sin(phi() - phi0());
 
 }
+
+//zflight: returns the projection of the flight along the z axis.
 double
 CosmicLineTraj::zFlight(double zpos, double z0) const { 
   return (zpos - z0)/cos(theta());
 }
 
+//Position returns a 3 element position (x,y,z) 'point' at flight length 'f"
 HepPoint
 CosmicLineTraj::position(double f) const  
 {
   double sphi0 = sin(phi0());
   double cphi0 = cos(phi0());
   //keep definition the same as for Helix for consistancy:
-  double x_pos = -1*d0()*sphi0+referencePoint().x();
-  double y_pos = d0()*cphi0+referencePoint().y();
-  //f = dz - z is direction along DS axis (i.e the usual definition)
-  double z_pos = f+referencePoint().z();
+  double x_pos = -1*d0()*sphi0+referencePoint().x() + cos(phi())*sin(theta())*f;
+  double y_pos = d0()*cphi0+referencePoint().y()+  sin(theta())*sin(phi())*f;
+  double z_pos = d0()*tan(phi()-phi0())+referencePoint().z() + cos(theta())*f;
   return HepPoint(x_pos, y_pos, z_pos);
 }
 
-
+//Direction returns the unit vector for track direction
 Hep3Vector
-CosmicLineTraj::direction(double f) const //TODO - f --> r (Arc)
+CosmicLineTraj::direction(double f) const 
 {
 
 double x_dir = cos(phi())*sin(theta());
@@ -119,12 +123,13 @@ double z_dir = cos(theta());
 return Hep3Vector (x_dir, y_dir, z_dir);
 }
 
+
+//DelDirect is the 2nd deriv wrt flight lengths
 Hep3Vector
 CosmicLineTraj::delDirect( double fltLen ) const
-{  //This is the derivative of the direction vector in XY
-  double ang = angle(fltLen); //BbrAngle(phi0()+arc(f))
-  double delX = 0;//TODO
-  double delY = 0; //TODO
+{  
+  double delX = 0;
+  double delY = 0; 
   return Hep3Vector(delX, delY, 0.0);
 }
 
@@ -153,81 +158,62 @@ CosmicLineTraj::getInfo(double fltLen, HepPoint& pos, Hep3Vector& dir,
 {
   pos = position(fltLen);
   dir = direction(fltLen);
-  delDir = delDirect(fltLen);//TODO
+  delDir = delDirect(fltLen);
 }
 
+//derivDeflect: considers scattering in 2 orthogonal directions.
 HepMatrix
-CosmicLineTraj::derivDeflect(double fltlen,deflectDirection idirect) const //TODO
+CosmicLineTraj::derivDeflect(double fltlen, deflectDirection idirect) const //TODO
 {
-//
 //  This function computes the column matrix of derrivatives for the change
 //  in parameters for a change in the direction of a track at a point along
 //  its flight, holding the momentum and position constant.  The effects for
-//  changes in 2 perpendicular directions (theta1 = pi/2 - theta and
-//  theta2 = phi*cos(pi/2 -theta)) can sometimes be added, as scattering in these
-//  are uncorrelated.
+//  changes in 2 perpendicular directions (theta1 = theta and
+//  theta2 = phi()*sin(theta) can sometimes be added, as scattering in these
+//  are uncorrelated. These axes are track specific. as cosmics are not always coming along the same track direction it is necessary to have difference parameterization than that used for the helixal case.
 //
   HepMatrix ddflct(NHLXPRM,1);
 
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy = sin(arcl);
-  double tand = tan(pi/2 - theta());
-  double cosd = cos(pi/2 - theta());
-  double sind = sin(pi/2 -theta());
   switch (idirect) {
-  case theta1:
+  case theta1: 
     
-    ddflct(thetaIndex+1,1) = 1.0/pow(sind,2);
-    ddflct(d0Index+1,1) = 1;//(1-dx)*tand/omeg;
-    ddflct(phi0Index+1,1) = // -dy*tand/(1+darc);
-    ddflct(phiIndex+1,1) = 1;
+    ddflct(thetaIndex+1,1) = 1;
+    ddflct(d0Index+1,1) = 0;
+    ddflct(phi0Index+1,1) = 0;
+    ddflct(phiIndex+1,1) = 0;
     break;
-  case theta2:
+
+  case theta2: 
     
     ddflct(thetaIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = 1;//-dy/(cosd*omeg);
-    ddflct(phi0Index+1,1) = ;//dx/(cosd*(1+darc));
-    ddflct(phiIndex+1,1) = 1;//-tand*(1- dx/(1+darc))/(cosd*omeg);
+    ddflct(d0Index+1,1) = 0;
+    ddflct(phi0Index+1,1) = 1/sin(theta());
+    ddflct(phiIndex+1,1) = 1/sin(theta());
     break;
   }
 
   return ddflct;
 }
 
-
+//DerivDisplace: the effect of a change in position: this is gnored as it is a second order effect.
 HepMatrix
-CosmicLineTraj::derivDisplace(double fltlen, deflectDirection idirect) const //TODO
+CosmicLineTraj::derivDisplace(double fltlen, deflectDirection idirect) const
 {
-//
-//  This function computes the column matrix of derrivatives for the change
-//  in parameters for a change in the position of a track at a point along
-//  its flight, holding the momentum and direction constant.  The effects for
-//  changes in 2 perpendicular directions 'theta1' = (-sin(l)cos(p),-sin(l)sin(p),cos(l)) and
-//  'theta2' = (-sin(p),cos(p),0).  These are by definition orthogonal and uncorrelated.
-//  these displacements are correlated with the angular change above
-//
-  HepMatrix ddflct(NHLXPRM,1);
+ HepMatrix ddflct(NHLXPRM,1);
 
-  double arcl = arc(fltlen);
-  double dx = cos(arcl);
-  double dy =sin(arcl);
-  double sind = sin(theta);
-  double cosd = cos(theta);
-  
-  switch (idirect) {
+ switch (idirect) {
   case theta1:
    
     ddflct(thetaIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = -cosd*dy;
+    ddflct(d0Index+1,1) = 0;
     ddflct(phi0Index+1,1) = 0;
     ddflct(phiIndex+1,1) = 0;
     break;
   case theta2:
     
     ddflct(thetaIndex+1,1) = 0;
-    ddflct(d0Index+1,1) = dx;
-    ddflct(phi0Index+1,1) = 0;//dy/(1+d0());
+    ddflct(d0Index+1,1) = 0;
+    ddflct(phi0Index+1,1) = 0;
     ddflct(phiIndex+1,1) = 0;
     break;
   }
@@ -235,9 +221,9 @@ CosmicLineTraj::derivDisplace(double fltlen, deflectDirection idirect) const //T
   return ddflct;
 }
 
+//derivPFract: Function computes column marix of derivatives for parameters from a fractional change in the track momentium. Holds postion and direction constant. The momentum change could from energy loss.
 HepMatrix CosmicLineTraj::derivPFract(double fltLen) const {
-//Function computes column marix of derivatives for parameters from a fractional change in the track momentium. Holds postion and direction constant. The momentum change could from energy loss.
-// Note: I have assumed we do not need this
+
      HepMatrix dmomfrac(NHLXPRM,1);
     
      dmomfrac(phiIndex+1,1) = 0;
@@ -257,10 +243,6 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
   //  All arithmetic operations have been replaced by +=, etc. versions 
   //  for speed.
 
-  // Create difNumber versions of parameters
-  //Df = change in f...
-  //q: Does not use dir yet...do we need to?
-  // Note: Lambda = (pi/2 - theta) so cos(lambda) = cos(pi/2-theta) = sin(theta)
   DifNumber phi0Df(phi0(), phi0Index+1, NHLXPRM);
   phi0Df.setIndepPar( parameters() );
   DifNumber d0Df(d0(), d0Index+1, NHLXPRM);
@@ -271,31 +253,22 @@ CosmicLineTraj::getDFInfo(double flt, DifPoint& pos, DifVector& dir,
   phiDf.setIndepPar( parameters() );
 
   static DifNumber sTheta; 
-  thetaDf.cosAndSin(dir.z, sTheta);//Set sTheta = sin(theta) and cos(theta) = dir.z
+  thetaDf.cosAndSin(cTheta, sTheta);
   static DifNumber sinPhi0, cosPhi0; 
   phi0Df.cosAndSin(cosPhi0, sinPhi0);
+  static DifNumber sinPhi, cosPhi; 
+  phi0Df.cosAndSin(cosPhi, sinPhi);
 
   bool lref = (referencePoint().x() != 0. || referencePoint().y() != 0. ||
                referencePoint().z() != 0.);
 
-  //define alphaDf as angle change = sin(theta)
-  DifNumber alphaDf = sTheta;
-  alphaDf *= flt;
-  alphaDf += phi0Df;
-   
-  alphaDf.mod(-Constants::pi, Constants::pi);
-  alphaDf.cosAndSin(dir.x, dir.y);
 
-  DifNumber temp = d0Df;
-  temp *= -1*sinPhi0;
-  pos.x += temp;
-
-  temp = d0Df;
-  temp *= cosPhi0;
-  pos.y += temp;
-
-  pos.z += flt;
-  
+  DifNumber x =  sTheta*flt*cosPhi - d0Df*sinPhi0;
+  DifNumber y =  sTheta*flt*sinPhi + d0Df*cosPhi0;
+  DifNumber z =  d0Df*tan(phiDf-phi0Df) + flt*cTheta;
+  pos =  DifPoint(x, y, z);
+  dir = DifVector( cosPhi*sTheta, sinPhi*sTheta, cTheta);
+  delDir = DifVector(0., 0., 0.);
 
   if (lref) {
     DifNumber px(referencePoint().x());
@@ -316,6 +289,7 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
   //  All arithmetic operations have been replaced by +=, etc. versions 
   //  for speed.
 
+
   DifNumber phi0Df(phi0(), phi0Index+1, NHLXPRM);
   phi0Df.setIndepPar( parameters() );
   DifNumber d0Df(d0(), d0Index+1, NHLXPRM);
@@ -325,34 +299,23 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
   DifNumber phiDf(phi(), phiIndex+1, NHLXPRM);
   phiDf.setIndepPar( parameters() );
 
-  DifNumber dipDf = thetaDf;
-
   static DifNumber sTheta; 
-  dipDf.cosAndSin(dir.z,sTheta);	
+  thetaDf.cosAndSin(cTheta, sTheta);
   static DifNumber sinPhi0, cosPhi0; 
   phi0Df.cosAndSin(cosPhi0, sinPhi0);
+  static DifNumber sinPhi, cosPhi; 
+  phi0Df.cosAndSin(cosPhi, sinPhi);
 
   bool lref = (referencePoint().x() != 0. || referencePoint().y() != 0. ||
                referencePoint().z() != 0.);
 
-  //define alphaDf as angle change = sin(theta)
-  DifNumber alphaDf = sTheta;
-  alphaDf *= flt;
-  alphaDf += phi0Df;
-   
-  alphaDf.mod(-Constants::pi, Constants::pi);
-  alphaDf.cosAndSin(dir.x, dir.y);
 
-  DifNumber temp = d0Df;
-  temp *= -1*sinPhi0;
-  pos.x += temp;
-
-  temp = d0Df;
-  temp *= cosPhi0;
-  pos.y += temp;
-
-  pos.z += flt;
-  
+  DifNumber x =  sTheta*flt*cosPhi - d0Df*sinPhi0;
+  DifNumber y =  sTheta*flt*sinPhi + d0Df*cosPhi0;
+  DifNumber z =  d0Df*tan(phiDf-phi0Df) + flt*cTheta;
+  pos =  DifPoint(x, y, z);
+  dir = DifVector( cosPhi*sTheta, sinPhi*sTheta, cTheta);
+  delDir = DifVector(0., 0., 0.);
 
   if (lref) {
     DifNumber px(referencePoint().x());
@@ -362,9 +325,7 @@ void CosmicLineTraj::getDFInfo2(double flt, DifPoint& pos, DifVector& dir) const
     pos.y += py;
     pos.z += pz;
   }
- //might want to check this:
- dir.x *=sTheta;
- dir.y *=sTheta;
+
 
 }
 
