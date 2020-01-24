@@ -121,7 +121,7 @@ CosmicTrkMomCalc::errMom(const TrkSimpTraj& theTraj, const BField&
 
   }  else if (theVisitor.cosmic() !=0){
 
-     return calcCosmicErrMom(theTraj,theField,fltlen);
+     return calcCosmicLineErrMom(theTraj,theField,fltlen);
  } else {
 
 // particle must be a plain line--no way to calculate momentum or err
@@ -196,7 +196,7 @@ CosmicTrkMomCalc::posmomCov(const TrkSimpTraj& theTraj,const BField& theField,
 
   } else if (theVisitor.cosmic()!=0){
 
-    return calcCosmicPosmomCov(theTraj, theField, fltlen);
+    return calcCosmicLinePosmomCov(theTraj, theField, fltlen);
 
  }else {
 
@@ -236,7 +236,7 @@ CosmicTrkMomCalc::getAllCovs(const TrkSimpTraj& theTraj,
 
   } else if (theVisitor.cosmic()){
 
-     calcCosmicAllCovs(theTraj,theField,fltlen,xxCov,ppCov,xpCov);
+     calcCosmicLineAllCovs(theTraj,theField,fltlen,xxCov,ppCov,xpCov);
 
 
 }else {
@@ -289,7 +289,7 @@ CosmicTrkMomCalc::getAllWeights(const TrkSimpTraj& theTraj,
 		       pos,mom,xxWeight,ppWeight,xpWeight);
 
   }else if (theVisitor.cosmic() != 0) {
-    calcCosmicAllWeights(theTraj,theField,fltlen,
+    calcCosmicLineAllWeights(theTraj,theField,fltlen,
 		       pos,mom,xxWeight,ppWeight,xpWeight);
    }else {  
 
@@ -478,7 +478,7 @@ CosmicTrkMomCalc::calcNeutErrMom(const TrkSimpTraj& theTraj,
 }
 
 BbrVectorErr
-CosmicTrkMomCalc::calcCosmicErrMom(const TrkSimpTraj& theTraj,
+CosmicTrkMomCalc::calcCosmicLineErrMom(const TrkSimpTraj& theTraj,
                                  const BField& theField,
                                  double fltlen) {
 //------------------------------------------------------------------------
@@ -663,7 +663,7 @@ CosmicTrkMomCalc::calcNeutPosmomCov(const TrkSimpTraj& theTraj,
 
 //------------------------------------------------------------------------  this for cosmics
 HepMatrix
-CosmicTrkMomCalc::calcCosmicPosmomCov(const TrkSimpTraj& theTraj,
+CosmicTrkMomCalc::calcCosmicLinePosmomCov(const TrkSimpTraj& theTraj,
 				    const BField& theField,
 				    double fltlen) {
 //------------------------------------------------------------------------
@@ -1004,7 +1004,7 @@ CosmicTrkMomCalc::calcNeutAllCovs(const TrkSimpTraj& theTraj,
 
 //------------------------------------------------------------------------ 
 void
-CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
+CosmicTrkMomCalc::calcCosmicLineAllCovs(const TrkSimpTraj& theTraj,
 				  const BField& theField,
 				  double fltlen,
 				  HepSymMatrix& xxCov,
@@ -1041,16 +1041,17 @@ CosmicTrkMomCalc::calcCosmicAllCovs(const TrkSimpTraj& theTraj,
   double d_y_theta = fltlen*sinphi*costheta;
   double d_y_phi = fltlen*cosphi*sintheta;
 
-  double d_z_theta = -1*fltlen*sintheta;
-  double d_z_phi = 0;
-  double d_z_d0 = 0;
-  double d_z_dphi0 = 0;
+  double d_z_theta = d0*(1/(cos(theta)*cos(theta))sin(phi - phi0)-1*fltlen*sintheta;
+  double d_z_phi = d0*tan(theta)*(cos(phi-phi0));
+  double d_z_d0 = tan(theta)*sin(phi-phi0);
+  double d_z_dphi0 = -d0*tan(theta)*cos(phi-phi0);
 
   double d_px_phi = -pt*sinphi*sintheta;
   double d_py_phi = pt*cosphi*sintheta;
   double d_px_theta = pt*cosphi*costheta;
   double d_py_theta = pt*sinphi*costheta;
-  
+  double d_pz_phi = 0;
+  double d_pz_theta = -1*pt*sintheta;
 
   // Fill temporary variables for m - Note: some of these will be 0!
   double m_d0_d0 =  m[CosmicLineParams::d0Index][CosmicLineParams::d0Index];
@@ -1336,37 +1337,6 @@ CosmicTrkMomCalc::calcCurvAllWeights(const TrkSimpTraj& theTraj,
 
 }
 
-//------------------------------------------------------------------------
-void
-CosmicTrkMomCalc::calcCosmicAllWeights(const TrkSimpTraj& theTraj,
-				     const BField& theField,
-				     double fltlen,
-				     HepVector& pos,
-				     HepVector& mom,
-				     HepSymMatrix& xxWeight,
-				     HepSymMatrix& ppWeight,
-				     HepMatrix&    xpWeight) {
-//------------------------------------------------------------------------
-  const HepVector&    v = theTraj.parameters()->parameter();
-  const HepSymMatrix& w = theTraj.parameters()->weightMatrix();
-
-  // track parameters
-  double theta = v[CosmicLineParams::thetaIndex];
-  double d0 = v[CosmicLineParams::d0Index];
-  double phi = v[CosmicLineParams::phiIndex];
-  double phi0 = v[CosmicLineParams::phi0Index];
-
-  double sinphi0 = sin(phi0);
-  double cosphi0 = cos(phi0);
-  double sinphi = sin(phi);
-  double cosphi = cos(phi);
-
-  //double C = BField::mmTeslaToMeVc * theField.bFieldNominal(); //TODO
-  //double q(1.0); 
-  //double qC = q*C;
-  double pt = theTraj.mom();//will that work? 
-  
-}
 
 //------------------------------------------------------------------------
 void
@@ -1546,3 +1516,67 @@ CosmicTrkMomCalc::calcNeutAllWeights(const TrkSimpTraj& theTraj,
   mom[2]=MomDif.z.number();
 }
 
+
+void
+CosmicTrkMomCalc::calcCosmicLineAllWeights(const TrkSimpTraj& theTraj,
+				     const BField& theField,
+				     double fltlen,
+				     HepVector& pos,
+				     HepVector& mom,
+				     HepSymMatrix& xxWeight,
+				     HepSymMatrix& ppWeight,
+				     HepMatrix&    xpWeight) {
+//------------------------------------------------------------------------
+  DifPoint  PosDif;
+  DifVector DirDif;
+  DifVector delDirDif;
+  DifNumber momMag;
+
+  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif);
+
+  // set the momentum's direction, and then its magnitude
+  DifVector MomDif = DirDif;
+
+  MomDif *= theTraj.parameters()->difPar(NeutParams::_p + 1);
+
+  HepMatrix Jx_n(PosDif.jacobian());
+  HepMatrix Jp_n(MomDif.jacobian());
+
+  int          i,j;
+  HepMatrix    Jxp_ns(6,6);
+
+  for(i=0;i<3;i++)
+    for(j=0;j<6;j++)
+      {
+	Jxp_ns[i  ][j]=Jx_n[i][j];
+	Jxp_ns[i+3][j]=Jp_n[i][j];
+      }
+  int invStatus;
+  
+  Jxp_ns.invert(invStatus);
+  
+  HepMatrix Jn_x(4,3);
+  HepMatrix Jn_p(5,3);
+  
+  for(i=0;i<4;i++)
+    for(j=0;j<3;j++)
+      {
+	Jn_x[i][j]=Jxp_ns[i][j  ];
+	Jn_p[i][j]=Jxp_ns[i][j+3];
+      }
+
+  HepSymMatrix Wnn(PosDif.x.indepPar()->covariance().sub(1,4));
+
+  Wnn.invert(invStatus);
+  xxWeight   = Wnn.similarityT(Jn_x);
+  ppWeight   = Wnn.similarityT(Jn_p);
+  xpWeight   = Jn_x.T()*Wnn*Jn_p;
+
+  pos[0]=PosDif.x.number();
+  pos[1]=PosDif.y.number();
+  pos[2]=PosDif.z.number();
+
+  mom[0]=MomDif.x.number();
+  mom[1]=MomDif.y.number();
+  mom[2]=MomDif.z.number();
+}

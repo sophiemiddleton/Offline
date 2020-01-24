@@ -32,7 +32,7 @@ public:
 // calculate the df form of the momentum magnitude.  This can be done for generic
 // trajectories, but is hideously inefficient
   static DifNumber momMag(const HelixTraj& theTraj, const BField&);
-  //static DifNumber momMagCosmic(const CosmicLineTraj& theTraj, const BField&);
+  
   // Interface to vertexing algorithms (M.Bondioli 7/17/98)
   // covariance matrices of the track at fixed flight length 
   static CLHEP::HepMatrix    posmomCov(const TrkSimpTraj&,const BField&,
@@ -88,7 +88,7 @@ private:
                                      double flt); 
   static BbrVectorErr calcNeutErrMom(const TrkSimpTraj&, const BField&,  
                                      double flt);
-  static BbrVectorErr calcCosmicErrMom(const TrkSimpTraj&, const BField&,  
+  static BbrVectorErr calcCosmicLineErrMom(const TrkSimpTraj&, const BField&,  
                                      double flt);
 
   static int          calcCurvCharge(const CLHEP::Hep3Vector&, 
@@ -99,7 +99,7 @@ private:
 					double fltlen);
   static CLHEP::HepMatrix    calcNeutPosmomCov(const TrkSimpTraj&,const BField&,
 					double fltlen);
-  static CLHEP::HepMatrix    calcCosmicPosmomCov(const TrkSimpTraj&,const BField&,
+  static CLHEP::HepMatrix    calcCosmicLinePosmomCov(const TrkSimpTraj&,const BField&,
 					double fltlen);
 
   static void         calcCurvAllCovs(const TrkSimpTraj&,const BField&,
@@ -128,7 +128,7 @@ private:
 				      CLHEP::HepSymMatrix& ppCov,
 				      CLHEP::HepMatrix&    xpCov);
 
- static void         calcCosmicAllCovs(const TrkSimpTraj&,const BField&,
+ static void         calcCosmicLineAllCovs(const TrkSimpTraj&,const BField&,
 				      double fltlen,
 				      CLHEP::HepSymMatrix& xxCov,
 				      CLHEP::HepSymMatrix& ppCov,
@@ -158,7 +158,7 @@ private:
 					 CLHEP::HepSymMatrix& xxWeight,
 					 CLHEP::HepSymMatrix& ppWeight,
 					 CLHEP::HepMatrix&    xpWeight);
-  static void         calcCosmicAllWeights(const TrkSimpTraj&,const BField&,
+  static void         calcCosmicLineAllWeights(const TrkSimpTraj&,const BField&,
 					 double fltlen,
 					 CLHEP::HepVector& pos,
 					 CLHEP::HepVector& mom,
