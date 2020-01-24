@@ -165,8 +165,7 @@ CosmicTrkMomCalc::charge(const TrkSimpTraj& theTraj, const BField&
      return 0;
 
   } else if (theVisitor.cosmic() !=0 ){
-
-     return calcCurvCharge(theTraj.direction(fltlen), theTraj.curvature(fltlen), theField);
+      return calcCosmicLineCurvCharge(theTraj.mom()*theTraj.direction(fltlen), theTraj.curvature(fltlen), theField);
 
 }else {
 
@@ -481,61 +480,19 @@ BbrVectorErr
 CosmicTrkMomCalc::calcCosmicLineErrMom(const TrkSimpTraj& theTraj,
                                  const BField& theField,
                                  double fltlen) {
-//------------------------------------------------------------------------
-if (delDirDif.length() == 0.) {   
-  }
-  else {
-    
-    MomDif = DirDif * theTraj.mom();
+  DifPoint  posDif;
+  DifVector dirDif;
+  DifVector delDirDif;
+ 
+  theTraj.getDFInfo(fltlen, posDif, dirDif, delDirDif);
+  DifVector momDif = dirDif;
+  momDif *= theTraj.mom();
 
-    if (ErrLogging(debugging) && 0) {
-      HepMatrix e1 = DirDif.errorMatrix(MomDif.x.indepPar()->covariance());
-      double e2 = momMag.error(MomDif.x.indepPar()->covariance());
-      HepMatrix e3 = MomDif.errorMatrix(MomDif.x.indepPar()->covariance());
-      const HepMatrix& c1 = MomDif.x.indepPar()->covariance();
-      
-      ErrMsg(debugging) << endl << endl << "Start" << endl
-      << "param cov: " << endl
-      << c1(1,1) << endl
-      << c1(2,1) << "  " << c1(2,2) << endl
-      << c1(3,1) << "  " << c1(3,2) << "  " << c1(3,3) << endl
-      << c1(4,1) << "  " << c1(4,2) << "  " << c1(4,3) 
-      << "  " << c1(4,4) << endl
-      << c1(5,1) << "  " << c1(5,2) << "  " << c1(5,3) 
-      << "  " << c1(5,4) << "  " << c1(5,5) << endl
-      
-      << "Dir " << e1.num_row() << " " << e1.num_col() << endl
-      << "output:" << endl
-      << e1(1,1) << endl
-      << e1(2,1) << "  " << e1(2,2) << endl
-      << e1(3,1) << "  " << e1(3,2) << "  " << e1(3,3) << endl
-      << "deriv: " << endl
-      << DirDif.x.derivatives() << endl
-      << endl
-      
-      << "Mag " << endl
-      << "output:" << endl
-      << e2 << endl
-      << "deriv: " << endl
-      << momMag.derivatives() << endl
-      << endl
-      
-      << "Momdif " << e3.num_row() << " " << e3.num_col() << endl
-      << "output:" << endl
-      << e3(1,1) << endl
-      << e3(2,1) << "  " << e3(2,2) << endl
-      << e3(3,1) << "  " << e3(3,2) << "  " << e3(3,3) << endl
-      << "deriv: " << endl
-      << MomDif.x.derivatives() << endl
-      << endl
-      
-      << "End" << endl << endmsg; 
-    }
-  }
-  BbrError  symErr(MomDif.errorMatrix(
-                              MomDif.x.indepPar()->covariance()));
-  return BbrVectorErr(Hep3Vector(MomDif.x.number(), MomDif.y.number(),
-                    MomDif.z.number()), symErr);
+  BbrError  symErr(momDif.errorMatrix(
+                              momDif.x.indepPar()->covariance()));
+
+  return BbrVectorErr(Hep3Vector(momDif.x.number(), momDif.y.number(),
+                    momDif.z.number()), symErr);
 }
 
 // The following functions may be used at a later date (if and when we
@@ -557,7 +514,19 @@ CosmicTrkMomCalc::calcCurvCharge(const Hep3Vector& direction,
    } else {
      return nearestInt(momVec.mag() * curvature / theField.bFieldNominal());
    }
-}                        
+}     
+
+int
+CosmicTrkMomCalc::calcCosmicLineCurvCharge(const Hep3Vector& momVec,
+                                 double curvature,
+                                 const BField& theField) {
+//------------------------------------------------------------------------
+   if (theField.bFieldNominal() > 0.) {
+     return -nearestInt(momVec.mag() * curvature / theField.bFieldNominal());
+   } else {
+     return nearestInt(momVec.mag() * curvature / theField.bFieldNominal());
+   }
+}                          
 
 //------------------------------------------------------------------------
 int
@@ -673,19 +642,12 @@ CosmicTrkMomCalc::calcCosmicLinePosmomCov(const TrkSimpTraj& theTraj,
   DifVector delDirDif;
   DifVector MomDif(0., 0., 0.);
 
-  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif); //TODO - sortdeDirDif
+  theTraj.getDFInfo(fltlen, PosDif, DirDif, delDirDif); 
   if (delDirDif.length() == 0.) {   
   }
   else {
-    DifNumber cosTheta=DirDif.z; 
-    DifNumber arg = 1.0-cosTheta*cosTheta; 
-    if (arg.number() < 0.0) {arg.setNumber(0.0);}
-    DifNumber sinTheta = sqrt(arg);
-
-
-    DifNumber momMag = theTraj.mom()*sinTheta / delDirDif.length(); //check denom.
+    DifNumber momMag = theTraj.mom(); 
     momMag.absolute();
-
     MomDif = DirDif * momMag;
 
   }

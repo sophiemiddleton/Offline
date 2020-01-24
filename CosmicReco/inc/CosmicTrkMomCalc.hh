@@ -95,6 +95,10 @@ private:
                                      double curvature, 
 				     const BField&);        
 
+  static int          calcCosmicLineCurvCharge(const CLHEP::Hep3Vector&, 
+                                     double curvature, 
+				     const BField&);        
+
   static CLHEP::HepMatrix    calcCurvPosmomCov(const TrkSimpTraj&,const BField&,
 					double fltlen);
   static CLHEP::HepMatrix    calcNeutPosmomCov(const TrkSimpTraj&,const BField&,
