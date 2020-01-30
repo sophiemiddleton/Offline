@@ -15,6 +15,11 @@ namespace mu2e
     _timeCluster(tclust),_h0(helix),_tpart(tpart),_fdir(fdir)
   {}
 
+    TrkDef::TrkDef(TimeCluster const& tclust, const CosmicLineTraj& cosmic,
+      TrkParticle const& tpart, TrkFitDirection const& fdir) :
+    _timeCluster(tclust),_h0(cosmic),_tpart(tpart),_fdir(fdir)
+  {}
+
   TrkDef::TrkDef(const TrkDef& other ) : 
     _timeCluster(other._timeCluster),
     _h0(other._h0), _tpart(other._tpart),
