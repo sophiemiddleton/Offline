@@ -8,8 +8,8 @@ BEGIN_PROLOG
 
 TEveEventDisplay : {
       module_type : TEveEventDisplay
-       ComboHitCollection : "makePH"
-      _chtag : "makePH"
+      ComboHitCollection : "makePH"
+      #chtag 		  : "makePH"
       strawStepsTag        : "compressDigiMCs:tracker"
       strawDigisTag        : "makeSD"
       strawHitsTag         : "makeSH"

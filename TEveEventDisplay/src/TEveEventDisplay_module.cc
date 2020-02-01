@@ -58,8 +58,11 @@
 
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
+#include "GeometryService/inc/DetectorSystem.hh"
+#include "BFieldGeom/inc/BFieldManager.hh"
 #include "Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "TrkDiag/inc/TrkMCTools.hh"
+
 
 //Mu2e Tracker Geom:
 #include "TrackerGeom/inc/Tracker.hh"
@@ -78,6 +81,22 @@
 // Mu2e diagnostics
 using namespace std;
 using namespace mu2e;
+
+  void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list)
+  {
+    std::string hstr=" hit %d";
+    std::string dstr=" hit# %d\nLayer: %d";
+    std::string strlst=pstr+hstr;
+    std::string strlab=pstr+dstr;
+
+    TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
+    h->SetTitle(Form(strlab.c_str(),n,hstr));
+    h->SetNextPoint(hit.pos().X()*0.1,hit.pos().Y()*0.1,hit.pos().Z()*0.1);
+    h->SetMarkerColor(mColor);
+    h->SetMarkerSize(mSize);
+    list->AddElement(h);
+  }
+
 
 
 
@@ -99,43 +118,38 @@ namespace mu2e
 struct Config{
 	      using Name=fhicl::Name;
 	      using Comment=fhicl::Comment;
-	      fhicl::Atom<int> mcdiag{Name("mcdiag"), Comment("set on for MC info"),2};
-	      //fhicl::Atom<art::InputTag> modulelabel_{Name("modulelabel"), Comment("")};
-	      
-	      //fhicl::Atom<art::InputTag> strawStepsTag{Name("strawStepsTag"), Comment("")};
-	      fhicl::Atom<art::InputTag> strawDigisTag{Name("strawDigisTag"),Comment("strawDigiTag")};
-	      //fhicl::Atom<art::InputTag> strawHitsTag{Name("strawHitsTag"),Comment("straw hit tag")};
-	      //fhicl::Atom<std::string> generatorModuleLabel{Name("generatorModuleLabel"), Comment("")};
+	      fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
+	      fhicl::Atom<art::InputTag>chTag{Name("chTag"),Comment("chTag")};
+	      fhicl::Atom<art::InputTag>gensTag{Name("gensTag"),Comment("gensTag")};
    	      fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
-	      //fhicl::Atom<std::string> hitMakerModuleLabel{Name("hitMakerModuleLabel"), Comment("")};
-             // fhicl::Atom<std::string> trackerStepPoints{Name("trackerStepPoints"), Comment("")};
      	      fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
 	       fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
 	       fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
 	       fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
-               fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),false};     
-		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
-		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
+               fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
+		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),true};
+		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),true};
 		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
 		
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
     explicit TEveEventDisplay(const Parameters& conf);
      virtual ~TEveEventDisplay();
-     virtual void beginJob();
-     virtual void beginRun(const art::Run& run);
-     void analyze(const art::Event& e);
-     //virtual void endJob();
+     virtual void beginJob() override;
+     virtual void beginRun(const art::Run& run) override;
+     virtual void analyze(const art::Event& e);
+     virtual void endJob() override;
  private:
      Config _conf;
-     int _mcdiag;
+     int _diagLevel;
      Int_t _evt; 
      //std::string moduleLabel_;
      const StrawDigiCollection* _stcol;
+     const ComboHitCollection* _chcol;
      //art::InputTag strawStepsTag_;
-     art::InputTag strawDigisTag_;
+     art::InputTag chTag_;
+     art::InputTag gensTag_;
      //art::InputTag strawHitsTag_;
-    
      //std::string generatorModuleLabel_;
      std::string g4ModuleLabel_;
      //std::string hitMakerModuleLabel_;
@@ -152,8 +166,7 @@ struct Config{
       bool showEvent_;
       TApplication* application_;
       TDirectory*   directory_ = nullptr;
-      bool            drawGenTracks_;
-      bool            drawHits_;
+      
       Double_t        hitMarkerSize_;
       Double_t        trkMaxR_;
       Double_t        trkMaxZ_;
@@ -176,12 +189,16 @@ struct Config{
       TGTextEntry      *fTeRun,*fTeEvt;
       TGLabel          *fTlRun,*fTlEvt;
    
+      //GeomHandle<mu2e::BFieldManager> bfmgr;
+     
       TEveTrackList *fTrackList;
       TEveElementList *fHitsList;
       
       bool addHits_, addTracks_, addClusters_;
       EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
       
+      TGeoManager* geom = new TGeoManager("geom","Geom");
+  	
       bool foundEvent = false;
       void MakeNavPanel();
       void InsideDS( TGeoNode * node, bool inDSVac );
@@ -189,7 +206,7 @@ struct Config{
       void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
       void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
       void hideBuilding(TGeoNode* node);
-      void AddTrack(const art::Event& event);
+      void AddTrack(const art::Event& event, mu2e::BFieldManager const& fm);
       void AddHits(const art::Event& event);
       void AddClusters(const art::Event& event);
       bool FindData(const art::Event& event);
@@ -197,14 +214,10 @@ struct Config{
 
 TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
 	art::EDAnalyzer(conf),
-	_mcdiag	(conf().mcdiag()),
-        //strawStepsTag_(conf().strawStepsTag()),
-	strawDigisTag_(conf().strawDigisTag()),
-        //strawHitsTag_(conf().strawHitsTag()),
-        //generatorModuleLabel_(conf().generatorModuleLabel()),
+	_diagLevel(conf().diagLevel()),
+        chTag_(conf().chTag()),
+        gensTag_(conf().gensTag()),
         g4ModuleLabel_(conf().g4ModuleLabel()),
-        //hitMakerModuleLabel_(conf().hitMakerModuleLabel()),
-        //trackerStepPoints_(conf().trackerStepPoints()),
         minEnergyDep_(conf().minEnergyDep()),
         minHits_(conf().minHits()),
 	doDisplay_(conf().doDisplay()),
@@ -289,8 +302,6 @@ void TEveEventDisplay::MakeNavPanel()
 }
 
 void TEveEventDisplay::beginJob(){
-  cout<<"Beginning Job ... "<<endl;
-
   directory_ = gDirectory;
   // Create application environment:
    if ( !gApplication ){
@@ -342,16 +353,13 @@ void TEveEventDisplay::beginJob(){
 
   // Create navigation panel
   MakeNavPanel();
-  cout<<"adding event "<<endl;
-  // Add new Eve event into the "Event" scene and make it the current event
-  // (Subsequent elements added using "AddElements" will be added to this event)
+  
   gEve->AddEvent(new TEveEventManager("Event", "Toy Detector Event"));
 
   TGLViewer *glv = gEve->GetDefaultGLViewer();
   glv->SetGuideState(TGLUtil::kAxesEdge, kTRUE, kFALSE, 0);
   glv->CurrentCamera().RotateRad(camRotateCenterH_,camRotateCenterV_);
   glv->CurrentCamera().Dolly(camDollyDelta_,kFALSE,kFALSE);
-
 }
 
 
@@ -368,9 +376,9 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   
   cout<<"importing GDML "<<endl;
   // Import the GDML of entire Mu2e Geometry
-  TGeoManager* geom = new TGeoManager("geom","Geom");
+  /*TGeoManager* geom = new TGeoManager("geom","Geom");
   geom->TGeoManager::SetNavigatorsLock(kFALSE);
-  geom->TGeoManager::ClearNavigators();
+  geom->TGeoManager::ClearNavigators();*/
 
   geom = geom->TGeoManager::Import("TEveEventDisplay/src/fix.gdml");
   cout<<"Getting top volume "<<endl;
@@ -391,19 +399,18 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   //Set colours to allow transparency:
   setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
   //This is a basic function to allow us to just see tracker and calo, it needs fixing:
-  cout<<"extracting"<<endl;
-  //InsideDS( topnode, false );
+  
+  InsideDS( topnode, false );
   hideBuilding(topnode);
   hideTop(topnode);
  
   //Add static detector geometry to global scene
   gEve->AddGlobalElement(etopnode);
-  geom->Draw("ogl");
-  gPad->WaitPrimitive();
+  
 }
 
 void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
-  cout<<"In side DS"<<endl;
+ 
   std::string _name = (node->GetVolume()->GetName());
   if ( node->GetMotherVolume() ) {
     std::string motherName(node->GetMotherVolume()->GetName());
@@ -428,10 +435,14 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
-
+  cout<<"Analyzing Event Number "<<event.id()<<endl;
+   GeomHandle<mu2e::BFieldManager> bfmgr;
   _evt = event.id().event();
   if(showEvent_ ){
   	FindData(event);
+	if(addHits_) AddHits(event);
+  	if(addTracks_) AddTrack(event, *bfmgr);
+  	if(addClusters_) AddClusters(event);
   }
   std::ostringstream sstr;
   sstr << event.id().run();
@@ -443,15 +454,12 @@ void TEveEventDisplay::analyze(const art::Event& event){
   sstr << event.id().event();
   visutil_->fTbEvt->Clear();
   visutil_->fTbEvt->AddText(0,sstr.str().c_str());
-  gClient->NeedRedraw(fTeEvt);
   
   // Delete visualization structures associated with previous event
   gEve->GetViewers()->DeleteAnnotations();
   gEve->GetCurrentEvent()->DestroyElements();
 
-  if(addHits_) AddHits(event);
-  if(addTracks_) AddTrack(event);
-  if(addClusters_) AddClusters(event);
+  
   // Import event into ortho views and apply projections
   TEveElement* currevt = gEve->GetCurrentEvent();
 
@@ -460,14 +468,14 @@ void TEveEventDisplay::analyze(const art::Event& event){
 
   fEvtRZScene->DestroyElements();
   fRZMgr->ImportElements(currevt, fEvtRZScene);
-
- 
+  geom->Draw("ogl");
+  gPad->WaitPrimitive();
+  
 } 
 
 void TEveEventDisplay::hideTop(TGeoNode* node) {
-  cout<<"hide top "<<endl;
   TString name = node->GetName();
-  if(name.Index("Shield")>0) {
+  if(_diagLevel > 0 and name.Index("Shield")>0) {
     std::cout << name << " " <<  name.Index("mBox_") << std::endl;
   }
   bool test = false;
@@ -512,7 +520,7 @@ void TEveEventDisplay::hideNodesByName(TGeoNode* node, const std::string& str,
   std::string name(node->GetName());
   if ( name.find(str) != std::string::npos ){
     node->SetVisibility(onOff);
-    std::cout <<"hiding "<< name << std::endl;
+    if(_diagLevel > 0) std::cout <<"hiding "<< name << std::endl;
   }
 
   // Descend recursively into each daughter TGeoNode.
@@ -552,8 +560,8 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 
 }
 
-void TEveEventDisplay::AddTrack(const art::Event& event){
-    /*
+void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager const& bf){
+    
     auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
 
     if (fTrackList == 0) {
@@ -565,16 +573,16 @@ void TEveEventDisplay::AddTrack(const art::Event& event){
       fTrackList->DestroyElements();         
     }
 
-    TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
-    trkProp->SetMagField(-geom_->bz()*1000.);
-    trkProp->SetMaxR(trkMaxR_);
-    trkProp->SetMaxZ(trkMaxZ_);
-    trkProp->SetMaxStep(trkMaxStepSize_);
-
     int mcindex=-1;
     for ( auto const& gen: *gens){
+      TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
+      //CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));
+      trkProp->SetMagField(-1*1000.);
+      trkProp->SetMaxR(trkMaxR_);
+      trkProp->SetMaxZ(trkMaxZ_);
+      trkProp->SetMaxStep(trkMaxStepSize_);
       mcindex++;
-      if ( gen.hasChildren() ) continue;
+      //if ( gen.hasChildren() ) continue;
       TParticle mcpart;
       mcpart.SetMomentum(gen.momentum().px(),gen.momentum().py(),gen.momentum().pz(),gen.momentum().e());
       mcpart.SetProductionVertex(gen.position().x()*0.1,gen.position().y()*0.1,gen.position().z()*0.1,0.);
@@ -586,18 +594,19 @@ void TEveEventDisplay::AddTrack(const art::Event& event){
       if ( gen.pdgId() == 11 ){
         track->SetMainColor(kGreen);
       } else {
-        track->SetMainColor(kViolet+1);
+        track->SetMainColor(kBlue+1);
       }
       fTrackList->AddElement(track);
     }
     fTrackList->MakeTracks();
     gEve->AddElement(fTrackList);
-  */
+    gEve->Redraw3D();
 }
 
 void TEveEventDisplay::AddHits(const art::Event& event){
-    
-  /* // Draw the detector hits
+
+   auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
+   _chcol = chH.product(); //this should be any collection eventually
    if (fHitsList == 0) {
       fHitsList = new TEveElementList("Hits");
       fHitsList->IncDenyDestroy();     
@@ -605,35 +614,30 @@ void TEveEventDisplay::AddHits(const art::Event& event){
     else {
       fHitsList->DestroyElements();  
     }
+    TEveElementList* HitsList  = new TEveElementList("Combo Hits");
+ 
+    for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
+	    ComboHit const& hit = (*_chcol)[ih];
+	    cout<<"adding hit "<<hit.pos().X()<<" "<<hit.pos().Y()<<" "<<hit.pos().Z()<<endl;
+	    DrawHit("ComboHits",kGreen,20,ih,hit,HitsList);
+	    fHitsList->AddElement(HitsList);  
+	    gEve->AddElement(fHitsList);
 
-    TEveElementList* ElectronHitsList  = new TEveElementList("Electron Hits");
-    TEveElementList* BkgHitsList = new TEveElementList("Bkg Hits");
-    int ie = 0;
-    int ibkg = 0;
-    drawHit("e",kGreen,hitMarkerSize_,ie++,hit,ElectronHitsList);
-    drawHit("Bkg",kViolet+1,hitMarkerSize_,ibkg++,hit,BkgHitsList);
-        
-    fHitsList->AddElement(ElectronHitsList);  
-    fHitsList->AddElement(BkgHitsList);  
-    gEve->AddElement(fHitsList);
-  */
+    }
+	gEve->Redraw3D();
 }
 
-void TEveEventDisplay::AddClusters(const art::Event& evt){
-
-
-}
+void TEveEventDisplay::AddClusters(const art::Event& evt){}
 
 
 bool TEveEventDisplay::FindData(const art::Event& evt){
-	_stcol = 0; 
-        cout<<"finding data "<<endl;
-	auto chH = evt.getValidHandle<mu2e::StrawDigiCollection>(strawDigisTag_);
-	_stcol = chH.product();
+	_chcol = 0; 
+        auto chH = evt.getValidHandle<mu2e::ComboHitCollection>(chTag_);
+	_chcol = chH.product();
 	foundEvent = true;
-	return _stcol != 0;
-       }
-/*
+	return _chcol != 0;
+  }
+
 void TEveEventDisplay::endJob(){
 	if(foundEvent){
 		char msg[300];
@@ -642,7 +646,7 @@ void TEveEventDisplay::endJob(){
 	}
 
 }  
-*/	
+	
 }
 
 using mu2e::TEveEventDisplay;

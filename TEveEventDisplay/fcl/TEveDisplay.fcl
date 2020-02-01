@@ -22,9 +22,11 @@ physics :
 	{
 		Teveeventdisplay:
 		{
+			diagLevel   : 0
 			module_type : TEveEventDisplay
 			g4ModuleLabel : "g4run"
-			strawDigisTag : "makeSD"
+			chTag : "makeSD"
+			gensTag : GenParticleCollection
         		minEnergyDep : 0
         		minHits : 1
 		}
