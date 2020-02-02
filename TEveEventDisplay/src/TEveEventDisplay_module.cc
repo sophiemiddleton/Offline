@@ -82,8 +82,19 @@
 using namespace std;
 using namespace mu2e;
 
+XYZVec ConvertPointToDetFrame(XYZVec vec){
+        CLHEP::Hep3Vector vec1(vec.x(),vec.y(),vec.z());
+        GeomHandle<DetectorSystem> det;
+        CLHEP::Hep3Vector vec2 = det->toDetector(vec1);
+	XYZVec XYZ(vec2.x(), vec2.y(), vec2.z());
+        cout<<" in det "<<XYZ.X()<<" "<<XYZ.Y()<<" "<<XYZ.Z()<<endl;
+	return XYZ;
+
+    }
   void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list)
   {
+    cout<<"Drawing Hit "<<n<<endl;
+    XYZVec vecDet = (hit.pos());
     std::string hstr=" hit %d";
     std::string dstr=" hit# %d\nLayer: %d";
     std::string strlst=pstr+hstr;
@@ -91,7 +102,8 @@ using namespace mu2e;
 
     TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
     h->SetTitle(Form(strlab.c_str(),n,hstr));
-    h->SetNextPoint(hit.pos().X()*0.1,hit.pos().Y()*0.1,hit.pos().Z()*0.1);
+    cout<<"plotting : "<<vecDet.x()<<" "<<vecDet.y()<<" "<<vecDet.z()<<endl;
+    h->SetNextPoint(vecDet.x(),vecDet.y(),vecDet.z());
     h->SetMarkerColor(mColor);
     h->SetMarkerSize(mSize);
     list->AddElement(h);
@@ -119,16 +131,16 @@ struct Config{
 	      using Name=fhicl::Name;
 	      using Comment=fhicl::Comment;
 	      fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
-	      fhicl::Atom<art::InputTag>chTag{Name("chTag"),Comment("chTag")};
-	      fhicl::Atom<art::InputTag>gensTag{Name("gensTag"),Comment("gensTag")};
+	      fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
+	      fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
    	      fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
      	      fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
 	       fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
 	       fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
 	       fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
                fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
-		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),true};
-		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),true};
+		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
+		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
 		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
 		
     };
@@ -160,7 +172,7 @@ struct Config{
 
       double minEnergyDep_;
       size_t minHits_;
-
+      bool isFirstEvent = true;
       bool doDisplay_;
       bool clickToAdvance_;
       bool showEvent_;
@@ -374,19 +386,13 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   fDetXYScene->DestroyElements();
   fDetRZScene->DestroyElements();
   
-  cout<<"importing GDML "<<endl;
   // Import the GDML of entire Mu2e Geometry
-  /*TGeoManager* geom = new TGeoManager("geom","Geom");
-  geom->TGeoManager::SetNavigatorsLock(kFALSE);
-  geom->TGeoManager::ClearNavigators();*/
-
   geom = geom->TGeoManager::Import("TEveEventDisplay/src/fix.gdml");
-  cout<<"Getting top volume "<<endl;
+  
   //Get Top Volume
   TGeoVolume* topvol = geom->GetTopVolume();
   
   //Set Top Volume for gGeoManager:
-  cout<<"setting top "<<endl;
   gGeoManager->SetTopVolume(topvol);
   gGeoManager->SetTopVisible(kTRUE);
   int nn = gGeoManager->GetNNodes();
@@ -400,7 +406,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
   //This is a basic function to allow us to just see tracker and calo, it needs fixing:
   
-  InsideDS( topnode, false );
+  //InsideDS( topnode, false );
   hideBuilding(topnode);
   hideTop(topnode);
  
@@ -435,15 +441,16 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
+
   cout<<"Analyzing Event Number "<<event.id()<<endl;
    GeomHandle<mu2e::BFieldManager> bfmgr;
   _evt = event.id().event();
   if(showEvent_ ){
-  	FindData(event);
 	if(addHits_) AddHits(event);
-  	if(addTracks_) AddTrack(event, *bfmgr);
-  	if(addClusters_) AddClusters(event);
+  	//if(addTracks_) AddTrack(event, *bfmgr);
+  	//if(addClusters_) AddClusters(event);
   }
+
   std::ostringstream sstr;
   sstr << event.id().run();
   visutil_->fTbRun->Clear();
@@ -454,23 +461,24 @@ void TEveEventDisplay::analyze(const art::Event& event){
   sstr << event.id().event();
   visutil_->fTbEvt->Clear();
   visutil_->fTbEvt->AddText(0,sstr.str().c_str());
-  
-  // Delete visualization structures associated with previous event
-  gEve->GetViewers()->DeleteAnnotations();
-  gEve->GetCurrentEvent()->DestroyElements();
 
-  
+  // Delete visualization structures associated with previous event
+  if(!isFirstEvent){
+  	gEve->GetViewers()->DeleteAnnotations();
+ 	gEve->GetCurrentEvent()->DestroyElements();
+   }
   // Import event into ortho views and apply projections
   TEveElement* currevt = gEve->GetCurrentEvent();
 
   fEvtXYScene->DestroyElements();
   fXYMgr->ImportElements(currevt, fEvtXYScene);
-
+ 
   fEvtRZScene->DestroyElements();
   fRZMgr->ImportElements(currevt, fEvtRZScene);
+  
   geom->Draw("ogl");
   gPad->WaitPrimitive();
-  
+  isFirstEvent = false;
 } 
 
 void TEveEventDisplay::hideTop(TGeoNode* node) {
@@ -492,18 +500,6 @@ void TEveEventDisplay::hideTop(TGeoNode* node) {
     std::cout << "turning off " << name << std::endl;
     node->SetVisibility(false);
   }
-
-
-  /*
-  std::string str("ExtShield");
-  if ( name.find(str) != std::string::npos ){
-    TGeoVolume* gv = node->GetVolume(); 
-    printf("vol %ul\n",gv);
-    TGeoShape* gs = gv->GetShape();
-    printf("ExtShield shape %s\n",gs->IsA()->GetName());
-    Double_t dx,dy,dz;
-  }
-  */
   
   // Descend recursively into each daughter TGeoNode.
   int ndau = node->GetNdaughters();
@@ -561,7 +557,7 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 }
 
 void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager const& bf){
-    
+    std::cout<<"Adding tracks "<<std::endl;
     auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
 
     if (fTrackList == 0) {
@@ -603,10 +599,13 @@ void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager con
     gEve->Redraw3D();
 }
 
-void TEveEventDisplay::AddHits(const art::Event& event){
 
+
+void TEveEventDisplay::AddHits(const art::Event& event){
+   
    auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
    _chcol = chH.product(); //this should be any collection eventually
+   
    if (fHitsList == 0) {
       fHitsList = new TEveElementList("Hits");
       fHitsList->IncDenyDestroy();     
@@ -615,16 +614,19 @@ void TEveEventDisplay::AddHits(const art::Event& event){
       fHitsList->DestroyElements();  
     }
     TEveElementList* HitsList  = new TEveElementList("Combo Hits");
- 
+   
     for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
 	    ComboHit const& hit = (*_chcol)[ih];
+	    cout<<"hit "<<ih<<" of "<<_chcol->size()<<endl;
 	    cout<<"adding hit "<<hit.pos().X()<<" "<<hit.pos().Y()<<" "<<hit.pos().Z()<<endl;
-	    DrawHit("ComboHits",kGreen,20,ih,hit,HitsList);
+	 
+	    DrawHit("ComboHits",kGreen,2,ih,hit,HitsList);
 	    fHitsList->AddElement(HitsList);  
 	    gEve->AddElement(fHitsList);
-
+	    cout<<"redrawing "<<endl;
+	    gEve->Redraw3D();
     }
-	gEve->Redraw3D();
+	
 }
 
 void TEveEventDisplay::AddClusters(const art::Event& evt){}

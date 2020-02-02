@@ -3,11 +3,13 @@
 #include "fcl/standardServices.fcl"
 #include "CommonMC/fcl/prolog.fcl"
 
+
 process_name : TEveDisplay
 
 source :
 {
 	module_type : RootInput
+	
 }
 	
 services :
@@ -25,10 +27,15 @@ physics :
 			diagLevel   : 0
 			module_type : TEveEventDisplay
 			g4ModuleLabel : "g4run"
-			chTag : "makeSD"
-			gensTag : GenParticleCollection
+ 			ComboHitCollection : "makePH"
+			chTag_ : "makePH"
+			gensTag_ : "generate"
+			GenParticleCollection : "generate"
         		minEnergyDep : 0
         		minHits : 1
+			addHits : false
+			addTracks : true
+			addClusters : false
 		}
 	}
 	

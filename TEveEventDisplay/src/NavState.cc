@@ -26,7 +26,7 @@ using namespace mu2e;
   void NavState::Set(int which)
   {
     gsNavState = which;
-    gROOT->GetApplication()->Terminate();
+    //gROOT->GetApplication()->Terminate();
   }
 
   //......................................................................
