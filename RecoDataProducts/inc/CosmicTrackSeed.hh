@@ -22,7 +22,7 @@ namespace mu2e {
     const std::vector<StrawHitIndex>& _shits       () const { return _strawHitIdxs; }
     std::vector<TrkStrawHitSeed> const& trkstrawhits() const { return _trkstrawhits;}
     ComboHitCollection const& hits() const { return _panel_hits; }
-    CosmicTrack const& track() const { return _track; }//TODO rename this class!!
+    CosmicTrack const& track() const { return _track; }
     TrkFitFlag const& status() const { return _status; }
     art::Ptr<TimeCluster> const& timeCluster() const { return _timeCluster; }
 

@@ -58,7 +58,7 @@ namespace mu2e
 
 	virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
 	virtual BField const& bField() const;
-
+	TrkPrintUtils*  printUtils() { return _printUtils; }
   private:
 
 	int _debug;		    // debug level
@@ -71,8 +71,9 @@ namespace mu2e
 	std::vector<bool> _addmaterial; // look for additional materials along the track
 	const mu2e::Tracker*    _tracker;     // straw tracker geometry
 	//TrkTimeCalculator _ttcalc;
+	int    _annealingStep;
 	mutable BField* _bfield;
- 	
+ 	TrkPrintUtils*  _printUtils;
 	bool fitable(CosmicKalSeed const& kseed);
 	void initT0(CosmicKalFitData& kalData);
 

@@ -98,10 +98,12 @@ namespace mu2e{
 		private:
 			void produce(art::Event& event ) override;
 			int 			        _debug,_diag;
+			unsigned _iev;
+  			int _printfreq;
 			art::ProductToken<CosmicTrackSeedCollection> const  _seedToken;
 			unsigned				_minnhits;
-			std::vector<double> 		_perr;
-			double _amsign; // cached sign of angular momentum WRT the z axis 
+			std::vector<double> 		_perr;// diagonal parameter errors to use in the fit
+			
 			double _bz000;        // sign of the magnetic field at (0,0,0)
 			HepSymMatrix _hcovar; // cache of parameter error covariance matrix
 			bool _saveall;
@@ -111,7 +113,7 @@ namespace mu2e{
 
 			StrawHitFlag     _dontuseflag;
 			TrkFitDirection  _fdir;
-			double upz, downz; //TODO - may not need
+			double _upz, _downz; 
 			
 			CosmicKalFitData               _kalResult;
 			const CosmicTrackSeedCollection*  _seedcol;
@@ -126,12 +128,16 @@ namespace mu2e{
 	CosmicKalFitter::CosmicKalFitter(fhicl::ParameterSet const& pset) :
     	art::EDProducer{pset},
     	_debug(pset.get<int>("debugLevel", 0)),
-    	_diag(pset.get<int>("diagLevel",0)),	
+    	_diag(pset.get<int>("diagLevel",0)),
+	_printfreq(pset.get<int>("printFrequency",101)),	
 	_seedToken{consumes<CosmicTrackSeedCollection> (pset.get<art::InputTag>("CosmicTrackSeedCollection"))},
 	_minnhits(pset.get<unsigned>("minnhits",1)),
+	_perr(pset.get<vector<double> >("ParameterErrors")),
 	_saveall(pset.get<bool>("saveall", false)),
 	_tpart((TrkParticle::type)(pset.get<int>("fitparticle",TrkParticle::mu_minus))),//TODO+/-
-	_kfit(pset.get<fhicl::ParameterSet>("CosmicKalFit",fhicl::ParameterSet()))
+	_kfit(pset.get<fhicl::ParameterSet>("CosmicKalFit",fhicl::ParameterSet())),
+	_upz(pset.get<double>("UpstreamZ",-1500)),
+    	_downz(pset.get<double>("DownstreamZ",1500))
 	{
 		//consumes<CosmicTrackSeedCollection>(_seedToken);
 		produces<CosmicKalSeedCollection>();
@@ -140,7 +146,7 @@ namespace mu2e{
 		}
 		_hcovar = HepSymMatrix(CosmicLineTraj::NHLXPRM,0);
 		for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
-			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];   
+			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];//sets it to all 1's?   
 		}
 	}
 
@@ -163,6 +169,7 @@ namespace mu2e{
 		CLHEP::Hep3Vector vpoint_mu2e = det->toMu2e(vpoint);
 		CLHEP::Hep3Vector field = bfmgr->getBField(vpoint_mu2e);
 		_bz000    = field.z();
+		
 
    	}
 
@@ -173,36 +180,43 @@ namespace mu2e{
 
 		unique_ptr<CosmicKalSeedCollection> kal_col(new CosmicKalSeedCollection());
 
+		_iev=event.id().event();
+		if(_debug > 0 && (_iev%_printfreq)==0)cout<<"KalSeedFit: event="<<_iev<<endl;
+		
 		auto const& seedH = event.getValidHandle<CosmicTrackSeedCollection>(_seedToken);
 		_seedcol = seedH.product();
 
+		if(_seedcol->empty()){
+			throw cet::exception("RECO")<<"mu2e::CosmicKalFit: data missing or incomplete"<< endl;
+		}
 		_kalResult.event   = &event;
 		_kalResult.seedcol  = _seedcol; 
-		_kalResult.fdir = _fdir;
+		_kalResult.fdir = _fdir; //TODO - we dont care about fitdirection for Cosmics?
 		
 		for (size_t index=0;index< _kalResult.seedcol->size();++index) {
-
-			
 			CosmicTrackSeed const& sts(_kalResult.seedcol->at(index));
 			ComboHitCollection _chcol = sts._straw_chits ;
-			TrkParticle tpart(_tpart);
-			TrkParticle::type t = (TrkParticle::type) (-(int) _tpart.particleType());
+
+			TrkParticle tpart(_tpart); //TODO we want either +/-13
+			TrkParticle::type t = (TrkParticle::type) fabs(((-(int) _tpart.particleType())));
 			tpart = TrkParticle(t);
+
       			if (sts.track().converged == true ) {
 				std::vector<CosmicKalSeed>   kal_vec;
 				CosmicKalFitData _tmpResult(_kalResult);
 				HepVector hpvec(CosmicLineTraj::NHLXPRM);
 				
-				CosmicLineTraj cosmictraj(hpvec,_hcovar);
-				CosmicTrkUtils::CosmicTrack2Traj(sts.track(), hpvec,1);
+				CosmicLineTraj cosmictraj(hpvec,_hcovar);//TODO
+				unsigned amsign = sts.track().AMSIGN();
+				CosmicTrkUtils::CosmicTrack2Traj(sts.track(), hpvec,amsign);
 				TimeCluster tclust;
 				tclust._t0 = sts._t0;
 				for(uint16_t ihit=0;ihit < sts.hits().size(); ++ihit){
-					sts.hits().fillStrawHitIndices(event,ihit,tclust._strawHitIdxs);
+				sts.hits().fillStrawHitIndices(event,ihit,tclust._strawHitIdxs);
 				}
-				CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); 
+				CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); //fdir-TODO 
 				const CosmicLineTraj* traj = &seeddef.cosmic();
-				double flt0  = traj->zFlight(0.0,0.0); //TODO
+				double flt0  = traj->zFlight(0.0,traj->z0()); 
 				double mom   = TrkMomCalculator::vecMom(*traj, _kfit.bField(), flt0).mag(); 
 				double vflt  = seeddef.particle().beta(mom)*CLHEP::c_light;
 				double  cosmict0 = sts.t0().t0();
@@ -259,7 +273,7 @@ namespace mu2e{
 
 				 if(htraj != 0){
 				    	KalSegment kseg;
-				    	BbrVectorErr momerr;// = _tmpResult.krep->momentumErr(_tmpResult.krep->flt0());
+				    	BbrVectorErr momerr = _tmpResult.krep->momentumErr(_tmpResult.krep->flt0());
 				    	CosmicTrkUtils::fillSegment(*htraj,momerr,locflt-_tmpResult.krep->flt0(),kseg);
 				    	double upflt(0.0), downflt(0.0);
 
@@ -272,7 +286,7 @@ namespace mu2e{
 					bool Down = true;
 					do {
 						double ztraj = traj->position(upflt).z();
-						dz = upz - ztraj;
+						dz = _upz - ztraj;
 						upflt += dz/traj->direction(upflt).z();
 						niterUp++;
 						if( fabs(dz) > tol) Up = false;
@@ -281,7 +295,7 @@ namespace mu2e{
 					//This is : TrkHelixUtils::findZFltlen(*htraj,_upz,upflt);
 				    	do {
 						double ztraj = traj->position(downflt).z();
-						dz = downz - ztraj;
+						dz = _downz - ztraj;
 						downflt += dz/traj->direction(downflt).z();
 						niterDown++;
 						if( fabs(dz) > tol) Down = false;

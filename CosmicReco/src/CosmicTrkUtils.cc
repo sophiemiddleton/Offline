@@ -36,7 +36,7 @@ using namespace std;
 namespace mu2e {
   namespace CosmicTrkUtils {
 
-    bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, float amsign) { //TODO - do we need amsign?
+    bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, unsigned amsign) { 
       bool retval(false);
 
       if(hpvec.num_row() == CosmicLineTraj::NHLXPRM) {

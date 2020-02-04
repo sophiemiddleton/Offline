@@ -186,12 +186,17 @@ namespace mu2e {
 	    }
 
 	    void SetTrackPOCA() {
-		XYZVec TrackerCenter(0,0,0);//TODO 🙄
+		XYZVec TrackerCenter(0,0,0);
         	PointLinePCA_XYZ PCA = PointLinePCA_XYZ(TrackerCenter, this->FirstHitVec, this->LastHitVec);
 		this->POCA = PCA.pca();
 		this->DOCA = PCA.dca();
+		this->_AMSIGN = copysign(1,PCA.pca().X());
 	    }
-  
+
+	    unsigned AMSIGN()const {
+		return _AMSIGN;
+  	    }
+
 	    void set_fit_theta(double track_angle){ FitTheta = track_angle;}
 	    void set_fit_phi(double track_angle){ FitPhi = track_angle;}
 
@@ -230,7 +235,7 @@ namespace mu2e {
 	     double FitTheta;
 	     XYZVec POCA;
 	     double DOCA;
-
+	     unsigned _AMSIGN;
   private:
 	    
 	    unsigned _Nhits;
@@ -240,6 +245,8 @@ namespace mu2e {
 	    XYZVec Position;
 	    XYZVec FirstHitVec;
 	    XYZVec LastHitVec; 
+
+	  
 	    
   };
   

@@ -7,32 +7,32 @@ BEGIN_PROLOG
 
 # time clustering is the 1st stage of track finding 
 TimeClusterFinder : {
-  module_type  : TimeClusterFinder
-  ClusterMVA : { MVAWeights : "TrkPatRec/test/TimeCluster.weights.xml" }
-  ClusterCaloMVA : { MVAWeights : "TrkPatRec/test/TimeClusterCalo.weights.xml" }
-  ComboHitCollection : "makePH"
-  StrawHitFlagCollection : "FlagBkgHits:ComboHits"
-  CaloClusterCollection : "CaloClusterFromProtoCluster"
-  T0Calculator : { CaloT0Offset : @local::TrackCaloMatching.DtOffset }
+	module_type  : TimeClusterFinder
+	ClusterMVA : { MVAWeights : "TrkPatRec/test/TimeCluster.weights.xml" }
+	ClusterCaloMVA : { MVAWeights : "TrkPatRec/test/TimeClusterCalo.weights.xml" }
+	ComboHitCollection : "makePH"
+	StrawHitFlagCollection : "FlagBkgHits:ComboHits"
+	CaloClusterCollection : "CaloClusterFromProtoCluster"
+	T0Calculator : { CaloT0Offset : @local::TrackCaloMatching.DtOffset }
 
-  # enable calorimeter cluster info in time clustering
-  UseCaloCluster : true
-  UseCaloClusterPosition : true
-  #CaloClusterWeight : 10.0
-  TestFlag : true
+	# enable calorimeter cluster info in time clustering
+	UseCaloCluster : true
+	UseCaloClusterPosition : true
+	#CaloClusterWeight : 10.0
+	TestFlag : true
 }
 
 #cosmics:
 TimeClusterFinderCosmics : {
-  @table::TimeClusterFinder
-  ComboHitCollection : "makePH"
-  #CaloClusterCollection : "CaloClusterFromProtoCluster"
-  T0Calculator : { CaloT0Offset : @local::TrackCaloMatching.DtOffset }
-  maxdPhi : 10.0
-  RefineClusters : false
-  PrefilterCluster : false
-  UseCaloCluster : false
-  UseCaloClusterPosition : false
+	@table::TimeClusterFinder
+	ComboHitCollection : "makePH"
+	#CaloClusterCollection : "CaloClusterFromProtoCluster"
+	T0Calculator : { CaloT0Offset : @local::TrackCaloMatching.DtOffset }
+	maxdPhi : 10.0
+	RefineClusters : false
+	PrefilterCluster : false
+	UseCaloCluster : false
+	UseCaloClusterPosition : false
 }
 
 CHD : {
@@ -44,22 +44,46 @@ CHD : {
 	TimeOffsets : {inputs : [ @sequence::DigiCompression.NoCosmicTimeMaps ]}
 }
 CosmicTrackFinder : {
-    module_type		: CosmicTrackFinder
-    ComboHitCollection     : "makePH"
-    TimeClusterCollection  : "TimeClusterFinderCosmics"
-    StrawDigiMCCollection : "compressDigiMCs"
-    DoDrift : true
+	module_type		: CosmicTrackFinder
+	ComboHitCollection     : "makePH"
+	TimeClusterCollection  : "TimeClusterFinderCosmics"
+	StrawDigiMCCollection : "compressDigiMCs"
+	DoDrift : true
 }
+
 
 CosmicKFSeed : {
+	module_type            	: KalSeedFit
+ 	debug 			: 0
+	maxpull 		: 5
+	strawHitT0Weight        : 1
+	minnstraws		: 2
+	MaxIterations           : 3
+	fieldCorrection	      	: false
+	materialCorrection      : false
+	seedsmear       	: 10000
+	maxhitchi               : 5.0
+	hiterr                  : [ 80., 23.04]
+	printUtils              : { @table::TrkReco.PrintUtils}
 
 }
 
+#fitparticle	      : @local::Particle.muplus
+  #fitdirection	      : @local::FitDir.upstream 
 CosmicKalFitter:
-    module_type                 : CosmicKalSeedFitter
-    CosmicTrackSeedCollection   :CosmicTrackFinder
-    CosmicKalFit		 : @local::CosmicKFSeed
-  
+	
+	module_type             	: CosmicKalSeedFitter
+	debugLevel 			:    0
+	diagLevel			:    0
+	printFrequency			:    101
+	CosmicTrackSeedCollection    	:CosmicTrackFinder
+	minnhits			:    8
+	ParameterErrors			:   [1.0,1.0,1.0,1.0] #how to get these?
+  	saveall				: false
+	fitparticle	      		: @local::Particle.muminus #both
+	CosmicKalFit		 	: @local::CosmicKFSeed
+	UpstreamZ			:-1500
+	DownstreamZ			:1500
 }
 
  CosmicAnalysis : {

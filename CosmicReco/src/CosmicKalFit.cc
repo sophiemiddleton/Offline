@@ -77,11 +77,35 @@ namespace mu2e
   	CosmicKalFit::CosmicKalFit(fhicl::ParameterSet const& pset) :
     	_debug(pset.get<int>("debugLevel",0)),
     	_maxpull(pset.get<double>("maxPull",5)),
-	_strHitW(pset.get<double>("strHitW")),
+	_strHitW(pset.get<double>("strawHitT0Weight")),
 	_minnstraws(pset.get<double>("minnstraws",2)),
 	_herr(pset.get< vector<double> >("hiterr")),
 	_maxIterations(pset.get<unsigned>("maxIterations",10)),
-	_bfield(0){}
+	_bfield(0){
+		// set KalContext parameters
+		_disttol = pset.get<double>("IterationTolerance",0.1);
+		_intertol = pset.get<double>("IntersectionTolerance",100.0);
+		_maxiter = pset.get<long>("MaxIterations",10);
+		_maxinter = pset.get<long>("MaxIntersections",0);
+		_matcorr = pset.get<bool>("materialCorrection",true);
+		_fieldcorr = pset.get<bool>("fieldCorrection",false);
+		_smearfactor = pset.get<double>("SeedSmear",1.0e6);
+		_sitethresh = pset.get<double>("SiteMomThreshold",0.2);
+		_momthresh = pset.get<double>("MomThreshold",10.0);
+		_mingap = pset.get<double>("mingap",1.0);
+		_minfltlen = pset.get<double>("MinFltLen",0.1);
+		_minmom = pset.get<double>("MinMom",10.0);
+		_fltepsilon = pset.get<double>("FltEpsilon",0.001);
+		_divergeflt = pset.get<double>("DivergeFlt",1.0e3);
+		_mindot = pset.get<double>("MinDot",0.0);
+		_maxmomdiff = pset.get<double>("MaxMomDiff",0.5);
+		_momfac = pset.get<double>("MomFactor",0.0);
+		_maxpardif[0] = _maxpardif[1] = pset.get<double>("MaxParameterDifference",1.0);
+
+		_mindof = pset.get<double>("MinNDOF",10);
+
+		_printUtils = new TrkPrintUtils(pset.get<fhicl::ParameterSet>("printUtils",fhicl::ParameterSet()));
+	}
 
 	 CosmicKalFit::~CosmicKalFit(){
 	    delete _bfield;
@@ -99,9 +123,7 @@ namespace mu2e
 
 		double flt0 = kalData.cosmicKalSeed->flt0();
 		auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
-		//if(kseg->fmin() > kseg->localFlt(flt0) || 
-		//kseg->fmax() < kseg->localFlt(flt0) ){//TODO}
-
+		
 		HepVector pvec(4,0);
 		HepSymMatrix pcov(4,0);
 		kseg->cosmic().hepVector(pvec);
@@ -124,13 +146,18 @@ namespace mu2e
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
 	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
 	      	assert(kalData.krep != 0);
+		if (_debug > 0) {
+			char msg[100];
+			sprintf(msg,"makeTrack_001 annealing step: %2i",_annealingStep);
+			_printUtils->printTrack(kalData.event,kalData.krep,"banner+data+hits",msg);
+      		}
 
 	      	kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
-
+		
 	      	TrkErrCode fitstat = FitTrack(detmodel,kalData);
 	      	kalData.krep->addHistory(fitstat,"KalFit fit");
 
-	}
+		}
   	}
 
 	bool CosmicKalFit::fitable(CosmicKalSeed const& kseed){
@@ -200,7 +227,8 @@ namespace mu2e
 				  CosmicKalFitData& kalData, int iter) {
 
 		if (iter == -1) iter =  _herr.size()-1;
-		
+		_annealingStep = iter;//used in the printHits routine
+
 		TrkHitVector* thv   = &(kalData.krep->hitVector());
 		for (auto itsh=thv->begin();itsh!=thv->end(); ++itsh){
 			(*itsh)->setTemperature(_herr[iter]);
