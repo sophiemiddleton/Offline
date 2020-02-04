@@ -13,7 +13,7 @@ class BbrVectorErr;
 class KalRep;
 class TrkDifPieceTraj;
 namespace mu2e {
-  class CosmicTrackSeedHelix;
+  class CosmicTrackSeed;
   class KalSegment;
   class CosmicKalSeed;
   class CosmicTrack;

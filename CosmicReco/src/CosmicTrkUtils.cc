@@ -13,7 +13,7 @@
 #include "RecoDataProducts/inc/TrkStrawHitSeed.hh"
 #include "RecoDataProducts/inc/ComboHit.hh"
 // BTrk
-#include "Btrk/TrkBase/CosmicLineTraj.hh"
+#include "BTrk/TrkBase/CosmicLineTraj.hh"
 #include "BTrk/KalmanTrack/KalRep.hh"
 #include "BTrk/KalmanTrack/KalMaterial.hh"
 #include "BTrk/BbrGeom/BbrVectorErr.hh"
@@ -47,9 +47,9 @@ namespace mu2e {
 	// d0 describes the distance to the origin at closest approach.
 	// It is signed by the particle angular momentum WRT the origin.
 	// The Helix fit radial bias is anti-correlated with d0; correct for it here.
-	hpvec[CosmicLineTraj::d0Index] = amsign*(track.GetDOCA()); 
-	hpvec[CosmicLineTraj::thetaIndex] = asin(track.GetTrackDirection.y()/sqrt(track.GetTrackDirection().Mag2()));
-	hpvec[CosmicLineTraj::phiIndex] = acos(track.GetTrackDirection.x()/track.GetTrackDirection.Mag2());
+	hpvec[CosmicLineTraj::d0Index] = amsign*(sqrt(track.GetPOCA().x()*track.GetPOCA().x()+track.GetPOCA().y()+track.GetPOCA().y())); 
+	hpvec[CosmicLineTraj::thetaIndex] = asin(track.GetTrackDirection().y()/sqrt(track.GetTrackDirection().Mag2()));
+	hpvec[CosmicLineTraj::z0Index] = track.GetPOCA().z();
 
 	retval = true;
       }
@@ -151,7 +151,7 @@ namespace mu2e {
       return over/norm;
     }
 
-    double overlap(CosmicKalSeed const& ks, HelixSeed const& hs){
+    double overlap(CosmicKalSeed const& ks, CosmicTrackSeed const& hs){
       SHIV shiv1, shiv2;
       for(auto tshs : ks.hits()){
 	if(tshs.flag().hasAllProperties(StrawHitFlag::active))

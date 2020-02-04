@@ -4,7 +4,7 @@
 // Original author David Brown, LBNL
 //
 #include "BTrk/BaBar/BaBar.hh"
-#include "TrkReco/inc/TrkDef.hh"
+#include "CosmicReco/inc/CosmicTrkDef.hh"
 
 
 using CLHEP::Hep3Vector;
@@ -12,28 +12,28 @@ using CLHEP::HepSymMatrix;
 using CLHEP::HepVector;
 namespace mu2e 
 {
-  TrkDef::TrkDef(TimeCluster const& tclust, const HelixTraj& helix,
+
+    CosmicTrkDef::CosmicTrkDef(TimeCluster const& tclust, const CosmicLineTraj& cosmic,
       TrkParticle const& tpart, TrkFitDirection const& fdir) :
-    _timeCluster(tclust),_h0(helix),_tpart(tpart),_fdir(fdir)
+    _timeCluster(tclust),_c0(cosmic),_tpart(tpart),_fdir(fdir)
   {}
 
-  TrkDef::TrkDef(const TrkDef& other ) : 
+  CosmicTrkDef::CosmicTrkDef(const CosmicTrkDef& other ) : 
     _timeCluster(other._timeCluster),
-    _h0(other._h0),  _tpart(other._tpart),
+    _c0(other._c0),  _tpart(other._tpart),
     _fdir(other._fdir)
   {}
   
-  
-  TrkDef&
-  TrkDef::operator = (const TrkDef& other) {
+  CosmicTrkDef&
+  CosmicTrkDef::operator = (const CosmicTrkDef& other) {
     if(this != &other){
       _timeCluster = other._timeCluster;
-      _h0 = other._h0;
+      _c0 = other._c0;
       _tpart = other._tpart;
       _fdir = other._fdir;
     }
     return *this;
   }
     
-  TrkDef::~TrkDef(){}
+  CosmicTrkDef::~CosmicTrkDef(){}
 }

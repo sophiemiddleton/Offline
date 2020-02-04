@@ -22,13 +22,10 @@ namespace mu2e {
     const std::vector<StrawHitIndex>& _shits       () const { return _strawHitIdxs; }
     std::vector<TrkStrawHitSeed> const& trkstrawhits() const { return _trkstrawhits;}
     ComboHitCollection const& hits() const { return _panel_hits; }
-    CosmicTrack const& track() const { return _track; }
+    CosmicTrack const& track() const { return _track; }//TODO rename this class!!
     TrkFitFlag const& status() const { return _status; }
     art::Ptr<TimeCluster> const& timeCluster() const { return _timeCluster; }
-/*///IN DEVELOPMENT: NEW INFRASTRUCTURE////////
-    typedef art::Ptr<ComboHit>          ComboHitPtr;
-    typedef std::vector<ComboHitPtr>    ComboHitPtrVector;
-////////////////////////////*/
+
     TrkT0	             _t0;	      // t0 for this track
     ComboHitCollection       _panel_hits;	      // hits for track (panel hits)
     ComboHitCollection       _straw_chits;    // get the straw level hits and store here (need to find panel hits first)

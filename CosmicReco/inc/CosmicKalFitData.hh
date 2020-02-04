@@ -13,7 +13,7 @@
 #include "BTrk/BaBar/BaBar.hh"
 
 #include "BTrkData/inc/TrkStrawHit.hh"
-#include "BTrk/TrkBase/KalRep.hh"
+#include "BTrk/KalmanTrack/KalRep.hh"
 #include "BTrk/TrkBase/TrkParticle.hh"
 #include "BTrk/TrkBase/CosmicLineTraj.hh"
 
@@ -34,9 +34,9 @@ namespace mu2e {
 
     const StrawHitFlagCollection*     shfcol;         //
     TrkFitDirection                   fdir; //TODO --> do we need this?
-    CosmicTrackSeedCollection	      seedcol;
+    const CosmicTrackSeedCollection*  seedcol;
     const CosmicTrackSeed*            cosmicSeed;      
-    const CosmicKalSeed*              cosmicKalSeed;       
+    const CosmicKalSeed*               cosmicKalSeed;       
     CosmicLineTraj*                   cosmicTraj;      
 
     int                               fitType;        // 0:seed 1:final TODO ---> do we need this?

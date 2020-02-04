@@ -32,58 +32,56 @@
 #include "CLHEP/Units/PhysicalConstants.h"
 // C++
 #include <array>
-
+// Framework
+#include "fhiclcpp/types/Atom.h"
+#include "fhiclcpp/types/Sequence.h"
+#include "fhiclcpp/types/Table.h"
 namespace mu2e 
 {
 
   class CosmicKalFit : public KalContext
   {
   public:
+	
+	#ifndef __GCCXML__
+    	explicit CosmicKalFit(fhicl::ParameterSet const&);
+	#endif/*__GCCXML__*/
+	virtual ~CosmicKalFit();
 
-	struct Config{
-	      using Name=fhicl::Name;
-	      using Comment=fhicl::Comment;
+	void MakeTrack(StrawResponse::cptr_t strawResponse, Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData);
+  	TrkErrCode FitIteration  (Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData,int iter); 
 
-	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
-	      fhicl::Atom<float> maxpull{Name("MaxHitPullForSeed"),Comment("The maxiumum allowed combo hit pull from fit")};
-	      fhicl::Atom<float> strHitW{Name("strHitW"),Comment("strW")};
-    	      fhicl::Atom<float> minnstraws{Name("MinStraws"),Comment("min straws")};
+	void       setTracker(const Tracker*  Tracker) { _tracker = Tracker; }
+	bool       updateT0 (CosmicKalFitData& kalData, int    iter);
+	bool       hit_time  (TrkHit* hit, HitT0& hitT0);
+	HitT0      krep_hitT0(KalRep* krep, const TrkHit*hit);
 
-    	}; 
-
-    explicit CosmicKalFit(const Config& conf);
-
-    virtual ~CosmicKalFit();
-
-    void makeTrack(StrawResponse::cptr_t strawResponse, 
-		   Mu2eDetector::cptr_t detmodel,
-		   CosmicKalFitData& kalData);
-
-    void       setTracker(const Tracker*  Tracker) { _tracker = Tracker; }
-    bool       updateT0 (CosmicKalFitData& kalData, int    iter);
-    bool       hit_time  (TrkHit* hit, HitT0& hitT0);
-    HitT0      krep_hitT0(KalRep* krep, const TrkHit*hit);
-
-   virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
-   virtual BField const& bField() const;
+	virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
+	virtual BField const& bField() const;
 
   private:
-    Config _conf;
-    int _debug;		    // debug level
-    double _maxpull;   // maximum pull in TrkHit 
-    double _strHitW;
-    std::vector<bool> _updatet0; // update t0 ieach iteration?
-    unsigned _minnstraws;   // minimum # staws for fit
-    std::vector<bool> _addmaterial; // look for additional materials along the track
-    const mu2e::Tracker*    _tracker;     // straw tracker geometry
-    TrkTimeCalculator _ttcalc;
-    mutable BField* _bfield;
 
-    bool fitable(CosmicKalSeed const& kseed);
-    void initT0(CosmicKalFitData& kalData);
+	int _debug;		    // debug level
+	float _maxpull;   // maximum pull in TrkHit 
+	float _strHitW;
+	std::vector<bool> _updatet0; // update t0 ieach iteration?
+	unsigned _minnstraws;   // minimum # staws for fit
+	std::vector<double> _herr; //hiterror
+	unsigned _maxIterations; //max number of iterations
+	std::vector<bool> _addmaterial; // look for additional materials along the track
+	const mu2e::Tracker*    _tracker;     // straw tracker geometry
+	//TrkTimeCalculator _ttcalc;
+	mutable BField* _bfield;
+ 	
+	bool fitable(CosmicKalSeed const& kseed);
+	void initT0(CosmicKalFitData& kalData);
 
-    void makeTrkStrawHits  (StrawResponse::cptr_t strawResponse, CosmicKalFitData& kalData, TrkStrawHitVector& tshv );
+	void MakeTrkStrawHits  (StrawResponse::cptr_t strawResponse, CosmicKalFitData& kalData, TrkStrawHitVector& tshv );
 
+	void MakeMaterials( Mu2eDetector::cptr_t detmodel,TrkStrawHitVector const&, CosmicLineTraj const& traj,std::vector<DetIntersection>& dinter);
+
+	TrkErrCode FitTrack    (Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData);
+	
   };
 }
 #endif

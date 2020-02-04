@@ -5,6 +5,7 @@
 //  to provide valid fit results in subset of positions.
 //  Original Author: Dave Brown (LBNL) 31 Aug. 2016
 // Cosmics added by S Middleton (2020)
+#ifndef RecoDataProducts_KalSegment_HH
 #define RecoDataProducts_KalSegment_HH
 #include <Rtypes.h>
 #include "RecoDataProducts/inc/HelixVal.hh"

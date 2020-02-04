@@ -51,6 +51,17 @@ CosmicTrackFinder : {
     DoDrift : true
 }
 
+CosmicKFSeed : {
+
+}
+
+CosmicKalFitter:
+    module_type                 : CosmicKalSeedFitter
+    CosmicTrackSeedCollection   :CosmicTrackFinder
+    CosmicKalFit		 : @local::CosmicKFSeed
+  
+}
+
  CosmicAnalysis : {
 	module_type : CosmicAnalyzer
 	ComboHitCollection : "makePH"
@@ -134,5 +145,5 @@ CosmicTracking : {
 
 #production sequence to find straight track
 CosmicTracking.FindCosmics : [  TimeClusterFinderCosmics, CosmicTrackFinder ]
-
+CosmicTracking.FindKalmanCosmics  : [ TimeClusterFinderCosmics, CosmicTrackFinder. ComsicKalFitter ]
 END_PROLOG

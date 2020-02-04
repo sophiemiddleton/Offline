@@ -8,19 +8,19 @@ using CLHEP::HepSymMatrix;
 
 namespace mu2e {
   CosmicVal::CosmicVal(HepVector const& pvec) {
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow)
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow)
       _pars[irow] = pvec[irow];
   }
 
   CosmicVal& CosmicVal::operator = (HepVector const& pvec) {
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow)
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow)
       _pars[irow] = pvec[irow];
     return *this;
   }
 
   void CosmicVal::hepVector(HepVector& pvec) const {
-    pvec = HepVector(CosmicParams::NHLXPRM,0);
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow)
+    pvec = HepVector(CosmicLineParams::NHLXPRM,0);
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow)
       pvec[irow] = _pars[irow];
   }
 
@@ -31,7 +31,7 @@ namespace mu2e {
 
   CosmicCov::CosmicCov(HepSymMatrix const& pcov) {
     size_t index(0);
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow){
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow){
       for(int icol=0; icol <= irow; ++icol){
 	_cov[index] = pcov(irow+1,icol+1); // CLHEP convention!
 	++index;
@@ -41,7 +41,7 @@ namespace mu2e {
 
   CosmicCov& CosmicCov::operator = (HepSymMatrix const& pcov) {
     size_t index(0);
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow){
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow){
       for(int icol=0; icol <= irow; ++icol){
 	_cov[index] = pcov(irow+1,icol+1); // CLHEP convention!
 	++index;
@@ -54,7 +54,7 @@ namespace mu2e {
   // dimension the matrix appropriately
     if(pcov.num_row() != 4)pcov = HepSymMatrix(4,0);
     size_t index(0);
-    for(int irow=0; irow < CosmicParams::NHLXPRM; ++irow){
+    for(int irow=0; irow < CosmicLineParams::NHLXPRM; ++irow){
       for(int icol=0; icol <= irow; ++icol){
 	pcov(irow+1,icol+1) =  _cov[index]; // CLHEP convention!
 	++index;
@@ -68,7 +68,7 @@ namespace mu2e {
    double y_dir = sin(theta())*sin(phi0());
    double z_dir = cos(theta());
 
-   dir(x_dir, y_dir, z_dir);
+   dir.SetXYZ(x_dir, y_dir, z_dir);
   }
 
   void CosmicVal::position(float f, XYZVec& pos) const { 
@@ -79,7 +79,7 @@ namespace mu2e {
   double y_pos = d0()*cphi0+  sin(theta())*sin(phi0())*f;
   double z_pos = z0() + cos(theta())*f;
 
-   dir(x_pos, y_pos, z_pos);
+   pos.SetXYZ(x_pos, y_pos, z_pos);
   }
 
 }
