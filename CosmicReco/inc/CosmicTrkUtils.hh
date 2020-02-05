@@ -1,8 +1,8 @@
 //Author: S Middleton
 //Date: Dec 2019
 //Purpose: Convert offlne cosmic track to BTrk Traj (analogous to TrkUtils for helix)
-#ifndef TrkReco_CosmicTrkUtils_HH
-#define TrkReco_ComicTrkUtils_HH
+#ifndef CosmicTrkUtils_HH
+#define ComicTrkUtils_HH
 #include "CLHEP/Vector/ThreeVector.h"
 #include "CLHEP/Matrix/Vector.h"
 #include "RecoDataProducts/inc/StrawHitIndex.hh"
@@ -22,6 +22,7 @@ namespace mu2e {
   class TimeCluster;
   class ComboHitCollection;
   typedef std::vector<StrawHitIndex> SHIV;
+
   namespace CosmicTrkUtils{
     bool CosmicTrack2Traj (CosmicTrack const& cosmic, CLHEP::HepVector& hpvec, float amsign);
     void CosmicTrackFromMom(CLHEP::Hep3Vector const& pos, CLHEP::Hep3Vector const& mom, double charge, double Bz, CosmicTrack& cosmic);
@@ -29,7 +30,7 @@ namespace mu2e {
     void fillStrawHitSeeds(const KalRep* krep, ComboHitCollection const& chits, std::vector<TrkStrawHitSeed>& hitseeds); 
     void fillStraws(const KalRep* krep, std::vector<TrkStraw>& straws);
     // compute overlap between 2 time clusters
-    double overlap(TimeCluster const& tc1, TimeCluster const& tc2);//TODO - no calo cluster needed for us
+    double overlap(TimeCluster const& tc1, TimeCluster const& tc2);
     double overlap(CosmicKalSeed const& ks1, CosmicKalSeed const& ks2);
     double overlap(CosmicKalSeed const& ks, CosmicTrackSeed const& hs);
     double overlap(CosmicTrackSeed const& hs,TimeCluster const& tc);

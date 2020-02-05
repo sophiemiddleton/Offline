@@ -49,6 +49,10 @@ namespace mu2e
 	virtual ~CosmicKalFit();
 
 	void MakeTrack(StrawResponse::cptr_t strawResponse, Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData);
+
+	virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
+	BField const& bField() const;
+
   	TrkErrCode FitIteration  (Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData,int iter); 
 
 	void       setTracker(const Tracker*  Tracker) { _tracker = Tracker; }
@@ -56,9 +60,7 @@ namespace mu2e
 	bool       hit_time  (TrkHit* hit, HitT0& hitT0);
 	HitT0      krep_hitT0(KalRep* krep, const TrkHit*hit);
 
-	virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
-	virtual BField const& bField() const;
-	TrkPrintUtils*  printUtils() { return _printUtils; }
+//TrkPrintUtils*  printUtils() { return _printUtils; }
   private:
 
 	int _debug;		    // debug level

@@ -207,8 +207,8 @@ namespace mu2e{
 				HepVector hpvec(CosmicLineTraj::NHLXPRM);
 				
 				CosmicLineTraj cosmictraj(hpvec,_hcovar);//TODO
-				unsigned amsign = sts.track().AMSIGN();
-				CosmicTrkUtils::CosmicTrack2Traj(sts.track(), hpvec,amsign);
+				float AM = sts.track().AMSIGN();
+				CosmicTrkUtils::CosmicTrack2Traj(sts.track(), hpvec,AM);
 				TimeCluster tclust;
 				tclust._t0 = sts._t0;
 				for(uint16_t ihit=0;ihit < sts.hits().size(); ++ihit){

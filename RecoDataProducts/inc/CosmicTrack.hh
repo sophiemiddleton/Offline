@@ -190,10 +190,10 @@ namespace mu2e {
         	PointLinePCA_XYZ PCA = PointLinePCA_XYZ(TrackerCenter, this->FirstHitVec, this->LastHitVec);
 		this->POCA = PCA.pca();
 		this->DOCA = PCA.dca();
-		this->_AMSIGN = copysign(1,PCA.pca().X());
+		this->_AMSIGN = copysign(1.0,PCA.pca().X());
 	    }
 
-	    unsigned AMSIGN()const {
+	    float AMSIGN()const {
 		return _AMSIGN;
   	    }
 
@@ -235,7 +235,7 @@ namespace mu2e {
 	     double FitTheta;
 	     XYZVec POCA;
 	     double DOCA;
-	     unsigned _AMSIGN;
+	     float _AMSIGN;
   private:
 	    
 	    unsigned _Nhits;

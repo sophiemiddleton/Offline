@@ -36,10 +36,10 @@ using namespace std;
 namespace mu2e {
   namespace CosmicTrkUtils {
 
-    bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, unsigned amsign) { 
-      bool retval(false);
+      bool CosmicTrack2Traj (CosmicTrack const& track, HepVector& hpvec, float amsign) { 
+	bool retval(false);
 
-      if(hpvec.num_row() == CosmicLineTraj::NHLXPRM) {
+	if(hpvec.num_row() == CosmicLineTraj::NHLXPRM) {
 	// phi0 is the azimuthal angle of the particle velocity vector at the point
 	// of closest approach to the origin.  It's sign also depends on the angular
 	// momentum.  To translate from the center, we need to reverse coordinates
@@ -118,7 +118,7 @@ namespace mu2e {
 	hitseeds.push_back(seedhit);
       }
     }
-
+/*
     double overlap(TimeCluster const& tc1, TimeCluster const& tc2) {
       double hover = overlap(tc1._strawHitIdxs,tc2._strawHitIdxs);
       double norm = std::min(tc1.hits().size(),tc2.hits().size());
@@ -182,7 +182,7 @@ namespace mu2e {
 
       return over/norm;
     }
-
+*/
     void countHits(const std::vector<TrkStrawHitSeed>& hits, unsigned& nhits, unsigned& nactive, unsigned& ndouble, unsigned& ndactive, unsigned& nnullambig) {
       nhits = 0; nactive = 0; ndouble = 0; ndactive = 0; nnullambig = 0;
       static StrawHitFlag active(StrawHitFlag::active);

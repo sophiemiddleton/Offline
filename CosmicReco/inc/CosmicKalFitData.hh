@@ -36,7 +36,7 @@ namespace mu2e {
     TrkFitDirection                   fdir; //TODO --> do we need this?
     const CosmicTrackSeedCollection*  seedcol;
     const CosmicTrackSeed*            cosmicSeed;      
-    const CosmicKalSeed*               cosmicKalSeed;       
+    const CosmicKalSeed*              cosmicKalSeed;       
     CosmicLineTraj*                   cosmicTraj;      
 
     int                               fitType;        // 0:seed 1:final TODO ---> do we need this?

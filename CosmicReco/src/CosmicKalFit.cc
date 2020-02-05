@@ -49,6 +49,7 @@
 //CLHEP
 #include "CLHEP/Units/PhysicalConstants.h"
 #include "CLHEP/Matrix/Vector.h"
+
 // root
 #include "TH1F.h"
 #include "TTree.h"
@@ -104,7 +105,7 @@ namespace mu2e
 
 		_mindof = pset.get<double>("MinNDOF",10);
 
-		_printUtils = new TrkPrintUtils(pset.get<fhicl::ParameterSet>("printUtils",fhicl::ParameterSet()));
+		/*_printUtils = new TrkPrintUtils(pset.get<fhicl::ParameterSet>("printUtils",fhicl::ParameterSet()));*/
 	}
 
 	 CosmicKalFit::~CosmicKalFit(){
@@ -122,12 +123,12 @@ namespace mu2e
     	if(fitable(*kalData.cosmicKalSeed)){
 
 		double flt0 = kalData.cosmicKalSeed->flt0();
-		auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
+		//auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
 		
 		HepVector pvec(4,0);
 		HepSymMatrix pcov(4,0);
-		kseg->cosmic().hepVector(pvec);
-		kseg->cosmic_cov().symMatrix(pcov);
+		//kseg->cosmic().hepVector(pvec);
+		//kseg->cosmic_cov().symMatrix(pcov);
 
 	      	CosmicLineTraj htraj(pvec,pcov);
 	      	kalData.cosmicTraj = &htraj;
@@ -146,11 +147,11 @@ namespace mu2e
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
 	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
 	      	assert(kalData.krep != 0);
-		if (_debug > 0) {
+		/*if (_debug > 0) {
 			char msg[100];
 			sprintf(msg,"makeTrack_001 annealing step: %2i",_annealingStep);
 			_printUtils->printTrack(kalData.event,kalData.krep,"banner+data+hits",msg);
-      		}
+      		}*/
 
 	      	kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
 		
@@ -277,6 +278,11 @@ namespace mu2e
 		      }
 	    	
     		return *_bfield;
+  	}
+
+	  const TrkVolume* CosmicKalFit::trkVolume(trkDirection trkdir) const {
+    
+    		return 0;
   	}
 
 	

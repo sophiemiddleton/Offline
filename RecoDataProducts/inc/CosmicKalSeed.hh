@@ -3,6 +3,7 @@
 #ifndef RecoDataProducts_CosmicKalSeed_HH
 #define RecoDataProducts_CosmicKalSeed_HH
 // mu2e
+#include "TrkReco/inc/TrkPrintUtils.hh"
 #include "RecoDataProducts/inc/TrkFitDirection.hh"
 #include "RecoDataProducts/inc/TrkStrawHitSeed.hh"
 #include "RecoDataProducts/inc/TrkStraw.hh"
