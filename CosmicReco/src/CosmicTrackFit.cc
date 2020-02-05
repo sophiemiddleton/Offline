@@ -168,6 +168,7 @@ void CosmicTrackFit::RunFitChi2(const char* title, CosmicTrackFinderData& TrackD
      int DOF = (nHits);// - (_Npara);
      const ComboHit* ch0 = &trackData._chHitsToProcess[0]; 
      const ComboHit* chN = &trackData._chHitsToProcess[trackData._chHitsToProcess.size()-1]; 
+     
      cosmictrack->SetFirstHitVec(ch0->pos().x(), ch0->pos().y(), ch0->pos().z());
      cosmictrack->SetLastHitVec(chN->pos().x(), chN->pos().y(), chN->pos().z());
      cosmictrack->Set_N(nHits);
