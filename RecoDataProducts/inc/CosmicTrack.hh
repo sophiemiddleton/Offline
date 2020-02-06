@@ -186,7 +186,7 @@ namespace mu2e {
 	    }
 
 	    void SetTrackPOCA() {
-		XYZVec TrackerCenter(0,0,0);
+		XYZVec TrackerCenter(0,0,0);//FIXME!!
         	PointLinePCA_XYZ PCA = PointLinePCA_XYZ(TrackerCenter, this->FirstHitVec, this->LastHitVec);
 		this->POCA = PCA.pca();
 		this->DOCA = PCA.dca();

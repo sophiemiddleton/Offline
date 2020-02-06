@@ -43,7 +43,7 @@ TVector3 GetPOCA( TVector3 point,TVector3 start,TVector3 end){
 	 
 	 return closestPointOnLine;
 	 
-
+	 
 }
 
 double GetDOCA(TVector3 closestPointOnLine, TVector3 point){
@@ -55,53 +55,55 @@ TVector3 direction(double phi0, double theta)
 {
 	TVector3 Dir;
 	Dir.SetXYZ(cos(phi0)*sin(theta),sin(theta)*sin(phi0), cos(theta));
-	return Dir;
+        return Dir;
 }
 
 TVector3 position(double f, double phi0, double theta, double z0, double d0, TVector3 Pos0)  
 {
-  double sphi0 = sin(phi0);
-  double cphi0 = cos(phi0);
-  //keep definition the same as for Helix for consistancy:
-  double x_pos = -1*d0*sphi0+ cos(phi0)*sin(theta)*f +Pos0.x() ;
-  double y_pos = d0*cphi0+  sin(theta)*sin(phi0)*f+Pos0.y();
-  double z_pos = z0 + cos(theta)*f+Pos0.z();
-  TVector3 Pos;
-  Pos.SetXYZ(x_pos, y_pos, z_pos);
-  return Pos;
+	double sphi0 = sin(phi0);
+	double cphi0 = cos(phi0);
+	double x_pos = -1*d0*sphi0+ cos(phi0)*sin(theta)*f +Pos0.x() ;
+	double y_pos = d0*cphi0+  sin(theta)*sin(phi0)*f+Pos0.y();
+	double z_pos = z0 + cos(theta)*f+Pos0.z();
+	TVector3 Pos;
+	Pos.SetXYZ(x_pos, y_pos, z_pos);
+	return Pos;
 }
 
 
 
 void TestBTrk( TVector3 Start, TVector3 End) {
-  TVector3 Pos0;
-  Pos0.SetXYZ(0, 0 ,0); //Reference point is set at 0.
-// position and momentum vectors
-  TVector3 POCA = GetPOCA(Pos0, Start, End);
-  unsigned AMSIGN = copysign(1,POCA.X());
-  double DOCA = GetDOCA(POCA, Pos0);
-  TVector3 TrackDirection;
-  TrackDirection.SetXYZ(End.X()-Start.X()/((End-Start).Mag()) , End.Y()-Start.Y()/((End-Start).Mag()), End.Z()-Start.Z()/((End-Start).Mag()));
-  double theta =asin(TrackDirection.y()/(TrackDirection.Mag())); 
-  double phi0 = AMSIGN*atan2(POCA.X(),POCA.Y());
-  double z0  = POCA.Z();
-  double d0 = sqrt(POCA.X()*POCA.X() + POCA.Y()*POCA.Y());
+	TVector3 Pos0;
+	Pos0.SetXYZ(0, 0 ,0); //Reference point is set at 0.
+	TVector3 POCA = GetPOCA(Pos0, Start, End);
+	unsigned AMSIGN = copysign(1,POCA.X());
+	double DOCA = GetDOCA(POCA, Pos0);
+	TVector3 TrackDirection;
+	TrackDirection = End-Start;
+	//TrackDirection.SetXYZ(TrackDirection.X()/TrackDirection.Z(),TrackDirection.Y()/TrackDirection.Z(),1);
+	double theta =asin(TrackDirection.Y()/(TrackDirection.Mag())); 
+	double phi0 = AMSIGN*atan2(POCA.X(),POCA.Y());
+	double z0  = POCA.Z();
+	double d0 = DOCA;//sqrt(POCA.X()*POCA.X() + POCA.Y()*POCA.Y());
   
-  cout << "Cosmic Test Parameter:" << endl
-  << "Theta = " <<theta << endl
-  << "phi-0 = " << phi0 << endl
-  << "d0 = " << d0 << endl
-  << "z0 = " << z0 << endl;
+	cout << "Cosmic Test Parameter:" << endl
+	<< "Theta = " <<theta << endl
+	<< "phi-0 = " << phi0 << endl
+	<< "d0 = " << d0 << endl
+	<< "z0 = " << z0 << endl;
 
-  TVector3 TestDirection = TrackDirection - direction(phi0,theta);
-  cout<<"Test 1: Direction test"<<TestDirection.X()<<" "<<TestDirection.Y()<<" "<<TestDirection.Z()<<endl;
+	TVector3 Dir = direction(phi0,theta);
+	TVector3 TestDirection = TrackDirection - Dir;
+	cout<<"Test 1: Direction test : "<<" input direction : "<<TrackDirection.X()<<" "<<endl
+	<<TrackDirection.Y()<<" "<<TrackDirection.Z()<<endl
+	<<" output direction "<<Dir.X()<<" "<<Dir.Y()<<" "<<Dir.Z()<<endl;
 
-   double f = (End-Start).Mag();
-   TVector3 TestPosition = position(1,phi0,theta,z0,d0, Pos0);
-   cout<<"Test 2 : given End can I get back to Start :" <<endl;
-  TVector3 PosEndTest = TestPosition + f*TestDirection;
-  cout<<"start position is: "<<Start.X()<<" "<<Start.Y()<<" "<<Start.Z()<<endl;
-  cout<<"test position is:"<<PosEndTest.X()<<" "<<PosEndTest.Y()<<" "<<PosEndTest.Z()<<endl;
+	double f = (End-Start).Mag();
+	TVector3 TestPosition = position(1,phi0,theta,z0,d0, Pos0);
+	cout<<"Test 2 : given End can I get back to Start :" <<endl;
+	TVector3 PosEndTest = TestPosition + f*TestDirection;
+	cout<<"start position is: "<<Start.X()<<" "<<Start.Y()<<" "<<Start.Z()<<endl;
+	cout<<"test position is:"<<PosEndTest.X()<<" "<<PosEndTest.Y()<<" "<<PosEndTest.Z()<<endl;
 /*
   TCanvas* hcan = new TCanvas("hcan","Cosmics",1000,1000);
 //TPolyLine to graph the result

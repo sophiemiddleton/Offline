@@ -474,6 +474,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse co
          trackData._tseed._track.MinuitFitParams.deltaB0 =  endresult.bestfiterrors[2];//errb0
          trackData._tseed._track.MinuitFitParams.deltaB1 =  endresult.bestfiterrors[3];//errb1
          trackData._tseed._track.MinuitFitParams.deltaT0 =  endresult.bestfiterrors[4];//errt0
+	 trackData._tseed._track.SetTrackPOCA(); //TODO - maybe this belongs esewhere
 
          if(endresult.bestfitcov.size() !=0 ){
 		 TrackCov Cov(endresult.bestfitcov[0], 0., 0., endresult.bestfitcov[1], endresult.bestfitcov[2],0.,0., endresult.bestfitcov[3]);
@@ -483,7 +484,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse co
 	
 	 XYZVec X(1,0,0);
 	 XYZVec Y(0,1,0);
-	 XYZVec Z(0,0,1);
+	 XYZVec Z(0,0,1);//FIXME! Need better way to do this!
 
 	 TrackAxes XYZ(X,Y,Z);
 	 trackData._tseed._track.MinuitCoordSystem = XYZ; 
@@ -502,20 +503,7 @@ void CosmicTrackFit::DriftFit(CosmicTrackFinderData& trackData, StrawResponse co
 		trackData._tseed._track.minuit_converged = false;
 	  }
 	
-	/*This code was built to help transofrm into BTrk - it didnt work but may be useful:
- 	std::vector<TrkStrawHitSeed>const trkseeds = trackData._tseed.trkstrawhits();
-        cout<<"size track seed "<<trkseeds.size()<<" "<<trackData._tseed._straw_chits.size()<<std::endl;
-     	for(auto const& ths : trkseeds ){
-      	
-     	 	size_t index = ths.index();
-     		const ComboHit& strawhit(trackData._tseed._straw_chits.at(index));
-      		const Straw& straw = _tracker->getStraw(strawhit.strawId());
-        	
-        	cout<<"nSH "<<strawhit.nStrawHits()<<endl;
-        	TrkStrawHit* trkhit = new TrkStrawHit(_srep, strawhit, straw, ths.index(),ths.t0(),100., 5.,1.);
-        	cout<<" Phi "<<trkhit->driftPhi()<<" v drift "<<trkhit->driftVelocity()<<" time"<<trkhit->driftTime()<<endl;
-        
- 		}*/
+	
      
 }
 

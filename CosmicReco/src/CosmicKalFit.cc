@@ -79,10 +79,11 @@ namespace mu2e
     	_debug(pset.get<int>("debugLevel",0)),
     	_maxpull(pset.get<double>("maxPull",5)),
 	_strHitW(pset.get<double>("strawHitT0Weight")),
-	_minnstraws(pset.get<double>("minnstraws",2)),
+	_minnstraws(pset.get<double>("minnstraws",1)),
 	_herr(pset.get< vector<double> >("hiterr")),
 	_maxIterations(pset.get<unsigned>("maxIterations",10)),
 	_bfield(0){
+		cout<<"initializing KalFit "<<endl;
 		// set KalContext parameters
 		_disttol = pset.get<double>("IterationTolerance",0.1);
 		_intertol = pset.get<double>("IntersectionTolerance",100.0);
@@ -119,9 +120,8 @@ namespace mu2e
 // create the track (KalRep) from a cosmic track seed
 //-----------------------------------------------------------------------------
 	void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData){
-
     	if(fitable(*kalData.cosmicKalSeed)){
-
+		
 		double flt0 = kalData.cosmicKalSeed->flt0();
 		//auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
 		
@@ -132,27 +132,28 @@ namespace mu2e
 
 	      	CosmicLineTraj htraj(pvec,pcov);
 	      	kalData.cosmicTraj = &htraj;
-
+		cout<<"kfit test point 2"<<endl;
 	      	TrkStrawHitVector tshv;
 	      	MakeTrkStrawHits(srep,kalData, tshv);
-
+		cout<<"kfit test point 3"<<endl;
 	      	std::vector<DetIntersection> detinter;
 	      	if(_matcorr)MakeMaterials(detmodel, tshv,*kalData.cosmicTraj,detinter);
-
+		cout<<"kfit test point 4"<<endl;
 	      	std::vector<TrkHit*> thv(0);
 	      	for(auto ihit = tshv.begin(); ihit != tshv.end(); ++ihit){
 			thv.push_back(*ihit);
 	      	}
-
+		cout<<"kfit test point 5"<<endl;
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
 	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
 	      	assert(kalData.krep != 0);
+		cout<<"kfit test point 6"<<endl;
 		/*if (_debug > 0) {
 			char msg[100];
 			sprintf(msg,"makeTrack_001 annealing step: %2i",_annealingStep);
 			_printUtils->printTrack(kalData.event,kalData.krep,"banner+data+hits",msg);
       		}*/
-
+		cout<<"kfit test point 7"<<endl;
 	      	kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
 		
 	      	TrkErrCode fitstat = FitTrack(detmodel,kalData);
@@ -162,21 +163,24 @@ namespace mu2e
   	}
 
 	bool CosmicKalFit::fitable(CosmicKalSeed const& kseed){
+		
     		return kseed.segments().size() > 0 && kseed.hits().size() >= _minnstraws;
   	}
 
   	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, TrkStrawHitVector& tshv ) {
-
+	    cout<<"in make trk SH's "<<endl; //FIXME - seg faults
 	    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicSeed->trkstrawhits();
-	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
 
+	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
+		cout<<"in make trk SH's 2"<<endl;
 	    for(auto ths : hseeds ){
+			cout<<"in make trk SH's 3 "<<endl;
 		size_t index = ths.index();
 		const ComboHit& strawhit(kalData.chcol->at(index));
 		const Straw& straw = _tracker->getStraw(strawhit.strawId());
 		TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
 		assert(trkhit != 0);
-
+		cout<<"in make trk SH's 4"<<endl;
 		trkhit->setAmbig(ths.ambig());
 
 		TrkErrCode pstat = trkhit->updatePoca(&htraj);

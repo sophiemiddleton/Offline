@@ -54,29 +54,28 @@ CosmicTrackFinder : {
 
 CosmicKFSeed : {
 	module_type            	: KalSeedFit
- 	debug 			: 0
+ 	debug 			: 2
 	maxpull 		: 5
 	strawHitT0Weight        : 1
-	minnstraws		: 2
+	minnstraws		: 1
 	MaxIterations           : 3
 	fieldCorrection	      	: false
 	materialCorrection      : false
 	seedsmear       	: 10000
 	maxhitchi               : 5.0
 	hiterr                  : [ 80., 23.04]
-	printUtils              : { @table::TrkReco.PrintUtils}
+	#printUtils              : { @table::TrkReco.PrintUtils}
 
 }
 
-#fitparticle	      : @local::Particle.muplus
-  #fitdirection	      : @local::FitDir.upstream 
-CosmicKalFitter:
+CosmicKalFitter:{
 	
-	module_type             	: CosmicKalSeedFitter
-	debugLevel 			:    0
-	diagLevel			:    0
+	module_type             	: CosmicKalFitter
+	debugLevel 			:    2
+	diagLevel			:    2
 	printFrequency			:    101
 	CosmicTrackSeedCollection    	:CosmicTrackFinder
+	ComboHitCollection	        : "makePH"
 	minnhits			:    8
 	ParameterErrors			:   [1.0,1.0,1.0,1.0] #how to get these?
   	saveall				: false
@@ -169,5 +168,5 @@ CosmicTracking : {
 
 #production sequence to find straight track
 CosmicTracking.FindCosmics : [  TimeClusterFinderCosmics, CosmicTrackFinder ]
-CosmicTracking.FindKalmanCosmics  : [ TimeClusterFinderCosmics, CosmicTrackFinder. ComsicKalFitter ]
+CosmicTracking.FindKalmanCosmics  : [ TimeClusterFinderCosmics, CosmicTrackFinder, CosmicKalFitter ]
 END_PROLOG
