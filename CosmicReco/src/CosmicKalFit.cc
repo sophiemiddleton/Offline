@@ -147,12 +147,7 @@ namespace mu2e
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
 	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
 	      	assert(kalData.krep != 0);
-		cout<<"kfit test point 6"<<endl;
-		/*if (_debug > 0) {
-			char msg[100];
-			sprintf(msg,"makeTrack_001 annealing step: %2i",_annealingStep);
-			_printUtils->printTrack(kalData.event,kalData.krep,"banner+data+hits",msg);
-      		}*/
+		
 		cout<<"kfit test point 7"<<endl;
 	      	kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
 		
@@ -168,20 +163,20 @@ namespace mu2e
   	}
 
   	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, TrkStrawHitVector& tshv ) {
-	    cout<<"in make trk SH's "<<endl; //FIXME - seg faults
-	    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicSeed->trkstrawhits();
+	    
+	    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicKalSeed->hits();
 
 	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
-		cout<<"in make trk SH's 2"<<endl;
+		
 	    for(auto ths : hseeds ){
-			cout<<"in make trk SH's 3 "<<endl;
+		cout<<"hits "<<endl; //TODO - use old code here
 		size_t index = ths.index();
 		const ComboHit& strawhit(kalData.chcol->at(index));
 		const Straw& straw = _tracker->getStraw(strawhit.strawId());
 		TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
 		assert(trkhit != 0);
-		cout<<"in make trk SH's 4"<<endl;
-		trkhit->setAmbig(ths.ambig());
+		
+		//trkhit->setAmbig(ths.ambig());
 
 		TrkErrCode pstat = trkhit->updatePoca(&htraj);
 	      	if(pstat.failure()){
@@ -189,7 +184,7 @@ namespace mu2e
 	      	}
 	      	tshv.push_back(trkhit);
     	}
-
+        cout<<"sorting" <<endl;
     	std::sort(tshv.begin(),tshv.end(),fcomp());
   	}
 

@@ -49,7 +49,7 @@ namespace mu2e
     TimeCluster _timeCluster; // t0 and hit indices
     CosmicLineTraj _c0; //comsic version
     TrkParticle _tpart; // particle type.  Note this defines both the charge and the mass
-    TrkFitDirection _fdir; // fit direction
+    TrkFitDirection _fdir; // fit direction - TODO - do we need?
   };
 }
 #endif

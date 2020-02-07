@@ -228,49 +228,37 @@ std::cout<<"ks ptr"<<std::endl;
 					tclust._t0 = sts._t0;
 					for(uint16_t ihit=0;ihit < sts.hits().size(); ++ihit){
 						sts.hits().fillStrawHitIndices(event,ihit,tclust._strawHitIdxs);
-						
-					CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); //fdir-TODO 
+					}	
+					CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); 
 					const CosmicLineTraj* traj = &seeddef.cosmic();
-					
 					double flt0  = traj->zFlight(0.0,traj->z0()); 
-					if(_diag> 1){
-							std::cout<<"[CosmicKalFitter::produce] calling TrkMomCalc "<<index<<std::endl;
-					}
 					double mom   = TrkMomCalculator::vecMom(*traj, _kfit.bField(), flt0).mag(); //FIXME - mom never set....
 					double vflt  = seeddef.particle().beta(mom)*CLHEP::c_light;
 					double  cosmict0 = sts.t0().t0();
-
-					if(_diag> 1){
-							std::cout<<"[CosmicKalFitter::produce]  KFit "<<" Vflt "<<vflt<<" mom "<<mom<<"t0 "<<cosmict0<<std::endl;
-						}
+					cout<<"vflt "<<vflt<<" mom "<<mom<<endl;
 					CosmicKalSeed kf(tpart,_fdir, sts.t0(), flt0, sts.status());
 					auto cosH = event.getValidHandle(_seedToken);
 					kf._cosmicseed = art::Ptr<CosmicTrackSeed>(cosH,index);
-					int nsh = seeddef.strawHitIndices().size();
-					for (int i=0; i< nsh; ++i){	
-						size_t  istraw   = seeddef.strawHitIndices().at(i);
+					
+					int nsh = sts._shits().size();
+					
+					for (int i=0; i< nsh; ++i){
+	  					size_t i_straw   = sts._shits().at(i);
+          					
+						//const ComboHit& strawhit(_tmpResult.chcol->at(i_straw));
+						//const Straw& straw = tracker->getStraw(strawhit.strawId());
+	 					double  fltlen  = traj->zFlight(1.0, traj->z0());//straw.getMidPoint().z(), traj->z0());
 						
-						//const ComboHit& strawhit(_chcol->at(istraw));
-						
-	  					//const Straw& straw    = tracker->getStraw(strawhit.strawId());	  
-						cout<<"getting mid "<<endl;
-	  					double fltlen   = traj->zFlight(1.0, traj->z0());//FIXME - seg fault on straw.getMidPoint().z()
-						
-						double propTime = (fltlen-flt0)/0.062;
-						
-						TrkStrawHitSeed tshs;
-						tshs._index  = istraw;
-						tshs._t0     = TrkT0(cosmict0 + propTime, sts.t0().t0Err());
-						tshs._trklen = fltlen; 
-						kf._hits.push_back(tshs);
-						
-					}  
-			
+	  					double  propTime = (fltlen-flt0)/0.062;
 
+	 					TrkStrawHitSeed tshs;
+						  tshs._index  = i_straw;
+						  tshs._t0     = TrkT0(cosmict0 + propTime, sts._t0.t0Err());
+						  tshs._trklen = fltlen; 
+						  kf._hits.push_back(tshs);
+					}
 					if(kf._hits.size() >= _minnhits) kf._status.merge(TrkFitFlag::hitsOK);
-					if(_diag> 1){
-						std::cout<<"[CosmicKalFitter::produce] KalTrack passes hit cut: "<<index<<std::endl;
-				}
+					
 					if(traj !=0){
 						KalSegment kseg;
 						BbrVectorErr momerr;
@@ -358,7 +346,6 @@ std::cout<<"ks ptr"<<std::endl;
         		}
     		}	
    		
-		}
   		event.put(std::move(kal_col));    
   	} 
 
