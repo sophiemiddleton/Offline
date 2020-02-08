@@ -55,10 +55,13 @@
 //TEveEventDisplay Headers:
 #include  "TEveEventDisplay/src/dict_classes/NavState.h"
 #include  "TEveEventDisplay/src/dict_classes/EvtDisplayUtils.h"
-
+#include  "TEveEventDisplay/src/dict_classes/Geom_Interface.h"
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
 #include "GeometryService/inc/DetectorSystem.hh"
+#include "GeometryService/inc/WorldG4.hh"
+#include "GeometryService/inc/WorldG4Maker.hh"
+#include "GeometryService/inc/Mu2eCoordTransform.hh"
 #include "BFieldGeom/inc/BFieldManager.hh"
 #include "Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "TrkDiag/inc/TrkMCTools.hh"
@@ -82,31 +85,29 @@
 using namespace std;
 using namespace mu2e;
 
-XYZVec ConvertPointToDetFrame(XYZVec vec){
-        CLHEP::Hep3Vector vec1(vec.x(),vec.y(),vec.z());
-        GeomHandle<DetectorSystem> det;
-        CLHEP::Hep3Vector vec2 = det->toDetector(vec1);
-	XYZVec XYZ(vec2.x(), vec2.y(), vec2.z());
-        cout<<" in det "<<XYZ.X()<<" "<<XYZ.Y()<<" "<<XYZ.Z()<<endl;
-	return XYZ;
 
-    }
-  void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list)
+
+  void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list, Geom_Interface *g)
   {
-    cout<<"Drawing Hit "<<n<<endl;
-    XYZVec vecDet = (hit.pos());
-    std::string hstr=" hit %d";
-    std::string dstr=" hit# %d\nLayer: %d";
-    std::string strlst=pstr+hstr;
-    std::string strlab=pstr+dstr;
+	
+	CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
+	CLHEP::Hep3Vector pointinGDMLCoord  = g->PointToGDML(HitPos);
 
-    TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
-    h->SetTitle(Form(strlab.c_str(),n,hstr));
-    cout<<"plotting : "<<vecDet.x()<<" "<<vecDet.y()<<" "<<vecDet.z()<<endl;
-    h->SetNextPoint(vecDet.x(),vecDet.y(),vecDet.z());
-    h->SetMarkerColor(mColor);
-    h->SetMarkerSize(mSize);
-    list->AddElement(h);
+	std::string hstr=" hit %d";
+	std::string dstr=" hit# %d\nLayer: %d";
+	std::string strlst=pstr+hstr;
+	std::string strlab=pstr+dstr;
+
+	TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
+	h->SetTitle(Form(strlab.c_str(),n,hstr));
+
+	cout<<"initial hit : "<<hit.pos().x()<<" "<<hit.pos().y()<<" "<<hit.pos().z()<<endl;
+	cout<<"to gdml "<<pointinGDMLCoord.x()<<" "<<pointinGDMLCoord.y()<<" "<<pointinGDMLCoord.z()<<endl;
+
+	h->SetNextPoint(pointinGDMLCoord.x(),pointinGDMLCoord.y(), pointinGDMLCoord.z());
+	h->SetMarkerColor(mColor);
+	h->SetMarkerSize(mSize);
+	list->AddElement(h);
   }
 
 
@@ -127,21 +128,21 @@ namespace mu2e
   class TEveEventDisplay : public art::EDAnalyzer {
     public:
 
-struct Config{
-	      using Name=fhicl::Name;
-	      using Comment=fhicl::Comment;
-	      fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
-	      fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
-	      fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
-   	      fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
-     	      fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
-	       fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
-	       fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
-	       fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
-               fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
-		fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
-		fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
-		fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
+	struct Config{
+	using Name=fhicl::Name;
+	using Comment=fhicl::Comment;
+	fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
+	fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
+	fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
+	fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
+	fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
+	fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
+	fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
+	fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
+	fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
+	fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
+	fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
+	fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
 		
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
@@ -208,7 +209,7 @@ struct Config{
       
       bool addHits_, addTracks_, addClusters_;
       EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
-      
+      Geom_Interface *gdml_geom	=new Geom_Interface(); 
       TGeoManager* geom = new TGeoManager("geom","Geom");
   	
       bool foundEvent = false;
@@ -239,6 +240,7 @@ TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
 	addTracks_(conf().addTracks()),
 	addClusters_(conf().addClusters()){
 		visutil_ = new EvtDisplayUtils();
+		//gdml_geom = new Geom_Interface();
 	}
 
 
@@ -363,10 +365,9 @@ void TEveEventDisplay::beginJob(){
 
   gEve->GetBrowser()->GetTabRight()->SetTab(0);
 
-  // Create navigation panel
   MakeNavPanel();
   
-  gEve->AddEvent(new TEveEventManager("Event", "Toy Detector Event"));
+  gEve->AddEvent(new TEveEventManager("Event", "Empty Event"));
 
   TGLViewer *glv = gEve->GetDefaultGLViewer();
   glv->SetGuideState(TGLUtil::kAxesEdge, kTRUE, kFALSE, 0);
@@ -387,8 +388,9 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   fDetRZScene->DestroyElements();
   
   // Import the GDML of entire Mu2e Geometry
-  geom = geom->TGeoManager::Import("TEveEventDisplay/src/fix.gdml");
-  
+  geom = gdml_geom->Geom_Interface::getGeom("TEveEventDisplay/src/fix.gdml");
+  gdml_geom->GetTrackerCenter();
+  //TODO-the below functions could be moved to Geom_Interface
   //Get Top Volume
   TGeoVolume* topvol = geom->GetTopVolume();
   
@@ -620,7 +622,7 @@ void TEveEventDisplay::AddHits(const art::Event& event){
 	    cout<<"hit "<<ih<<" of "<<_chcol->size()<<endl;
 	    cout<<"adding hit "<<hit.pos().X()<<" "<<hit.pos().Y()<<" "<<hit.pos().Z()<<endl;
 	 
-	    DrawHit("ComboHits",kGreen,2,ih,hit,HitsList);
+	    DrawHit("ComboHits",kGreen,2,ih,hit,HitsList, gdml_geom);
 	    fHitsList->AddElement(HitsList);  
 	    gEve->AddElement(fHitsList);
 	    cout<<"redrawing "<<endl;

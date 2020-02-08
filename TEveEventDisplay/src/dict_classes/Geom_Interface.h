@@ -38,18 +38,23 @@
 
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-
+#include "ConfigTools/inc/SimpleConfig.hh"
 
 
 class TGeoManager;
 class TGeoVolume;
 class TGMainFrame;
 
+struct temp{
+	mu2e::SimpleConfig *t = new mu2e::SimpleConfig("Mu2eG4/geom/tracker_v5.txt");
+};
+
 namespace mu2e{
 	class Geom_Interface {
-                #ifndef __CINT__
-		explicit Geom_Interface();
+             
                public:
+		  #ifndef __CINT__
+		 explicit Geom_Interface();
 		 virtual ~Geom_Interface(){};
 		 TGeoManager *_geom;
 		 TGeoManager* getGeom(TString filename) {
@@ -57,22 +62,29 @@ namespace mu2e{
 			geom = geom->TGeoManager::Import(filename);
 			return geom;
  		}
-		
-		private:
-		  art::Event  *_event;
-		  art::Run    *_run;
-	
-		 
-		  void CreateGeomManager();
-		  void RemoveComponents();
-		  void toForeground();
-		  void InsideDS( TGeoNode * node, bool inDSVac );
-		  void hideTop(TGeoNode* node);
-		  void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
-		  void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
-		  void hideBuilding(TGeoNode* node);
-		  #endif
-     		ClassDef(Geom_Interface,0);
+
+
+		void CreateGeomManager();
+		void RemoveComponents();
+		void toForeground();
+		CLHEP::Hep3Vector GetTrackerCenter();
+		CLHEP::Hep3Vector GetGDMLTrackerCenter(TString file);
+		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
+		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
+		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);
+		void InsideDS( TGeoNode * node, bool inDSVac );
+		void hideTop(TGeoNode* node);
+		void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
+		void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
+		void hideBuilding(TGeoNode* node);
+
+		art::Event  *_event;
+		art::Run    *_run;
+		//below are various files for accessinf Geom configS:
+
+   		
+	        #endif
+		ClassDef(Geom_Interface,0);
 
 	}; //end class def
 
