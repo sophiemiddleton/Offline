@@ -104,7 +104,7 @@ using namespace mu2e;
 	cout<<"initial hit : "<<hit.pos().x()<<" "<<hit.pos().y()<<" "<<hit.pos().z()<<endl;
 	cout<<"to gdml "<<pointinGDMLCoord.x()<<" "<<pointinGDMLCoord.y()<<" "<<pointinGDMLCoord.z()<<endl;
 
-	h->SetNextPoint(pointinGDMLCoord.x(),pointinGDMLCoord.y(), pointinGDMLCoord.z());
+	h->SetNextPoint(pointinGDMLCoord.x(),-1*pointinGDMLCoord.y(), pointinGDMLCoord.z());
 	h->SetMarkerColor(mColor);
 	h->SetMarkerSize(mSize);
 	list->AddElement(h);
@@ -418,7 +418,6 @@ void TEveEventDisplay::beginRun(const art::Run& run){
 }
 
 void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
- 
   std::string _name = (node->GetVolume()->GetName());
   if ( node->GetMotherVolume() ) {
     std::string motherName(node->GetMotherVolume()->GetName());

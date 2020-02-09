@@ -68,7 +68,8 @@ namespace mu2e{
 		void RemoveComponents();
 		void toForeground();
 		CLHEP::Hep3Vector GetTrackerCenter();
-		CLHEP::Hep3Vector GetGDMLTrackerCenter(TString file);
+		CLHEP::Hep3Vector GetGDMLTrackerCenter(TString file);		
+		double GetOffsetFromMu2e();
 		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
 		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);

@@ -1,4 +1,5 @@
-//Based on the Eventdisplay content selector but editted by SMiddleton 
+//Based on the EventDisplay content selector but editted by SMiddleton For use with TEve Display
+
 #ifndef Collection_Interface_h
 #define Collection_Interface_h
 
@@ -64,26 +65,26 @@ class Collection_Interface
 
  
   private:
-	  art::Event *_event;
-	  art::Run *_run;
+	art::Event *_event;
+	art::Run *_run;
 
-	  struct entryStruct
-	  {
-	    int         entryID, classID, vectorPos;
-	    std::string entryText;
-	    std::string className, moduleLabel, productInstanceName;
-	    bool operator==(const entryStruct& rhs) const
-	    {
-	      return ((this->entryID==rhs.entryID) && (this->entryText==rhs.entryText));
-	    }
-	  };
+	struct entryStruct
+	{
+		int         entryID, classID, vectorPos;
+		std::string entryText;
+		std::string className, moduleLabel, productInstanceName;
+		bool operator==(const entryStruct& rhs) const
+		{
+			return ((this->entryID==rhs.entryID) && (this->entryText==rhs.entryText));
+		}
+	};
 
-  	std::vector<entryStruct> _hitEntries, _caloHitEntries, _crvHitEntries, _trackEntries;
-  	std::vector<entryStruct> _hitFlagEntries, _hitPositionEntries;
+	std::vector<entryStruct> _hitEntries, _caloHitEntries, _crvHitEntries, _trackEntries;
+	std::vector<entryStruct> _hitFlagEntries, _hitPositionEntries;
 
-  	std::string _selectedHitFlagEntry, _selectedHitPositionEntry;
+	std::string _selectedHitFlagEntry, _selectedHitPositionEntry;
 
-  	template<class CollectionType> void createNewEntries(std::vector<art::Handle<CollectionType> > &dataVector,const art::Event &event, const std::string &className, std::vector<entryStruct> &newEntries, int classID);
+	template<class CollectionType> void createNewEntries(std::vector<art::Handle<CollectionType> > &dataVector,const art::Event &event, const std::string &className, std::vector<entryStruct> &newEntries, int classID);
 
   public:
 
@@ -94,6 +95,7 @@ class Collection_Interface
 	    std::string moduleLabel, productInstanceName;
 	    art::ProductID productId;
 	  };
+
 	  Collection_Interface(TGComboBox *hitBox, TGComboBox *caloHitBox, TGComboBox *crvHitBox, TGListBox *trackBox, std::string const &g4ModuleLabel, std::string const &physicalVolumesMultiLabel);
   	void firstLoop();
   	void setAvailableCollections(const art::Event& event);
@@ -107,6 +109,8 @@ class Collection_Interface
 	template<typename CollectionType> const CollectionType* getSelectedCaloHitCollection() const;
 	template<typename CollectionType> const CollectionType* getSelectedCrvHitCollection() const;
 	template<typename CollectionType> std::vector<const CollectionType*> getSelectedTrackCollection(std::vector<trackInfoStruct> &v) const;
+
+
 	const mu2e::PhysicalVolumeInfoCollection *getPhysicalVolumeInfoCollection() const;
 	const mu2e::PhysicalVolumeInfoMultiCollection *getPhysicalVolumeInfoMultiCollection() const;
 	const mu2e::MCTrajectoryCollection *getMCTrajectoryCollection(const trackInfoStruct &t) const;
