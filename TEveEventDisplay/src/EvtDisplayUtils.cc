@@ -19,3 +19,8 @@ using namespace mu2e;
     NavState::Set(kGOTO_EVENT);
   }
 
+  void EvtDisplayUtils::PrevArtEvent(){}
+  void EvtDisplayUtils::NextArtEvent(){}
+  void EvtDisplayUtils::GotoArtEvent(){}
+
+//TODO - wrapper int to art

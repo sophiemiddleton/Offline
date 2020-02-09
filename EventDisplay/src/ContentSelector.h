@@ -1,15 +1,6 @@
-//
-// Class which manages the combo boxes and list box in the event display frame. It is able to returns the data objects associated with the selected box entries.
-//
-// $Id: ContentSelector.h,v 1.18 2014/04/20 10:57:09 ehrlich Exp $
-// $Author: ehrlich $
-// $Date: 2014/04/20 10:57:09 $
-//
-// Original author Ralf Ehrlich
-//
-
-#ifndef EventDisplay_src_ContentSelector_h
-#define EventDisplay_src_ContentSelector_h
+//Based on the Eventdisplay content selector but editted by SMiddleton 
+#ifndef ContentSelector_h
+#define ContentSelector_h
 
 #include "RecoDataProducts/inc/CaloCrystalHitCollection.hh"
 #include "RecoDataProducts/inc/CaloHitCollection.hh"

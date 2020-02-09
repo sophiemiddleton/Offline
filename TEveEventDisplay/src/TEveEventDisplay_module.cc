@@ -85,9 +85,7 @@
 using namespace std;
 using namespace mu2e;
 
-
-
-  void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list, Geom_Interface *g)
+void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list, Geom_Interface *g)
   {
 	
 	CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
@@ -104,7 +102,7 @@ using namespace mu2e;
 	cout<<"initial hit : "<<hit.pos().x()<<" "<<hit.pos().y()<<" "<<hit.pos().z()<<endl;
 	cout<<"to gdml "<<pointinGDMLCoord.x()<<" "<<pointinGDMLCoord.y()<<" "<<pointinGDMLCoord.z()<<endl;
 
-	h->SetNextPoint(pointinGDMLCoord.x(),-1*pointinGDMLCoord.y(), pointinGDMLCoord.z());
+	h->SetNextPoint(pointinGDMLCoord.x(), pointinGDMLCoord.y(), pointinGDMLCoord.z());
 	h->SetMarkerColor(mColor);
 	h->SetMarkerSize(mSize);
 	list->AddElement(h);
@@ -214,6 +212,9 @@ namespace mu2e
   	
       bool foundEvent = false;
       void MakeNavPanel();
+      std::string GetParentName(TGeoNode *daughter);
+      bool HasParent(TGeoNode *Mother);
+      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector> t);
       void InsideDS( TGeoNode * node, bool inDSVac );
       void hideTop(TGeoNode* node);
       void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
@@ -408,12 +409,55 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
   //This is a basic function to allow us to just see tracker and calo, it needs fixing:
   
-  //InsideDS( topnode, false );
+  
   hideBuilding(topnode);
   hideTop(topnode);
- 
+  //InsideDS( topnode, false );
+  std::vector<CLHEP::Hep3Vector> t;
+  Heirarchy(topnode, t);
   //Add static detector geometry to global scene
   gEve->AddGlobalElement(etopnode);
+  
+}
+
+std::string TEveEventDisplay::GetParentName(TGeoNode *daughter){
+	std::string motherName(daughter->GetMotherVolume()->GetName());
+	return motherName;	
+
+}
+
+bool TEveEventDisplay::HasParent(TGeoNode *Mother){
+	if(Mother->GetMotherVolume()) { return true; }
+	else { return false;}
+}
+
+
+
+void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector> TransformList ){
+  std::string _name = (node->GetVolume()->GetName());
+  if (node->GetMotherVolume() ) {
+    std::string motherName(node->GetMotherVolume()->GetName());
+    if ( motherName == "TrackerMother"){
+	TGeoVolume *vol = node->GetVolume();
+	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
+	Double_t master[3];
+	const Double_t *local = shape->GetOrigin();
+	if(shape!=NULL){
+		cout<<node->GetName()<<"Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
+		gGeoManager->LocalToMaster(local,master);
+		cout<<"Master"<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
+		CLHEP::Hep3Vector trans(master[0],master[1],master[2]);
+		TransformList.push_back(trans);
+		
+	}
+    }
+  }
+  // Descend into each daughter TGeoNode.
+  int ndau = node->GetNdaughters();
+  for ( int i=0; i<ndau; ++i ){
+    TGeoNode * dau = node->GetDaughter(i);
+    Heirarchy(dau, TransformList);
+  }
   
 }
 
@@ -425,8 +469,7 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
       inDSVac = true;
     }
   }
-
-  if ( inDSVac && _name.find("Virtual") != 0 ) {
+  if ( inDSVac && _name.find("VirtualDetector_TT_Mid") != 0 ) {
     node->SetVisibility(kTRUE);
   } else{
     node->SetVisibility(kFALSE);

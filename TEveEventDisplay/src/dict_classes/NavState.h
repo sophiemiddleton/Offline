@@ -1,5 +1,5 @@
 #include "art/Framework/Principal/Event.h"
-
+#include "art/Framework/Principal/Run.h"
 #ifndef NavState_h
 #define NavState_h
 
@@ -17,10 +17,13 @@ namespace mu2e{
 	  public:
 	    static int  Which();
 	    static void Set(int which);
-	    static void SetTarget(art::Run &run, art::Event& event);
+	    static void SetArtTarget(art::Run &run, art::Event& event);
 	    static void SetTarget(int run, int event);
 	    static int  TargetRun();
 	    static int  TargetEvent();
+	    art::Run *TargetArtRun();
+	    art::Event *TargetArtEvent();
+
 	    virtual ~NavState() {};
        
 	  private:

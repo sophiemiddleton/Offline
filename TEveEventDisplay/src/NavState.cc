@@ -16,7 +16,8 @@ using namespace mu2e;
   static int gsNavState    = 0;
   static int gsTargetRun   = 0;
   static int gsTargetEvent = 0;
-
+  art::Run *runID;
+  art::Event *eventID;
   //......................................................................
 
   int NavState::Which() { return gsNavState; }
@@ -37,6 +38,11 @@ using namespace mu2e;
     gsTargetEvent = event;
   }
 
+ /*void NavState::SetArtTarget(art::Run& run, art::Event& event)
+  {
+    runID= run;
+    eventID = event;
+  }*/
   //......................................................................
 
   int NavState::TargetRun() { return gsTargetRun; }
@@ -44,4 +50,12 @@ using namespace mu2e;
   //......................................................................
 
   int NavState::TargetEvent() { return gsTargetEvent; }
+
+  //......................................................................
+
+  art::Run *NavState::TargetArtRun() { return runID; }
+
+  //......................................................................
+
+  art::Event *NavState::TargetArtEvent() { return eventID; }
 

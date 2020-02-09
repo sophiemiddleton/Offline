@@ -6,6 +6,8 @@
 #include <TGTextBuffer.h>
 #include <iostream>
 #include "TROOT.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Run.h"
 
 namespace mu2e {
  class EvtDisplayUtils  : public TObject
@@ -19,6 +21,13 @@ namespace mu2e {
      
       TGTextBuffer *fTbRun;
       TGTextBuffer *fTbEvt;
+
+      void PrevArtEvent();
+      void NextArtEvent();
+      void GotoArtEvent();
+
+      art::Run *runID;
+      art::Event *eventID;
 
       virtual ~EvtDisplayUtils() {}
 #endif

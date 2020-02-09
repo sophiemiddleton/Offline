@@ -1,154 +1,161 @@
+#include <TObject.h>
+#include <TSystem.h>
+// ... libRIO
+#include <TFile.h>
+
 #include "TEveEventDisplay/src/dict_classes/Collection_Interface.h"
 #include "art/Framework/Principal/SubRun.h"
-/*
+
+using namespace mu2e;
+
 Collection_Interface::Collection_Interface(TGComboBox *hitBox, TGComboBox *caloHitBox, TGComboBox *crvHitBox, TGListBox *trackBox, std::string const &g4ModuleLabel, std::string const &physicalVolumesMultiLabel)
-  :
-  _hasPhysicalVolumes(false),
-  _hitBox(hitBox),
-  _caloHitBox(caloHitBox),
-  _crvHitBox(crvHitBox),
-  _trackBox(trackBox),
-  _g4ModuleLabel(g4ModuleLabel),
-  _physicalVolumesMultiLabel(physicalVolumesMultiLabel)
-  {}
+  	:
+	_hasPhysicalVolumes(false),
+	_hitBox(hitBox),
+	_caloHitBox(caloHitBox),
+	_crvHitBox(crvHitBox),
+	_trackBox(trackBox),
+	_g4ModuleLabel(g4ModuleLabel),
+	_physicalVolumesMultiLabel(physicalVolumesMultiLabel)
+ 	 {}
 
 void Collection_Interface::firstLoop()  //TODO: no hardcoding here
-{
-  TGLBEntry *entry;
+	{
+	TGLBEntry *entry;
 
-  entry=_hitBox->FindEntry("StrawHit:makeSH:");
-  if(entry==nullptr) entry=_hitBox->FindEntry("StrawHit:makeDcH:");
-  if(entry==nullptr) entry=_hitBox->FindEntry("KalRep:TrkPatRec:DownstreameMinus");
-  if(entry!=nullptr) _hitBox->Select(entry->EntryId());
+	entry=_hitBox->FindEntry("StrawHit:makeSH:");
+	if(entry==nullptr) entry=_hitBox->FindEntry("StrawHit:makeDcH:");
+	if(entry==nullptr) entry=_hitBox->FindEntry("KalRep:TrkPatRec:DownstreameMinus");
+	if(entry!=nullptr) _hitBox->Select(entry->EntryId());
 
-  entry=_caloHitBox->FindEntry("CaloCrystalHit:CaloCrystalHitsMaker:");
-  if(entry!=nullptr) _caloHitBox->Select(entry->EntryId());
+	entry=_caloHitBox->FindEntry("CaloCrystalHit:CaloCrystalHitsMaker:");
+	if(entry!=nullptr) _caloHitBox->Select(entry->EntryId());
 
-  entry=_trackBox->FindEntry("TrkExtTraj:TrkExt:");
-  if(entry!=nullptr) _trackBox->Select(entry->EntryId());
-  entry=_trackBox->FindEntry("KalRep:TrkPatRec:DownstreameMinus");
-  if(entry!=nullptr) _trackBox->Select(entry->EntryId());
-  entry=_trackBox->FindEntry("SimParticle:g4run:");
-  if(entry!=nullptr) _trackBox->Select(entry->EntryId());
+	entry=_trackBox->FindEntry("TrkExtTraj:TrkExt:");
+	if(entry!=nullptr) _trackBox->Select(entry->EntryId());
+	entry=_trackBox->FindEntry("KalRep:TrkPatRec:DownstreameMinus");
+	if(entry!=nullptr) _trackBox->Select(entry->EntryId());
+	entry=_trackBox->FindEntry("SimParticle:g4run:");
+	if(entry!=nullptr) _trackBox->Select(entry->EntryId());
 
-  _selectedHitFlagEntry="Nothing Selected";
-  _selectedHitPositionEntry="Nothing Selected";
+	_selectedHitFlagEntry="Nothing Selected";
+	_selectedHitPositionEntry="Nothing Selected";
 }
 
 template<class CollectionType>
 void Collection_Interface::createNewEntries(std::vector<art::Handle<CollectionType> > &dataVector,const art::Event &event, const std::string &className, std::vector<entryStruct> &newEntries, int classID)
-{
-  event.getManyByType(dataVector);
-  typedef std::vector<art::Handle<CollectionType> > CollectionVector;
-  typedef typename CollectionVector::const_iterator itertype;
-  itertype iter;
-  int vectorPos=0;
-  for(iter=dataVector.begin(); iter!=dataVector.end(); iter++, vectorPos++)
-  {
-    entryStruct e;
-    e.entryID=newEntries.size();
-    e.classID=classID;
-    e.vectorPos=vectorPos;
-    e.entryText=className+":"+iter->provenance()->moduleLabel()
-               +":"+iter->provenance()->productInstanceName();
-    e.className=iter->provenance()->producedClassName();
-    e.moduleLabel=iter->provenance()->moduleLabel();
-    e.productInstanceName=iter->provenance()->productInstanceName();
-    newEntries.push_back(e);
-  }
+	{
+	  event.getManyByType(dataVector);
+	  typedef std::vector<art::Handle<CollectionType> > CollectionVector;
+	  typedef typename CollectionVector::const_iterator itertype;
+	  itertype iter;
+	  int vectorPos=0;
+	  for(iter=dataVector.begin(); iter!=dataVector.end(); iter++, vectorPos++)
+	  {
+		entryStruct e;
+		e.entryID=newEntries.size();
+		e.classID=classID;
+		e.vectorPos=vectorPos;
+		e.entryText=className+":"+iter->provenance()->moduleLabel()
+		       +":"+iter->provenance()->productInstanceName();
+		e.className=iter->provenance()->producedClassName();
+		e.moduleLabel=iter->provenance()->moduleLabel();
+		e.productInstanceName=iter->provenance()->productInstanceName();
+		newEntries.push_back(e);
+  	}
 }
 
 void Collection_Interface::setAvailableCollections(const art::Event& event)
 {
-  std::vector<entryStruct> newEntries;
+	std::vector<entryStruct> newEntries;
 
-  entryStruct nothingSelected;
-  nothingSelected.entryID=0;
-  nothingSelected.entryText="Nothing Selected";
+	entryStruct nothingSelected;
+	nothingSelected.entryID=0;
+	nothingSelected.entryText="Nothing Selected";
 
-//Hit Selection
-  newEntries.push_back(nothingSelected);
-  createNewEntries<mu2e::StepPointMCCollection>(_stepPointMCVector, event, "StepPointMC", newEntries, 1);
-  createNewEntries<mu2e::StrawHitCollection>(_strawHitVector, event, "StrawHit", newEntries, 2);
-  createNewEntries<mu2e::KalRepCollection>(_hitOnTrackVector, event, "KalRep", newEntries, 3);
-  createNewEntries<mu2e::KalSeedCollection>(_kalSeedHitVector, event, "KalSeed", newEntries, 4);
+	//Hit Selection
+	newEntries.push_back(nothingSelected);
+	createNewEntries<mu2e::StepPointMCCollection>(_stepPointMCVector, event, "StepPointMC", newEntries, 1);
+	createNewEntries<mu2e::StrawHitCollection>(_strawHitVector, event, "StrawHit", newEntries, 2);
+	createNewEntries<mu2e::KalRepCollection>(_hitOnTrackVector, event, "KalRep", newEntries, 3);
+	createNewEntries<mu2e::KalSeedCollection>(_kalSeedHitVector, event, "KalSeed", newEntries, 4);
 
-  if(newEntries!=_hitEntries)
-  {
-    _hitEntries.clear();
-    TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_hitBox->GetSelectedEntry());
-    std::string selectedEntry="Nothing Selected";
-    if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
-    _hitBox->RemoveAll();
-    for(unsigned int i=0; i<newEntries.size(); i++)
-    {
-      _hitEntries.push_back(newEntries[i]);
-      _hitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
-      if(newEntries[i].entryText.compare(selectedEntry)==0) _hitBox->Select(newEntries[i].entryID);
-    }
-    _hitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
+	if(newEntries!=_hitEntries)
+	{
+		_hitEntries.clear();
+		TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_hitBox->GetSelectedEntry());
+		std::string selectedEntry="Nothing Selected";
+		if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
+		_hitBox->RemoveAll();
+		for(unsigned int i=0; i<newEntries.size(); i++)
+		{
+			_hitEntries.push_back(newEntries[i]);
+			_hitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
+			if(newEntries[i].entryText.compare(selectedEntry)==0) _hitBox->Select(newEntries[i].entryID);
+		}
+		_hitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
+	}
+
+	//Hit Flag Selection
+	_hitFlagEntries.clear();
+	_hitFlagEntries.push_back(nothingSelected);
+	createNewEntries<mu2e::StrawHitFlagCollection>(_strawHitFlagVector, event, "StrawHitFlag", _hitFlagEntries, 1);
+
+	//Hit Position Selection
+	_hitPositionEntries.clear();
+	_hitPositionEntries.push_back(nothingSelected);
+	createNewEntries<mu2e::StrawHitPositionCollection>(_strawHitPositionVector, event, "StrawHitPosition", _hitPositionEntries, 1);
+
+	//Calo Hit Selection
+	newEntries.clear();
+	newEntries.push_back(nothingSelected);
+	createNewEntries<mu2e::StepPointMCCollection>(_caloStepPointMCVector, event, "StepPointMC", newEntries, 1);
+	createNewEntries<mu2e::CaloCrystalHitCollection>(_caloCrystalHitVector, event, "CaloCrystalHit", newEntries, 2);
+	createNewEntries<mu2e::CaloHitCollection>(_caloHitVector, event, "CaloHit", newEntries, 3);
+
+	if(newEntries!=_caloHitEntries)
+  	{
+	    _caloHitEntries.clear();
+	    TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_caloHitBox->GetSelectedEntry());
+	    std::string selectedEntry="Nothing Selected";
+	    if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
+	    _caloHitBox->RemoveAll();
+	    for(unsigned int i=0; i<newEntries.size(); i++)
+	    {
+			_caloHitEntries.push_back(newEntries[i]);
+			_caloHitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
+			if(newEntries[i].entryText.compare(selectedEntry)==0) _caloHitBox->Select(newEntries[i].entryID);
+	    }
+	    _caloHitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
   }
 
-//Hit Flag Selection
-  _hitFlagEntries.clear();
-  _hitFlagEntries.push_back(nothingSelected);
-  createNewEntries<mu2e::StrawHitFlagCollection>(_strawHitFlagVector, event, "StrawHitFlag", _hitFlagEntries, 1);
+	//CRV Hit Selection
+	newEntries.clear();
+	newEntries.push_back(nothingSelected);
+	createNewEntries<mu2e::CrvRecoPulseCollection>(_crvRecoPulseVector, event, "CrvRecoPulse", newEntries, 1);
 
-//Hit Position Selection
-  _hitPositionEntries.clear();
-  _hitPositionEntries.push_back(nothingSelected);
-  createNewEntries<mu2e::StrawHitPositionCollection>(_strawHitPositionVector, event, "StrawHitPosition", _hitPositionEntries, 1);
+	if(newEntries!=_crvHitEntries)
+	{
+		_crvHitEntries.clear();
+		TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_crvHitBox->GetSelectedEntry());
+		std::string selectedEntry="Nothing Selected";
+		if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
+		_crvHitBox->RemoveAll();
+    		for(unsigned int i=0; i<newEntries.size(); i++)
+		{
+			_crvHitEntries.push_back(newEntries[i]);
+			_crvHitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
+			if(newEntries[i].entryText.compare(selectedEntry)==0) _crvHitBox->Select(newEntries[i].entryID);
+		}
+    		_crvHitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
+  	}
 
-//Calo Hit Selection
-  newEntries.clear();
-  newEntries.push_back(nothingSelected);
-  createNewEntries<mu2e::StepPointMCCollection>(_caloStepPointMCVector, event, "StepPointMC", newEntries, 1);
-  createNewEntries<mu2e::CaloCrystalHitCollection>(_caloCrystalHitVector, event, "CaloCrystalHit", newEntries, 2);
-  createNewEntries<mu2e::CaloHitCollection>(_caloHitVector, event, "CaloHit", newEntries, 3);
-
-  if(newEntries!=_caloHitEntries)
-  {
-    _caloHitEntries.clear();
-    TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_caloHitBox->GetSelectedEntry());
-    std::string selectedEntry="Nothing Selected";
-    if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
-    _caloHitBox->RemoveAll();
-    for(unsigned int i=0; i<newEntries.size(); i++)
-    {
-      _caloHitEntries.push_back(newEntries[i]);
-      _caloHitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
-      if(newEntries[i].entryText.compare(selectedEntry)==0) _caloHitBox->Select(newEntries[i].entryID);
-    }
-    _caloHitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
-  }
-
-//CRV Hit Selection
-  newEntries.clear();
-  newEntries.push_back(nothingSelected);
-  createNewEntries<mu2e::CrvRecoPulseCollection>(_crvRecoPulseVector, event, "CrvRecoPulse", newEntries, 1);
-
-  if(newEntries!=_crvHitEntries)
-  {
-    _crvHitEntries.clear();
-    TGTextLBEntry *selectedEntryTmp=dynamic_cast<TGTextLBEntry*>(_crvHitBox->GetSelectedEntry());
-    std::string selectedEntry="Nothing Selected";
-    if(selectedEntryTmp) selectedEntry=selectedEntryTmp->GetText()->GetString();
-    _crvHitBox->RemoveAll();
-    for(unsigned int i=0; i<newEntries.size(); i++)
-    {
-      _crvHitEntries.push_back(newEntries[i]);
-      _crvHitBox->AddEntry(newEntries[i].entryText.c_str(), newEntries[i].entryID);
-      if(newEntries[i].entryText.compare(selectedEntry)==0) _crvHitBox->Select(newEntries[i].entryID);
-    }
-    _crvHitBox->GetListBox()->GetEntry(0)->SetBackgroundColor(0x00FF00);
-  }
-
-//Track Selection
-  newEntries.clear();
-  createNewEntries<mu2e::SimParticleCollection>(_simParticleVector, event, "SimParticle", newEntries, 1);
-  createNewEntries<mu2e::KalRepCollection>(_trkRecoTrkVector, event, "KalRep", newEntries, 2);
-  createNewEntries<mu2e::TrkExtTrajCollection>(_trkExtTrajVector, event, "TrkExtTraj", newEntries, 3);
-  createNewEntries<mu2e::KalSeedCollection>(_kalSeedTrkVector, event, "KalSeed", newEntries, 4);
+	//Track Selection
+	newEntries.clear();
+	createNewEntries<mu2e::SimParticleCollection>(_simParticleVector, event, "SimParticle", newEntries, 1);
+	createNewEntries<mu2e::KalRepCollection>(_trkRecoTrkVector, event, "KalRep", newEntries, 2);
+	createNewEntries<mu2e::TrkExtTrajCollection>(_trkExtTrajVector, event, "TrkExtTraj", newEntries, 3);
+	createNewEntries<mu2e::KalSeedCollection>(_kalSeedTrkVector, event, "KalSeed", newEntries, 4);
 
   if(newEntries!=_trackEntries)
   {
@@ -450,4 +457,4 @@ const mu2e::StrawHitPositionCollection* Collection_Interface::getStrawHitPositio
   return(nullptr);
 }
 
-*/
+

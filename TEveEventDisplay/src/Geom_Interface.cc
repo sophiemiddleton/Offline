@@ -35,35 +35,23 @@ namespace mu2e{
 		return c;
 	}
 
-	double Geom_Interface::GetOffsetFromMu2e(){
+	CLHEP::Hep3Vector Geom_Interface::GetGDMLOffsetFromMu2e(){
 		std::string filename("Mu2eG4/geom/mu2eHall.txt");
 		SimpleConfig HallConfig(filename);
+      		double zCenter = -7929;
 		double yCenter  =  0;//HallConfig.getDouble("yOfFloorSurface.below.mu2eOrigin")*CLHEP::mm;
-		//double xCenter  = -HallConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
-		return yCenter;
+		double xCenter  = 3040;//-HallConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
+	        CLHEP::Hep3Vector center(xCenter,yCenter,zCenter);
+		return center;
 	}
-	CLHEP::Hep3Vector Geom_Interface::GetGDMLTrackerCenter(TString filename) {
-		TGeoManager *geom;
-		geom = geom->TGeoManager::Import(filename);
-		
-  		TGeoNode* node = gGeoManager->GetTopNode();
-		std::string _name = (node->GetVolume()->GetName());
-		if ( node->GetMotherVolume() ) {
-			std::string motherName(node->GetMotherVolume()->GetName());
-			bool isinDS = false;
-			if ( motherName == "DS2Vacuum" or motherName =="DS3Vacuum"){
-			    cout<<"got DS coords"<<endl;
-			    isinDS = true;
-			}
-			if ( isinDS==true and _name.find("TrackerMother")!=0 ){
-			    cout<<"got tracker - the tracker is inside the DS - need to transform from there backwards "<<endl;
 
-			}
-		}
-		double zCenter  =  -1610;
-		double xCenter  = 0;
-		CLHEP::Hep3Vector c(xCenter, 0, zCenter);
-	        cout<<"center forund at : "<<zCenter<<" 0 "<<xCenter<<endl;
+	CLHEP::Hep3Vector Geom_Interface::GetGDMLTrackerCenter(TString filename) {
+		
+		double zCenter  =  -7929;
+                double yCenter = 0;
+		double xCenter  = 3904;
+		CLHEP::Hep3Vector c(xCenter, yCenter, zCenter);
+	     
 		return c;
 	}
 
@@ -71,13 +59,16 @@ namespace mu2e{
 		//Step 1: Get Tracker origin ~ (-3904,0,10171):
 		CLHEP::Hep3Vector Mu2eTrackerOrigin = Geom_Interface::GetTrackerCenter();
 		//Step 2: Extract origin from GDML file:
-		CLHEP::Hep3Vector GDMLTrackerOrigin(0, GetOffsetFromMu2e()  ,0);
+		CLHEP::Hep3Vector GDMLTrackerOrigin = GetGDMLOffsetFromMu2e();
 		//Step 3: Transform Tracker origin to the GDML origin. Need to find the transform of tracker ofigin -->GDML origin:
-		CLHEP::Hep3Vector Tracker2GDMLOrigin(GDMLTrackerOrigin - Mu2eTrackerOrigin);
+		//CLHEP::Hep3Vector Tracker2GDMLOrigin(GDMLTrackerOrigin + Mu2eTrackerOrigin);
 		//Step 4: Transfrom a point first to tracker, then to GDML
 		CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
 		cout<<" in tracker "<<PointToTracker.x()<<" "<<PointToTracker.y()<<" "<<PointToTracker.z()<<endl;
-		CLHEP::Hep3Vector PointToGDML(PointToTracker.x()+Tracker2GDMLOrigin.x(),PointToTracker.y() +Tracker2GDMLOrigin.y(),PointToTracker.z()+Tracker2GDMLOrigin.z());
+		CLHEP::Hep3Vector PointToGDML(PointToTracker.x()+GDMLTrackerOrigin.x(),PointToTracker.y() +GDMLTrackerOrigin.y(),PointToTracker.z()+GDMLTrackerOrigin.z());
+
+		GetGDMLTrackerCenter("TEveEventDisplay/src/fix.gdml");
+
 		return PointToGDML;
 	}
 

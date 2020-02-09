@@ -45,10 +45,6 @@ class TGeoManager;
 class TGeoVolume;
 class TGMainFrame;
 
-struct temp{
-	mu2e::SimpleConfig *t = new mu2e::SimpleConfig("Mu2eG4/geom/tracker_v5.txt");
-};
-
 namespace mu2e{
 	class Geom_Interface {
              
@@ -69,7 +65,7 @@ namespace mu2e{
 		void toForeground();
 		CLHEP::Hep3Vector GetTrackerCenter();
 		CLHEP::Hep3Vector GetGDMLTrackerCenter(TString file);		
-		double GetOffsetFromMu2e();
+		CLHEP::Hep3Vector GetGDMLOffsetFromMu2e();
 		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
 		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);
@@ -81,9 +77,7 @@ namespace mu2e{
 
 		art::Event  *_event;
 		art::Run    *_run;
-		//below are various files for accessinf Geom configS:
-
-   		
+		
 	        #endif
 		ClassDef(Geom_Interface,0);
 
