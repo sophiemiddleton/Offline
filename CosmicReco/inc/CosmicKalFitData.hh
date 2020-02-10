@@ -30,7 +30,7 @@ namespace mu2e {
 
     const art::Event*                 event;
     KalRep*                           krep;           // Kalman rep, owned by the collection
-    const ComboHitCollection*         chcol;          // 
+    const ComboHitCollection         chcol;          // 
 
     const StrawHitFlagCollection*     shfcol;         //
     TrkFitDirection                   fdir; //TODO --> do we need this?

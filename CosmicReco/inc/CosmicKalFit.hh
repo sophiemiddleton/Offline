@@ -48,7 +48,7 @@ namespace mu2e
 	#endif/*__GCCXML__*/
 	virtual ~CosmicKalFit();
 
-	void MakeTrack(StrawResponse::cptr_t strawResponse, Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData);
+	void MakeTrack(StrawResponse::cptr_t strawResponse, Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData, ComboHitCollection& chits);
 
 	virtual const TrkVolume* trkVolume(trkDirection trkdir) const;
 	BField const& bField() const;
@@ -79,7 +79,7 @@ namespace mu2e
 	bool fitable(CosmicKalSeed const& kseed);
 	void initT0(CosmicKalFitData& kalData);
 
-	void MakeTrkStrawHits  (StrawResponse::cptr_t strawResponse, CosmicKalFitData& kalData, TrkStrawHitVector& tshv );
+	void MakeTrkStrawHits  (StrawResponse::cptr_t strawResponse, CosmicKalFitData& kalData, ComboHitCollection& chits, TrkStrawHitVector& tshv );
 
 	void MakeMaterials( Mu2eDetector::cptr_t detmodel,TrkStrawHitVector const&, CosmicLineTraj const& traj,std::vector<DetIntersection>& dinter);
 

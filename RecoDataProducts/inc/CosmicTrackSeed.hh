@@ -18,26 +18,26 @@ namespace mu2e {
 
   struct CosmicTrackSeed {
 
-    TrkT0 const& t0() const { return _t0; }//from the Time cluster
-    const std::vector<StrawHitIndex>& _shits       () const { return _strawHitIdxs; }
-    std::vector<TrkStrawHitSeed> const& trkstrawhits() const { return _trkstrawhits;}
-    ComboHitCollection const& hits() const { return _panel_hits; }
-    ComboHitCollection const& StrawLevelhits() const { return _straw_chits; }
-    CosmicTrack const& track() const { return _track; }
-    TrkFitFlag const& status() const { return _status; }
-    art::Ptr<TimeCluster> const& timeCluster() const { return _timeCluster; }
+	TrkT0 const& t0() const { return _t0; }//from the Time cluster
+	const std::vector<StrawHitIndex>& _shits () const { return _strawHitIdxs; }
+	std::vector<TrkStrawHitSeed> const& trkstrawhits() const { return _trkstrawhits;}
+	ComboHitCollection const& hits() const { return _panel_hits; }
+	ComboHitCollection const& StrawLevelhits() const { return _straw_chits; }
+	CosmicTrack const& track() const { return _track; }
+	TrkFitFlag const& status() const { return _status; }
+	art::Ptr<TimeCluster> const& timeCluster() const { return _timeCluster; }
 
-    TrkT0	             _t0;	      // t0 for this track
-    ComboHitCollection       _panel_hits;	      // hits for track (panel hits)
-    ComboHitCollection       _straw_chits;    // get the straw level hits and store here (need to find panel hits first)
+	TrkT0				_t0;	      // t0 for this track
+	ComboHitCollection       	_panel_hits;	      // hits for track (panel hits)
+	ComboHitCollection       	_straw_chits;    // get the straw level hits and store here (need to find panel hits first)
+	
+	CosmicTrack              	_track;	     // Cosmic track created from these hits  
 
-    CosmicTrack              _track;	     // Cosmic track created from these hits  
-   
-    TrkFitFlag	             _status;      // status of processes used to create this seed
-    art::Ptr<TimeCluster>    _timeCluster; // associated time cluster
-    std::vector<StrawHitIndex> _strawHitIdxs; // associated straw hits: can be empty
-    std::vector<TrkStrawHitSeed>  _trkstrawhits; //vector of associated trkstrawhits
-   
+	TrkFitFlag	             	_status;      // status of processes used to create this seed
+	art::Ptr<TimeCluster>    	_timeCluster; // associated time cluster
+	std::vector<StrawHitIndex> 	_strawHitIdxs; // associated straw hits: can be empty
+	std::vector<TrkStrawHitSeed>  	_trkstrawhits; //vector of associated trkstrawhits
+
    
   };
    typedef std::vector<mu2e::CosmicTrackSeed> CosmicTrackSeedCollection;

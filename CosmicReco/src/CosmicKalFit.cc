@@ -119,10 +119,10 @@ namespace mu2e
 //-----------------------------------------------------------------------------
 // create the track (KalRep) from a cosmic track seed
 //-----------------------------------------------------------------------------
-	void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData){
+	void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData, ComboHitCollection& shits){
     	if(fitable(*kalData.cosmicKalSeed)){
 		
-		double flt0 = kalData.cosmicKalSeed->flt0();
+		//double flt0 = kalData.cosmicKalSeed->flt0();
 		//auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
 		
 		HepVector pvec(4,0);
@@ -134,7 +134,7 @@ namespace mu2e
 	      	kalData.cosmicTraj = &htraj;
 		cout<<"kfit test point 2"<<endl;
 	      	TrkStrawHitVector tshv;
-	      	MakeTrkStrawHits(srep,kalData, tshv);
+	      	MakeTrkStrawHits(srep,kalData, shits, tshv);
 		cout<<"kfit test point 3"<<endl;
 	      	std::vector<DetIntersection> detinter;
 	      	if(_matcorr)MakeMaterials(detmodel, tshv,*kalData.cosmicTraj,detinter);
@@ -145,7 +145,10 @@ namespace mu2e
 	      	}
 		cout<<"kfit test point 5"<<endl;
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
-	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
+		cout<<"has t0"<<endl;
+		
+	      	/*kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); //FIXME seg fault (3)
+		cout<<"kal rep"<<endl;
 	      	assert(kalData.krep != 0);
 		
 		cout<<"kfit test point 7"<<endl;
@@ -153,25 +156,25 @@ namespace mu2e
 		
 	      	TrkErrCode fitstat = FitTrack(detmodel,kalData);
 	      	kalData.krep->addHistory(fitstat,"KalFit fit");
-
+*/
 		}
   	}
 
 	bool CosmicKalFit::fitable(CosmicKalSeed const& kseed){
 		
     		return kseed.segments().size() > 0 && kseed.hits().size() >= _minnstraws;
-  	}
+  	}  
 
-  	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, TrkStrawHitVector& tshv ) {
+  	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, ComboHitCollection& shits, TrkStrawHitVector& tshv ) {
 	    
 	    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicKalSeed->hits();
-
 	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
-		
+	   
 	    for(auto ths : hseeds ){
-		cout<<"hits "<<endl; //TODO - use old code here
+		
 		size_t index = ths.index();
-		const ComboHit& strawhit(kalData.chcol->at(index));
+		cout<<"index "<<index<<endl;
+		const ComboHit& strawhit(shits.at(0)); //this is set in fitter module - it should StrawLevel CH's INDEX //FIXME - seg fault (2)
 		const Straw& straw = _tracker->getStraw(strawhit.strawId());
 		TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
 		assert(trkhit != 0);
@@ -183,8 +186,9 @@ namespace mu2e
 			trkhit->setActivity(false);
 	      	}
 	      	tshv.push_back(trkhit);
+		
     	}
-        cout<<"sorting" <<endl;
+       
     	std::sort(tshv.begin(),tshv.end(),fcomp());
   	}
 
