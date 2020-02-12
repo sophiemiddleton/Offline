@@ -6,26 +6,49 @@
 
 BEGIN_PROLOG
 
-TEveEventDisplay : {
+TEveEventDisplayHelix : {
       module_type : TEveEventDisplay
 
-      	#strawStepsTag        : "compressDigiMCs:tracker"
-      	#strawDigisTag        : "makeSD"
+      	#strawStepsTag       	: "compressDigiMCs:tracker"
       	#strawHitsTag         : "makeSH"
-      	ComboHitCollection : "makePH"
-	GenParticleCollection : "generate"
-	g4ModuleLabel        : "g4run"
-	#hitMakerModuleLabel  : makeSH
-	#trackerStepPoints    : tracker
-	minEnergyDep         : 0
-	minHits              : 1
-	addHits : true
-	addTracks : false
-	addClusters : false
+      	#ComboHitCollection 	: "makePH"
+	GenParticleCollection 	: "compressDigiMCs" #generate"
+	StrawDigiCollection	:  "selectRecoMC"
+	CrvDigiCollection	: "CrvDigi"
+	g4ModuleLabel        	: "g4run"
+	#hitMakerModuleLabel  	: makeSH
+	#trackerStepPoints    	: tracker
+	minEnergyDep         	: 0
+	minHits              	: 1
+	addHits 		: true
+	addTracks 		: true
+	addCrystalHits		: false
+	addCrvHits		: false
+  }   
+
+TEveEventDisplayCosmics : {
+      module_type : TEveEventDisplay
+
+      	#strawStepsTag       	: "compressDigiMCs:tracker"
+      	#strawHitsTag           : "makeSH"
+      	ComboHitCollection 	: "makePH"
+	GenParticleCollection 	: "compressDigiMCs" #generate"
+	StrawDigiCollection	:  "makeSD"
+	CrvDigiCollection	: "CrvDigi"
+	g4ModuleLabel        	: "g4run"
+	#hitMakerModuleLabel  	: makeSH
+	#trackerStepPoints    	: tracker
+	minEnergyDep         	: 0
+	minHits              	: 1
+	addHits 		: true
+	addTracks 		: true
+	addCrystalHits		: false
+	addCrvHits		: false
+
   }   
 
 TEveDis : {  
-	analyzers : { TEveEventDisplay : @local::TEveEventDisplay }
+	analyzers : { TEveEventDisplay : @local::TEveEventDisplayCosmics} #change for comsics/helix
 }
 
 TEveDis.seq : [TEveEventDisplay]

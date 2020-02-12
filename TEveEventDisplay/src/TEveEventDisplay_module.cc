@@ -56,6 +56,7 @@
 #include  "TEveEventDisplay/src/dict_classes/NavState.h"
 #include  "TEveEventDisplay/src/dict_classes/EvtDisplayUtils.h"
 #include  "TEveEventDisplay/src/dict_classes/Geom_Interface.h"
+
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
 #include "GeometryService/inc/DetectorSystem.hh"
@@ -81,6 +82,8 @@
 
 //Collections:
 #include "RecoDataProducts/inc/StrawDigiCollection.hh"
+#include "RecoDataProducts/inc/CrvDigiCollection.hh"
+
 // Mu2e diagnostics
 using namespace std;
 using namespace mu2e;
@@ -89,7 +92,6 @@ void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const 
   {
 	
 	CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
-	CLHEP::Hep3Vector pointinGDMLCoord  = g->PointToGDML(HitPos);
 
 	std::string hstr=" hit %d";
 	std::string dstr=" hit# %d\nLayer: %d";
@@ -100,9 +102,12 @@ void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const 
 	h->SetTitle(Form(strlab.c_str(),n,hstr));
 
 	cout<<"initial hit : "<<hit.pos().x()<<" "<<hit.pos().y()<<" "<<hit.pos().z()<<endl;
-	cout<<"to gdml "<<pointinGDMLCoord.x()<<" "<<pointinGDMLCoord.y()<<" "<<pointinGDMLCoord.z()<<endl;
 
-	h->SetNextPoint(pointinGDMLCoord.x(), pointinGDMLCoord.y(), pointinGDMLCoord.z());
+	h->SetNextPoint(-400,0,1000);
+	h->SetMarkerColor(kRed);
+	h->SetMarkerSize(mSize);
+
+	h->SetNextPoint(HitPos.x(), HitPos.y(), HitPos.z());
 	h->SetMarkerColor(mColor);
 	h->SetMarkerSize(mSize);
 	list->AddElement(h);
@@ -132,6 +137,8 @@ namespace mu2e
 	fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
 	fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
 	fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
+	fhicl::Atom<art::InputTag>strawdigiTag{Name("StrawDigiCollection"),Comment("strawdigiTag")};
+	fhicl::Atom<art::InputTag>crvdigiTag{Name("CrvDigiCollection"),Comment("crvTag")};
 	fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
 	fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
 	fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
@@ -140,8 +147,8 @@ namespace mu2e
 	fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
 	fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
 	fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
-	fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
-		
+	fhicl::Atom<bool> addCrystalHits{Name("addCrystalHits"), Comment("set to add calo lusters"),false};
+	fhicl::Atom<bool> addCrvHits{Name("addCrvHits"), Comment("set to add crv hits"),false};	
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
     explicit TEveEventDisplay(const Parameters& conf);
@@ -157,9 +164,13 @@ namespace mu2e
      //std::string moduleLabel_;
      const StrawDigiCollection* _stcol;
      const ComboHitCollection* _chcol;
+     const StrawDigiCollection* _strawdigicol;
+     const CrvDigiCollection* _crvdigicol;
      //art::InputTag strawStepsTag_;
      art::InputTag chTag_;
      art::InputTag gensTag_;
+     art::InputTag strawdigiTag_;
+     art::InputTag crvdigiTag_;
      //art::InputTag strawHitsTag_;
      //std::string generatorModuleLabel_;
      std::string g4ModuleLabel_;
@@ -205,16 +216,18 @@ namespace mu2e
       TEveTrackList *fTrackList;
       TEveElementList *fHitsList;
       
-      bool addHits_, addTracks_, addClusters_;
+      bool addHits_, addTracks_, addCrystalHits_, addCrvHits_;
       EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
       Geom_Interface *gdml_geom	=new Geom_Interface(); 
+      //Particle_Interface *particle_info = new Particle_Interface();
+
       TGeoManager* geom = new TGeoManager("geom","Geom");
-  	
+      std::vector<CLHEP::Hep3Vector> GDMLt;
+
+  
       bool foundEvent = false;
       void MakeNavPanel();
-      std::string GetParentName(TGeoNode *daughter);
-      bool HasParent(TGeoNode *Mother);
-      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector> t);
+      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector>& t);
       void InsideDS( TGeoNode * node, bool inDSVac );
       void hideTop(TGeoNode* node);
       void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
@@ -222,7 +235,8 @@ namespace mu2e
       void hideBuilding(TGeoNode* node);
       void AddTrack(const art::Event& event, mu2e::BFieldManager const& fm);
       void AddHits(const art::Event& event);
-      void AddClusters(const art::Event& event);
+      void AddCrystalHits(const art::Event& event);
+      void AddCrvHits(const art::Event& event);
       bool FindData(const art::Event& event);
 };
 
@@ -231,6 +245,8 @@ TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
 	_diagLevel(conf().diagLevel()),
         chTag_(conf().chTag()),
         gensTag_(conf().gensTag()),
+	strawdigiTag_(conf().strawdigiTag()),
+	crvdigiTag_(conf().crvdigiTag()),
         g4ModuleLabel_(conf().g4ModuleLabel()),
         minEnergyDep_(conf().minEnergyDep()),
         minHits_(conf().minHits()),
@@ -239,9 +255,9 @@ TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
         showEvent_(conf().showEvent()),
 	addHits_(conf().addHits()),
 	addTracks_(conf().addTracks()),
-	addClusters_(conf().addClusters()){
+	addCrystalHits_(conf().addCrystalHits()),
+	addCrvHits_(conf().addCrvHits()){
 		visutil_ = new EvtDisplayUtils();
-		//gdml_geom = new Geom_Interface();
 	}
 
 
@@ -391,7 +407,7 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   // Import the GDML of entire Mu2e Geometry
   geom = gdml_geom->Geom_Interface::getGeom("TEveEventDisplay/src/fix.gdml");
   gdml_geom->GetTrackerCenter();
-  //TODO-the below functions could be moved to Geom_Interface
+ 
   //Get Top Volume
   TGeoVolume* topvol = geom->GetTopVolume();
   
@@ -413,45 +429,63 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   hideBuilding(topnode);
   hideTop(topnode);
   //InsideDS( topnode, false );
-  std::vector<CLHEP::Hep3Vector> t;
-  Heirarchy(topnode, t);
+  
+   Heirarchy(topnode, GDMLt);
+   for(auto const& transformation : GDMLt){
+	cout<<"Transformation "<<transformation.x()<<" "<<transformation.y()<<" "<<transformation.z()<<endl;
+  }
   //Add static detector geometry to global scene
   gEve->AddGlobalElement(etopnode);
   
 }
 
-std::string TEveEventDisplay::GetParentName(TGeoNode *daughter){
-	std::string motherName(daughter->GetMotherVolume()->GetName());
-	return motherName;	
 
-}
-
-bool TEveEventDisplay::HasParent(TGeoNode *Mother){
-	if(Mother->GetMotherVolume()) { return true; }
-	else { return false;}
-}
-
-
-
-void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector> TransformList ){
+void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector> &TransformList ){
   std::string _name = (node->GetVolume()->GetName());
-  if (node->GetMotherVolume() ) {
-    std::string motherName(node->GetMotherVolume()->GetName());
-    if ( motherName == "TrackerMother"){
-	TGeoVolume *vol = node->GetVolume();
+  if( _name == "HallAir") {
+	cout<<"HallAir Origin IS "<<node->GetMotherVolume()->GetName();
+        TGeoVolume *vol = node->GetVolume();
 	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
 	Double_t master[3];
 	const Double_t *local = shape->GetOrigin();
 	if(shape!=NULL){
-		cout<<node->GetName()<<"Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
+		cout<<node->GetName()<<"Hall Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
 		gGeoManager->LocalToMaster(local,master);
-		cout<<"Master"<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
-		CLHEP::Hep3Vector trans(master[0],master[1],master[2]);
-		TransformList.push_back(trans);
-		
-	}
-    }
+		cout<<"In World co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
+		CLHEP::Hep3Vector hallToworld(master[0], master[1], master[2]);
+		TransformList.push_back(hallToworld);
+        }
   }
+  if( _name == "DS3Vacuum") {
+	cout<<"DS3 Origin IS "<<node->GetMotherVolume()->GetName();
+        TGeoVolume *vol = node->GetVolume();
+	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
+	Double_t master[3];
+	const Double_t *local = shape->GetOrigin();
+	if(shape!=NULL){
+		cout<<node->GetName()<<"DS Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
+		gGeoManager->LocalToMaster(local,master);
+		cout<<"In Hall co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
+		CLHEP::Hep3Vector DSTohall(master[0], master[1], master[2]);
+		TransformList.push_back(DSTohall);
+        }
+ }
+  if( _name == "TrackerMother") {
+	cout<<"Tracker Origin IS "<<node->GetMotherVolume()->GetName();
+        TGeoVolume *vol = node->GetVolume();
+	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
+	Double_t master[3];
+	const Double_t *local = shape->GetOrigin();
+	if(shape!=NULL){
+		cout<<node->GetName()<<"Tracker Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
+		gGeoManager->LocalToMaster(local,master);
+		cout<<"In DS co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
+		CLHEP::Hep3Vector TrackerToDS(master[0], master[1], master[2]);
+		TransformList.push_back(TrackerToDS);
+        }
+
+  }
+
   // Descend into each daughter TGeoNode.
   int ndau = node->GetNdaughters();
   for ( int i=0; i<ndau; ++i ){
@@ -491,8 +525,8 @@ void TEveEventDisplay::analyze(const art::Event& event){
   _evt = event.id().event();
   if(showEvent_ ){
 	if(addHits_) AddHits(event);
-  	//if(addTracks_) AddTrack(event, *bfmgr);
-  	//if(addClusters_) AddClusters(event);
+  	if(addTracks_) AddTrack(event, *bfmgr);
+  	//if(AddCrystalHits_) AddCrystalHits(event);
   }
 
   std::ostringstream sstr;
@@ -616,7 +650,7 @@ void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager con
     int mcindex=-1;
     for ( auto const& gen: *gens){
       TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
-      //CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));
+      //CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));//FIXME
       trkProp->SetMagField(-1*1000.);
       trkProp->SetMaxR(trkMaxR_);
       trkProp->SetMaxZ(trkMaxZ_);
@@ -625,17 +659,23 @@ void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager con
       //if ( gen.hasChildren() ) continue;
       TParticle mcpart;
       mcpart.SetMomentum(gen.momentum().px(),gen.momentum().py(),gen.momentum().pz(),gen.momentum().e());
+     
       mcpart.SetProductionVertex(gen.position().x()*0.1,gen.position().y()*0.1,gen.position().z()*0.1,0.);
-      mcpart.SetPdgCode(gen.pdgId());
+      cout<<"setting pdg code "<<endl;
+      //mcpart.SetPdgCode(gen.pdgId()); //FIXME
+      cout<<"constructing track"<<endl;
       TEveTrack* track = new TEveTrack(&mcpart,mcindex,trkProp);
       track->SetIndex(0);
       track->SetStdTitle();
       track->SetAttLineAttMarker(fTrackList);
-      if ( gen.pdgId() == 11 ){
+	cout<<"colours "<<endl;
+     // if ( abs(gen.pdgId()) == 11 ){
+      //  track->SetMainColor(kRed);
+     // }  if (abs(gen.pdgId()) == 13 ){
         track->SetMainColor(kGreen);
-      } else {
-        track->SetMainColor(kBlue+1);
-      }
+     // } else {
+	//track->SetMainColor(kBlue);
+      //}
       fTrackList->AddElement(track);
     }
     fTrackList->MakeTracks();
@@ -650,6 +690,9 @@ void TEveEventDisplay::AddHits(const art::Event& event){
    auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
    _chcol = chH.product(); //this should be any collection eventually
    
+    auto sdH = event.getValidHandle<mu2e::StrawDigiCollection>(chTag_);
+   _strawdigicol = sdH.product(); 
+
    if (fHitsList == 0) {
       fHitsList = new TEveElementList("Hits");
       fHitsList->IncDenyDestroy();     
@@ -658,23 +701,32 @@ void TEveEventDisplay::AddHits(const art::Event& event){
       fHitsList->DestroyElements();  
     }
     TEveElementList* HitsList  = new TEveElementList("Combo Hits");
-   
+    if(!_chcol->empty()){
     for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
 	    ComboHit const& hit = (*_chcol)[ih];
-	    cout<<"hit "<<ih<<" of "<<_chcol->size()<<endl;
-	    cout<<"adding hit "<<hit.pos().X()<<" "<<hit.pos().Y()<<" "<<hit.pos().Z()<<endl;
-	 
 	    DrawHit("ComboHits",kGreen,2,ih,hit,HitsList, gdml_geom);
 	    fHitsList->AddElement(HitsList);  
 	    gEve->AddElement(fHitsList);
-	    cout<<"redrawing "<<endl;
 	    gEve->Redraw3D();
     }
+  }
+
 	
 }
 
-void TEveEventDisplay::AddClusters(const art::Event& evt){}
+void TEveEventDisplay::AddCrystalHits(const art::Event& evt){
+	 /*auto chH = event.getValidHandle<mu2e::CrystalHitCollection>(cryhTag_);
+   	_cryhcol = chH.product(); */
+  
 
+}
+
+void TEveEventDisplay::AddCrvHits(const art::Event& evt){
+	 /*auto chH = event.getValidHandle<mu2e::CrystalHitCollection>(cryhTag_);
+   	_cryhcol = chH.product(); */
+  
+
+}
 
 bool TEveEventDisplay::FindData(const art::Event& evt){
 	_chcol = 0; 

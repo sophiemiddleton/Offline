@@ -1,4 +1,4 @@
-/*#ifndef Particle_Interface_h
+#ifndef Particle_Interface_h
 #define Particle_Interface_h
 #include <TObject.h>
 #include <TSystem.h>
@@ -8,11 +8,12 @@
 
 namespace mu2e{
 	class Particle_Interface{
-		public:
+		
+	
 			#ifndef __CINT__
 			explicit Particle_Interface();		
-			virtual ~Particle_Interface();
-
+			virtual ~Particle_Interface(){};
+	public:
 			enum type{
 				e_minus = 11,
 				e_plus	= -11,
@@ -34,16 +35,16 @@ namespace mu2e{
 			double velocity() const { return _velocity;}
 
 
-		private:
+		
 			double _energy;
 			double _charge;
 			double _momentum;
 			double _velocity;
 			double _name;
 
-		#endif
-		ClassDef(Particle_Interface, 0);
+			#endif
+			ClassDef(Particle_Interface, 0);
 	};
 }
-#endif*/
+#endif
 

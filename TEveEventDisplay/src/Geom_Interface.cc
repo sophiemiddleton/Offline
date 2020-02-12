@@ -13,6 +13,8 @@
 #include "GeometryService/inc/WorldG4.hh"
 #include "GeometryService/inc/WorldG4Maker.hh"
 #include "GeometryService/inc/TrackerMaker.hh"
+#include "GeometryService/inc/Mu2eHallMaker.hh"
+#include "GeometryService/inc/G4GeometryOptions.hh"
 //Mu2e Tracker Geom:
 #include "TrackerGeom/inc/Tracker.hh"
 #include "GeometryService/inc/Mu2eCoordTransform.hh"
@@ -32,24 +34,28 @@ namespace mu2e{
 		double zCenter  =  GeomConfig.getDouble("mu2e.detectorSystemZ0")*CLHEP::mm;
 		double xCenter  = -GeomConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
 		CLHEP::Hep3Vector c(xCenter, 0, zCenter);//y=0 as unchanged
+		TrackMu2eOrigin = c;
 		return c;
 	}
 
 	CLHEP::Hep3Vector Geom_Interface::GetGDMLOffsetFromMu2e(){
 		std::string filename("Mu2eG4/geom/mu2eHall.txt");
 		SimpleConfig HallConfig(filename);
-      		double zCenter = -7929;
+      		double zCenter = 0;//-7929;
 		double yCenter  =  0;//HallConfig.getDouble("yOfFloorSurface.below.mu2eOrigin")*CLHEP::mm;
-		double xCenter  = 3040;//-HallConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
+		double xCenter  = 1288;//3040;//-HallConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
 	        CLHEP::Hep3Vector center(xCenter,yCenter,zCenter);
+		TrackerG4Origin = center;
 		return center;
 	}
 
-	CLHEP::Hep3Vector Geom_Interface::GetGDMLTrackerCenter(TString filename) {
-		
-		double zCenter  =  -7929;
-                double yCenter = 0;
-		double xCenter  = 3904;
+	CLHEP::Hep3Vector Geom_Interface::GetGDMLTrackerCenter() {
+		//World->HallAir->Ds3->TrackerMother ->(0,0,0)->(0,0,0)->(0,0,1288)->(0,0,0) 
+		std::string filename("Mu2eG4/geom/mu2eHall.txt");
+		SimpleConfig HallConfig(filename);
+		double yCenter  = HallConfig.getDouble("yOfFloorSurface.below.mu2eOrigin")*CLHEP::mm;
+		double zCenter  = 1288;
+		double xCenter  = 0;
 		CLHEP::Hep3Vector c(xCenter, yCenter, zCenter);
 	     
 		return c;
@@ -63,26 +69,30 @@ namespace mu2e{
 		//Step 3: Transform Tracker origin to the GDML origin. Need to find the transform of tracker ofigin -->GDML origin:
 		//CLHEP::Hep3Vector Tracker2GDMLOrigin(GDMLTrackerOrigin + Mu2eTrackerOrigin);
 		//Step 4: Transfrom a point first to tracker, then to GDML
-		CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
-		cout<<" in tracker "<<PointToTracker.x()<<" "<<PointToTracker.y()<<" "<<PointToTracker.z()<<endl;
-		CLHEP::Hep3Vector PointToGDML(PointToTracker.x()+GDMLTrackerOrigin.x(),PointToTracker.y() +GDMLTrackerOrigin.y(),PointToTracker.z()+GDMLTrackerOrigin.z());
-
-		GetGDMLTrackerCenter("TEveEventDisplay/src/fix.gdml");
+		//CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
+		//cout<<" in tracker "<<PointToTracker.x()<<" "<<PointToTracker.y()<<" "<<PointToTracker.z()<<endl;
+		//CLHEP::Hep3Vector PointToGDML(point.x()+GDMLTrackerOrigin.x(),point.y() +GDMLTrackerOrigin.y(),point.z()+GDMLTrackerOrigin.z());
+		CLHEP::Hep3Vector PointToGDML(GDMLTrackerOrigin.x() - point.x(), +GDMLTrackerOrigin.y() - point.y(), GDMLTrackerOrigin.z()-point.z());
+		GetGDMLTrackerCenter();
 
 		return PointToGDML;
 	}
 
 	CLHEP::Hep3Vector Geom_Interface::TransformToG4(CLHEP::Hep3Vector point){
-		//GeomHandle<WorldG4> world;
-		//WorldG4Maker worldMaker;
-		//std::unique_ptr<WorldG4> world = worldMaker.res(new WorldG4());
+		/*std::string hallconfigFile("Mu2eG4/geom/mu2eHall.txt");
+		SimpleConfig HallConfig(hallconfigFile);
+		Mu2eHallMaker hallMaker;
+		G4GeometryOptions g4opt(HallConfig);
 
-		//1) Get origin of the Tracker from GeomServices:
-		//CLHEP::Hep3Vector center = GetTrackerCenter();
-		//Mu2eCoordTransform trans();
-		//CLHEP::Hep3Vector vec2 = trans.Mu2eToG4bl(vec1);
-		//CLHEP::Hep3Vector vec2 = res->mu2eOriginInWorld();//world.mu2eOriginInWorld();
-		
+		std::unique_ptr<Mu2eHall> Hall = hallMaker.makeBuilding(g4opt,HallConfig);
+		std::string worldconfigFile("Mu2eG4/geom/geom_common_current.txt");
+		SimpleConfig WorldConfig(worldconfigFile);
+
+		WorldG4Maker worldMaker;
+                std::unique_ptr<WorldG4> world = worldMaker.make(Hall, WorldConfig);
+		CLHEP::Hep3Vector vec2 = world->hallFormalCenterInWorld();
+		cout<<vec2.x()<<" "<<vec2.y()<<" "<<vec2.z()<<endl;*/
+
 		return point;
 
 	}

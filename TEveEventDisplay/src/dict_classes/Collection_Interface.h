@@ -31,63 +31,64 @@ using namespace CLHEP;
 namespace mu2e{
 	class Collection_Interface
 	{
-		  #ifndef __CINT__
-		  explicit Collection_Interface();
-		  Collection_Interface(const Collection_Interface &);
-		  Collection_Interface& operator=(const Collection_Interface &);
+	
+			#ifndef __CINT__
+			explicit Collection_Interface();
+			Collection_Interface(const Collection_Interface &);
+			Collection_Interface& operator=(const Collection_Interface &);
 
-		  std::vector<art::Handle<mu2e::StepPointMCCollection> > _stepPointMCVector;
-		  std::vector<art::Handle<mu2e::StepPointMCCollection> > _caloStepPointMCVector;
-		  std::vector<art::Handle<mu2e::StrawHitCollection> > _strawHitVector;
-		  std::vector<art::Handle<mu2e::StrawHitFlagCollection> > _strawHitFlagVector;
-		  std::vector<art::Handle<mu2e::StrawHitPositionCollection> > _strawHitPositionVector;
-		  std::vector<art::Handle<mu2e::CaloCrystalHitCollection> > _caloCrystalHitVector;
-		  std::vector<art::Handle<mu2e::CaloHitCollection> > _caloHitVector;
-		  std::vector<art::Handle<mu2e::CrvRecoPulseCollection> > _crvRecoPulseVector;
-		  std::vector<art::Handle<mu2e::SimParticleCollection> > _simParticleVector;
-		  std::vector<art::Handle<mu2e::MCTrajectoryCollection> > _mcTrajectoryVector;
-		  std::vector<art::Handle<mu2e::KalRepCollection> > _trkRecoTrkVector;
-		  std::vector<art::Handle<mu2e::KalRepCollection> > _hitOnTrackVector; 
-		  std::vector<art::Handle<mu2e::KalSeedCollection> > _kalSeedTrkVector;
-		  std::vector<art::Handle<mu2e::KalSeedCollection> > _kalSeedHitVector;
-		  std::vector<art::Handle<mu2e::TrkExtTrajCollection> > _trkExtTrajVector;
-		  art::Handle<mu2e::PhysicalVolumeInfoCollection> _physicalVolumes;
-		  art::Handle<mu2e::PhysicalVolumeInfoMultiCollection> _physicalVolumesMulti;
+			std::vector<art::Handle<mu2e::StepPointMCCollection> > _stepPointMCVector;
+			std::vector<art::Handle<mu2e::StepPointMCCollection> > _caloStepPointMCVector;
+			std::vector<art::Handle<mu2e::StrawHitCollection> > _strawHitVector;
+			std::vector<art::Handle<mu2e::StrawHitFlagCollection> > _strawHitFlagVector;
+			std::vector<art::Handle<mu2e::StrawHitPositionCollection> > _strawHitPositionVector;
+			std::vector<art::Handle<mu2e::CaloCrystalHitCollection> > _caloCrystalHitVector;
+			std::vector<art::Handle<mu2e::CaloHitCollection> > _caloHitVector;
+			std::vector<art::Handle<mu2e::CrvRecoPulseCollection> > _crvRecoPulseVector;
+			std::vector<art::Handle<mu2e::SimParticleCollection> > _simParticleVector;
+			std::vector<art::Handle<mu2e::MCTrajectoryCollection> > _mcTrajectoryVector;
+			std::vector<art::Handle<mu2e::KalRepCollection> > _trkRecoTrkVector;
+			std::vector<art::Handle<mu2e::KalRepCollection> > _hitOnTrackVector; 
+			std::vector<art::Handle<mu2e::KalSeedCollection> > _kalSeedTrkVector;
+			std::vector<art::Handle<mu2e::KalSeedCollection> > _kalSeedHitVector;
+			std::vector<art::Handle<mu2e::TrkExtTrajCollection> > _trkExtTrajVector;
+			art::Handle<mu2e::PhysicalVolumeInfoCollection> _physicalVolumes;
+			art::Handle<mu2e::PhysicalVolumeInfoMultiCollection> _physicalVolumesMulti;
 
-		  bool _hasPhysicalVolumes, _hasPhysicalVolumesMulti;
+			bool _hasPhysicalVolumes, _hasPhysicalVolumesMulti;
 
-		  TGComboBox  *_hitBox;
-		  TGComboBox  *_caloHitBox;
-		  TGComboBox  *_crvHitBox;
-		  TGListBox   *_trackBox;
-		  std::string _g4ModuleLabel;
-		  std::string _physicalVolumesMultiLabel;
+			TGComboBox  *_hitBox;
+			TGComboBox  *_caloHitBox;
+			TGComboBox  *_crvHitBox;
+			TGListBox   *_trackBox;
+			std::string _g4ModuleLabel;
+			std::string _physicalVolumesMultiLabel;
 
 
 	private:
-		art::Event *_event;
-		art::Run *_run;
+			art::Event *_event;
+			art::Run *_run;
 
-		struct entryStruct
-		{
-			int         entryID, classID, vectorPos;
-			std::string entryText;
-			std::string className, moduleLabel, productInstanceName;
-			bool operator==(const entryStruct& rhs) const
+			struct entryStruct
 			{
-				return ((this->entryID==rhs.entryID) && (this->entryText==rhs.entryText));
-			}
-		};
+				int  entryID, classID, vectorPos;
+				std::string entryText;
+				std::string className, moduleLabel, productInstanceName;
+				bool operator==(const entryStruct& rhs) const
+				{
+					return ((this->entryID==rhs.entryID) && (this->entryText==rhs.entryText));
+				}
+			};
 
-		std::vector<entryStruct> _hitEntries, _caloHitEntries, _crvHitEntries, _trackEntries;
-		std::vector<entryStruct> _hitFlagEntries, _hitPositionEntries;
+			std::vector<entryStruct> _hitEntries, _caloHitEntries, _crvHitEntries, _trackEntries;
+			std::vector<entryStruct> _hitFlagEntries, _hitPositionEntries;
 
-		std::string _selectedHitFlagEntry, _selectedHitPositionEntry;
+			std::string _selectedHitFlagEntry, _selectedHitPositionEntry;
 
-		template<class CollectionType> void createNewEntries(std::vector<art::Handle<CollectionType> > &dataVector,const art::Event &event, const std::string &className, std::vector<entryStruct> &newEntries, int classID);
+			template<class CollectionType> void createNewEntries(std::vector<art::Handle<CollectionType> > &dataVector,const art::Event &event, const std::string &className, std::vector<entryStruct> &newEntries, int classID);
 
   	public:
-
+		
 		struct trackInfoStruct
 		  {
 		    int classID, index;
@@ -128,7 +129,7 @@ namespace mu2e{
 
 		virtual ~Collection_Interface(){};
 
-		friend class FilterDialog;
+		//friend class FilterDialog;
 		#endif
 		ClassDef(Collection_Interface,0);
 	};
