@@ -64,8 +64,10 @@ namespace mu2e{
 		void RemoveComponents();
 		void toForeground();
 		CLHEP::Hep3Vector GetTrackerCenter();
+		CLHEP::Hep3Vector GetCaloCenter(unsigned nDisk);
 		CLHEP::Hep3Vector GetGDMLTrackerCenter();		
 		CLHEP::Hep3Vector GetGDMLOffsetFromMu2e();
+		CLHEP::Hep3Vector PointToTracker(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
 		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);
@@ -78,6 +80,7 @@ namespace mu2e{
 		art::Event  *_event;
 		art::Run    *_run;
 		CLHEP::Hep3Vector TrackerG4Origin;
+		CLHEP::Hep3Vector CaloG4Origin;
 		CLHEP::Hep3Vector TrackMu2eOrigin;
 	        #endif
 		ClassDef(Geom_Interface,0);

@@ -9,47 +9,56 @@ BEGIN_PROLOG
 TEveEventDisplayHelix : {
       module_type : TEveEventDisplay
 
-      	#strawStepsTag       	: "compressDigiMCs:tracker"
-      	#strawHitsTag         : "makeSH"
-      	#ComboHitCollection 	: "makePH"
-	GenParticleCollection 	: "compressDigiMCs" #generate"
-	StrawDigiCollection	:  "selectRecoMC"
-	CrvDigiCollection	: "CrvDigi"
-	g4ModuleLabel        	: "g4run"
-	#hitMakerModuleLabel  	: makeSH
-	#trackerStepPoints    	: tracker
-	minEnergyDep         	: 0
-	minHits              	: 1
-	addHits 		: true
-	addTracks 		: true
-	addCrystalHits		: false
-	addCrvHits		: false
+      	#strawStepsTag       		: "compressDigiMCs:tracker"
+      	#strawHitsTag         		: "makeSH"
+      	ComboHitCollection 		: "makePH"
+	GenParticleCollection 		: "compressDigiMCs" #generate"
+	StrawDigiCollection		:  "selectRecoMC"
+	CrvDigiCollection	 	: "CrvDigi"
+	CosmicTrackSeedCollection 	:  NULL
+	g4ModuleLabel        		: "g4run"
+	#hitMakerModuleLabel  		: makeSH
+	#trackerStepPoints    		: tracker
+	minEnergyDep         		: 0
+	minHits              		: 1
+	addHits 			: true
+	addTracks 			: false
+	addCrystalHits			: false
+	addCrvHits			: false
+	addCosmicSeedFit	        : false
+	isCosmic			: false
   }   
 
 TEveEventDisplayCosmics : {
       module_type : TEveEventDisplay
 
-      	#strawStepsTag       	: "compressDigiMCs:tracker"
-      	#strawHitsTag           : "makeSH"
-      	ComboHitCollection 	: "makePH"
-	GenParticleCollection 	: "compressDigiMCs" #generate"
-	StrawDigiCollection	:  "makeSD"
-	CrvDigiCollection	: "CrvDigi"
-	g4ModuleLabel        	: "g4run"
-	#hitMakerModuleLabel  	: makeSH
-	#trackerStepPoints    	: tracker
-	minEnergyDep         	: 0
-	minHits              	: 1
-	addHits 		: true
-	addTracks 		: true
-	addCrystalHits		: false
-	addCrvHits		: false
+      	#strawStepsTag       		: "compressDigiMCs:tracker"
+      	#strawHitsTag           	: "makeSH"
+      	ComboHitCollection 		: "makePH"
+	GenParticleCollection 		: "compressDigiMCs" #generate"
+	StrawDigiCollection		:  "makeSD"
+	CrvDigiCollection		: "CrvDigi"
+	CosmicTrackSeedCollection 	: "CosmicTrackFinder"
+	g4ModuleLabel        		: "g4run"
+	#hitMakerModuleLabel  		: makeSH
+	#trackerStepPoints    		: tracker
+	minEnergyDep         		: 0
+	minHits              		: 1
+	addHits 			: true
+	addTracks 			: true
+	addCrystalHits			: false
+	addCrvHits			: false
+	addCosmicSeedFit		: false
+	isCosmic			: true
 
   }   
 
 TEveDis : {  
-	analyzers : { TEveEventDisplay : @local::TEveEventDisplayCosmics} #change for comsics/helix
+	analyzers : { 	
+			TEveEventDisplayCosmics : @local::TEveEventDisplayCosmics
+ 			TEveEventDisplayHelix : @local::TEveEventDisplayHelix
+		    } 
+	seqCosmics : [TEveEventDisplayCosmics]
+	seqHelix   : [TEveEventDisplayHelix]
 }
-
-TEveDis.seq : [TEveEventDisplay]
 END_PROLOG

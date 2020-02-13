@@ -62,7 +62,7 @@ physics.RecoPath : [ @sequence::TrkHitReco.PrepareHits, @sequence::CosmicTrackin
 physics.producers.TimeClusterFinderCosmics.UseCaloCluster : false
 physics.producers.TimeClusterFinderCosmics.UseCaloClusterPosition : false
 
-physics.EndPath : [ @sequence::TEveDis.seq] 
+physics.EndPath : [ @sequence::TEveDis.seqCosmics] 
 physics.producers.CosmicTrackFinder.ComboHitCollection : "makePH"
 physics.analyzers.CosmicAnalysis.TimeClusterCollection : TimeClusterFinderCosmics
 

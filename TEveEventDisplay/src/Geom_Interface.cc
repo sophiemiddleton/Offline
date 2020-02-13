@@ -38,6 +38,18 @@ namespace mu2e{
 		return c;
 	}
 
+	CLHEP::Hep3Vector Geom_Interface::GetCaloCenter(unsigned nDisk){
+                std::string filename("Mu2eG4/geom/Calorimeter_CsI.txt");
+		SimpleConfig GeomConfig(filename);
+		double zCenter;
+		if(nDisk==0) zCenter = GeomConfig.getDouble("mu2e.calorimeter.caloMotherZ0")*CLHEP::mm;
+		if(nDisk==1) zCenter = GeomConfig.getDouble("mu2e.calorimeter.caloMotherZ1")*CLHEP::mm;
+		double xCenter  = -GeomConfig.getDouble("mu2e.solenoidOffset")*CLHEP::mm;
+		CLHEP::Hep3Vector c(xCenter, 0, zCenter);//y=0 as unchanged
+		TrackMu2eOrigin = c;
+		return c;
+	}
+
 	CLHEP::Hep3Vector Geom_Interface::GetGDMLOffsetFromMu2e(){
 		std::string filename("Mu2eG4/geom/mu2eHall.txt");
 		SimpleConfig HallConfig(filename);
@@ -61,6 +73,14 @@ namespace mu2e{
 		return c;
 	}
 
+	CLHEP::Hep3Vector Geom_Interface::PointToTracker(CLHEP::Hep3Vector point){
+		CLHEP::Hep3Vector Mu2eTrackerOrigin = Geom_Interface::GetTrackerCenter();
+		CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
+		return PointToTracker;
+
+        }
+
+
 	CLHEP::Hep3Vector Geom_Interface::PointToGDML(CLHEP::Hep3Vector point){
 		//Step 1: Get Tracker origin ~ (-3904,0,10171):
 		CLHEP::Hep3Vector Mu2eTrackerOrigin = Geom_Interface::GetTrackerCenter();
@@ -69,8 +89,8 @@ namespace mu2e{
 		//Step 3: Transform Tracker origin to the GDML origin. Need to find the transform of tracker ofigin -->GDML origin:
 		//CLHEP::Hep3Vector Tracker2GDMLOrigin(GDMLTrackerOrigin + Mu2eTrackerOrigin);
 		//Step 4: Transfrom a point first to tracker, then to GDML
-		//CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
-		//cout<<" in tracker "<<PointToTracker.x()<<" "<<PointToTracker.y()<<" "<<PointToTracker.z()<<endl;
+		CLHEP::Hep3Vector PointToTracker(point.x() + Mu2eTrackerOrigin.x(), point.y()+Mu2eTrackerOrigin.y(), point.z() +Mu2eTrackerOrigin.z());
+		cout<<" in tracker "<<PointToTracker.x()<<" "<<PointToTracker.y()<<" "<<PointToTracker.z()<<endl;
 		//CLHEP::Hep3Vector PointToGDML(point.x()+GDMLTrackerOrigin.x(),point.y() +GDMLTrackerOrigin.y(),point.z()+GDMLTrackerOrigin.z());
 		CLHEP::Hep3Vector PointToGDML(GDMLTrackerOrigin.x() - point.x(), +GDMLTrackerOrigin.y() - point.y(), GDMLTrackerOrigin.z()-point.z());
 		GetGDMLTrackerCenter();

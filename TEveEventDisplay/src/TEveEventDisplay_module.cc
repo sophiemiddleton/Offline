@@ -9,12 +9,13 @@
 #include <TList.h>
 #include <TObjArray.h>
 #include <Rtypes.h>
-
+#include <TPolyLine3D.h>
 // ... libRIO
 #include <TFile.h>
 // ... libGui
 #include <TGString.h>
 #include <TGLabel.h>
+#include <TGIcon.h>
 #include <TGButton.h>
 #include <TGButtonGroup.h>
 #include <TGTextEntry.h>
@@ -83,16 +84,16 @@
 //Collections:
 #include "RecoDataProducts/inc/StrawDigiCollection.hh"
 #include "RecoDataProducts/inc/CrvDigiCollection.hh"
-
+#include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 // Mu2e diagnostics
 using namespace std;
 using namespace mu2e;
 
-void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const ComboHit &hit, TEveElementList *list, Geom_Interface *g)
+void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP::Hep3Vector HitPos, TEveElementList *list, Geom_Interface *g) //FIXME - should be combo hit here , t should take in the CLHEPvec
   {
 	
-	CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
-
+	g->GetTrackerCenter();
+        CLHEP::Hep3Vector pointInMu2e = g->PointToTracker(HitPos);
 	std::string hstr=" hit %d";
 	std::string dstr=" hit# %d\nLayer: %d";
 	std::string strlst=pstr+hstr;
@@ -101,13 +102,11 @@ void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, const 
 	TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
 	h->SetTitle(Form(strlab.c_str(),n,hstr));
 
-	cout<<"initial hit : "<<hit.pos().x()<<" "<<hit.pos().y()<<" "<<hit.pos().z()<<endl;
-
-	h->SetNextPoint(-400,0,1000);
+	cout<<"in mu2e : "<<n<<" "<<pointInMu2e.x()/10<<" "<<pointInMu2e.y()/10<<" "<<pointInMu2e.z()/10<<endl;
 	h->SetMarkerColor(kRed);
 	h->SetMarkerSize(mSize);
 
-	h->SetNextPoint(HitPos.x(), HitPos.y(), HitPos.z());
+	h->SetNextPoint(pointInMu2e.x()/10, pointInMu2e.y()/10, pointInMu2e.z()/10); //as GDML is in cm (I think...and hope)
 	h->SetMarkerColor(mColor);
 	h->SetMarkerSize(mSize);
 	list->AddElement(h);
@@ -129,134 +128,143 @@ void setRecursiveColorTransp(TGeoVolume *vol, Int_t color, Int_t transp)
 namespace mu2e 
 {
   class TEveEventDisplay : public art::EDAnalyzer {
-    public:
+	public:
 
-	struct Config{
-	using Name=fhicl::Name;
-	using Comment=fhicl::Comment;
-	fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
-	fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
-	fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
-	fhicl::Atom<art::InputTag>strawdigiTag{Name("StrawDigiCollection"),Comment("strawdigiTag")};
-	fhicl::Atom<art::InputTag>crvdigiTag{Name("CrvDigiCollection"),Comment("crvTag")};
-	fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
-	fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
-	fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
-	fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
-	fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
-	fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
-	fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
-	fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
-	fhicl::Atom<bool> addCrystalHits{Name("addCrystalHits"), Comment("set to add calo lusters"),false};
-	fhicl::Atom<bool> addCrvHits{Name("addCrvHits"), Comment("set to add crv hits"),false};	
-    };
-    typedef art::EDAnalyzer::Table<Config> Parameters;
-    explicit TEveEventDisplay(const Parameters& conf);
-     virtual ~TEveEventDisplay();
-     virtual void beginJob() override;
-     virtual void beginRun(const art::Run& run) override;
-     virtual void analyze(const art::Event& e);
-     virtual void endJob() override;
- private:
-     Config _conf;
-     int _diagLevel;
-     Int_t _evt; 
-     //std::string moduleLabel_;
-     const StrawDigiCollection* _stcol;
-     const ComboHitCollection* _chcol;
-     const StrawDigiCollection* _strawdigicol;
-     const CrvDigiCollection* _crvdigicol;
-     //art::InputTag strawStepsTag_;
-     art::InputTag chTag_;
-     art::InputTag gensTag_;
-     art::InputTag strawdigiTag_;
-     art::InputTag crvdigiTag_;
-     //art::InputTag strawHitsTag_;
-     //std::string generatorModuleLabel_;
-     std::string g4ModuleLabel_;
-     //std::string hitMakerModuleLabel_;
+		struct Config{
+			using Name=fhicl::Name;
+			using Comment=fhicl::Comment;
+			fhicl::Atom<int> diagLevel{Name("diagLevel"), Comment("for info"),0};
+			fhicl::Atom<art::InputTag>chTag{Name("ComboHitCollection"),Comment("chTag")};
+			fhicl::Atom<art::InputTag>gensTag{Name("GenParticleCollection"),Comment("gensTag")};
+			fhicl::Atom<art::InputTag>strawdigiTag{Name("StrawDigiCollection"),Comment("strawdigiTag")};
+			fhicl::Atom<art::InputTag>crvdigiTag{Name("CrvDigiCollection"),Comment("crvTag")};
+			fhicl::Atom<art::InputTag>cosmicTag{Name("CosmicTrackSeedCollection"),Comment("cosmicTag")};
+			fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
+			fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
+			fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
+			fhicl::Atom<bool> doDisplay{Name("doDisplay"), Comment(""), true};
+			fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"), Comment(""), true}; 
+			fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
+			fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
+			fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
+			fhicl::Atom<bool> addCrystalHits{Name("addCrystalHits"), Comment("set to add calo lusters"),false};
+			fhicl::Atom<bool> addCrvHits{Name("addCrvHits"), Comment("set to add crv hits"),false};	
+			fhicl::Atom<bool> addCosmicSeedFit{Name("addCosmicSeedFit"), Comment("for fitted cosmic track"), false};
+			fhicl::Atom<bool> isCosmic{Name("isCosmic"), Comment("flag for cosmic track v helix track"), false};	
+	    };
+		typedef art::EDAnalyzer::Table<Config> Parameters;
+		explicit TEveEventDisplay(const Parameters& conf);
+		virtual ~TEveEventDisplay();
+		virtual void beginJob() override;
+		virtual void beginRun(const art::Run& run) override;
+		virtual void analyze(const art::Event& e);
+		virtual void endJob() override;
+	private:
+		     Config _conf;
+		     int _diagLevel;
+		     Int_t _evt; 
+		     //std::string moduleLabel_;
+		     const StrawDigiCollection* _stcol;
+		     const ComboHitCollection* _chcol;
+		     const StrawDigiCollection* _strawdigicol;
+		     const CrvDigiCollection* _crvdigicol;
+		     const CosmicTrackSeedCollection* _cosmiccol;
+		     const GenParticleCollection* _gencol;
+		     //art::InputTag strawStepsTag_;
+		     art::InputTag chTag_;
+		     art::InputTag gensTag_;
+		     art::InputTag strawdigiTag_;
+		     art::InputTag crvdigiTag_;
+		     art::InputTag cosmicTag_;
+		     //art::InputTag strawHitsTag_;
+		     //std::string generatorModuleLabel_;
+		     std::string g4ModuleLabel_;
+		     //std::string hitMakerModuleLabel_;
 
-     // Name of the tracker StepPoint collection
-     //std::string trackerStepPoints_;
+		     // Name of the tracker StepPoint collection
+		     //std::string trackerStepPoints_;
 
 
-      double minEnergyDep_;
-      size_t minHits_;
-      bool isFirstEvent = true;
-      bool doDisplay_;
-      bool clickToAdvance_;
-      bool showEvent_;
-      TApplication* application_;
-      TDirectory*   directory_ = nullptr;
-      
-      Double_t        hitMarkerSize_;
-      Double_t        trkMaxR_;
-      Double_t        trkMaxZ_;
-      Double_t        trkMaxStepSize_;
-      Double_t        camRotateCenterH_;
-      Double_t        camRotateCenterV_;
-      Double_t        camDollyDelta_;
+		      double minEnergyDep_;
+		      size_t minHits_;
+		      bool isFirstEvent = true;
+		      bool doDisplay_;
+		      bool clickToAdvance_;
+		      bool showEvent_;
+		      TApplication* application_;
+		      TDirectory*   directory_ = nullptr;
+		      
+		      Double_t        hitMarkerSize_;
+		      Double_t        trkMaxR_;
+		      Double_t        trkMaxZ_;
+		      Double_t        trkMaxStepSize_;
+		      Double_t        camRotateCenterH_;
+		      Double_t        camRotateCenterV_;
+		      Double_t        camDollyDelta_;
 
-      TEveGeoShape* fSimpleGeom;
+		      TEveGeoShape* fSimpleGeom;
 
-      TEveViewer *fXYView;
-      TEveViewer *fRZView;
-      TEveProjectionManager *fXYMgr;
-      TEveProjectionManager *fRZMgr;
-      TEveScene *fDetXYScene;
-      TEveScene *fDetRZScene;
-      TEveScene *fEvtXYScene;
-      TEveScene *fEvtRZScene;
+		      TEveViewer *fXYView;
+		      TEveViewer *fRZView;
+		      TEveProjectionManager *fXYMgr;
+		      TEveProjectionManager *fRZMgr;
+		      TEveScene *fDetXYScene;
+		      TEveScene *fDetRZScene;
+		      TEveScene *fEvtXYScene;
+		      TEveScene *fEvtRZScene;
 
-      TGTextEntry      *fTeRun,*fTeEvt;
-      TGLabel          *fTlRun,*fTlEvt;
-   
-      //GeomHandle<mu2e::BFieldManager> bfmgr;
-     
-      TEveTrackList *fTrackList;
-      TEveElementList *fHitsList;
-      
-      bool addHits_, addTracks_, addCrystalHits_, addCrvHits_;
-      EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
-      Geom_Interface *gdml_geom	=new Geom_Interface(); 
-      //Particle_Interface *particle_info = new Particle_Interface();
+		      TGTextEntry      *fTeRun,*fTeEvt;
+		      TGLabel          *fTlRun,*fTlEvt;
+		   
+		     // GeomHandle<mu2e::BFieldManager> bfmgr;
+		     
+		      TEveTrackList *fTrackList;
+		      TEveElementList *fHitsList;
+		      
+		      bool addHits_, addTracks_, addCrystalHits_, addCrvHits_, addCosmicSeedFit_, isCosmic_;
+		      EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
+		      Geom_Interface *gdml_geom	=new Geom_Interface(); 
+		      //Particle_Interface *particle_info = new Particle_Interface();
 
-      TGeoManager* geom = new TGeoManager("geom","Geom");
-      std::vector<CLHEP::Hep3Vector> GDMLt;
+		      TGeoManager* geom = new TGeoManager("geom","Geom");
+		      std::vector<CLHEP::Hep3Vector> GDMLt;
 
-  
-      bool foundEvent = false;
-      void MakeNavPanel();
-      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector>& t);
-      void InsideDS( TGeoNode * node, bool inDSVac );
-      void hideTop(TGeoNode* node);
-      void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
-      void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
-      void hideBuilding(TGeoNode* node);
-      void AddTrack(const art::Event& event, mu2e::BFieldManager const& fm);
-      void AddHits(const art::Event& event);
-      void AddCrystalHits(const art::Event& event);
-      void AddCrvHits(const art::Event& event);
-      bool FindData(const art::Event& event);
-};
+		  
+		      bool foundEvent = false;
+		      void MakeNavPanel();
+		      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector>& t);
+		      void InsideDS( TGeoNode * node, bool inDSVac );
+		      void hideTop(TGeoNode* node);
+		      void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
+		      void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
+		      void hideBuilding(TGeoNode* node);
+		      void AddCosmicTrack(const art::Event& event);
+		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
+		      void AddHits(const art::Event& event);
+		      void AddCrystalHits(const art::Event& event);
+		      void AddCrvHits(const art::Event& event);
+		      bool FindData(const art::Event& event);
+	};
 
 TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
 	art::EDAnalyzer(conf),
 	_diagLevel(conf().diagLevel()),
-        chTag_(conf().chTag()),
-        gensTag_(conf().gensTag()),
+	chTag_(conf().chTag()),
+	gensTag_(conf().gensTag()),
 	strawdigiTag_(conf().strawdigiTag()),
 	crvdigiTag_(conf().crvdigiTag()),
-        g4ModuleLabel_(conf().g4ModuleLabel()),
-        minEnergyDep_(conf().minEnergyDep()),
-        minHits_(conf().minHits()),
+	g4ModuleLabel_(conf().g4ModuleLabel()),
+	minEnergyDep_(conf().minEnergyDep()),
+	minHits_(conf().minHits()),
 	doDisplay_(conf().doDisplay()),
-        clickToAdvance_(conf().clickToAdvance()),
-        showEvent_(conf().showEvent()),
+	clickToAdvance_(conf().clickToAdvance()),
+	showEvent_(conf().showEvent()),
 	addHits_(conf().addHits()),
 	addTracks_(conf().addTracks()),
 	addCrystalHits_(conf().addCrystalHits()),
-	addCrvHits_(conf().addCrvHits()){
+	addCrvHits_(conf().addCrvHits()),
+	addCosmicSeedFit_(conf().addCosmicSeedFit()),
+	isCosmic_(conf().isCosmic()){
 		visutil_ = new EvtDisplayUtils();
 	}
 
@@ -266,176 +274,182 @@ TEveEventDisplay::~TEveEventDisplay(){}
 /*-------Create Control Panel For Event Navigation----""*/
 void TEveEventDisplay::MakeNavPanel()
 {
-  TEveBrowser* browser = gEve->GetBrowser();
-  browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
+	TEveBrowser* browser = gEve->GetBrowser();
+	browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
 
-  TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
-  frmMain->SetWindowName("EVT NAV");
-  frmMain->SetCleanup(kDeepCleanup);
+	TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
+	frmMain->SetWindowName("EVT NAV");
+	frmMain->SetCleanup(kDeepCleanup);
 
-  TGHorizontalFrame* navFrame = new TGHorizontalFrame(frmMain);
-  TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
-  {
-    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
-    TGPictureButton* b = 0;
+	TGHorizontalFrame* navFrame = new TGHorizontalFrame(frmMain);
+	TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
+	{
+		TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
+		TGPictureButton* b = 0;
 
-    // ... Create back button and connect to "PrevEvent" rcvr in visutils
-    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
-    navFrame->AddFrame(b);
-    b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
+		// ... Create back button and connect to "PrevEvent" rcvr in visutils
+		b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
+		navFrame->AddFrame(b);
+		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
 
-    // ... Create forward button and connect to "NextEvent" rcvr in visutils
-    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
-    navFrame->AddFrame(b);
-    b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
+		// ... Create forward button and connect to "NextEvent" rcvr in visutils
+		b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
+		navFrame->AddFrame(b);
+		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
-    // ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
-    TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
-    fTlRun = new TGLabel(runoFrame,"Run Number");
-    fTlRun->SetTextJustify(kTextLeft);
-    fTlRun->SetMargins(5,5,5,0);
-    runoFrame->AddFrame(fTlRun);
+		// ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
+		TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
+		fTlRun = new TGLabel(runoFrame,"Run Number");
+		fTlRun->SetTextJustify(kTextLeft);
+		fTlRun->SetMargins(5,5,5,0);
+		runoFrame->AddFrame(fTlRun);
     
-    fTeRun = new TGTextEntry(runoFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
-    visutil_->fTbRun->AddText(0, "1");
-    fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
-    runoFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
+		fTeRun = new TGTextEntry(runoFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
+		visutil_->fTbRun->AddText(0, "1");
+		fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
+		runoFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
 
-    // ... Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
-    TGHorizontalFrame* evnoFrame = new TGHorizontalFrame(evtidFrame);
-    fTlEvt = new TGLabel(evnoFrame,"Evt Number");
-    fTlEvt->SetTextJustify(kTextLeft);
-    fTlEvt->SetMargins(5,5,5,0);
-    evnoFrame->AddFrame(fTlEvt);
+		// ... Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
+		TGHorizontalFrame* evnoFrame = new TGHorizontalFrame(evtidFrame);
+		fTlEvt = new TGLabel(evnoFrame,"Evt Number");
+		fTlEvt->SetTextJustify(kTextLeft);
+		fTlEvt->SetMargins(5,5,5,0);
+		evnoFrame->AddFrame(fTlEvt);
 
-    fTeEvt = new TGTextEntry(evnoFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
-    visutil_->fTbEvt->AddText(0, "1");
-    fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
-    evnoFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
+		//Add logo
+		std::string logoFile = "TEveEventDisplay/src/Icons/mu2e_logo_oval.png";
+		const TGPicture *logo = gClient->GetPicture(logoFile.c_str());
+		TGIcon *icon = new TGIcon(navFrame,logo,50,50);
+		navFrame->AddFrame(icon,new TGLayoutHints(kLHintsLeft,20,0,0,0));
 
-    // ... Add horizontal run & event number subframes to vertical evtidFrame
-    evtidFrame->AddFrame(runoFrame,new TGLayoutHints(kLHintsExpandX));
-    evtidFrame->AddFrame(evnoFrame,new TGLayoutHints(kLHintsExpandX));
+		fTeEvt = new TGTextEntry(evnoFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
+		visutil_->fTbEvt->AddText(0, "1");
+		fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
+		evnoFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
 
-    // ... Add navFrame and evtidFrame to MainFrame
-    frmMain->AddFrame(navFrame);
-    TGHorizontal3DLine *separator = new TGHorizontal3DLine(frmMain);
-    frmMain->AddFrame(separator, new TGLayoutHints(kLHintsExpandX));
-    frmMain->AddFrame(evtidFrame);
+		// ... Add horizontal run & event number subframes to vertical evtidFrame
+		evtidFrame->AddFrame(runoFrame,new TGLayoutHints(kLHintsExpandX));
+		evtidFrame->AddFrame(evnoFrame,new TGLayoutHints(kLHintsExpandX));
 
-    frmMain->MapSubwindows();
-    frmMain->Resize();
-    frmMain->MapWindow();
+		// ... Add navFrame and evtidFrame to MainFrame
+		frmMain->AddFrame(navFrame);
+		TGHorizontal3DLine *separator = new TGHorizontal3DLine(frmMain);
+		frmMain->AddFrame(separator, new TGLayoutHints(kLHintsExpandX));
+		frmMain->AddFrame(evtidFrame);
 
-    browser->StopEmbedding();
-    browser->SetTabTitle("Event Nav", 0);
-  }
+		frmMain->MapSubwindows();
+		frmMain->Resize();
+		frmMain->MapWindow();
+
+		browser->StopEmbedding();
+		browser->SetTabTitle("Event Nav", 0);
+ 	 }
 }
 
 void TEveEventDisplay::beginJob(){
-  directory_ = gDirectory;
-  // Create application environment:
-   if ( !gApplication ){
-      int    tmp_argc(0);
-      char** tmp_argv(0);
-      application_ = new TApplication( "noapplication", &tmp_argc, tmp_argv );
-   }
-  // Initialize global Eve application manager (return gEve)
-  TEveManager::Create();
-  
-  // Create detector and event scenes for ortho views
-  fDetXYScene = gEve->SpawnNewScene("Det XY Scene", "");
-  fDetRZScene = gEve->SpawnNewScene("Det RZ Scene", "");
-  fEvtXYScene = gEve->SpawnNewScene("Evt XY Scene", "");
-  fEvtRZScene = gEve->SpawnNewScene("Evt RZ Scene", "");
+	directory_ = gDirectory;
+	// Create application environment:
+	if ( !gApplication ){
+		int    tmp_argc(0);
+		char** tmp_argv(0);
+		application_ = new TApplication( "noapplication", &tmp_argc, tmp_argv );
+	}
+	// Initialize global Eve application manager (return gEve)
+	TEveManager::Create();
 
-  // Create XY/RZ projection mgrs, draw projected axes, & add them to scenes
-  fXYMgr = new TEveProjectionManager(TEveProjection::kPT_RPhi);
-  TEveProjectionAxes* axes_xy = new TEveProjectionAxes(fXYMgr);
-  fDetXYScene->AddElement(axes_xy);
+	// Create detector and event scenes for ortho views
+	fDetXYScene = gEve->SpawnNewScene("Det XY Scene", "");
+	fDetRZScene = gEve->SpawnNewScene("Det RZ Scene", "");
+	fEvtXYScene = gEve->SpawnNewScene("Evt XY Scene", "");
+	fEvtRZScene = gEve->SpawnNewScene("Evt RZ Scene", "");
 
-  fRZMgr = new TEveProjectionManager(TEveProjection::kPT_RhoZ);
-  TEveProjectionAxes* axes_rz = new TEveProjectionAxes(fRZMgr);
-  fDetRZScene->AddElement(axes_rz);
+	// Create XY/RZ projection mgrs, draw projected axes, & add them to scenes
+	fXYMgr = new TEveProjectionManager(TEveProjection::kPT_RPhi);
+	TEveProjectionAxes* axes_xy = new TEveProjectionAxes(fXYMgr);
+	fDetXYScene->AddElement(axes_xy);
 
-  // Create side-by-side ortho XY & RZ views in new tab & add det/evt scenes
-  TEveWindowSlot *slot = 0;
-  TEveWindowPack *pack = 0;
+	fRZMgr = new TEveProjectionManager(TEveProjection::kPT_RhoZ);
+	TEveProjectionAxes* axes_rz = new TEveProjectionAxes(fRZMgr);
+	fDetRZScene->AddElement(axes_rz);
 
-  slot = TEveWindow::CreateWindowInTab(gEve->GetBrowser()->GetTabRight());
-  pack = slot->MakePack();
-  pack->SetElementName("Ortho Views");
-  pack->SetHorizontal();
-  pack->SetShowTitleBar(kFALSE);
+	// Create side-by-side ortho XY & RZ views in new tab & add det/evt scenes
+	TEveWindowSlot *slot = 0;
+	TEveWindowPack *pack = 0;
 
-  pack->NewSlot()->MakeCurrent();
-  fXYView = gEve->SpawnNewViewer("XY View", "");
-  fXYView->GetGLViewer()->SetCurrentCamera(TGLViewer::kCameraOrthoXOY);
-  fXYView->AddScene(fDetXYScene);
-  fXYView->AddScene(fEvtXYScene);
+	slot = TEveWindow::CreateWindowInTab(gEve->GetBrowser()->GetTabRight());
+	pack = slot->MakePack();
+	pack->SetElementName("Ortho Views");
+	pack->SetHorizontal();
+	pack->SetShowTitleBar(kFALSE);
 
-  pack->NewSlot()->MakeCurrent();
-  fRZView = gEve->SpawnNewViewer("RZ View", "");
-  fRZView->GetGLViewer()->SetCurrentCamera(TGLViewer::kCameraOrthoXOY);
-  fRZView->AddScene(fDetRZScene);
-  fRZView->AddScene(fEvtRZScene);
+	pack->NewSlot()->MakeCurrent();
+	fXYView = gEve->SpawnNewViewer("XY View", "");
+	fXYView->GetGLViewer()->SetCurrentCamera(TGLViewer::kCameraOrthoXOY);
+	fXYView->AddScene(fDetXYScene);
+	fXYView->AddScene(fEvtXYScene);
 
-  gEve->GetBrowser()->GetTabRight()->SetTab(0);
+	pack->NewSlot()->MakeCurrent();
+	fRZView = gEve->SpawnNewViewer("RZ View", "");
+	fRZView->GetGLViewer()->SetCurrentCamera(TGLViewer::kCameraOrthoXOY);
+	fRZView->AddScene(fDetRZScene);
+	fRZView->AddScene(fEvtRZScene);
 
-  MakeNavPanel();
-  
-  gEve->AddEvent(new TEveEventManager("Event", "Empty Event"));
+	gEve->GetBrowser()->GetTabRight()->SetTab(0);
 
-  TGLViewer *glv = gEve->GetDefaultGLViewer();
-  glv->SetGuideState(TGLUtil::kAxesEdge, kTRUE, kFALSE, 0);
-  glv->CurrentCamera().RotateRad(camRotateCenterH_,camRotateCenterV_);
-  glv->CurrentCamera().Dolly(camDollyDelta_,kFALSE,kFALSE);
+	MakeNavPanel();
+
+	gEve->AddEvent(new TEveEventManager("Event", "Empty Event"));
+
+	TGLViewer *glv = gEve->GetDefaultGLViewer();
+	glv->SetGuideState(TGLUtil::kAxesEdge, kTRUE, kFALSE, 0);
+	glv->CurrentCamera().RotateRad(camRotateCenterH_,camRotateCenterV_);
+	glv->CurrentCamera().Dolly(camDollyDelta_,kFALSE,kFALSE);
 }
 
 
 void TEveEventDisplay::beginRun(const art::Run& run){
-  
-  if(gGeoManager){
-    gGeoManager->GetListOfNodes()->Delete();
-    gGeoManager->GetListOfVolumes()->Delete();
-    gGeoManager->GetListOfShapes()->Delete();
-  }
-  gEve->GetGlobalScene()->DestroyElements();
-  fDetXYScene->DestroyElements();
-  fDetRZScene->DestroyElements();
-  
-  // Import the GDML of entire Mu2e Geometry
-  geom = gdml_geom->Geom_Interface::getGeom("TEveEventDisplay/src/fix.gdml");
-  gdml_geom->GetTrackerCenter();
- 
-  //Get Top Volume
-  TGeoVolume* topvol = geom->GetTopVolume();
-  
-  //Set Top Volume for gGeoManager:
-  gGeoManager->SetTopVolume(topvol);
-  gGeoManager->SetTopVisible(kTRUE);
-  int nn = gGeoManager->GetNNodes();
-  printf("nodes in geom = %d\n",nn);
-  //Get Top Node:
-  TGeoNode* topnode = gGeoManager->GetTopNode();
-  TEveGeoTopNode* etopnode = new TEveGeoTopNode(gGeoManager, topnode);
-  etopnode->SetVisLevel(4);
-  etopnode->GetNode()->GetVolume()->SetVisibility(kFALSE);
-  //Set colours to allow transparency:
-  setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
-  //This is a basic function to allow us to just see tracker and calo, it needs fixing:
-  
-  
-  hideBuilding(topnode);
-  hideTop(topnode);
-  //InsideDS( topnode, false );
-  
-   Heirarchy(topnode, GDMLt);
-   for(auto const& transformation : GDMLt){
-	cout<<"Transformation "<<transformation.x()<<" "<<transformation.y()<<" "<<transformation.z()<<endl;
-  }
-  //Add static detector geometry to global scene
-  gEve->AddGlobalElement(etopnode);
+
+	if(gGeoManager){
+		gGeoManager->GetListOfNodes()->Delete();
+		gGeoManager->GetListOfVolumes()->Delete();
+		gGeoManager->GetListOfShapes()->Delete();
+	}
+	gEve->GetGlobalScene()->DestroyElements();
+	fDetXYScene->DestroyElements();
+	fDetRZScene->DestroyElements();
+
+	// Import the GDML of entire Mu2e Geometry
+	geom = gdml_geom->Geom_Interface::getGeom("TEveEventDisplay/src/fix.gdml");
+	gdml_geom->GetTrackerCenter();
+
+	//Get Top Volume
+	TGeoVolume* topvol = geom->GetTopVolume();
+
+	//Set Top Volume for gGeoManager:
+	gGeoManager->SetTopVolume(topvol);
+	gGeoManager->SetTopVisible(kTRUE);
+	int nn = gGeoManager->GetNNodes();
+	printf("nodes in geom = %d\n",nn);
+	//Get Top Node:
+	TGeoNode* topnode = gGeoManager->GetTopNode();
+	TEveGeoTopNode* etopnode = new TEveGeoTopNode(gGeoManager, topnode);
+	etopnode->SetVisLevel(4);
+	etopnode->GetNode()->GetVolume()->SetVisibility(kFALSE);
+	//Set colours to allow transparency:
+	setRecursiveColorTransp(etopnode->GetNode()->GetVolume(), kWhite-10,70);
+	//This is a basic function to allow us to just see tracker and calo, it needs fixing:
+
+
+	hideBuilding(topnode);
+	hideTop(topnode);
+	InsideDS( topnode, false );
+
+	Heirarchy(topnode, GDMLt);
+	for(auto const& transformation : GDMLt){
+		cout<<"Transformation "<<transformation.x()<<" "<<transformation.y()<<" "<<transformation.z()<<endl;
+  	}
+  	//Add static detector geometry to global scene
+  	gEve->AddGlobalElement(etopnode);
   
 }
 
@@ -449,9 +463,7 @@ void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector
 	Double_t master[3];
 	const Double_t *local = shape->GetOrigin();
 	if(shape!=NULL){
-		cout<<node->GetName()<<"Hall Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
 		gGeoManager->LocalToMaster(local,master);
-		cout<<"In World co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
 		CLHEP::Hep3Vector hallToworld(master[0], master[1], master[2]);
 		TransformList.push_back(hallToworld);
         }
@@ -463,9 +475,7 @@ void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector
 	Double_t master[3];
 	const Double_t *local = shape->GetOrigin();
 	if(shape!=NULL){
-		cout<<node->GetName()<<"DS Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
 		gGeoManager->LocalToMaster(local,master);
-		cout<<"In Hall co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
 		CLHEP::Hep3Vector DSTohall(master[0], master[1], master[2]);
 		TransformList.push_back(DSTohall);
         }
@@ -477,9 +487,7 @@ void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector
 	Double_t master[3];
 	const Double_t *local = shape->GetOrigin();
 	if(shape!=NULL){
-		cout<<node->GetName()<<"Tracker Local Origin "<<local[0]<<" "<<local[1]<<" "<<local[2]<<endl;
 		gGeoManager->LocalToMaster(local,master);
-		cout<<"In DS co-ords : "<<master[0]<<" "<<master[1]<<" "<<master[2]<<endl;
 		CLHEP::Hep3Vector TrackerToDS(master[0], master[1], master[2]);
 		TransformList.push_back(TrackerToDS);
         }
@@ -496,94 +504,96 @@ void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector
 }
 
 void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
-  std::string _name = (node->GetVolume()->GetName());
-  if ( node->GetMotherVolume() ) {
-    std::string motherName(node->GetMotherVolume()->GetName());
-    if ( motherName == "DS2Vacuum" || motherName == "DS3Vacuum" ){
-      inDSVac = true;
-    }
-  }
-  if ( inDSVac && _name.find("VirtualDetector_TT_Mid") != 0 ) {
-    node->SetVisibility(kTRUE);
-  } else{
-    node->SetVisibility(kFALSE);
-  }
-
-  // Descend into each daughter TGeoNode.
-  int ndau = node->GetNdaughters();
-  for ( int i=0; i<ndau; ++i ){
-    TGeoNode * dau = node->GetDaughter(i);
-    InsideDS( dau, inDSVac );
-  }
+	std::string _name = (node->GetVolume()->GetName());
+	if ( node->GetMotherVolume() ) {
+		std::string motherName(node->GetMotherVolume()->GetName());
+		if ( motherName == "DS2Vacuum" || motherName == "DS3Vacuum" ){
+		inDSVac = true;
+		}
+	}
+	if ( inDSVac && _name.find("VirtualDetector_TT_Mid") != 0 ) {
+		node->SetVisibility(kTRUE);
+	} else{
+		node->SetVisibility(kFALSE);
+	}
+	int ndau = node->GetNdaughters();
+	for ( int i=0; i<ndau; ++i ){
+		TGeoNode * dau = node->GetDaughter(i);
+		InsideDS( dau, inDSVac );
+  	}
 
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
+	if(_diagLevel > 0){
+		cout<<"Analyzing Event :"<<event.id()<<endl;
+	}
+	GeomHandle<mu2e::BFieldManager> bfmgr;
+	_evt = event.id().event();
+	if(showEvent_ ){
+		if(addHits_) AddHits(event);
+		if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
+		//if(addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
+		//if(AddCrystalHits_) AddCrystalHits(event);
+		//if(AddCrvHits_)
+		
+	}
 
-  cout<<"Analyzing Event Number "<<event.id()<<endl;
-   GeomHandle<mu2e::BFieldManager> bfmgr;
-  _evt = event.id().event();
-  if(showEvent_ ){
-	if(addHits_) AddHits(event);
-  	if(addTracks_) AddTrack(event, *bfmgr);
-  	//if(AddCrystalHits_) AddCrystalHits(event);
-  }
+	std::ostringstream sstr;
+	sstr << event.id().run();
+	visutil_->fTbRun->Clear();
+	visutil_->fTbRun->AddText(0,sstr.str().c_str());
+	gClient->NeedRedraw(fTeRun);
 
-  std::ostringstream sstr;
-  sstr << event.id().run();
-  visutil_->fTbRun->Clear();
-  visutil_->fTbRun->AddText(0,sstr.str().c_str());
-  gClient->NeedRedraw(fTeRun);
+	sstr.str("");
+	sstr << event.id().event();
+	visutil_->fTbEvt->Clear();
+	visutil_->fTbEvt->AddText(0,sstr.str().c_str());
 
-  sstr.str("");
-  sstr << event.id().event();
-  visutil_->fTbEvt->Clear();
-  visutil_->fTbEvt->AddText(0,sstr.str().c_str());
+	// Delete visualization structures associated with previous event
+	if(!isFirstEvent){
+		gEve->GetViewers()->DeleteAnnotations();
+		gEve->GetCurrentEvent()->DestroyElements();
+	}
+	// Import event into ortho views and apply projections
+	TEveElement* currevt = gEve->GetCurrentEvent();
 
-  // Delete visualization structures associated with previous event
-  if(!isFirstEvent){
-  	gEve->GetViewers()->DeleteAnnotations();
- 	gEve->GetCurrentEvent()->DestroyElements();
-   }
-  // Import event into ortho views and apply projections
-  TEveElement* currevt = gEve->GetCurrentEvent();
+	fEvtXYScene->DestroyElements();
+	fXYMgr->ImportElements(currevt, fEvtXYScene);
 
-  fEvtXYScene->DestroyElements();
-  fXYMgr->ImportElements(currevt, fEvtXYScene);
- 
-  fEvtRZScene->DestroyElements();
-  fRZMgr->ImportElements(currevt, fEvtRZScene);
-  
-  geom->Draw("ogl");
-  gPad->WaitPrimitive();
-  isFirstEvent = false;
+	fEvtRZScene->DestroyElements();
+	fRZMgr->ImportElements(currevt, fEvtRZScene);
+
+	geom->Draw("ogl");
+	gPad->WaitPrimitive();
+	isFirstEvent = false;
 } 
 
 void TEveEventDisplay::hideTop(TGeoNode* node) {
-  TString name = node->GetName();
-  if(_diagLevel > 0 and name.Index("Shield")>0) {
-    std::cout << name << " " <<  name.Index("mBox_") << std::endl;
-  }
-  bool test = false;
+  	TString name = node->GetName();
+  	if(_diagLevel > 0 and name.Index("Shield")>0) {
+		std::cout << name << " " <<  name.Index("mBox_") << std::endl;
+  	}
+  	bool test = false;
 
-  // from gg1
-  if(name.Index("mBox_45_")>=0) test = true;
-  if(name.Index("mBox_46_")>=0) test = true;
-  if(name.Index("mBox_47_")>=0) test = true;
-  if(name.Index("mBox_48_")>=0) test = true;
-  if(name.Index("mBox_49_")>=0) test = true;
-  if(name.Index("mBox_74_")>=0) test = true;
+	// from gg1
+	if(name.Index("mBox_45_")>=0) test = true;
+	if(name.Index("mBox_46_")>=0) test = true;
+	if(name.Index("mBox_47_")>=0) test = true;
+	if(name.Index("mBox_48_")>=0) test = true;
+	if(name.Index("mBox_49_")>=0) test = true;
+	if(name.Index("mBox_74_")>=0) test = true;
 
-  if(test) {
-    std::cout << "turning off " << name << std::endl;
-    node->SetVisibility(false);
-  }
-  
-  // Descend recursively into each daughter TGeoNode.
-  int ndau = node->GetNdaughters();
-  for ( int i=0; i<ndau; ++i ){
-    TGeoNode * dau = node->GetDaughter(i);
-    hideTop( dau );
+	if(test) {
+		std::cout << "turning off " << name << std::endl;
+		node->SetVisibility(false);
+	}
+
+	// Descend recursively into each daughter TGeoNode.
+	int ndau = node->GetNdaughters();
+	for ( int i=0; i<ndau; ++i ){
+		TGeoNode * dau = node->GetDaughter(i);
+		hideTop( dau );
   }
 
 }
@@ -591,125 +601,149 @@ void TEveEventDisplay::hideTop(TGeoNode* node) {
 void TEveEventDisplay::hideNodesByName(TGeoNode* node, const std::string& str,
 				     bool onOff) {
 
-  std::string name(node->GetName());
-  if ( name.find(str) != std::string::npos ){
-    node->SetVisibility(onOff);
-    if(_diagLevel > 0) std::cout <<"hiding "<< name << std::endl;
-  }
-
-  // Descend recursively into each daughter TGeoNode.
-  int ndau = node->GetNdaughters();
-  for ( int i=0; i<ndau; ++i ){
-    TGeoNode * dau = node->GetDaughter(i);
-    hideNodesByName( dau, str, onOff);
-  }
+	std::string name(node->GetName());
+	if ( name.find(str) != std::string::npos ){
+		node->SetVisibility(onOff);
+		if(_diagLevel > 0) std::cout <<"hiding "<< name << std::endl;
+	}
+	int ndau = node->GetNdaughters();
+	for ( int i=0; i<ndau; ++i ){
+		TGeoNode * dau = node->GetDaughter(i);
+		hideNodesByName( dau, str, onOff);
+	}
 
 }
 
 void TEveEventDisplay::hideNodesByMaterial(TGeoNode* node, 
 					 const std::string& mat, bool onOff) {
 
-  std::string material(node->GetVolume()->GetMaterial()->GetName());
-  if ( material.find(mat) != std::string::npos ) node->SetVisibility(onOff);
-
-  // Descend recursively into each daughter TGeoNode.
-  int ndau = node->GetNdaughters();
-  for ( int i=0; i<ndau; ++i ){
-    TGeoNode * dau = node->GetDaughter(i);
-    hideNodesByMaterial( dau, mat, onOff);
-  }
+	std::string material(node->GetVolume()->GetMaterial()->GetName());
+	if ( material.find(mat) != std::string::npos ) node->SetVisibility(onOff);
+	int ndau = node->GetNdaughters();
+	for ( int i=0; i<ndau; ++i ){
+		TGeoNode * dau = node->GetDaughter(i);
+		hideNodesByMaterial( dau, mat, onOff);
+	}
 
 }
 
 void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 
-  static std::vector <std::string> substrings  { "Ceiling",
-      "backfill", "dirt", "concrete", "VirtualDetector",
-      "pipeType","CRSAluminium","CRV","CRS", "ExtShield", "PSShield"};
-  for(auto& i: substrings) hideNodesByName(node,i,kFALSE);
+	static std::vector <std::string> substrings  { "Ceiling",
+	"backfill", "dirt", "concrete", "VirtualDetector",
+	"pipeType","CRSAluminium","CRV","CRS", "ExtShield", "PSShield"};
+	for(auto& i: substrings) hideNodesByName(node,i,kFALSE);
 
-  static std::vector <std::string> materials { "MBOverburden", "CONCRETE"};
-  for(auto& i: materials) hideNodesByMaterial(node,i,kFALSE);
+	static std::vector <std::string> materials { "MBOverburden", "CONCRETE"};
+	for(auto& i: materials) hideNodesByMaterial(node,i,kFALSE);
 
 
 }
 
-void TEveEventDisplay::AddTrack(const art::Event& event, mu2e::BFieldManager const& bf){
-    std::cout<<"Adding tracks "<<std::endl;
-    auto gens = event.getValidHandle<GenParticleCollection>(gensTag_);
+void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
+	auto cosH = event.getValidHandle<mu2e::CosmicTrackSeedCollection>(cosmicTag_);
+	_cosmiccol = cosH.product();
+	if(!_cosmiccol->empty()){
+		TEveStraightLineSet *CosmicTrackList = new TEveStraightLineSet();
+		for(size_t ist = 0;ist < _cosmiccol->size(); ++ist){
+			CosmicTrackSeed sts =(*_cosmiccol)[ist];
+			CosmicTrack st = sts._track;
+			
+			CosmicTrackList->SetLineColor(kGreen);
+			Float_t tz1 = -150;
+			Float_t tz2 = 150;
+			Float_t tx1 = st.InitParams.A0  + st.InitParams.A1*tz1;
+			Float_t tx2 = st.InitParams.A0  + st.InitParams.A1*tz2;
+			Float_t ty1 = st.InitParams.B0  + st.InitParams.B1*tz1;
+			Float_t ty2 = st.InitParams.B0  + st.InitParams.B1*tz2; 	
+			CosmicTrackList->AddLine(tx1, ty1, tz1, tx2, ty2, tz2);
+		
+			cout<<st.InitParams.A0<<"track "<<endl;
+			gEve->AddElement(CosmicTrackList);
+		    	gEve->Redraw3D();
+		}
+	}
+}
 
-    if (fTrackList == 0) {
-      fTrackList = new TEveTrackList("Tracks");
-      fTrackList->SetLineWidth(4);
-      fTrackList->IncDenyDestroy(); 
-    }
-    else {
-      fTrackList->DestroyElements();         
-    }
 
-    int mcindex=-1;
-    for ( auto const& gen: *gens){
-      TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
-      //CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));//FIXME
-      trkProp->SetMagField(-1*1000.);
-      trkProp->SetMaxR(trkMaxR_);
-      trkProp->SetMaxZ(trkMaxZ_);
-      trkProp->SetMaxStep(trkMaxStepSize_);
-      mcindex++;
-      //if ( gen.hasChildren() ) continue;
-      TParticle mcpart;
-      mcpart.SetMomentum(gen.momentum().px(),gen.momentum().py(),gen.momentum().pz(),gen.momentum().e());
-     
-      mcpart.SetProductionVertex(gen.position().x()*0.1,gen.position().y()*0.1,gen.position().z()*0.1,0.);
-      cout<<"setting pdg code "<<endl;
-      //mcpart.SetPdgCode(gen.pdgId()); //FIXME
-      cout<<"constructing track"<<endl;
-      TEveTrack* track = new TEveTrack(&mcpart,mcindex,trkProp);
-      track->SetIndex(0);
-      track->SetStdTitle();
-      track->SetAttLineAttMarker(fTrackList);
-	cout<<"colours "<<endl;
-     // if ( abs(gen.pdgId()) == 11 ){
-      //  track->SetMainColor(kRed);
-     // }  if (abs(gen.pdgId()) == 13 ){
-        track->SetMainColor(kGreen);
-     // } else {
-	//track->SetMainColor(kBlue);
-      //}
-      fTrackList->AddElement(track);
-    }
-    fTrackList->MakeTracks();
-    gEve->AddElement(fTrackList);
-    gEve->Redraw3D();
+void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& bf){
+	auto genH = event.getValidHandle<GenParticleCollection>(gensTag_);
+	_gencol = genH.product();
+	if (fTrackList == 0) {
+		fTrackList = new TEveTrackList("Tracks");
+		fTrackList->SetLineWidth(4);
+		fTrackList->IncDenyDestroy(); 
+	}
+	else {
+		fTrackList->DestroyElements();         
+	}
+
+	int mcindex=-1;
+	for ( auto const& gen: *_gencol){
+		TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
+		//if(!isCosmic_) CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));
+		//if(isCosmic_) CLHEP::Hep3Vector field(CLHEP::Hep3Vector(0,0,0)); 
+		trkProp->SetMagField(0);//-1*1000.);
+		trkProp->SetMaxR(trkMaxR_);
+		trkProp->SetMaxZ(trkMaxZ_);
+		trkProp->SetMaxStep(trkMaxStepSize_);
+		mcindex++;
+		      //if ( gen.hasChildren() ) continue;
+		TParticle mcpart;
+		mcpart.SetMomentum(gen.momentum().px(),
+			gen.momentum().py(),	
+			gen.momentum().pz(),
+			gen.momentum().e());
+		 	mcpart.SetProductionVertex(gen.position().x(), 		
+						gen.position().y(), gen.position().z(),0.);
+		      mcpart.SetPdgCode(gen.pdgId());
+		      TEveTrack* track = new TEveTrack(&mcpart,mcindex,trkProp);
+		      track->SetIndex(0);
+		      track->SetStdTitle();
+		      track->SetAttLineAttMarker(fTrackList);
+			
+		      if ( abs(gen.pdgId()) == 11 ){
+		        track->SetMainColor(kRed);
+		      }  if (abs(gen.pdgId()) == 13 ){
+			track->SetMainColor(kGreen);
+		      } else {
+			track->SetMainColor(kBlue);
+		      }
+		      fTrackList->AddElement(track);
+		    }
+		    fTrackList->MakeTracks();
+	            fTrackList->SetLineWidth(10);
+		    gEve->AddElement(fTrackList);
+		    gEve->Redraw3D();
 }
 
 
 
 void TEveEventDisplay::AddHits(const art::Event& event){
    
-   auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
-   _chcol = chH.product(); //this should be any collection eventually
-   
-    auto sdH = event.getValidHandle<mu2e::StrawDigiCollection>(chTag_);
-   _strawdigicol = sdH.product(); 
+	auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
+	_chcol = chH.product(); //this should be any collection eventually
 
-   if (fHitsList == 0) {
-      fHitsList = new TEveElementList("Hits");
-      fHitsList->IncDenyDestroy();     
-    }
-    else {
-      fHitsList->DestroyElements();  
-    }
-    TEveElementList* HitsList  = new TEveElementList("Combo Hits");
-    if(!_chcol->empty()){
-    for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
-	    ComboHit const& hit = (*_chcol)[ih];
-	    DrawHit("ComboHits",kGreen,2,ih,hit,HitsList, gdml_geom);
-	    fHitsList->AddElement(HitsList);  
-	    gEve->AddElement(fHitsList);
-	    gEve->Redraw3D();
-    }
-  }
+	if (fHitsList == 0) {
+		fHitsList = new TEveElementList("Hits");
+		fHitsList->IncDenyDestroy();     
+	}
+	else {
+		fHitsList->DestroyElements();  
+	}
+	TEveElementList* HitsList  = new TEveElementList("Combo Hits");
+	if(!_chcol->empty()){
+	    cout<<"Number of Hits "<<_chcol->size()<<endl;
+	    for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
+		    ComboHit const& hit = (*_chcol)[ih];
+		    CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
+		    if(ih%100 ==0 and !isCosmic_) DrawHit("ComboHits",kRed, 2, ih, HitPos, HitsList, gdml_geom);
+		    else DrawHit("ComboHits",kRed, 1, ih, HitPos, HitsList, gdml_geom);
+		    fHitsList->AddElement(HitsList);  
+		    gEve->AddElement(fHitsList);
+		    gEve->Redraw3D();
+	    }
+	}
 
 	
 }
@@ -745,7 +779,7 @@ void TEveEventDisplay::endJob(){
 
 }  
 	
-}
 
+}
 using mu2e::TEveEventDisplay;
 DEFINE_ART_MODULE(TEveEventDisplay);

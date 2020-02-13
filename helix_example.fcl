@@ -43,25 +43,10 @@ physics :
 {
   
   producers : { @table::TrkHitReco.producers} 
-
+  analyzers : { @table::TEveDis.analyzers}
 }
 
-physics.RecoPath : [ makeSH ] 
-outputs : { 
-  rootout: {
-	    module_type: RootOutput
-	    fileName: "RecoOnlyNew.art"
-            SelectEvents : [RecoPath]
-	    outputCommands: ["keep mu2e::*_*_*_*" ]
-	}
+physics.RecoPath : [ @sequence::TrkHitReco.PrepareHits]
+physics.EndPath  : [ @sequence::TEveDis.seqHelix] 
 
-}
-
-#include "JobConfig/primary/epilog.fcl"
-# customize the output
-services.TFileService.fileName: "CeHits.root"
-outputs.Output.fileName: "CeHits.art"
-
-physics.EndPath : [ rootout ]
-services.scheduler.wantSummary: true
 
