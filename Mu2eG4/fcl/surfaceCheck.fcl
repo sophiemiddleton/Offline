@@ -1,0 +1,40 @@
+#
+#  Run the gean4 surface check.
+#
+
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+process_name : SurfaceCheck
+
+source : {
+   module_type : EmptyEvent
+   maxEvents   : 1
+}
+
+services : @local::Services.Sim
+
+physics : {
+
+   producers: {
+      generate : @local::generate
+      g4run    : @local::mu2eg4runDefaultSingleStage
+   }
+
+   p1 : [generate, g4run ]
+
+   trigger_paths  : [p1]
+
+}
+
+physics.producers.g4run.physics.physicsListName: "Minimal"
+
+services.SeedService.baseSeed         :  0
+services.SeedService.maxUniqueEngines :  20
+
+physics.producers.generate.inputfile : "Mu2eG4/test/genconfig_01.txt"
+
+services.GeometryService.inputFile : "Mu2eG4/test/geom_SurfaceCheck.txt"
+services.TFileService.fileName     : "surfaceCheck.root"
+

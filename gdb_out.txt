@@ -1,0 +1,158 @@
+[sophie@localhost Offline]$ gdb --args mu2e -c TEveEventDisplay/fcl/TEveDisplay.fcl ../../ArtFiles/dig.mu2e.DS-cosmic-nofield.MDC2018e.001002_00000052.art 
+GNU gdb (GDB) 8.2.1
+Copyright (C) 2018 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-pc-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from mu2e...done.
+(gdb) catch throw
+Catchpoint 1 (throw)
+(gdb) run
+Starting program: /cvmfs/mu2e.opensciencegrid.org/artexternals/art/v3_04_00/slf7.x86_64.e19.prof/bin/mu2e -c TEveEventDisplay/fcl/TEveDisplay.fcl ../../ArtFiles/dig.mu2e.DS-cosmic-nofield.MDC2018e.001002_00000052.art
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+%MSG-i MF_INIT_OK:  Early 17-Jan-2020 16:33:17 GMT JobSetup
+Messagelogger initialization complete.
+%MSG
+GlobalConstants file: /home/sophie/Offlinesophie/MDC/Offline/Mu2eG4/test/globalConstants_01.txt
+GlobalConstants lines: 108  hash: 2363920393760819664
+[Detaching after fork from child process 30646]
+[Detaching after fork from child process 30648]
+[Detaching after fork from child process 30650]
+[Detaching after fork from child process 30652]
+[Detaching after fork from child process 30654]
+[Detaching after fork from child process 30656]
+[Detaching after fork from child process 30661]
+[Detaching after fork from child process 30663]
+17-Jan-2020 16:33:24 GMT  Initiating request to open input file "../../ArtFiles/dig.mu2e.DS-cosmic-nofield.MDC2018e.001002_00000052.art"
+17-Jan-2020 16:33:27 GMT  Opened input file "../../ArtFiles/dig.mu2e.DS-cosmic-nofield.MDC2018e.001002_00000052.art"
+%MSG-w PROVENANCE:  TEveEventDisplay:Teveeventdisplay@Construction  17-Jan-2020 16:33:27 GMT ModuleConstruction
+Source parameter readParameterSets was set to false: parameter set provenance
+will NOT be available in this or subsequent jobs using output from this job.
+Check your experiment's policy on this issue  to avoid future problems
+with analysis reproducibility.
+
+%MSG
+Beginning Job ... this has been deleted to help debugging....
+Geometry file: /home/sophie/Offlinesophie/MDC/Offline/Mu2eG4/geom/geom_common.txt
+Geometry lines: 16739  hash: 5443794426020176280
+importing GDML 
+%MSG-i Root_Information:  TEveEventDisplay:Teveeventdisplay@BeginRun  TGeoManager::TGeoManager() 17-Jan-2020 16:33:27 GMT run: 1002
+Geometry geom, Geom created
+%MSG
+the following causes the break:geom = geom-> TGeoManager::Import(TEveEventDisplay/src/mu2e.gdml....
+%MSG-i Root_Information:  TEveEventDisplay:Teveeventdisplay@BeginRun  TGeoManager::Import() 17-Jan-2020 16:33:27 GMT run: 1002
+Reading geometry from file: TEveEventDisplay/src/mu2e.gdml
+%MSG
+%MSG-i Root_Information:  TEveEventDisplay:Teveeventdisplay@BeginRun  TGeoManager::TGeoManager() 17-Jan-2020 16:33:27 GMT run: 1002
+Geometry GDMLImport, Geometry imported from GDML created
+%MSG
+*** Shape collimator1channel: TGeoPcon ***
+    Nz    = 4
+    phi1  =     0.00000
+    dphi  =   360.00000
+     plane 0: z= -210.12160 Rmin=    0.00000 Rmax=    2.50000
+     plane 1: z=   -0.00000 Rmin=    0.00000 Rmax=    2.50000
+     plane 2: z=   -0.00000 Rmin=    0.00000 Rmax=    2.50000
+     plane 3: z=  210.12160 Rmin=    0.00000 Rmax=    2.50000
+ Bounding box:
+*** Shape collimator1channel: TGeoBBox ***
+    dX =     0.00000
+    dY =     0.00000
+    dZ =     0.00000
+    origin: x=    0.00000 y=    0.00000 z=    0.00000
+
+Catchpoint 1 (exception thrown), 0x00007ffff422afed in __cxxabiv1::__cxa_throw (
+    obj=obj@entry=0x7061500, 
+    tinfo=0x7ffff7dd6078 <typeinfo for cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>>, 
+    tinfo@entry=0x7fffe61acbf8 <typeinfo for cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>>, 
+    dest=0x7ffff7b40bf0 <cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>::~coded_exception()>, 
+    dest@entry=0x7fffe5f51020 <cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>::~coded_exception()>)
+    at ../../.././libstdc++-v3/libsupc++/eh_throw.cc:78
+78	../../.././libstdc++-v3/libsupc++/eh_throw.cc: No such file or directory.
+(gdb) continue
+Continuing.
+
+Catchpoint 1 (exception thrown), 0x00007ffff422afed in __cxxabiv1::__cxa_throw (
+    obj=obj@entry=0x7061d30, 
+    tinfo=0x7ffff7dd6078 <typeinfo for cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>>, 
+    tinfo@entry=0x7fffe61acbf8 <typeinfo for cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>>, 
+    dest=0x7ffff7b40bf0 <cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>::~coded_exception()>, 
+    dest@entry=0x7fffe5f51020 <cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>::~coded_exception()>)
+    at ../../.././libstdc++-v3/libsupc++/eh_throw.cc:78
+78	in ../../.././libstdc++-v3/libsupc++/eh_throw.cc
+(gdb) contnue
+Undefined command: "contnue".  Try "help".
+(gdb) continue
+Continuing.
+terminate called after throwing an instance of 'cet::coded_exception<art::errors::ErrorCodes, &art::ExceptionDetail::translate[abi:cxx11]>'
+  what():  ---- FatalRootError BEGIN
+  Fatal Root Error: @SUB=TReentrantRWLock::WriteUnLock
+  Write lock already released for 0x233ffb8
+---- FatalRootError END
+
+
+Program received signal SIGABRT, Aborted.
+0x00007ffff38e7377 in raise () from /lib64/libc.so.6
+(gdb) where
+#0  0x00007ffff38e7377 in raise () from /lib64/libc.so.6
+#1  0x00007ffff38e8a68 in abort () from /lib64/libc.so.6
+#2  0x00007ffff4224c53 in __gnu_cxx::__verbose_terminate_handler ()
+    at ../../.././libstdc++-v3/libsupc++/vterminate.cc:95
+#3  0x00007ffff422adb6 in __cxxabiv1::__terminate (handler=<optimized out>)
+    at ../../.././libstdc++-v3/libsupc++/eh_terminate.cc:47
+#4  0x00007ffff4229ea9 in __cxa_call_terminate (ue_header=ue_header@entry=0x7061d10)
+    at ../../.././libstdc++-v3/libsupc++/eh_call.cc:54
+#5  0x00007ffff422a7f5 in __cxxabiv1::__gxx_personality_v0 (version=<optimized out>, 
+    actions=6, exception_class=5138137972254386944, ue_header=0x7061d10, 
+    context=<optimized out>)
+    at ../../.././libstdc++-v3/libsupc++/eh_personality.cc:676
+#6  0x00007ffff3c8f523 in _Unwind_RaiseException_Phase2 (exc=0x7061d10, 
+    context=0x7fffffff0c20, frames_p=0x7fffffff0b28) at ../.././libgcc/unwind.inc:64
+#7  0x00007ffff3c8fda5 in _Unwind_Resume (exc=0x7061d10)
+    at ../.././libgcc/unwind.inc:241
+#8  0x00007fffe8cfa92b in ROOT::TReentrantRWLock<std::mutex, ROOT::Internal::RecurseCounts>::WriteUnLock(ROOT::TVirtualRWMutex::Hint_t*) ()
+   from /cvmfs/mu2e.opensciencegrid.org/artexternals/root/v6_18_04c/Linux64bit+3.10-2.17-e19-prof/lib/libThread.so
+#9  0x00007fffeba84911 in ROOT::TVirtualRWMutex::UnLock() ()
+   from /cvmfs/mu2e.opensciencegrid.org/artexternals/root/v6_18_04c/Linux64bit+3.10-2.1--Type <RET> for more, q to quit, c to continue without paging--c
+7-e19-prof/lib/libCore.so
+#10 0x00007fffe024e894 in TCling::Calc(char const*, TInterpreter::EErrorCode*) () from /cvmfs/mu2e.opensciencegrid.org/artexternals/root/v6_18_04c/Linux64bit+3.10-2.17-e19-prof/lib/libCling.so
+#11 0x00007fffeba90652 in TROOT::ProcessLineFast(char const*, int*) () from /cvmfs/mu2e.opensciencegrid.org/artexternals/root/v6_18_04c/Linux64bit+3.10-2.17-e19-prof/lib/libCore.so
+#12 0x00007fffeb03db6a in TGeoManager::Import(char const*, char const*, char const*) () from /cvmfs/mu2e.opensciencegrid.org/artexternals/root/v6_18_04c/Linux64bit+3.10-2.17-e19-prof/lib/libGeom.so
+#13 0x00007fffec09064c in mu2e::TEveEventDisplay::beginRun (this=<optimized out>, run=...) at TEveEventDisplay/src/TEveEventDisplay_module.cc:193
+#14 0x00007ffff7166737 in art::detail::Analyzer::doBeginRun (this=0xe28ed0, rp=..., mc=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Core/detail/Analyzer.cc:71
+#15 0x00007ffff6c29357 in art::Worker::doWork (this=0xe1bd40, trans=trans@entry=art::Transition::BeginRun, principal=..., mc=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Principal/Worker.cc:324
+#16 0x00007ffff7160f13 in art::WorkerInPath::runWorker (this=this@entry=0xe297f0, trans=trans@entry=art::Transition::BeginRun, principal=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Core/WorkerInPath.cc:147
+#17 0x00007ffff7131d19 in art::Path::process (this=0xe29c20, trans=trans@entry=art::Transition::BeginRun, principal=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Core/Path.cc:179
+#18 0x00007ffff70ee781 in art::EndPathExecutor::process (this=0xe2a4e8, trans=trans@entry=art::Transition::BeginRun, principal=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Core/EndPathExecutor.cc:310
+#19 0x00007ffff73dac94 in art::EventProcessor::<lambda(art::ScheduleID)>::operator() (__closure=<synthetic pointer>, sid=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1556
+#20 art::ScheduleIteration::for_each_schedule<art::EventProcessor::beginRun()::<lambda(art::ScheduleID)> > (f=..., this=0x7fffffff1fa8) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Utilities/ScheduleIteration.h:36
+#21 art::EventProcessor::beginRun (this=0x7fffffff1f50) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1554
+#22 0x00007ffff7406b8d in art::EventProcessor::process<(art::Level)2>()::{lambda()#1}::operator()() const (this=<optimized out>) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:27
+#23 art::detail::ExceptionCollector::call<art::EventProcessor::process<(art::Level)2>()::{lambda()#1}>(art::EventProcessor::process<(art::Level)2>()::{lambda()#1}) (f=..., this=0xb62d00) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:34
+#24 art::EventProcessor::process<(art::Level)2> (this=this@entry=0x7fffffff1f50) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1242
+#25 0x00007ffff7406ead in art::EventProcessor::process<(art::Level)1>()::{lambda()#2}::operator()() const (this=<optimized out>) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:27
+#26 art::detail::ExceptionCollector::call<art::EventProcessor::process<(art::Level)1>()::{lambda()#2}>(art::EventProcessor::process<(art::Level)1>()::{lambda()#2}) (f=..., this=0xb62d00) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:34
+#27 art::EventProcessor::process<(art::Level)1> (this=this@entry=0x7fffffff1f50) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1245
+#28 0x00007ffff7407045 in art::EventProcessor::process<(art::Level)0>()::{lambda()#2}::operator()() const (this=<optimized out>) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:27
+#29 art::detail::ExceptionCollector::call<art::EventProcessor::process<(art::Level)0>()::{lambda()#2}>(art::EventProcessor::process<(art::Level)0>()::{lambda()#2}) (f=..., this=0xb62d00) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:34
+#30 art::EventProcessor::process<(art::Level)0> (this=this@entry=0x7fffffff1f50) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1245
+#31 0x00007ffff73e4e19 in art::EventProcessor::<lambda()>::operator() (__closure=<synthetic pointer>, __closure=<synthetic pointer>) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1258
+#32 art::detail::ExceptionCollector::call<art::EventProcessor::runToCompletion()::<lambda()> > (f=..., this=0xb62d00) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/detail/ExceptionCollector.h:34
+#33 art::EventProcessor::runToCompletion (this=this@entry=0x7fffffff1f50) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/EventProcessor/EventProcessor.cc:1257
+#34 0x00007ffff7b7e6eb in art::run_art_common_ (main_pset=..., enabled_modules=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Art/run_art.cc:362
+#35 0x00007ffff7b80258 in art::run_art (argc=argc@entry=4, argv=argv@entry=0x7fffffff28f8, all_desc=..., handlers=...) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/src/art/Framework/Art/run_art.cc:251
+#36 0x00007ffff7b7c1a3 in mu2eapp (argc=4, argv=0x7fffffff28f8) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/build/art/Framework/Art/mu2eapp.cc:60
+#37 0x000000000040123c in main (argc=<optimized out>, argv=<optimized out>) at /scratch/workspace/critic-all/BUILDTYPE/prof/QUAL/e19/label1/swarm/label2/SLF7/build/art/v3_04_00-buildFW/build/art/Framework/Art/mu2e.cc:14
+(gdb) 
+

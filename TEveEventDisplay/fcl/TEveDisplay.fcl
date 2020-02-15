@@ -1,0 +1,48 @@
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+#include "CommonMC/fcl/prolog.fcl"
+
+
+process_name : TEveDisplay
+
+source :
+{
+	module_type : RootInput
+	
+}
+	
+services :
+{
+	GeometryService : { inputFile : "Mu2eG4/geom/geom_common.txt" }
+	GlobalConstantsService : { inputFile : "Mu2eG4/test/globalConstants_01.txt" }
+}
+	
+physics :
+{
+	analyzers:
+	{
+		Teveeventdisplay:
+		{
+			diagLevel   : 0
+			module_type : TEveEventDisplay
+			g4ModuleLabel : "g4run"
+ 			ComboHitCollection : "makePH"
+			chTag_ : "makePH"
+			gensTag_ : "generate"
+			GenParticleCollection : "generate"
+        		minEnergyDep : 0
+        		minHits : 1
+			addHits : false
+			addTracks : true
+			addClusters : false
+		}
+	}
+	
+	e1 : [Teveeventdisplay]
+	
+	end_paths : [e1]
+}
+	
+services.GeometryService.simulatedDetector.tool_type : "Mu2e"
+

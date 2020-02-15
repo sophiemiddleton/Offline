@@ -1,0 +1,32 @@
+# Run the second random number generator test module.
+#
+
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardServices.fcl"
+
+process_name : random04
+
+source : {
+  module_type : EmptyEvent
+  maxEvents   : 10
+}
+
+services : {
+  message               : @local::default_message
+  RandomNumberGenerator : {}
+
+  SeedService : @local::automaticSeeds
+
+}
+
+physics : {
+
+  analyzers : { foo : { module_type : Random02 } }
+
+  e1        : [ foo ]
+  end_paths : [ e1  ]
+
+}
+
+services.SeedService.baseSeed         :  0
+services.SeedService.maxUniqueEngines :  20

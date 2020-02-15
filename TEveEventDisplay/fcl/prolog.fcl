@@ -1,0 +1,86 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this file is included by fcl/standardProducers.fcl inside the PROLOG section
+#------------------------------------------------------------------------------
+
+
+BEGIN_PROLOG
+
+TEveEventDisplayHelix : {
+      module_type : TEveEventDisplay
+
+      	#strawStepsTag       		: "compressDigiMCs:tracker"
+      	#strawHitsTag         		: "makeSH"
+      	ComboHitCollection 		: "makePH"
+	GenParticleCollection 		: "compressDigiMCs" #generate"
+	StrawDigiCollection		:  "selectRecoMC"
+	CrvDigiCollection	 	: "CrvDigi"
+	CosmicTrackSeedCollection 	:  NULL
+	CaloClusterCollection		: "CaloClusterFast"
+	g4ModuleLabel        		: "g4run"
+	#hitMakerModuleLabel  		: makeSH
+	#trackerStepPoints    		: tracker
+	minEnergyDep         		: 0
+	minHits              		: 1
+	addHits 			: true
+	addTracks 			: false
+	addCrvHits			: false
+	addCosmicSeedFit	        : false
+	isCosmic			: false
+  }   
+
+TEveEventDisplayCosmics : {
+      module_type : TEveEventDisplay
+
+      	#strawStepsTag       		: "compressDigiMCs:tracker"
+      	#strawHitsTag           	: "makeSH"
+      	ComboHitCollection 		: "makePH"
+	GenParticleCollection 		: "compressDigiMCs" #generate"
+	StrawDigiCollection		:  "makeSD"
+	CrvDigiCollection		: "CrvDigi"
+	CosmicTrackSeedCollection 	: "CosmicTrackFinder"
+	CaloClusterCollection		: NULL
+	g4ModuleLabel        		: "g4run"
+	#hitMakerModuleLabel  		: makeSH
+	#trackerStepPoints    		: tracker
+	minEnergyDep         		: 0
+	minHits              		: 1
+	addHits 			: true
+	addTracks 			: false
+	addCrvHits			: false
+	addCosmicSeedFit		: false
+	isCosmic			: true
+
+  }   
+
+TEveEventDisplayCaloOnly : {
+      module_type : TEveEventDisplay  
+
+      	ComboHitCollection 		: NULL
+	GenParticleCollection 		: NULL
+	StrawDigiCollection		: NULL
+	CrvDigiCollection		: NULL
+	CosmicTrackSeedCollection 	: NULL
+	CaloClusterCollection		: "CaloClusterFast"
+	g4ModuleLabel        		: "g4run"
+	minEnergyDep         		: 0
+	minHits              		: 1
+	addHits 			: false
+	addTracks 			: false
+	addClusters			: true
+	addCrvHits			: false
+	addCosmicSeedFit	        : false
+	isCosmic			: false
+  }   
+
+TEveDis : {  
+	analyzers : { 	
+			TEveEventDisplayCosmics  : @local::TEveEventDisplayCosmics
+ 			TEveEventDisplayHelix    : @local::TEveEventDisplayHelix
+			TEveEventDisplayCaloOnly : @local::TEveEventDisplayCaloOnly
+		    } 
+	seqCosmics 	: [TEveEventDisplayCosmics]
+	seqHelix   	: [TEveEventDisplayHelix]
+	seqCaloOnly     : [TEveEventDisplayCaloOnly]
+}
+END_PROLOG

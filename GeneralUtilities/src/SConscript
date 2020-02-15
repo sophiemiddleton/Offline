@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+#
+# Script to build the files found in this directory.
+#
+# Original author Rob Kutschke.
+#
+
+import os
+Import('env')
+Import('mu2e_helper')
+
+helper=mu2e_helper(env);
+
+mainlib = helper.make_mainlib ( [ 'art_Persistency_Common',
+                                  'art_Utilities',
+                                  'canvas',
+                                  'fhiclcpp',
+                                  'cetlib',
+                                  'cetlib_except',
+                                  'CLHEP',
+                                  'boost_regex',
+                                  'boost_filesystem',
+                                  'boost_system',
+                                ]
+                              )
+
+
+# This tells emacs to view this file in python mode.
+# Local Variables:
+# mode:python
+# End:

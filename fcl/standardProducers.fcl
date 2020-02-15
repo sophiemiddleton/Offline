@@ -1,0 +1,58 @@
+# -*- mode: tcl -*-
+
+BEGIN_PROLOG
+#------------------------------------------------------------------------------
+# unfortunately, in the present scheme can't do it differently : 
+# CalPatRec needs DtOffset as well and the DtOffset declaration 
+# has to go before the CalPatRec prolog
+#------------------------------------------------------------------------------
+TrackCaloMatching : { 
+#    DtOffset : -0.4 # v6_3: was 2.9  # track-cluster offset, ns v5_7_6 # 1.2  # 1.4   
+    DtOffset : 0.2 # from TrkCaloHit matching
+}
+END_PROLOG
+
+#include "EventGenerator/fcl/prolog.fcl"
+#include "Filters/fcl/prolog.fcl"
+#include "Mu2eG4/fcl/prolog.fcl"
+#include "TrackerMC/fcl/prolog.fcl"
+#include "CaloCluster/fcl/prolog.fcl"
+#include "ExtinctionMonitorFNAL/fcl/prolog.fcl"
+#include "TrkHitReco/fcl/prolog.fcl"
+#include "TrkReco/fcl/prolog.fcl"
+#include "TrkPatRec/fcl/prolog.fcl"
+#include "CalPatRec/fcl/prolog.fcl"
+#include "CalPatRec/fcl/prolog_common.fcl"
+#include "TrackCaloMatching/fcl/prolog.fcl"
+#include "ParticleID/fcl/prolog.fcl"
+#include "EventMixing/fcl/prolog.fcl"
+#include "CaloMC/fcl/prolog.fcl"
+#include "CaloReco/fcl/prolog.fcl"
+#include "CRVResponse/fcl/prolog.fcl"
+#include "CommonMC/fcl/prolog.fcl"
+
+
+BEGIN_PROLOG
+
+//================================================================
+// analysis cuts
+
+cutSetC : {
+   nactive: 25
+   fitcon: 2.e-3
+   momerr: 0.25
+   t0err:  0.9
+   d0min: -80.
+   d0max: 105.
+   doutmin: 450.
+   doutmax: 680.
+   t0min: 700.
+   t0max: 1695.
+   tandipmin: 0.57735
+   tandipmax: 1.
+   mommin: 103.5
+   mommax: 105.
+}
+//================================================================
+
+END_PROLOG
