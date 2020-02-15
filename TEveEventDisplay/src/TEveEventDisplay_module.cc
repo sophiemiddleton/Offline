@@ -113,6 +113,28 @@ void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP:
   }
 
 
+void DrawCluster(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP::Hep3Vector ClusterPos, int nDisk, TEveElementList *list, Geom_Interface *g) //FIXME - should be combo hit here , t should take in the CLHEPvec
+  {
+	
+	g->GetCaloCenter(nDisk);
+        CLHEP::Hep3Vector pointInMu2e = g->PointToCalo(ClusterPos, nDisk);
+	std::string hstr=" cluster %d";
+	std::string dstr=" cluster# %d\nLayer: %d";
+	std::string strlst=pstr+hstr;
+	std::string strlab=pstr+dstr;
+
+	TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
+	h->SetTitle(Form(strlab.c_str(),n,hstr));
+
+	cout<<"in mu2e : "<<n<<" "<<pointInMu2e.x()/10<<" "<<pointInMu2e.y()/10<<" "<<pointInMu2e.z()/10<<endl;
+	h->SetMarkerColor(kRed);
+	h->SetMarkerSize(mSize);
+
+	h->SetNextPoint(pointInMu2e.x()/10, pointInMu2e.y()/10, pointInMu2e.z()/10); //as GDML is in cm (I think...and hope)
+	h->SetMarkerColor(mColor);
+	h->SetMarkerSize(mSize);
+	list->AddElement(h);
+  }
 
 
 void setRecursiveColorTransp(TGeoVolume *vol, Int_t color, Int_t transp)
@@ -139,6 +161,7 @@ namespace mu2e
 			fhicl::Atom<art::InputTag>strawdigiTag{Name("StrawDigiCollection"),Comment("strawdigiTag")};
 			fhicl::Atom<art::InputTag>crvdigiTag{Name("CrvDigiCollection"),Comment("crvTag")};
 			fhicl::Atom<art::InputTag>cosmicTag{Name("CosmicTrackSeedCollection"),Comment("cosmicTag")};
+			fhicl::Atom<art::InputTag>cluTag{Name("CaloClusterCollection"),Comment("cluTag")};
 			fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
 			fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
 			fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
@@ -147,7 +170,7 @@ namespace mu2e
 			fhicl::Atom<bool> showEvent{Name("showEvent"), Comment(""),true};     
 			fhicl::Atom<bool> addHits{Name("addHits"), Comment("set to add the hits"),false};
 			fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
-			fhicl::Atom<bool> addCrystalHits{Name("addCrystalHits"), Comment("set to add calo lusters"),false};
+			fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
 			fhicl::Atom<bool> addCrvHits{Name("addCrvHits"), Comment("set to add crv hits"),false};	
 			fhicl::Atom<bool> addCosmicSeedFit{Name("addCosmicSeedFit"), Comment("for fitted cosmic track"), false};
 			fhicl::Atom<bool> isCosmic{Name("isCosmic"), Comment("flag for cosmic track v helix track"), false};	
@@ -170,14 +193,13 @@ namespace mu2e
 		     const CrvDigiCollection* _crvdigicol;
 		     const CosmicTrackSeedCollection* _cosmiccol;
 		     const GenParticleCollection* _gencol;
-		     //art::InputTag strawStepsTag_;
+		     const CaloClusterCollection* _clustercol;
 		     art::InputTag chTag_;
 		     art::InputTag gensTag_;
 		     art::InputTag strawdigiTag_;
 		     art::InputTag crvdigiTag_;
 		     art::InputTag cosmicTag_;
-		     //art::InputTag strawHitsTag_;
-		     //std::string generatorModuleLabel_;
+		     art::InputTag cluTag_;
 		     std::string g4ModuleLabel_;
 		     //std::string hitMakerModuleLabel_;
 
@@ -220,8 +242,10 @@ namespace mu2e
 		     
 		      TEveTrackList *fTrackList;
 		      TEveElementList *fHitsList;
+		      TEveElementList *fClusters;
 		      
-		      bool addHits_, addTracks_, addCrystalHits_, addCrvHits_, addCosmicSeedFit_, isCosmic_;
+		      bool addHits_, addTracks_, addClusters_, addCrvHits_, addCosmicSeedFit_, isCosmic_;
+		     
 		      EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
 		      Geom_Interface *gdml_geom	=new Geom_Interface(); 
 		      //Particle_Interface *particle_info = new Particle_Interface();
@@ -241,7 +265,7 @@ namespace mu2e
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
 		      void AddHits(const art::Event& event);
-		      void AddCrystalHits(const art::Event& event);
+		      void AddCaloCluster(const art::Event& event);
 		      void AddCrvHits(const art::Event& event);
 		      bool FindData(const art::Event& event);
 	};
@@ -261,7 +285,7 @@ TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
 	showEvent_(conf().showEvent()),
 	addHits_(conf().addHits()),
 	addTracks_(conf().addTracks()),
-	addCrystalHits_(conf().addCrystalHits()),
+	addClusters_(conf().addClusters()),
 	addCrvHits_(conf().addCrvHits()),
 	addCosmicSeedFit_(conf().addCosmicSeedFit()),
 	isCosmic_(conf().isCosmic()){
@@ -534,7 +558,6 @@ void TEveEventDisplay::analyze(const art::Event& event){
 		if(addHits_) AddHits(event);
 		if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
 		//if(addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
-		//if(AddCrystalHits_) AddCrystalHits(event);
 		//if(AddCrvHits_)
 		
 	}
@@ -748,19 +771,36 @@ void TEveEventDisplay::AddHits(const art::Event& event){
 	
 }
 
-void TEveEventDisplay::AddCrystalHits(const art::Event& evt){
-	 /*auto chH = event.getValidHandle<mu2e::CrystalHitCollection>(cryhTag_);
-   	_cryhcol = chH.product(); */
-  
+void TEveEventDisplay::AddCaloCluster(const art::Event& event){
+	 auto cluH = event.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
+   	_clustercol = cluH.product(); 
+	cout<<"has clusters "<<endl;
+	cout<<_clustercol->size()<<endl;
+	if (fClusters == 0) {
+		fClusters= new TEveElementList("Hits");
+		fClusters->IncDenyDestroy();     
+	}
+	else {
+		fClusters->DestroyElements();  
+	}
+	
+	if(!_clustercol->empty()){
+		cout<<"in cluster loop "<<endl;
+		TEveElementList* ClusterList  = new TEveElementList("Combo Hits");
+		for(unsigned c = 0; c < _clustercol->size(); c++){
+			 CaloCluster const& cluster = (*_clustercol)[c];
+			 const CLHEP::Hep3Vector&      ClusterCOG = cluster.cog3Vector();
+			 int nDisk = cluster.diskId();
+			 DrawCluster("CaloCluster",kRed, 2, c, ClusterCOG, nDisk, ClusterList, gdml_geom);
+			 fClusters->AddElement(ClusterList);  
+			 gEve->AddElement(fClusters);
+			 gEve->Redraw3D(); 
+		}
+  	}
 
 }
 
-void TEveEventDisplay::AddCrvHits(const art::Event& evt){
-	 /*auto chH = event.getValidHandle<mu2e::CrystalHitCollection>(cryhTag_);
-   	_cryhcol = chH.product(); */
-  
 
-}
 
 bool TEveEventDisplay::FindData(const art::Event& evt){
 	_chcol = 0; 

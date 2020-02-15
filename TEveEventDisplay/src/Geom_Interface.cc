@@ -38,7 +38,7 @@ namespace mu2e{
 		return c;
 	}
 
-	CLHEP::Hep3Vector Geom_Interface::GetCaloCenter(unsigned nDisk){
+	CLHEP::Hep3Vector Geom_Interface::GetCaloCenter(int nDisk){
                 std::string filename("Mu2eG4/geom/Calorimeter_CsI.txt");
 		SimpleConfig GeomConfig(filename);
 		double zCenter;
@@ -122,6 +122,13 @@ namespace mu2e{
 		CLHEP::Hep3Vector vec2 = det->toDetector(vec1);
 		return vec2;
     	}
+
+	CLHEP::Hep3Vector Geom_Interface::PointToCalo(CLHEP::Hep3Vector point, int nDisk){
+		CLHEP::Hep3Vector Mu2eCaloOrigin = Geom_Interface::GetCaloCenter(nDisk);
+		CLHEP::Hep3Vector PointToCalo(point.x() + Mu2eCaloOrigin.x(), point.y()+Mu2eCaloOrigin.y(), point.z() + Mu2eCaloOrigin.z());
+		return PointToCalo;
+
+        }
 
 
 }

@@ -64,10 +64,11 @@ namespace mu2e{
 		void RemoveComponents();
 		void toForeground();
 		CLHEP::Hep3Vector GetTrackerCenter();
-		CLHEP::Hep3Vector GetCaloCenter(unsigned nDisk);
+		CLHEP::Hep3Vector GetCaloCenter(int nDisk);
 		CLHEP::Hep3Vector GetGDMLTrackerCenter();		
 		CLHEP::Hep3Vector GetGDMLOffsetFromMu2e();
 		CLHEP::Hep3Vector PointToTracker(CLHEP::Hep3Vector point);
+		CLHEP::Hep3Vector PointToCalo(CLHEP::Hep3Vector point, int nDsk);
 		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
 		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);
