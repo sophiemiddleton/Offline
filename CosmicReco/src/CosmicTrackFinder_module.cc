@@ -99,7 +99,7 @@ namespace mu2e{
 	      fhicl::Atom<int> debug{Name("debugLevel"), Comment("set to 1 for debug prints"),1};
               fhicl::Atom<int> printfreq{Name("printFrequency"), Comment("print frquency"), 101};
     	      fhicl::Atom<int> minnsh {Name("minNStrawHits"), Comment("minimum number of straw hits "),2};
-    	      fhicl::Atom<int> minnch {Name("minNComboHits"), Comment("number of combohits allowed"),8};
+    	      fhicl::Atom<int> minnch {Name("minNComboHits"), Comment("number of combohits allowed"),4};
     	      fhicl::Atom<TrkFitFlag> saveflag {Name("SaveTrackFlag"),Comment("if set to OK then save the track"), TrkFitFlag::helixOK};
               fhicl::Atom<int> minNHitsTimeCluster{Name("minNHitsTimeCluster"),Comment("minium allowed time cluster"), 1 };
     	      fhicl::Atom<art::InputTag> chToken{Name("ComboHitCollection"),Comment("tag for combo hit collection")};

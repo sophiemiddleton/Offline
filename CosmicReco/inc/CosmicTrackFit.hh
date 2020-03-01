@@ -58,7 +58,7 @@ namespace mu2e
     	      fhicl::Atom<unsigned> maxniter{Name("maxNiter"), Comment("Maximum allowed number of iterations before considered unconverged in seed fit"),1000};
     	      
               fhicl::Atom<unsigned> minNHitsTimeCluster{Name("minNHitsTimeCluster"),Comment("minium allowed time cluster"), 1 };
-    	      fhicl::Atom<float> max_seed_chi2{Name("MaxSeedChi2DOF"),Comment("maximum chi 2/dof for seed"),2.5};
+    	      fhicl::Atom<float> max_seed_chi2{Name("MaxSeedChi2DOF"),Comment("maximum chi 2/dof for seed"),2.5};//2.5
 	      fhicl::Atom<float> max_chi2_change{Name("MaxDeltaChi2"),Comment("The maxiumum allowed change in chi2 before convergeing seed fit"),0.001};
 	      fhicl::Atom<float> max_position_deviation{Name("MaxPosDev"),Comment("The maxiumum allowed change in position correlated parameters between seed fit iterations "), 200 };
 	       fhicl::Atom<float> maxHitDOCA{Name("MaxDOCA"),Comment("The maxiumum allowed DOCA to wire for any hit used for full drift fit"), 2.5 };
@@ -66,7 +66,7 @@ namespace mu2e
 	      fhicl::Atom<float> gaussTres{Name("GaussianSeedTimeResolution"),Comment("The resolution of the Gaussian seed fit in time"), 24 };
               fhicl::Atom<float> maxTres{Name("MaxTimeResidual"),Comment("The maxiumum allowed time residual for any hit used for full drift fit"), 40 };
 		fhicl::Atom<float> maxd{Name("MaxTrackLength"),Comment("The maxiumum allowed length of track") ,2000.};
-		fhicl::Atom<float> maxpull{Name("MaxHitPullSForeed"),Comment("The maxiumum allowed combo hit pull from fit") ,100.};
+		fhicl::Atom<float> maxpull{Name("MaxHitPullForSeed"),Comment("The maxiumum allowed combo hit pull from fit") ,100.};
     	};
 		
 		explicit CosmicTrackFit(const Config& conf);
