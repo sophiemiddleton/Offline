@@ -179,7 +179,6 @@ physics :
          visualization: @local::mu2eg4NoVisualization
 
          generatorModuleLabel: generate
-         MultiStageParameters: {} // this is the first stage
 
          SDConfig: 
          {
@@ -237,11 +236,9 @@ physics :
       cosmicFilter: 
       {
          module_type: FilterG4Out
-         noInstanceName : true
          mainHitInputs : [ "g4run:crvStage1" ]
          extraHitInputs : []
          mcTrajectoryInputs : [ "g4run" ]
-         numSimParticleCollections : 1
          vetoDaughters: []
       }
 
@@ -292,7 +289,7 @@ services.GeometryService.inputFile : "JobConfig/cosmic/geom_cosmic.txt"
 
 
 // Initialze seeding of random engines: do not put these lines in base .fcl files for grid jobs.
-services.SeedService.baseSeed         :  0
+services.SeedService.baseSeed         :  8
 services.SeedService.maxUniqueEngines :  20
 
 services.scheduler.wantSummary: true

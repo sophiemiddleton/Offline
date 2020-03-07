@@ -8,6 +8,8 @@
 #include <vector>
 #include "canvas/Persistency/Common/Wrapper.h"
 #include "canvas/Persistency/Common/Assns.h"
+#include "RecoDataProducts/inc/CosmicTrack.hh" 
+#include "RecoDataProducts/inc/CosmicTrackSeed.hh"
 
 // calorimeter
 #include "RecoDataProducts/inc/CaloDigi.hh"
@@ -32,6 +34,7 @@
 #include "RecoDataProducts/inc/RobustHelix.hh"
 #include "RecoDataProducts/inc/HelixSeed.hh"
 #include "RecoDataProducts/inc/BkgCluster.hh"
+#include "RecoDataProducts/inc/BkgClusterHit.hh"
 #include "RecoDataProducts/inc/BkgQual.hh"
 
 // tracking output
