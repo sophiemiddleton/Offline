@@ -1,4 +1,3 @@
-
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "GlobalConstantsService/inc/ParticleDataTable.hh"
@@ -621,7 +620,6 @@ void IPACaloCalibAna::FillXY(){
 	canvas_->SaveAs("AllCrystalsInAllEvents.root");
 	
 }
-
 */
  
 double IPACaloCalibAna::GetMostProbEoP(TH1F* h){

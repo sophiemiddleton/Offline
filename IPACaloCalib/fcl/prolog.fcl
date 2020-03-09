@@ -8,18 +8,37 @@ IPACaloCalib: {
         #CaloHitMCTruthCollection :
 	KalRepPtrCollection : "KFFDeM"
         CaloClusterCollection : "CaloClusterFromProtoCluster"
-        #TrackClusterMatchCollection : "TrackCaloMatching"
+        TrackClusterMatchCollection : "TrackCaloMatching"
 	GenParticleCollection : "compressDigiMCs"  
 	#PIDProductCollection :  "ParticleID"  
 	
 }
 
+IPACaloCluster: {
+	module_type : IPACaloClusterAna
+        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+        CaloClusterCollection : "CaloClusterFromProtoCluster"
+	GenParticleCollection : "compressDigiMCs"   
+	
+}
+
+IPACaloCrystalHits: {
+	module_type : IPACaloCrystalHitsAna
+        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+}
+
+IPACaloMatch: {
+	module_type : IPAMatchAna
+	KalRepPtrCollection : "KFFDeM"
+        TrackClusterMatchCollection : "TrackCaloMatching"
+	
+	
+}
 
 CaloEventDisplays: {
 	module_type : CaloEventDisplays
 	CaloCrystalHitCollection : "CaloCrystalHitFromHit"
         CaloClusterCollection : "CaloClusterFromProtoCluster"
-	
         doDisplay            : true
 	
 }
@@ -27,6 +46,9 @@ CaloEventDisplays: {
 CaloCalib: {
  analyzers : {
 		IPACaloCalib: @local::IPACaloCalib
+		IPACaloMatch: @local::IPACaloMatch
+		IPACaloCluster: @local::IPACaloCluster
+		IPACaloCrystalHits: @local::IPACaloCrystalHits
 		CaloEventDisplays: @local::CaloEventDisplays
 		}
 }
