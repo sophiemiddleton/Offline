@@ -206,6 +206,7 @@ namespace mu2e {
 	_Ntup->Branch("clusterR", 	&_clusterR,		"clusterR/F");
 	_Ntup->Branch("clusterNHits", 	&_clusterNHits,		"clusterNHits/F");
 	outputfile.open("IPAAnaCaloClusters.csv");
+        outputfile<<event,run,cluster_size<<std::endl;s
   }
 
 
