@@ -316,16 +316,14 @@ namespace mu2e{
 						continue;
 					}
 			     
-				      	for(auto const &chit : tmpResult._tseed._straw_chits){
-					
-						if(!chit._flag.hasAnyProperty(StrawHitFlag::outlier)){
-
-							tmpHits.push_back(chit);
+				      	for (auto const& chit : tmpResult._tseed._straw_chits) {
+						if (!chit._flag.hasAnyProperty(StrawHitFlag::outlier)) {
+						    tmpHits.push_back(chit);
 						}
-				      }
-				      tmpResult._tseed._straw_chits = tmpHits;
-		      		}
-		      		track_seed_vec.push_back(tmpResult._tseed);
+					    }
+					    tmpResult._tseed._straw_chits = tmpHits;
+					}
+		      			track_seed_vec.push_back(tmpResult._tseed);
 		     
 		      		CosmicTrackSeedCollection* col = seed_col.get();
 		      

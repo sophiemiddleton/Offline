@@ -232,6 +232,7 @@ std::cout<<"ks ptr"<<std::endl;
 					///}	
 					CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); 
 					const CosmicLineTraj* traj = &seeddef.cosmic();
+					
 					double flt0  = traj->zFlight(0.0,traj->z0()); 
 					double mom   = TrkMomCalculator::vecMom(*traj, _kfit.bField(), flt0).mag(); //FIXME - mom never set....
 					double vflt  = seeddef.particle().beta(mom)*CLHEP::c_light;
@@ -258,7 +259,7 @@ std::cout<<"ks ptr"<<std::endl;
 						tshs._index  = i_straw;
 						tshs._t0     = TrkT0(cosmict0 + propTime, sts._t0.t0Err());
 						tshs._trklen = fltlen; 
-						kf._hits.push_back(tshs); //fill KALMAN hits
+						kf._hits.push_back(tshs); 
 					}
 					if(_diag> 1){
 							std::cout<<"[CosmicKalFitter::produce] KalSeed has "<<kf._hits.size()<<" hits "<<std::endl;
@@ -282,9 +283,9 @@ std::cout<<"ks ptr"<<std::endl;
 						std::cout<<"[CosmicKalFitter::produce] producing track: "<<index<<std::endl;
 					}	      
 					_kfit.MakeTrack( _srep, detmodel, _tmpResult, _strawCHcol);  
-					cout<<"after make "<<endl;
-					kf._status.merge(TrkFitFlag::kalmanConverged);
-					/*if(_tmpResult.krep != 0 && (_tmpResult.krep->fitStatus().success() || _saveall)){ 
+					cout<<"[CosmicKalFitter::produce ] Tracks Made"<<endl;
+					kf._status.merge(TrkFitFlag::kalmanConverged); //HERE
+					if(_tmpResult.krep != 0 && (_tmpResult.krep->fitStatus().success() || _saveall)){ 
 						cout<<"has Rep "<<endl;
 						//copied from KalSeedFit: create seed from the fit
 						CosmicKalSeed kseed(_tmpResult.krep->particleType(),_fdir,_tmpResult.krep->t0(),_tmpResult.krep->flt0(),kf.status());
@@ -347,13 +348,13 @@ std::cout<<"ks ptr"<<std::endl;
 							CosmicKalSeedCollection* col = kal_col.get();
 							if (kal_vec.size() == 0)     continue;
 						      	col->push_back(kseed);  
-			    		}*/
+			    		}
 		      			cout<<"test point 5"<<endl;
 		    			_tmpResult.deleteTrack();
 					}
         		}
     		}	
-   		
+   		std::cout<<"[In CosmicKalFitter :: produce ] Adding Final KalFit to Event"<<std::endl;
   		event.put(std::move(kal_col));    
   	} 
 

@@ -122,13 +122,13 @@ namespace mu2e
 	void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData, ComboHitCollection& shits){
     	if(fitable(*kalData.cosmicKalSeed)){
 		
-		//double flt0 = kalData.cosmicKalSeed->flt0();
-		//auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0);
+		float flt0 = kalData.cosmicKalSeed->flt0(); //Comment
+		auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0); //Comment
 		
 		HepVector pvec(4,0);
 		HepSymMatrix pcov(4,0);
-		//kseg->cosmic().hepVector(pvec);
-		//kseg->cosmic_cov().symMatrix(pcov);
+		kseg->cosmic().hepVector(pvec);
+		kseg->cosmic_cov().symMatrix(pcov);
 
 	      	CosmicLineTraj htraj(pvec,pcov);
 	      	kalData.cosmicTraj = &htraj;
@@ -146,8 +146,9 @@ namespace mu2e
 		cout<<"kfit test point 5"<<endl;
 	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
 		cout<<"has t0"<<endl;
-		
-	      	/*kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); //FIXME seg fault (3)
+		htraj.set_mom(0.00001);//FIXME
+   		cout<<"setmom"<<endl;
+	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); //FIXME seg fault (3)
 		cout<<"kal rep"<<endl;
 	      	assert(kalData.krep != 0);
 		
@@ -156,7 +157,7 @@ namespace mu2e
 		
 	      	TrkErrCode fitstat = FitTrack(detmodel,kalData);
 	      	kalData.krep->addHistory(fitstat,"KalFit fit");
-*/
+
 		}
   	}
 
