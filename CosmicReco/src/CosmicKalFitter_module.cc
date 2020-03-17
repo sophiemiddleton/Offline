@@ -1,6 +1,7 @@
 // Author: S Middleton
 // Purpose: Use Kalman BTrk for the cosmic fit
 // Date: Dec 2019
+
 #include "CosmicReco/inc/CosmicKalFit.hh"
 #include "CosmicReco/inc/CosmicKalFitData.hh"
 #include "RecoDataProducts/inc/CosmicKalSeed.hh"
@@ -282,6 +283,7 @@ std::cout<<"ks ptr"<<std::endl;
 					}	      
 					_kfit.MakeTrack( _srep, detmodel, _tmpResult, _strawCHcol);  
 					cout<<"after make "<<endl;
+					kf._status.merge(TrkFitFlag::kalmanConverged);
 					/*if(_tmpResult.krep != 0 && (_tmpResult.krep->fitStatus().success() || _saveall)){ 
 						cout<<"has Rep "<<endl;
 						//copied from KalSeedFit: create seed from the fit
