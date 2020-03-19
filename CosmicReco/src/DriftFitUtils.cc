@@ -31,50 +31,50 @@
 
 using namespace mu2e;
 
-    double DriftFitUtils::GetTestDOCA(ComboHit const& chit, double a0, double a1, double b0, double b1, const Tracker* tracker) {
+double DriftFitUtils::GetTestDOCA(ComboHit const& chit, double a0, double a1, double b0, double b1, const Tracker* tracker) {
 	
-	Straw const& straw = tracker->getStraw(chit.strawId());
+  Straw const& straw = tracker->getStraw(chit.strawId());
 
-	XYZVec track_position(a0,b0,0);
-	XYZVec track_direction(a1,b1,1);
+  XYZVec track_position(a0,b0,0);
+  XYZVec track_direction(a1,b1,1);
 
-	const CLHEP::Hep3Vector& spos = straw.getMidPoint();
-	const CLHEP::Hep3Vector& sdir = straw.getDirection();
+  const CLHEP::Hep3Vector& spos = straw.getMidPoint();
+  const CLHEP::Hep3Vector& sdir = straw.getDirection();
 
-	XYZVec wire_position = Geom::toXYZVec(spos);
-	XYZVec wire_direction= Geom::toXYZVec(sdir);
+  XYZVec wire_position = Geom::toXYZVec(spos);
+  XYZVec wire_direction= Geom::toXYZVec(sdir);
 
-	TwoLinePCA_XYZ PCA = TwoLinePCA_XYZ(track_position,
-		track_direction,
-		wire_position,
-		wire_direction,
-		1.e-8);
+  TwoLinePCA_XYZ PCA = TwoLinePCA_XYZ(track_position,
+	  track_direction,
+	  wire_position,
+	  wire_direction,
+	  1.e-8);
 
-	double dca; 
-	dca = PCA.dca();    
-	
-	return dca;
+  double dca; 
+  dca = PCA.dca();    
+
+  return dca;
 }
 
-    double DriftFitUtils::GetTestDOCA(ComboHit const& chit, XYZVec const& track_position, XYZVec const&  track_direction, const Tracker* tracker) {
+  double DriftFitUtils::GetTestDOCA(ComboHit const& chit, XYZVec const& track_position, XYZVec const&  track_direction, const Tracker* tracker) {
 	
-	Straw const& straw = tracker->getStraw(chit.strawId());
-	const CLHEP::Hep3Vector& spos = straw.getMidPoint();
-	const CLHEP::Hep3Vector& sdir = straw.getDirection();
-	
-	XYZVec wire_position = Geom::toXYZVec(spos);
-        XYZVec wire_direction= Geom::toXYZVec(sdir);
-	
-	TwoLinePCA_XYZ PCA = TwoLinePCA_XYZ(track_position,
-                track_direction,
-                wire_position,
-                wire_direction,
-                1.e-8);
-	
-        double dca; 
-	dca = PCA.dca();    
-	
-	return dca;
+    Straw const& straw = tracker->getStraw(chit.strawId());
+    const CLHEP::Hep3Vector& spos = straw.getMidPoint();
+    const CLHEP::Hep3Vector& sdir = straw.getDirection();
+
+    XYZVec wire_position = Geom::toXYZVec(spos);
+          XYZVec wire_direction= Geom::toXYZVec(sdir);
+
+    TwoLinePCA_XYZ PCA = TwoLinePCA_XYZ(track_position,
+                  track_direction,
+                  wire_position,
+                  wire_direction,
+                  1.e-8);
+
+          double dca; 
+    dca = PCA.dca();    
+
+    return dca;
 }
 
      double DriftFitUtils::GetRPerp(StrawResponse const& _srep, ComboHit const& chit, double a0, double a1, double b0, double b1, const Tracker* tracker){

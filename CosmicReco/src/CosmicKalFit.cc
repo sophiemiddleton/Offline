@@ -73,7 +73,6 @@ namespace mu2e
 		}
 	};
 
-
 	// construct from a parameter set
   	CosmicKalFit::CosmicKalFit(fhicl::ParameterSet const& pset) :
     	_debug(pset.get<int>("debugLevel",0)),
@@ -172,26 +171,22 @@ namespace mu2e
 	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
 	   
 	    for(auto ths : hseeds ){
-		
-		size_t index = ths.index();
-		cout<<"index "<<index<<endl;
-		const ComboHit& strawhit(shits.at(0)); //this is set in fitter module - it should StrawLevel CH's INDEX //FIXME - seg fault (2)
-		const Straw& straw = _tracker->getStraw(strawhit.strawId());
-		TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
-		assert(trkhit != 0);
-		
-		//trkhit->setAmbig(ths.ambig());
-
-		TrkErrCode pstat = trkhit->updatePoca(&htraj);
-	      	if(pstat.failure()){
-			trkhit->setActivity(false);
-	      	}
-	      	tshv.push_back(trkhit);
-		
-    	}
-       
-    	std::sort(tshv.begin(),tshv.end(),fcomp());
-  	}
+		    size_t index = ths.index();
+		    const ComboHit& strawhit(shits.at(index)); 
+		    const Straw& straw = _tracker->getStraw(strawhit.strawId());
+		    TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
+		    assert(trkhit != 0);
+		    
+		    TrkErrCode pstat = trkhit->updatePoca(&htraj);
+	      if(pstat.failure()){
+			    trkhit->setActivity(false);
+	       }
+	       tshv.push_back(trkhit);
+		    
+       }
+           
+       std::sort(tshv.begin(),tshv.end(),fcomp());
+      }
 
 	void CosmicKalFit::MakeMaterials( Mu2eDetector::cptr_t detmodel,TrkStrawHitVector const& tshv, CosmicLineTraj const& traj,std::vector<DetIntersection>& detinter) {
 		// loop over strawhits and extract the straws

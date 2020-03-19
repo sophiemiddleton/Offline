@@ -123,36 +123,35 @@ namespace mu2e{
 			ProditionsHandle<StrawResponse> _strawResponse_h; 
 			ProditionsHandle<Mu2eMaterial> _mu2eMaterial_h;
 			ProditionsHandle<Mu2eDetector> _mu2eDetector_h;
-			const Tracker* tracker;     // straw tracker geometry
+			ProditionsHandle<Tracker> _alignedTracker_h;
 			bool findData(const art::Event& e);
 			
 	};
 
 
 	CosmicKalFitter::CosmicKalFitter(fhicl::ParameterSet const& pset) :
-    	art::EDProducer{pset},
-    	_debug(pset.get<int>("debugLevel", 1)),
-    	_diag(pset.get<int>("diagLevel",1)),
-	_printfreq(pset.get<int>("printFrequency",101)),	
-	_seedToken{consumes<CosmicTrackSeedCollection> (pset.get<art::InputTag>("CosmicTrackSeedCollection"))},
-	_chToken{consumes<ComboHitCollection>(pset.get<art::InputTag>("ComboHitCollection"))},
-	_minnhits(pset.get<unsigned>("minnhits",1)),
-	_perr(pset.get<vector<double> >("ParameterErrors")),
-	_saveall(pset.get<bool>("saveall", false)),
-	_tpart((TrkParticle::type)(pset.get<int>("fitparticle",TrkParticle::mu_minus))),//TODO+/-
-	_kfit(pset.get<fhicl::ParameterSet>("CosmicKalFit",fhicl::ParameterSet())),
-	_upz(pset.get<double>("UpstreamZ",-1500)),
-    	_downz(pset.get<double>("DownstreamZ",1500))
-	{
-		//consumes<CosmicTrackSeedCollection>(_seedToken);
-		produces<CosmicKalSeedCollection>();
-		if(_perr.size() != CosmicLineTraj::NHLXPRM){
-			throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<<std::endl;
-		}
-		_hcovar = HepSymMatrix(CosmicLineTraj::NHLXPRM,0);
-		for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
-			_hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];//sets it to all 1's?   
-		}
+    art::EDProducer{pset},
+    _debug(pset.get<int>("debugLevel", 1)),
+    _diag(pset.get<int>("diagLevel",1)),
+    _printfreq(pset.get<int>("printFrequency",101)),	
+    _seedToken{consumes<CosmicTrackSeedCollection> (pset.get<art::InputTag>("CosmicTrackSeedCollection"))},
+    _chToken{consumes<ComboHitCollection>(pset.get<art::InputTag>("ComboHitCollection"))},
+    _minnhits(pset.get<unsigned>("minnhits",1)),
+    _perr(pset.get<vector<double> >("ParameterErrors")),
+    _saveall(pset.get<bool>("saveall", false)),
+    _tpart((TrkParticle::type)(pset.get<int>("fitparticle",TrkParticle::mu_minus))),//This is resolved later as we want both + and - muons
+    _kfit(pset.get<fhicl::ParameterSet>("CosmicKalFit",fhicl::ParameterSet())),
+    _upz(pset.get<double>("UpstreamZ",-1500)),
+    _downz(pset.get<double>("DownstreamZ",1500))
+	  {
+		  produces<CosmicKalSeedCollection>();
+		  if(_perr.size() != CosmicLineTraj::NHLXPRM){
+			  throw cet::exception("RECO")<<"mu2e::CosmicKalFit: parameter error vector has wrong size"<<std::endl;
+		  }
+		  _hcovar = HepSymMatrix(CosmicLineTraj::NHLXPRM,0);
+		  for(size_t ipar = 0; ipar < CosmicLineTraj::NHLXPRM; ++ipar){
+			  _hcovar(ipar+1,ipar+1) = _perr[ipar]*_perr[ipar];//sets it to all 1's?   
+		  }
 	}
 
 	CosmicKalFitter::~CosmicKalFitter(){}
@@ -164,15 +163,13 @@ namespace mu2e{
 
   	void CosmicKalFitter::beginRun(art::Run& run) {
 		cout<<"Beginning Kal Fit run ... "<<endl;
-		mu2e::GeomHandle<mu2e::Tracker> th;
+		//mu2e::GeomHandle<mu2e::Tracker> th;
 		mu2e::GeomHandle<BFieldManager> bfmgr;
 		mu2e::GeomHandle<DetectorSystem> det;
-		const Tracker* tracker = th.get();
-		_kfit.setTracker  (tracker);
+
 		_mu2eMaterial_h.get(run.id());
 
-		// change coordinates to mu2e
-		CLHEP::Hep3Vector vpoint(0.0,0.0,0.0);
+		CLHEP::Hep3Vector vpoint(-3904, 0, 11071); //TODO
 		CLHEP::Hep3Vector vpoint_mu2e = det->toMu2e(vpoint);
 		CLHEP::Hep3Vector field = bfmgr->getBField(vpoint_mu2e);
 		_bz000    = field.z();
@@ -181,11 +178,12 @@ namespace mu2e{
    	}
 
   	void CosmicKalFitter::produce(art::Event& event ) {
-		
+		const Tracker *tracker = _alignedTracker_h.getPtr(event.id()).get();
+    _kfit.setTracker  (tracker);
 		auto _srep = _strawResponse_h.getPtr(event.id());
 		auto detmodel = _mu2eDetector_h.getPtr(event.id());
 		unique_ptr<CosmicKalSeedCollection> kal_col(new CosmicKalSeedCollection());
-std::cout<<"ks ptr"<<std::endl;
+
 		_iev=event.id().event();
 		
 		if(_debug > 0 && (_iev%_printfreq)==0)cout<<"CosmicKalFit: event="<<_iev<<endl;
@@ -205,7 +203,7 @@ std::cout<<"ks ptr"<<std::endl;
 			ComboHitCollection _strawCHcol = sts._straw_chits ;
 			//_kalResult.chcol  = _strawCHcol;
 			
-			TrkParticle tpart(_tpart); //TODO we want either +/-13
+			TrkParticle tpart(_tpart); 
 			TrkParticle::type t = (TrkParticle::type) fabs(((-(int) _tpart.particleType())));
 			tpart = TrkParticle(t);
 
@@ -242,28 +240,30 @@ std::cout<<"ks ptr"<<std::endl;
 					auto cosH = event.getValidHandle(_seedToken);
 					kf._cosmicseed = art::Ptr<CosmicTrackSeed>(cosH,index);
 					
-					int nsh = sts._shits().size();
+					int nsh = _strawCHcol.size();//sts._shits().size();
 					cout<<"Check: What is the Size of the SH SHIndex  vector: "<<nsh<<endl;
 					for (int i=0; i< nsh; ++i){
-						size_t i_straw   = sts._shits().at(i);
+						//size_t i_straw   = sts._shits().at(i);
+            ComboHit const& strawhit = sts._straw_chits[i];
+            size_t i_straw = i;
 						if(_diag> 1){
-							std::cout<<"[CosmicKalFitter::produce] Getting TrkStrawHitIndex: "<<i<<" of "<<"Check: What is the Size of the SH SHIndex  vector: "<<nsh<<std::endl;
+							std::cout<<"[CosmicKalFitter::produce] Getting TrkStrawHitIndex: "<<i<<" of "s<<nsh<<std::endl;
 							std::cout<<"Check:the size of the SL CHhits is "<<_strawCHcol.size()<<endl;
 						}
-						//const ComboHit& strawhit(_tmpResult.StrawLevelhits()->at(i_straw)); //FIXME seg fault (1)
-						//const Straw& straw = tracker->getStraw(strawhit.strawId());
-						double  fltlen  = traj->zFlight(1.0, traj->z0());//straw.getMidPoint().z(), traj->z0());
-						double  propTime = (fltlen-flt0)/0.062; //FIXME - velcoity access
+						
+						const Straw& straw = tracker->getStraw(strawhit.strawId());
+						double  fltlen  = traj->zFlight(straw.getMidPoint().z(), traj->z0());
+						double  propTime = (fltlen-flt0)/0.062; //TODO - use strep
 
 						TrkStrawHitSeed tshs;
-						tshs._index  = i_straw;
+						tshs._index  = i_straw;//TODO
 						tshs._t0     = TrkT0(cosmict0 + propTime, sts._t0.t0Err());
 						tshs._trklen = fltlen; 
 						kf._hits.push_back(tshs); 
 					}
 					if(_diag> 1){
 							std::cout<<"[CosmicKalFitter::produce] KalSeed has "<<kf._hits.size()<<" hits "<<std::endl;
-						}
+					}
 					if(kf._hits.size() >= _minnhits) kf._status.merge(TrkFitFlag::hitsOK);
 					
 					if(traj !=0){
@@ -284,10 +284,10 @@ std::cout<<"ks ptr"<<std::endl;
 					}	      
 					_kfit.MakeTrack( _srep, detmodel, _tmpResult, _strawCHcol);  
 					cout<<"[CosmicKalFitter::produce ] Tracks Made"<<endl;
-					kf._status.merge(TrkFitFlag::kalmanConverged); //HERE
+					kf._status.merge(TrkFitFlag::kalmanConverged); 
 					if(_tmpResult.krep != 0 && (_tmpResult.krep->fitStatus().success() || _saveall)){ 
 						cout<<"has Rep "<<endl;
-						//copied from KalSeedFit: create seed from the fit
+
 						CosmicKalSeed kseed(_tmpResult.krep->particleType(),_fdir,_tmpResult.krep->t0(),_tmpResult.krep->flt0(),kf.status());
 						kseed._status.merge(TrkFitFlag::kalmanOK);
 
