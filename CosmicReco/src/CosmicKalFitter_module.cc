@@ -268,7 +268,7 @@ namespace mu2e{
 						CosmicTrkUtils::fillSegment(*traj,momerr,0.0, kseg);
 						kf._segments.push_back(kseg);
 						if(_diag> 1){
-							std::cout<<"[CosmicKalFitter::produce] filled segments: "<<index<<std::endl;
+							std::cout<<"[CosmicKalFitter::produce] Filled segments: "<<index<<std::endl;
 						}
 					}else {
 						throw cet::exception("RECO")<<"mu2e::CosmicKalFitter: Cant extract comsic traj from seed "<<endl;
@@ -276,10 +276,12 @@ namespace mu2e{
 
 					_tmpResult.cosmicKalSeed = &kf;	
 					if(_diag> 1){
-						std::cout<<"[CosmicKalFitter::produce] producing track: "<<index<<std::endl;
+						std::cout<<"[CosmicKalFitter::produce] Producing track: "<<index<<std::endl;
 					}	      
-					_kfit.MakeTrack( _srep, detmodel, _tmpResult, _strawCHcol);  
-					
+					_kfit.MakeTrack( _srep, detmodel, _tmpResult, _strawCHcol);
+          if(_diag> 1){  
+					  std::cout<<"[CosmicKalFitter::produce] Made track: "<<index<<" "<<_tmpResult.krep <<" "<< _tmpResult.krep->fitStatus().success()<<" "<< _saveall<<std::endl;
+          }
 					if(_tmpResult.krep != 0 && (_tmpResult.krep->fitStatus().success() || _saveall)){ 
 						
             std::cout<<"[CosmicKalFitt::produce] Success : "<<_tmpResult.krep->fitStatus().success()<<std::endl;
@@ -339,21 +341,26 @@ namespace mu2e{
 							  }
 							  kseed._segments.push_back(kseg);
 			    		}
+              kseed.kalmanworked = true;
+              std::cout<<"[In CosmicKalFitter::produce() ] setting converged to : "<<kseed.kalmanworked<<std::endl;
 							kal_vec.push_back(kseed);
+          
 							CosmicKalSeedCollection* col = kal_col.get();
               std::cout<<"[In CosmicKalFitter::produce ()] size: "<<kal_vec.size()<<std::endl;
 							if (kal_vec.size() == 0)     continue;
-						      	kal_col->push_back(kseed);  
                     col->push_back(kseed); 
 			    		}
 		    			_tmpResult.deleteTrack();
+            
+              std::cout<<"[In CosmicKalFitter :: produce ] Adding Final KalFit to Event"<<std::endl;
+              nkal ++;
+              cout <<"NKal"<<nkal<<endl; 
 					  }
         	}
     		}	
-   		std::cout<<"[In CosmicKalFitter :: produce ] Adding Final KalFit to Event"<<std::endl;
-      nkal ++;
-  		event.put(std::move(kal_col));//removed std::move 
-      cout <<"NKal"<<nkal<<endl;   
+   		
+  		event.put(std::move(kal_col));
+         
   	} 
 
 	bool CosmicKalFitter::findData(const art::Event& evt){

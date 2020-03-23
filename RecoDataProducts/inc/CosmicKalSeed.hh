@@ -13,6 +13,7 @@
 #include "canvas/Persistency/Common/Ptr.h"
 // BTrk
 #include "BTrk/TrkBase/TrkParticle.hh"
+#include "BTrk/TrkBase/CosmicLineTraj.hh"
 // Root
 #include <Rtypes.h>
 // C++
@@ -44,7 +45,7 @@ namespace mu2e {
 
 	// global information about the track
 	TrkParticle			 _tpart; // particle assumed for this fit
-	TrkFitDirection			 _fdir; // direction in which this particle was fit TODO
+	TrkFitDirection	 _fdir; // direction in which this particle was fit TODO
 	TrkFitFlag			 _status; // status of this fit
 	HitT0			    	 _t0; // track t0; Time particle crosses z=0
 	Float_t			    	_flt0; // flight distance where the track crosses the tracker midplane (z=0)
@@ -57,6 +58,8 @@ namespace mu2e {
 	art::Ptr<CosmicTrackSeed>       _cosmicseed; // associated Cosmic Seed (for seed fits); can be null
 	art::Ptr<CosmicKalSeed>         _kalseed; // associated Kalman Seed (for final fits); can be null
 	ComboHitCollection		_StrawLevelComboHits;
+  const CosmicLineTraj*       _traj;
+  bool kalmanworked = false;
 	};
 	typedef std::vector<mu2e::CosmicKalSeed> CosmicKalSeedCollection;
 }

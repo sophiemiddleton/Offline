@@ -111,8 +111,8 @@ CosmicKFSeed : {
 CosmicKalFitter : {
 	
 	module_type             	: CosmicKalFitter
-	debugLevel 			:    2
-	diagLevel			:    2
+	debugLevel 			:    10
+	diagLevel			:    10
 	printFrequency			:    101
 	CosmicTrackSeedCollection    	: CosmicTrackFinderLoose
 	ComboHitCollection	        : "makePH"

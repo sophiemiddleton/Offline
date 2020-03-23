@@ -182,9 +182,9 @@ namespace mu2e
 
 		  CosmicKalSeed sts =(*_kalcol)[ist];
 		  double t0 = sts._t0.t0();
-		  TrkFitFlag const& status = sts._status;
+		  //TrkFitFlag const& status = sts._status;
       const CosmicLineTraj *traj = sts._traj;
-		  if (status.hasAllProperties(TrkFitFlag::kalmanConverged) ){ 
+		  if (sts.kalmanworked == true ){ //status.hasAllProperties(TrkFitFlag::kalmanConverged)
 		    //Particle = sts._tpart;
 		    //Direction = sts._fdir;
 		    _Chi2 = sts._chisq;
@@ -197,8 +197,6 @@ namespace mu2e
 
 		    _nused ++;
 		
-	
-	
  		    _cosmic_tree->Fill();
       }
   }
