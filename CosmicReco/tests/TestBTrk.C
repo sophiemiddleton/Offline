@@ -34,7 +34,7 @@ using namespace ROOT::Math;
 
 TVector3 GetPOCA( TVector3 point,TVector3 start,TVector3 end){
 	  
-    	  double tMin = -(start-point).Dot(end-start) /((end-start).Mag2());
+    double tMin = -(start-point).Dot(end-start) /((end-start).Mag2());
 	  double POCA_x = start.x() + (end.x()-start.x())*tMin;
 	  double POCA_y = start.y() + (end.x()-start.y())*tMin;
 	  double POCA_z = start.z() + (end.z()-start.z())*tMin;
@@ -62,9 +62,9 @@ TVector3 position(double f, double phi0, double theta, double z0, double d0, TVe
 {
 	double sphi0 = sin(phi0);
 	double cphi0 = cos(phi0);
-	double x_pos = -1*d0*sphi0+ cos(phi0)*sin(theta)*f +Pos0.x() ;
-	double y_pos = d0*cphi0+  sin(theta)*sin(phi0)*f+Pos0.y();
-	double z_pos = z0 + cos(theta)*f+Pos0.z();
+	double x_pos = -1*d0*sphi0+ cos(phi0)*sin(theta)*f + Pos0.x() ;
+	double y_pos = d0*cphi0+  sin(theta)*sin(phi0)*f + Pos0.y();
+	double z_pos = z0 + cos(theta)*f + Pos0.z();
 	TVector3 Pos;
 	Pos.SetXYZ(x_pos, y_pos, z_pos);
 	return Pos;
@@ -74,7 +74,7 @@ TVector3 position(double f, double phi0, double theta, double z0, double d0, TVe
 
 void TestBTrk( TVector3 Start, TVector3 End) {
 	TVector3 Pos0;
-	Pos0.SetXYZ(0, 0 ,0); //Reference point is set at 0.
+	Pos0.SetXYZ(0,0,0); //Reference point is set at 0.
 	TVector3 POCA = GetPOCA(Pos0, Start, End);
 	unsigned AMSIGN = copysign(1,POCA.X());
 	double DOCA = GetDOCA(POCA, Pos0);
