@@ -1,4 +1,4 @@
-#Mu2e TEve Event Display Development Branch
+# Mu2e TEve Event Display Development Branch
 
 This branch contains the prototype for the TEve based Mu2e Event Display.
 
@@ -32,7 +32,7 @@ Contains callers for access to Tracker and Calo
 
 Contains drawing options
 
-###Collection Interface
+### Collection Interface
 
 Not yet used but will be as we move towards a more complex design
 
