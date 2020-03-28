@@ -207,7 +207,7 @@ namespace mu2e
 	
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
-		      void AddHits(const art::Event& event);
+		      void AddComboHits(const art::Event& event);
 		      void AddCaloCluster(const art::Event& event);
 		      void AddCrvHits(const art::Event& event);
 
@@ -439,7 +439,7 @@ void TEveEventDisplay::analyze(const art::Event& event){
 	_evt = event.id().event();
 
 	if(showEvent_ ){
-		if(addHits_) AddHits(event);
+		if(addHits_) AddComboHits(event);
 		//if(addClusters_) AddCaloCluster(event);
 		//if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
 		//if(HasTrack(event) and addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
@@ -545,7 +545,7 @@ void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldMana
 		    gEve->Redraw3D(kTRUE);
 }
 
-void TEveEventDisplay::AddHits(const art::Event& event){
+void TEveEventDisplay::AddComboHits(const art::Event& event){
    	cout<<"adding hits "<<endl;
 	auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
 	_chcol = chH.product(); 

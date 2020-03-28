@@ -24,17 +24,21 @@ The TEve Browser will appear. It is currently very slow.
 
 This branch is very much a "work-in-progress" way it is currently structured is not optimal. Currently there are a number of Interfaces defined in ``dict classes`` in the ``src`` directory:
 
-### Geometry
+### gdml
 
-Contains callers for access to Tracker and Calo
+The GDML file used here can be regenerated using: ```mu2e -c mu2eG4/fcl/gdmldump.fcl```. It contains the entire Mu2e World.
+
+### Geom Interface
+
+Contains callers for access to Tracker and Calo geometry. This class also contains functions to set visability of different elements absed on their names within the gdml.
 
 ### Drawing
 
-Contains drawing options
+Contains drawing options for both hits and clusters. These are cosmetic features.
 
 ### Collection Interface
 
-Not yet used but will be as we move towards a more complex design
+Not yet used but will be as we move towards a more complex design. bsed on EventDisplay infrastructure.
 
 ### Particle Interface
 
@@ -42,6 +46,6 @@ The physics or PID world.
 
 ### NavState and EvtUtils
 
-These contian the event navigation. It currently does not work as planned.
+These contian the event navigation. It currently does not work as planned. This needs to be adapted to the ART world.
 
 
