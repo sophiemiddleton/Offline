@@ -33,7 +33,7 @@ namespace mu2e{
 
 	void Draw_Interface::DrawCluster(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP::Hep3Vector ClusterPos, int nDisk, TEveElementList *list, Geom_Interface *g) 
   	{
-	
+		
 		g->GetCaloCenter(nDisk);
 		CLHEP::Hep3Vector pointInMu2e = g->PointToCalo(ClusterPos, nDisk);
 		std::string hstr=" cluster %d";
@@ -44,11 +44,11 @@ namespace mu2e{
 		TEvePointSet* h = new TEvePointSet(Form(strlst.c_str(),n));
 		h->SetTitle(Form(strlab.c_str(),n,hstr));
 
-		std::cout<<"in mu2e : "<<n<<" "<<pointInMu2e.x()/10<<" "<<pointInMu2e.y()/10<<" "<<pointInMu2e.z()/10<<std::endl;
+		std::cout<<"Cluster in mu2e : "<<n<<" "<<pointInMu2e.x()/10<<" "<<pointInMu2e.y()/10<<" "<<pointInMu2e.z()/10<<std::endl;
 		h->SetMarkerColor(kRed);
 		h->SetMarkerSize(mSize);
 
-		h->SetNextPoint(pointInMu2e.x()/10, pointInMu2e.y()/10, pointInMu2e.z()/10); //as GDML is in cm (I think...and hope)
+		h->SetNextPoint(pointInMu2e.x()/10, pointInMu2e.y()/10, pointInMu2e.z()/10); 
 		h->SetMarkerColor(mColor);
 		h->SetMarkerSize(mSize);
 		list->AddElement(h);

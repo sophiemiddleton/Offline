@@ -49,7 +49,7 @@
 #include <TEveTrack.h>
 #include <TEveTrackPropagator.h>
 #include <TEveStraightLineSet.h>
-
+//#include <TRint.h>
 //#include <sstream>
 #include "fstream"
 
@@ -156,7 +156,6 @@ namespace mu2e
 		     std::string g4ModuleLabel_;
 		     //std::string hitMakerModuleLabel_;
 
-		    
 		      double minEnergyDep_;
 		      size_t minHits_;
 		      bool doDisplay_;
@@ -203,7 +202,6 @@ namespace mu2e
 		      TGeoManager* geom = new TGeoManager("geom","Geom");
 		      std::vector<CLHEP::Hep3Vector> GDMLt;
 
-		  
 		      bool foundEvent = false;
 		      void MakeNavPanel();
 		      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector>& t);
@@ -212,12 +210,15 @@ namespace mu2e
 		      void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
 		      void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
 		      void hideBuilding(TGeoNode* node);
+
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
 		      void AddHits(const art::Event& event);
 		      void AddCaloCluster(const art::Event& event);
 		      void AddCrvHits(const art::Event& event);
+
 		      bool FindData(const art::Event& event);
+		      bool HasTrack(const art::Event& event);
 	};
 
 TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
@@ -249,6 +250,7 @@ TEveEventDisplay::~TEveEventDisplay(){}
 void TEveEventDisplay::MakeNavPanel()
 {
 	TEveBrowser* browser = gEve->GetBrowser();
+
 	browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
 
 	TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
@@ -271,6 +273,14 @@ void TEveEventDisplay::MakeNavPanel()
 		navFrame->AddFrame(b);
 		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
+		// ... Create forward button and connect to "NextEvent" rcvr in visutils
+		TGTextButton *fin = new TGTextButton(navFrame,"&Exit","gApplication->Terminate(0)");
+		navFrame->AddFrame(fin);
+
+		//....Add in check list
+		TGGroupFrame *options = new TGGroupFrame(navFrame, "Options", kVerticalFrame);
+		options->SetTitlePos(TGGroupFrame::kLeft);
+		
 		// ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
 		TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
 		fTlRun = new TGLabel(runoFrame,"Run Number");
@@ -327,6 +337,7 @@ void TEveEventDisplay::beginJob(){
 		int    tmp_argc(0);
 		char** tmp_argv(0);
 		application_ = new TApplication( "noapplication", &tmp_argc, tmp_argv );
+	
 	}
 	// Initialize global Eve application manager (return gEve)
 	TEveManager::Create();
@@ -498,18 +509,21 @@ void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
-cout<<"Analyzing Event :"<<event.id()<<endl;
+
+	cout<<"[TEveEventDisplay :: analyze] Analyzing Event :"<<event.id()<<endl;
 
 	GeomHandle<mu2e::BFieldManager> bfmgr;
 	_evt = event.id().event();
+
 	if(showEvent_ ){
 		if(addHits_) AddHits(event);
+		//if(addClusters_) AddCaloCluster(event);
 		//if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
-		//if(addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
-		//if(AddCrvHits_)
+		//if(HasTrack(event) and addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
+		
 		gSystem->ProcessEvents();
 	}
-	cout<<"finsihed hit list "<<endl;
+	
 	std::ostringstream sstr;
 	sstr << event.id().run();
 	visutil_->fTbRun->Clear();
@@ -605,11 +619,11 @@ void TEveEventDisplay::hideBuilding(TGeoNode* node) {
 }
 
 void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
-	auto cosH = event.getValidHandle<mu2e::CosmicTrackSeedCollection>(cosmicTag_);
-	_cosmiccol = cosH.product();
-	if(!_cosmiccol->empty()){
+        std::cout<<"[In AddCosmicTrack() ] "<<std::endl;
+	
+		 std::cout<<"[In AddCosmicTrack() ] found Track "<<std::endl;
 		TEveStraightLineSet *CosmicTrackList = new TEveStraightLineSet();
-		for(size_t ist = 0;ist < _cosmiccol->size(); ++ist){
+		for(size_t ist = 0; ist < _cosmiccol->size(); ++ist){
 			CosmicTrackSeed sts =(*_cosmiccol)[ist];
 			CosmicTrack st = sts._track;
 			
@@ -622,10 +636,10 @@ void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
 			Float_t ty2 = st.InitParams.B0  + st.InitParams.B1*tz2; 	
 			CosmicTrackList->AddLine(tx1, ty1, tz1, tx2, ty2, tz2);
 		
-			cout<<st.InitParams.A0<<"track "<<endl;
+			cout<<st.InitParams.A0<<"track "<<st.InitParams.A1<<st.InitParams.B1<<st.InitParams.B0<<endl;
 			gEve->AddElement(CosmicTrackList);
 		    	gEve->Redraw3D(kTRUE);
-		}
+		
 	}
 }
 
@@ -645,9 +659,9 @@ void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldMana
 	int mcindex=-1;
 	for ( auto const& gen: *_gencol){
 		TEveTrackPropagator* trkProp = fTrackList->GetPropagator();
-		//if(!isCosmic_) CLHEP::Hep3Vector field = bf.getBField(CLHEP::Hep3Vector(gen.position().x(), gen.position().y(), gen.position().z()));
+		//if(!isCosmic_) CLHEP::Hep3Vector field = bf.getBField(gen.position());
 		//if(isCosmic_) CLHEP::Hep3Vector field(CLHEP::Hep3Vector(0,0,0)); 
-		trkProp->SetMagField(0);//-1*1000.);
+		trkProp->SetMagField(-1*1000.);
 		trkProp->SetMaxR(trkMaxR_);
 		trkProp->SetMaxZ(trkMaxZ_);
 		trkProp->SetMaxStep(trkMaxStepSize_);
@@ -684,10 +698,10 @@ void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldMana
 
 
 void TEveEventDisplay::AddHits(const art::Event& event){
-   
+   	cout<<"adding hits "<<endl;
 	auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
-	_chcol = chH.product(); //this should be any collection eventually
-
+	_chcol = chH.product(); 
+	cout<<"is cosmics "<<isCosmic_<<endl;
 	if (fHitsList == 0) {
 		fHitsList = new TEveElementList("Hits");
 		fHitsList->IncDenyDestroy();     
@@ -701,8 +715,8 @@ void TEveEventDisplay::AddHits(const art::Event& event){
 	    for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
 		    ComboHit const& hit = (*_chcol)[ih];
 		    CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
-		    if(ih%100 ==0 and !isCosmic_) draw->DrawHit("ComboHits",kRed, 2, ih, HitPos, HitsList, gdml_geom);
-		    else draw->DrawHit("ComboHits",kRed, 1, ih, HitPos, HitsList, gdml_geom);
+		    if(ih%100 ==0 and !isCosmic_) draw->DrawHit("ComboHits",kRed, 1, ih, HitPos, HitsList, gdml_geom);
+		    if(isCosmic_) draw->DrawHit("ComboHits",kRed, 1, ih, HitPos, HitsList, gdml_geom);
 		    fHitsList->AddElement(HitsList);  
 		    gEve->AddElement(fHitsList);
 		    gEve->Redraw3D(kTRUE);
@@ -715,19 +729,18 @@ void TEveEventDisplay::AddHits(const art::Event& event){
 void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 	 auto cluH = event.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
    	_clustercol = cluH.product(); 
-	cout<<"has clusters "<<endl;
-	cout<<_clustercol->size()<<endl;
+	
 	if (fClusters == 0) {
-		fClusters= new TEveElementList("Hits");
+		fClusters= new TEveElementList("Clusters");
 		fClusters->IncDenyDestroy();     
 	}
 	else {
 		fClusters->DestroyElements();  
 	}
-	
-	if(!_clustercol->empty()){
+	TEveElementList* ClusterList  = new TEveElementList("CaloCLusters");
+	if(_clustercol->size() !=0){
 		cout<<"in cluster loop "<<endl;
-		TEveElementList* ClusterList  = new TEveElementList("Combo Hits");
+		
 		for(unsigned c = 0; c < _clustercol->size(); c++){
 			 CaloCluster const& cluster = (*_clustercol)[c];
 			 const CLHEP::Hep3Vector&      ClusterCOG = cluster.cog3Vector();
@@ -744,11 +757,19 @@ void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 
 
 bool TEveEventDisplay::FindData(const art::Event& evt){
-	_chcol = 0; 
-        auto chH = evt.getValidHandle<mu2e::ComboHitCollection>(chTag_);
-	_chcol = chH.product();
+	_clustercol = 0; 
+        auto chH = evt.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
+	_clustercol = chH.product();
 	foundEvent = true;
-	return _chcol != 0;
+	return _clustercol != 0;
+  }
+
+
+bool TEveEventDisplay::HasTrack(const art::Event& evt){
+	_cosmiccol = 0; 
+        auto chH = evt.getValidHandle<mu2e::CosmicTrackSeedCollection>(cosmicTag_);
+	_cosmiccol = chH.product();
+	return _cosmiccol != 0;
   }
 
 void TEveEventDisplay::endJob(){
