@@ -39,14 +39,14 @@ source : { module_type : RootInput }
 
 physics :
 {
-	producers : {
-	   
+	 producers : {
 	    @table::CaloCluster.producers
+	    @table::CaloReco.producers
 	    @table::CaloClusterFast.producers
 	 }
   	analyzers : { @table::TEveDis.analyzers}
 }
 
-physics.EndPath  : [ @sequence::TEveDis.seqCaloOnly] 
+physics.RecoPath  : [ @sequence::TEveDis.seqCaloOnly] 
 
 
