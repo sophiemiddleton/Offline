@@ -204,13 +204,7 @@ namespace mu2e
 
 		      bool foundEvent = false;
 		      void MakeNavPanel();
-		      void Heirarchy(TGeoNode *node, std::vector<CLHEP::Hep3Vector>& t);
-		      void InsideDS( TGeoNode * node, bool inDSVac );
-		      void hideTop(TGeoNode* node);
-		      void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
-		      void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
-		      void hideBuilding(TGeoNode* node);
-
+	
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
 		      void AddHits(const art::Event& event);
@@ -425,87 +419,16 @@ void TEveEventDisplay::beginRun(const art::Run& run){
 	//This is a basic function to allow us to just see tracker and calo, it needs fixing:
 
 
-	hideBuilding(topnode);
-	hideTop(topnode);
-	InsideDS( topnode, false );
+	gdml_geom->Geom_Interface::hideBuilding(topnode);
+	gdml_geom->hideTop(topnode, _diagLevel);
+	gdml_geom->InsideDS(topnode, false );
 
-	Heirarchy(topnode, GDMLt);
+	gdml_geom->Heirarchy(topnode, GDMLt);
 	for(auto const& transformation : GDMLt){
 		cout<<"Transformation "<<transformation.x()<<" "<<transformation.y()<<" "<<transformation.z()<<endl;
   	}
   	//Add static detector geometry to global scene
   	gEve->AddGlobalElement(etopnode);
-}
-
-
-void TEveEventDisplay::Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector> &TransformList ){
-  std::string _name = (node->GetVolume()->GetName());
-  if( _name == "HallAir") {
-	cout<<"HallAir Origin IS "<<node->GetMotherVolume()->GetName();
-        TGeoVolume *vol = node->GetVolume();
-	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
-	Double_t master[3];
-	const Double_t *local = shape->GetOrigin();
-	if(shape!=NULL){
-		gGeoManager->LocalToMaster(local,master);
-		CLHEP::Hep3Vector hallToworld(master[0], master[1], master[2]);
-		TransformList.push_back(hallToworld);
-        }
-  }
-  if( _name == "DS3Vacuum") {
-	cout<<"DS3 Origin IS "<<node->GetMotherVolume()->GetName();
-        TGeoVolume *vol = node->GetVolume();
-	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
-	Double_t master[3];
-	const Double_t *local = shape->GetOrigin();
-	if(shape!=NULL){
-		gGeoManager->LocalToMaster(local,master);
-		CLHEP::Hep3Vector DSTohall(master[0], master[1], master[2]);
-		TransformList.push_back(DSTohall);
-        }
- }
-  if( _name == "TrackerMother") {
-	cout<<"Tracker Origin IS "<<node->GetMotherVolume()->GetName();
-        TGeoVolume *vol = node->GetVolume();
-	TGeoBBox *shape = (TGeoBBox*)vol->GetShape();
-	Double_t master[3];
-	const Double_t *local = shape->GetOrigin();
-	if(shape!=NULL){
-		gGeoManager->LocalToMaster(local,master);
-		CLHEP::Hep3Vector TrackerToDS(master[0], master[1], master[2]);
-		TransformList.push_back(TrackerToDS);
-        }
-
-  }
-
-  // Descend into each daughter TGeoNode.
-  int ndau = node->GetNdaughters();
-  for ( int i=0; i<ndau; ++i ){
-    TGeoNode * dau = node->GetDaughter(i);
-    Heirarchy(dau, TransformList);
-  }
-  
-}
-
-void TEveEventDisplay::InsideDS( TGeoNode * node, bool inDSVac ){
-	std::string _name = (node->GetVolume()->GetName());
-	if ( node->GetMotherVolume() ) {
-		std::string motherName(node->GetMotherVolume()->GetName());
-		if ( motherName == "DS2Vacuum" || motherName == "DS3Vacuum" ){
-		inDSVac = true;
-		}
-	}
-	if ( inDSVac && _name.find("VirtualDetector_TT_Mid") != 0 ) {
-		node->SetVisibility(kTRUE);
-	} else{
-		node->SetVisibility(kFALSE);
-	}
-	int ndau = node->GetNdaughters();
-	for ( int i=0; i<ndau; ++i ){
-		TGeoNode * dau = node->GetDaughter(i);
-		InsideDS( dau, inDSVac );
-  	}
-
 }
 
 void TEveEventDisplay::analyze(const art::Event& event){
@@ -520,7 +443,6 @@ void TEveEventDisplay::analyze(const art::Event& event){
 		//if(addClusters_) AddCaloCluster(event);
 		//if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
 		//if(HasTrack(event) and addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
-		
 		gSystem->ProcessEvents();
 	}
 	
@@ -547,77 +469,6 @@ void TEveEventDisplay::analyze(const art::Event& event){
 	gPad->WaitPrimitive();
 } 
 
-void TEveEventDisplay::hideTop(TGeoNode* node) {
-  	TString name = node->GetName();
-  	if(_diagLevel > 0 and name.Index("Shield")>0) {
-		std::cout << name << " " <<  name.Index("mBox_") << std::endl;
-  	}
-  	bool test = false;
-
-	// from gg1
-	if(name.Index("mBox_45_")>=0) test = true;
-	if(name.Index("mBox_46_")>=0) test = true;
-	if(name.Index("mBox_47_")>=0) test = true;
-	if(name.Index("mBox_48_")>=0) test = true;
-	if(name.Index("mBox_49_")>=0) test = true;
-	if(name.Index("mBox_74_")>=0) test = true;
-
-	if(test) {
-		std::cout << "turning off " << name << std::endl;
-		node->SetVisibility(false);
-	}
-
-	// Descend recursively into each daughter TGeoNode.
-	int ndau = node->GetNdaughters();
-	for ( int i=0; i<ndau; ++i ){
-		TGeoNode * dau = node->GetDaughter(i);
-		hideTop( dau );
-  }
-
-}
-
-void TEveEventDisplay::hideNodesByName(TGeoNode* node, const std::string& str,
-				     bool onOff) {
-
-	std::string name(node->GetName());
-	if ( name.find(str) != std::string::npos ){
-		node->SetVisibility(onOff);
-		if(_diagLevel > 0) std::cout <<"hiding "<< name << std::endl;
-	}
-	int ndau = node->GetNdaughters();
-	for ( int i=0; i<ndau; ++i ){
-		TGeoNode * dau = node->GetDaughter(i);
-		hideNodesByName( dau, str, onOff);
-	}
-
-}
-
-void TEveEventDisplay::hideNodesByMaterial(TGeoNode* node, 
-					 const std::string& mat, bool onOff) {
-
-	std::string material(node->GetVolume()->GetMaterial()->GetName());
-	if ( material.find(mat) != std::string::npos ) node->SetVisibility(onOff);
-	int ndau = node->GetNdaughters();
-	for ( int i=0; i<ndau; ++i ){
-		TGeoNode * dau = node->GetDaughter(i);
-		hideNodesByMaterial( dau, mat, onOff);
-	}
-
-}
-
-void TEveEventDisplay::hideBuilding(TGeoNode* node) {
-
-	static std::vector <std::string> substrings  { "Ceiling",
-	"backfill", "dirt", "concrete", "VirtualDetector",
-	"pipeType","CRSAluminium","CRV","CRS", "ExtShield", "PSShield"};
-	for(auto& i: substrings) hideNodesByName(node,i,kFALSE);
-
-	static std::vector <std::string> materials { "MBOverburden", "CONCRETE"};
-	for(auto& i: materials) hideNodesByMaterial(node,i,kFALSE);
-
-
-}
-
 void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
         std::cout<<"[In AddCosmicTrack() ] "<<std::endl;
 	
@@ -642,7 +493,6 @@ void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
 		
 	}
 }
-
 
 void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& bf){
 	auto genH = event.getValidHandle<GenParticleCollection>(gensTag_);
@@ -694,8 +544,6 @@ void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldMana
 		    gEve->AddElement(fTrackList);
 		    gEve->Redraw3D(kTRUE);
 }
-
-
 
 void TEveEventDisplay::AddHits(const art::Event& event){
    	cout<<"adding hits "<<endl;
@@ -754,8 +602,6 @@ void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 
 }
 
-
-
 bool TEveEventDisplay::FindData(const art::Event& evt){
 	_clustercol = 0; 
         auto chH = evt.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
@@ -763,7 +609,6 @@ bool TEveEventDisplay::FindData(const art::Event& evt){
 	foundEvent = true;
 	return _clustercol != 0;
   }
-
 
 bool TEveEventDisplay::HasTrack(const art::Event& evt){
 	_cosmiccol = 0; 

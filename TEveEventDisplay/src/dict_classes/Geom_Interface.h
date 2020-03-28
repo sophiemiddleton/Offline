@@ -63,6 +63,8 @@ namespace mu2e{
 		void CreateGeomManager();
 		void RemoveComponents();
 		void toForeground();
+		
+
 		CLHEP::Hep3Vector GetTrackerCenter();
 		CLHEP::Hep3Vector GetCaloCenter(int nDisk);
 		CLHEP::Hep3Vector GetGDMLTrackerCenter();		
@@ -72,11 +74,13 @@ namespace mu2e{
 		CLHEP::Hep3Vector PointToGDML(CLHEP::Hep3Vector point);
 		CLHEP::Hep3Vector TransformToG4(CLHEP::Hep3Vector vec);
 		CLHEP::Hep3Vector TransformToDet(CLHEP::Hep3Vector vec);
+
 		void InsideDS( TGeoNode * node, bool inDSVac );
-		void hideTop(TGeoNode* node);
-		void hideNodesByName(TGeoNode* node, const std::string& str,bool onOff) ;
+		void hideTop(TGeoNode* node, int _diagLevel);
+		void hideNodesByName(TGeoNode* node, const std::string& str, bool onOff, int _diagLevel) ;
 		void hideNodesByMaterial(TGeoNode* node, const std::string& mat, bool onOff);
 		void hideBuilding(TGeoNode* node);
+        void Heirarchy( TGeoNode * node, std::vector<CLHEP::Hep3Vector> &TransformList );
 
 		art::Event  *_event;
 		art::Run    *_run;
