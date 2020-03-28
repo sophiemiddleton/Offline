@@ -15,7 +15,7 @@ helper=mu2e_helper(env)
 
 babarlibs = env['BABARLIBS']
 rootlibs = env['ROOTLIBS']
-extrarootlibs = [ 'Geom', 'Geom', 'GeomPainter', 'Ged', 'Graf3d', 'Eve','EG', 'RGL','Gui', "Gdml" ]
+extrarootlibs = [ 'Geom', 'Geom', 'GeomPainter', 'Ged', 'Graf3d', 'Eve','EG', 'RGL','Gui', "Gdml" , "Core", "Rint"]
 
 userlibs = [ rootlibs, 
              extrarootlibs,

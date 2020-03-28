@@ -4,3 +4,4 @@
 #include "TEveEventDisplay/src/dict_classes/Collection_Interface.h"
 #include "TEveEventDisplay/src/dict_classes/ParticleTrack.h"
 #include "TEveEventDisplay/src/dict_classes/Particle_Interface.h"
+#include "TEveEventDisplay/src/dict_classes/Draw_Interface.h"
