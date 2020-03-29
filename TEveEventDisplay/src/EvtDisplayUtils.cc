@@ -9,9 +9,15 @@ using namespace mu2e;
   void EvtDisplayUtils::PrevEvent(){
     NavState::Set(kPREV_EVENT);
   }
+
   void EvtDisplayUtils::NextEvent(){
     NavState::Set(kNEXT_EVENT);
   }
+ 
+  void EvtDisplayUtils::TestWithPrint(){
+    NavState::Print();
+ }
+
   void EvtDisplayUtils::GotoEvent(){
     int run = std::stoi(fTbRun->GetString());
     int event = std::stoi(fTbEvt->GetString());
@@ -19,8 +25,7 @@ using namespace mu2e;
     NavState::Set(kGOTO_EVENT);
   }
 
-  void EvtDisplayUtils::PrevArtEvent(){}
+  /*void EvtDisplayUtils::PrevArtEvent(){}
   void EvtDisplayUtils::NextArtEvent(){}
-  void EvtDisplayUtils::GotoArtEvent(){}
-
-//TODO - wrapper int to art
+  void EvtDisplayUtils::GotoArtEvent(){}*/
+   

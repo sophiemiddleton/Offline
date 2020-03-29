@@ -9,7 +9,8 @@ namespace mu2e{
 	    kNEXT_EVENT,
 	    kPREV_EVENT,
 	    kRELOAD_EVENT,
-	    kGOTO_EVENT
+	    kGOTO_EVENT,
+        kSEQUENTIAL_ONLY
 	};
 
 	class NavState {
@@ -17,13 +18,10 @@ namespace mu2e{
 	  public:
 	    static int  Which();
 	    static void Set(int which);
-	    static void SetArtTarget(art::Run &run, art::Event& event);
 	    static void SetTarget(int run, int event);
 	    static int  TargetRun();
 	    static int  TargetEvent();
-	    art::Run *TargetArtRun();
-	    art::Event *TargetArtEvent();
-
+	    static void Print();
 	    virtual ~NavState() {};
        
 	  private:

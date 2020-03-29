@@ -10,14 +10,14 @@
 #include <iostream>
 
 #include "TROOT.h"
+#include "TApplication.h"
 #include "TEveEventDisplay/src/dict_classes/NavState.h"
 using namespace mu2e;
 
   static int gsNavState    = 0;
   static int gsTargetRun   = 0;
   static int gsTargetEvent = 0;
-  art::Run *runID;
-  art::Event *eventID;
+ 
   //......................................................................
 
   int NavState::Which() { return gsNavState; }
@@ -26,8 +26,10 @@ using namespace mu2e;
 
   void NavState::Set(int which)
   {
-    gsNavState = which;
-    //gROOT->GetApplication()->Terminate();
+    
+    if(gsNavState != kSEQUENTIAL_ONLY)
+        gsNavState = which;
+    else gROOT->GetApplication()->Terminate();
   }
 
   //......................................................................
@@ -38,24 +40,41 @@ using namespace mu2e;
     gsTargetEvent = event;
   }
 
+ 
+  int NavState::TargetRun() { return gsTargetRun; }
+
+  int NavState::TargetEvent() { return gsTargetEvent; }
+
+  void NavState::Print(){
+
+        std::cout<<"The print button has been pressed on screen"<<std::endl;
+   }
+
  /*void NavState::SetArtTarget(art::Run& run, art::Event& event)
   {
     runID= run;
     eventID = event;
-  }*/
-  //......................................................................
-
-  int NavState::TargetRun() { return gsTargetRun; }
-
-  //......................................................................
-
-  int NavState::TargetEvent() { return gsTargetEvent; }
-
-  //......................................................................
-
+  }
   art::Run *NavState::TargetArtRun() { return runID; }
 
-  //......................................................................
-
   art::Event *NavState::TargetArtEvent() { return eventID; }
+
+ void NavState::PreviousEvent() {
+
+    GotoEvent(eventNum_ - 1);
+   }
+
+  void NavState::NextEvent() {
+
+    GotoEvent(eventNum_ + 1);
+  }
+
+
+ void NavState::GotoEvent(int event) {
+
+        eventNum_ = event;
+        std::cout << "[ In NavState::GoToEvent() ] : Loading event " << event << "... " << std::flush;
+        
+    }
+*/
 

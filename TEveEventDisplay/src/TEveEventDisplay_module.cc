@@ -25,6 +25,7 @@
 #include <TG3DLine.h>
 #include<TGLViewer.h>
 #include <TGMsgBox.h>
+#include <TRootEmbeddedCanvas.h>
 // ... libGeom
 #include <TGeoManager.h>
 #include <TGeoTube.h>
@@ -49,15 +50,15 @@
 #include <TEveTrack.h>
 #include <TEveTrackPropagator.h>
 #include <TEveStraightLineSet.h>
-//#include <TRint.h>
-//#include <sstream>
 #include "fstream"
 
 //TEveEventDisplay Headers:
 #include  "TEveEventDisplay/src/dict_classes/NavState.h"
 #include  "TEveEventDisplay/src/dict_classes/EvtDisplayUtils.h"
 #include  "TEveEventDisplay/src/dict_classes/Geom_Interface.h"
-#include "TEveEventDisplay/src/dict_classes/Draw_Interface.h" 
+#include  "TEveEventDisplay/src/dict_classes/Draw_Interface.h" 
+#include  "TEveEventDisplay/src/dict_classes/NavPanel.h"
+
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
 #include "GeometryService/inc/DetectorSystem.hh"
@@ -195,6 +196,7 @@ namespace mu2e
 		      bool addHits_, addTracks_, addClusters_, addCrvHits_, addCosmicSeedFit_, isCosmic_;
 		     
 		      EvtDisplayUtils *visutil_ = new EvtDisplayUtils();
+              
 		      Geom_Interface *gdml_geom	=new Geom_Interface(); 
 		      Draw_Interface *draw = new Draw_Interface();
 		      //Particle_Interface *particle_info = new Particle_Interface();
@@ -204,7 +206,7 @@ namespace mu2e
 
 		      bool foundEvent = false;
 		      void MakeNavPanel();
-	
+	           //TODO : the following function will eventualy be part of the "Collections Interface"
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
 		      void AddComboHits(const art::Event& event);
@@ -244,7 +246,12 @@ TEveEventDisplay::~TEveEventDisplay(){}
 void TEveEventDisplay::MakeNavPanel()
 {
 	TEveBrowser* browser = gEve->GetBrowser();
-
+    FontStruct_t buttonfont = gClient->GetFontByName("-*-helvetica-medium-r-*-*-8-*-*-*-*-*-iso8859-1");
+    GCValues_t gval;
+    gval.fMask = kGCForeground | kGCFont;
+    gval.fFont = gVirtualX->GetFontHandle(buttonfont);
+    gClient->GetColorByName("black", gval.fForeground);
+   
 	browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
 
 	TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
@@ -267,9 +274,15 @@ void TEveEventDisplay::MakeNavPanel()
 		navFrame->AddFrame(b);
 		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
-		// ... Create forward button and connect to "NextEvent" rcvr in visutils
+		// ... Create forward button and connect to "Exit" rcvr in visutils
 		TGTextButton *fin = new TGTextButton(navFrame,"&Exit","gApplication->Terminate(0)");
 		navFrame->AddFrame(fin);
+
+
+        // ... Create forward button and connect to "Exit" rcvr in visutils
+		TGTextButton *print = new TGTextButton(navFrame,"&print");
+		navFrame->AddFrame(print);
+        b->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "TestWithPrint()");
 
 		//....Add in check list
 		TGGroupFrame *options = new TGGroupFrame(navFrame, "Options", kVerticalFrame);
@@ -374,9 +387,9 @@ void TEveEventDisplay::beginJob(){
 	fRZView->AddScene(fEvtRZScene);
 
 	gEve->GetBrowser()->GetTabRight()->SetTab(0);
-
-	MakeNavPanel();
-
+    //NavPanel *navpanel_ = new NavPanel();
+	//navpanel_->MakeNavPanel(visutil_);
+    MakeNavPanel();
 	gEve->AddEvent(new TEveEventManager("Event", "Empty Event"));
 
 	TGLViewer *glv = gEve->GetDefaultGLViewer();
@@ -460,10 +473,10 @@ void TEveEventDisplay::analyze(const art::Event& event){
 	// Import event into ortho views and apply projections
 	TEveElement* currevt = gEve->GetCurrentEvent();
         
-	fEvtXYScene->DestroyElements();
+	//fEvtXYScene->DestroyElements();
 	fXYMgr->ImportElements(currevt, fEvtXYScene);
 
-	fEvtRZScene->DestroyElements();
+	//fEvtRZScene->DestroyElements();
 	fRZMgr->ImportElements(currevt, fEvtRZScene);
 	geom->Draw("ogl");
 	gPad->WaitPrimitive();

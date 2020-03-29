@@ -18,16 +18,17 @@ namespace mu2e {
       void PrevEvent();
       void NextEvent();
       void GotoEvent();
-     
+      void TestWithPrint();
+
       TGTextBuffer *fTbRun;
       TGTextBuffer *fTbEvt;
-
+        /*
       void PrevArtEvent();
       void NextArtEvent();
       void GotoArtEvent();
 
       art::Run *runID;
-      art::Event *eventID;
+      art::Event *eventID;*/
 
       virtual ~EvtDisplayUtils() {}
 #endif
