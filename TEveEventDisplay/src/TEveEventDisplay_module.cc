@@ -206,6 +206,7 @@ namespace mu2e
 
 		      bool foundEvent = false;
 		      void MakeNavPanel();
+          
 	           //TODO : the following function will eventualy be part of the "Collections Interface"
 		      void AddCosmicTrack(const art::Event& event);
 		      void AddHelicalTrack(const art::Event& event, mu2e::BFieldManager const& fm);
@@ -262,27 +263,20 @@ void TEveEventDisplay::MakeNavPanel()
 	TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
 	{
 		TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
-		TGPictureButton* b = 0;
-
-		// ... Create back button and connect to "PrevEvent" rcvr in visutils
-		b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
-		navFrame->AddFrame(b);
-		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
-
+		
 		// ... Create forward button and connect to "NextEvent" rcvr in visutils
-		b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
-		navFrame->AddFrame(b);
-		b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
+		//TGPictureButton* f = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
+		//navFrame->AddFrame(f);
+		//f->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
-		// ... Create forward button and connect to "Exit" rcvr in visutils
+        // ... Create back button and connect to "PrevEvent" rcvr in visutils
+		//TGPictureButton* b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
+		//navFrame->AddFrame(b);
+		//b->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
+
+		// ... Create forward button and connect to "Exit" 
 		TGTextButton *fin = new TGTextButton(navFrame,"&Exit","gApplication->Terminate(0)");
 		navFrame->AddFrame(fin);
-
-
-        // ... Create forward button and connect to "Exit" rcvr in visutils
-		TGTextButton *print = new TGTextButton(navFrame,"&print");
-		navFrame->AddFrame(print);
-        b->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "TestWithPrint()");
 
 		//....Add in check list
 		TGGroupFrame *options = new TGGroupFrame(navFrame, "Options", kVerticalFrame);
@@ -336,6 +330,7 @@ void TEveEventDisplay::MakeNavPanel()
 		browser->SetTabTitle("Event Nav", 0);
  	 }
 }
+
 
 void TEveEventDisplay::beginJob(){
 	directory_ = gDirectory;
@@ -480,6 +475,9 @@ void TEveEventDisplay::analyze(const art::Event& event){
 	fRZMgr->ImportElements(currevt, fEvtRZScene);
 	geom->Draw("ogl");
 	gPad->WaitPrimitive();
+    char junk;
+	cerr << "Enter any character to continue: ";
+	cin >> junk;
 } 
 
 void TEveEventDisplay::AddCosmicTrack(const art::Event& event){

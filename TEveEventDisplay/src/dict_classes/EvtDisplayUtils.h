@@ -9,27 +9,24 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 
+
 namespace mu2e {
+
  class EvtDisplayUtils  : public TObject
   {
 #ifndef __CINT__
     public:
-      explicit EvtDisplayUtils();
-      void PrevEvent();
-      void NextEvent();
-      void GotoEvent();
-      void TestWithPrint();
+        explicit EvtDisplayUtils();
+        void PrevEvent();
+        void NextEvent();
+        void GotoEvent();
+        void Test();
+     
 
       TGTextBuffer *fTbRun;
       TGTextBuffer *fTbEvt;
-        /*
-      void PrevArtEvent();
-      void NextArtEvent();
-      void GotoArtEvent();
-
-      art::Run *runID;
-      art::Event *eventID;*/
-
+ 
+        
       virtual ~EvtDisplayUtils() {}
 #endif
      ClassDef(EvtDisplayUtils,0);

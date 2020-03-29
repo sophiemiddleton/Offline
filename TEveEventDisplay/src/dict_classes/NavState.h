@@ -21,7 +21,7 @@ namespace mu2e{
 	    static void SetTarget(int run, int event);
 	    static int  TargetRun();
 	    static int  TargetEvent();
-	    static void Print();
+
 	    virtual ~NavState() {};
        
 	  private:
@@ -30,4 +30,5 @@ namespace mu2e{
 	};
 }
 #endif
+
 

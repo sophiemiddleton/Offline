@@ -128,7 +128,42 @@ namespace mu2e{
 		    browser->SetTabTitle("Event Nav", 0);
      	 }
     }
+
+
 /*
+    Bool_t NavPanel::ProcessMessage(Long_t msg, Long_t param1, Long_t param2){
+      switch (GET_MSG(msg))
+      {
+        
+        case kC_COMMAND:
+          switch (GET_SUBMSG(msg))
+          {
+            case kCM_BUTTON: 
+                 if(param1==1111)
+                 {
+                   gApplication->Terminate();
+                 }
+                 if(param1==1112)
+                 {
+                   
+                   fillEvent();
+                 }
+                 
+                 if(param1==1102)
+                 {
+                   //_eventToFind=atoi(_eventToFindField->GetText());
+                  // _findEvent=true;
+                   
+                   gApplication->Terminate();
+                 }
+                break;
+      }
+      break;
+  }
+  return kTRUE;
+}
+
+
     void NavPanel::setEvent(const art::Event& event, bool firstLoop)
     {
       _eventNumber=event.id().event();

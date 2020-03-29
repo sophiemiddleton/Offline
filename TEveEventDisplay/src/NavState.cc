@@ -1,4 +1,4 @@
-//
+
 // - Serves as the link between ROOT "events" (e.g. mouse-clicks) and the ART
 //   event display service by providing a receiver slot for signals generated
 //   by the ROOT events.  A ROOT dictionary needs to be generated for this.
@@ -45,36 +45,4 @@ using namespace mu2e;
 
   int NavState::TargetEvent() { return gsTargetEvent; }
 
-  void NavState::Print(){
-
-        std::cout<<"The print button has been pressed on screen"<<std::endl;
-   }
-
- /*void NavState::SetArtTarget(art::Run& run, art::Event& event)
-  {
-    runID= run;
-    eventID = event;
-  }
-  art::Run *NavState::TargetArtRun() { return runID; }
-
-  art::Event *NavState::TargetArtEvent() { return eventID; }
-
- void NavState::PreviousEvent() {
-
-    GotoEvent(eventNum_ - 1);
-   }
-
-  void NavState::NextEvent() {
-
-    GotoEvent(eventNum_ + 1);
-  }
-
-
- void NavState::GotoEvent(int event) {
-
-        eventNum_ = event;
-        std::cout << "[ In NavState::GoToEvent() ] : Loading event " << event << "... " << std::flush;
-        
-    }
-*/
-
+ 

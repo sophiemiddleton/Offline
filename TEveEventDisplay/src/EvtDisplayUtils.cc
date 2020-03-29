@@ -3,7 +3,7 @@
 #include <string>
 
 using namespace mu2e;
-
+namespace mu2e{
   EvtDisplayUtils::EvtDisplayUtils():fTbRun(0),fTbEvt(0){}
 
   void EvtDisplayUtils::PrevEvent(){
@@ -14,10 +14,6 @@ using namespace mu2e;
     NavState::Set(kNEXT_EVENT);
   }
  
-  void EvtDisplayUtils::TestWithPrint(){
-    NavState::Print();
- }
-
   void EvtDisplayUtils::GotoEvent(){
     int run = std::stoi(fTbRun->GetString());
     int event = std::stoi(fTbEvt->GetString());
@@ -25,7 +21,8 @@ using namespace mu2e;
     NavState::Set(kGOTO_EVENT);
   }
 
-  /*void EvtDisplayUtils::PrevArtEvent(){}
-  void EvtDisplayUtils::NextArtEvent(){}
-  void EvtDisplayUtils::GotoArtEvent(){}*/
-   
+ void EvtDisplayUtils::Test(){
+    
+}
+}
+
