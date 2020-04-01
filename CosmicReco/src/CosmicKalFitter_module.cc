@@ -136,7 +136,7 @@ namespace mu2e{
     _printfreq(pset.get<int>("printFrequency",101)),	
     _seedToken{consumes<CosmicTrackSeedCollection> (pset.get<art::InputTag>("CosmicTrackSeedCollection"))},
     _chToken{consumes<ComboHitCollection>(pset.get<art::InputTag>("ComboHitCollection"))},
-    _minnhits(pset.get<unsigned>("minnhits",1)),
+    _minnhits(pset.get<unsigned>("minnhits",8)),
     _perr(pset.get<vector<double> >("ParameterErrors")),
     _saveall(pset.get<bool>("saveall", false)),
     _tpart((TrkParticle::type)(pset.get<int>("fitparticle",TrkParticle::mu_minus))),//This is resolved later as we want both + and - muons
@@ -168,7 +168,7 @@ namespace mu2e{
 
     _mu2eMaterial_h.get(run.id());
 
-    CLHEP::Hep3Vector vpoint(-3904, 0, 11071); //TODO
+    CLHEP::Hep3Vector vpoint(0,0,0); //TODO - 0,,0,0?
     CLHEP::Hep3Vector vpoint_mu2e = det->toMu2e(vpoint);
     CLHEP::Hep3Vector field = bfmgr->getBField(vpoint_mu2e);
     _bz000    = field.z();
@@ -227,36 +227,38 @@ namespace mu2e{
 					CosmicTrkDef seeddef(tclust,cosmictraj,tpart,_fdir); 
 					const CosmicLineTraj* traj = &seeddef.cosmic();
 					
-					double flt0  = traj->zFlight(0.0,traj->z0()); 
-					double mom   = TrkMomCalculator::vecMom(*traj, _kfit.bField(), flt0).mag(); //FIXME - mom never set....
+					double flt0  = traj->zFlight(0.0,traj->z0());
+					double mom   = TrkMomCalculator::vecMom(*traj, _kfit.bField(), flt0).mag(); 
 					double vflt  = seeddef.particle().beta(mom)*CLHEP::c_light;
 					double  cosmict0 = sts.t0().t0();
-					cout<<"Vel "<<vflt<<" Mom "<<mom<<" time "<<cosmict0<<endl;
+					cout<<"flt0"<<flt0<<"Vel "<<vflt<<" Mom "<<mom<<" time "<<cosmict0<<endl;
 					CosmicKalSeed kf(tpart,_fdir, sts.t0(), flt0, sts.status());
 					auto cosH = event.getValidHandle(_seedToken);
 					kf._cosmicseed = art::Ptr<CosmicTrackSeed>(cosH,index);
 					
 					int nsh = _strawCHcol.size();//sts._shits().size();
-					cout<<"Check: What is the Size of the SH SHIndex  vector: "<<nsh<<endl;
-					for (int i=0; i< nsh; ++i){
-						
+					cout<<"Check: What is the Size of the CH  vector: "<<nsh<<endl;
+          int nsh_size = sts._strawHitIdxs.size();
+          cout<<"Size of SH Index Vector "<<nsh_size<<std::endl;
+          std::cout<<"Size of TrkStrawHit from track : "<<sts._trkstrawhits.size()<<" or "<<sts._shits().size()<<std::endl;
+	        for (int i=0; i< nsh; ++i){
+	          //size_t  istraw   = sts._strawHitIdxs.at(i);
+            //const Straw&    straw    = tracker->getStraw(sts._trkstrawhits[i].strawId());
             ComboHit const& strawhit = sts._straw_chits[i];
-            size_t i_straw = i;
-						if(_diag> 1){
-							std::cout<<"[CosmicKalFitter::produce] Getting TrkStrawHitIndex: "<<i<<" of "s<<nsh<<std::endl;
-							std::cout<<"Check:the size of the SL CHhits is "<<_strawCHcol.size()<<endl;
-						}
-						
+            size_t istraw = i;
 						const Straw& straw = tracker->getStraw(strawhit.strawId());
-						double  fltlen  = traj->zFlight(straw.getMidPoint().z(), traj->z0());
-						double  propTime = (fltlen-flt0)/0.062; //TODO - use strep
 
-						TrkStrawHitSeed tshs;
-						tshs._index  = i_straw;//TODO---> Check!
-						tshs._t0     = TrkT0(cosmict0 + propTime, sts._t0.t0Err());
-						tshs._trklen = fltlen; 
-						kf._hits.push_back(tshs); 
-					}
+	          double          fltlen   = traj->zFlight(straw.getMidPoint().z(), traj->z0());
+	          double          propTime = (fltlen-flt0)/0.0625;
+
+	          TrkStrawHitSeed tshs;
+	          tshs._index  = istraw;
+	          tshs._t0     = TrkT0(cosmict0 + propTime, sts.t0().t0Err());
+	          tshs._trklen = fltlen;
+	          kf._hits.push_back(tshs);
+	      }
+
+				
 					if(_diag> 1){
 							std::cout<<"[CosmicKalFitter::produce] KalSeed has "<<kf._hits.size()<<" hits "<<std::endl;
 					}

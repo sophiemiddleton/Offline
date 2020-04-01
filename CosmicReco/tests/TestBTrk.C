@@ -43,7 +43,6 @@ TVector3 GetPOCA( TVector3 point,TVector3 start,TVector3 end){
 	 
 	 return closestPointOnLine;
 	 
-	 
 }
 
 double GetDOCA(TVector3 closestPointOnLine, TVector3 point){
@@ -84,7 +83,7 @@ void TestBTrk( TVector3 Start, TVector3 End) {
 	double theta =asin(TrackDirection.Y()/(TrackDirection.Mag())); 
 	double phi0 = AMSIGN*atan2(POCA.X(),POCA.Y());
 	double z0  = POCA.Z();
-	double d0 = DOCA;//sqrt(POCA.X()*POCA.X() + POCA.Y()*POCA.Y());
+	double d0 = DOCA;
   
 	cout << "Cosmic Test Parameter:" << endl
 	<< "Theta = " <<theta << endl

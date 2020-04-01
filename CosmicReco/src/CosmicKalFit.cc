@@ -14,6 +14,7 @@
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 #include "art/Utilities/make_tool.h"
+
 // conditions
 #include "ConditionsService/inc/ConditionsHandle.hh"
 #include "TrackerGeom/inc/Tracker.hh"
@@ -26,10 +27,12 @@
 #include "TrackerConditions/inc/StrawResponse.hh"
 #include "TrackerConditions/inc/Mu2eMaterial.hh"
 #include "TrackerConditions/inc/Mu2eDetector.hh"
+
 // utiliites
 #include "GeneralUtilities/inc/Angles.hh"
 #include "TrkReco/inc/TrkUtilities.hh"
 #include "Mu2eUtilities/inc/ModuleHistToolBase.hh"
+
 // data
 #include "DataProducts/inc/Helicity.hh"
 #include "RecoDataProducts/inc/ComboHit.hh"
@@ -41,11 +44,14 @@
 // BaBar
 #include "BTrk/BbrGeom/BbrVectorErr.hh"
 #include "BTrk/TrkBase/TrkPoca.hh"
+
 //#include "BTrk/TrkBase/TrkHelixUtils.hh" //TODO
 #include "BTrk/ProbTools/ChisqConsistency.hh"
 #include "BTrk/TrkBase/TrkMomCalculator.hh"
+
 // Mu2e BaBar
 #include "BTrkData/inc/TrkStrawHit.hh"
+
 //CLHEP
 #include "CLHEP/Units/PhysicalConstants.h"
 #include "CLHEP/Matrix/Vector.h"
@@ -53,6 +59,7 @@
 // root
 #include "TH1F.h"
 #include "TTree.h"
+
 // C++
 #include <iostream>
 #include <fstream>
@@ -75,35 +82,36 @@ namespace mu2e
 
 	// construct from a parameter set
   	CosmicKalFit::CosmicKalFit(fhicl::ParameterSet const& pset) :
-    	_debug(pset.get<int>("debugLevel",0)),
-    	_maxpull(pset.get<double>("maxPull",5)),
-	_strHitW(pset.get<double>("strawHitT0Weight")),
-	_minnstraws(pset.get<double>("minnstraws",1)),
-	_herr(pset.get< vector<double> >("hiterr")),
-	_maxIterations(pset.get<unsigned>("maxIterations",10)),
-	_bfield(0){
-		cout<<"initializing KalFit "<<endl;
-		// set KalContext parameters
-		_disttol = pset.get<double>("IterationTolerance",0.1);
-		_intertol = pset.get<double>("IntersectionTolerance",100.0);
-		_maxiter = pset.get<long>("MaxIterations",10);
-		_maxinter = pset.get<long>("MaxIntersections",0);
-		_matcorr = pset.get<bool>("materialCorrection",true);
-		_fieldcorr = pset.get<bool>("fieldCorrection",false);
-		_smearfactor = pset.get<double>("SeedSmear",1.0e6);
-		_sitethresh = pset.get<double>("SiteMomThreshold",0.2);
-		_momthresh = pset.get<double>("MomThreshold",10.0);
-		_mingap = pset.get<double>("mingap",1.0);
-		_minfltlen = pset.get<double>("MinFltLen",0.1);
-		_minmom = pset.get<double>("MinMom",10.0);
-		_fltepsilon = pset.get<double>("FltEpsilon",0.001);
-		_divergeflt = pset.get<double>("DivergeFlt",1.0e3);
-		_mindot = pset.get<double>("MinDot",0.0);
-		_maxmomdiff = pset.get<double>("MaxMomDiff",0.5);
-		_momfac = pset.get<double>("MomFactor",0.0);
-		_maxpardif[0] = _maxpardif[1] = pset.get<double>("MaxParameterDifference",1.0);
+      _debug(pset.get<int>("debugLevel",0)),
+      _maxpull(pset.get<double>("maxPull",5)),
+      _strHitW(pset.get<double>("strawHitT0Weight")),
+      _minnstraws(pset.get<double>("minnstraws",1)),
+      _herr(pset.get< vector<double> >("hiterr")),
+      _maxIterations(pset.get<unsigned>("maxIterations",10)),
+      
+      _bfield(0){
 
-		_mindof = pset.get<double>("MinNDOF",10);
+        // set KalContext parameters
+        _disttol = pset.get<double>("IterationTolerance",0.1);
+        _intertol = pset.get<double>("IntersectionTolerance",100.0);
+        _maxiter = pset.get<long>("MaxIterations",10);
+        _maxinter = pset.get<long>("MaxIntersections",0);
+        _matcorr = pset.get<bool>("materialCorrection",true);
+        _fieldcorr = pset.get<bool>("fieldCorrection",false);
+        _smearfactor = pset.get<double>("SeedSmear",1.0e6);
+        _sitethresh = pset.get<double>("SiteMomThreshold",0.2);
+        _momthresh = pset.get<double>("MomThreshold",10.0);
+        _mingap = pset.get<double>("mingap",1.0);
+        _minfltlen = pset.get<double>("MinFltLen",0.1);
+        _minmom = pset.get<double>("MinMom",10.0);
+        _fltepsilon = pset.get<double>("FltEpsilon",0.001);
+        _divergeflt = pset.get<double>("DivergeFlt",1.0e3);
+        _mindot = pset.get<double>("MinDot",0.0);
+        _maxmomdiff = pset.get<double>("MaxMomDiff",0.5);
+        _momfac = pset.get<double>("MomFactor",0.0);
+        _maxpardif[0] = _maxpardif[1] = pset.get<double>("MaxParameterDifference",1.0);
+
+        _mindof = pset.get<double>("MinNDOF",0);
 
 		/*_printUtils = new TrkPrintUtils(pset.get<fhicl::ParameterSet>("printUtils",fhicl::ParameterSet()));*/
 	}
@@ -121,43 +129,43 @@ namespace mu2e
 	void CosmicKalFit::MakeTrack(StrawResponse::cptr_t srep,Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData, ComboHitCollection& shits){
     	if(fitable(*kalData.cosmicKalSeed)){
 		
-		float flt0 = kalData.cosmicKalSeed->flt0(); //Comment
-		auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0); //Comment
-		
-		HepVector pvec(4,0);
-		HepSymMatrix pcov(4,0);
-		kseg->cosmic().hepVector(pvec);
-		kseg->cosmic_cov().symMatrix(pcov);
+        float flt0 = kalData.cosmicKalSeed->flt0(); //Comment
+        auto kseg = kalData.cosmicKalSeed->nearestSegment(flt0); //Comment
 
-	      	CosmicLineTraj htraj(pvec,pcov);
-	      	kalData.cosmicTraj = &htraj;
-		cout<<"kfit test point 2"<<endl;
-	      	TrkStrawHitVector tshv;
-	      	MakeTrkStrawHits(srep,kalData, shits, tshv);
-		cout<<"kfit test point 3"<<endl;
-	      	std::vector<DetIntersection> detinter;
-	      	if(_matcorr)MakeMaterials(detmodel, tshv,*kalData.cosmicTraj,detinter);
-		cout<<"kfit test point 4"<<endl;
-	      	std::vector<TrkHit*> thv(0);
-	      	for(auto ihit = tshv.begin(); ihit != tshv.end(); ++ihit){
-			thv.push_back(*ihit);
-	      	}
-		cout<<"kfit test point 5"<<endl;
-	      	TrkT0 t0(kalData.cosmicKalSeed->t0()); 
-		cout<<"has t0"<<endl;
-		htraj.set_mom(0.00001);//FIXME
-   		cout<<"setmom"<<endl;
-	      	kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); //FIXME seg fault (3)
-		cout<<"kal rep"<<endl;
-	      	assert(kalData.krep != 0);
-		
-		cout<<"kfit test point 7"<<endl;
-	      	kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
-		
-	      	TrkErrCode fitstat = FitTrack(detmodel,kalData);
-	      	kalData.krep->addHistory(fitstat,"KalFit fit");
+        HepVector pvec(4,0);
+        HepSymMatrix pcov(4,0);
+        kseg->cosmic().hepVector(pvec);
+        kseg->cosmic_cov().symMatrix(pcov);
 
-		}
+        CosmicLineTraj htraj(pvec,pcov);
+        kalData.cosmicTraj = &htraj;
+        
+        TrkStrawHitVector tshv;
+        MakeTrkStrawHits(srep,kalData, shits, tshv);
+        
+        std::vector<DetIntersection> detinter;
+        if(_matcorr)MakeMaterials(detmodel, tshv,*kalData.cosmicTraj,detinter);
+        
+        std::vector<TrkHit*> thv(0);
+        for(auto ihit = tshv.begin(); ihit != tshv.end(); ++ihit){
+          thv.push_back(*ihit);
+      	}
+        
+        TrkT0 t0(kalData.cosmicKalSeed->t0()); 
+       
+        htraj.set_mom(1);//FIXME
+        std::cout<<"Offline TrkHitVector size should be : "<<tshv.size()<<std::endl;
+        kalData.krep = new KalRep(htraj, thv, detinter, *this, kalData.cosmicKalSeed->particle(), t0, flt0); 
+        
+        assert(kalData.krep != 0);
+
+        kalData.krep->addHistory(TrkErrCode(),"KalFit creation");
+
+        TrkErrCode fitstat = FitTrack(detmodel,kalData);
+        cout<<"KFit Stat"<<fitstat<<endl;
+        kalData.krep->addHistory(fitstat,"KalFit fit");
+
+        }
   	}
 
 	bool CosmicKalFit::fitable(CosmicKalSeed const& kseed){
@@ -165,71 +173,79 @@ namespace mu2e
     		return kseed.segments().size() > 0 && kseed.hits().size() >= _minnstraws;
   	}  
 
-  	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, ComboHitCollection& shits, TrkStrawHitVector& tshv ) {
-	    
-	    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicKalSeed->hits();
-	    CosmicLineTraj const htraj = *kalData.cosmicTraj;
-	   
-	    for(auto ths : hseeds ){
-		    size_t index = ths.index();
-		    const ComboHit& strawhit(shits.at(index)); 
-		    const Straw& straw = _tracker->getStraw(strawhit.strawId());
-		    TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
-		    assert(trkhit != 0);
-		    
-		    TrkErrCode pstat = trkhit->updatePoca(&htraj);
-	      if(pstat.failure()){
-			    trkhit->setActivity(false);
-	       }
-	       tshv.push_back(trkhit);
-		    
+	void CosmicKalFit::MakeTrkStrawHits(StrawResponse::cptr_t srep, CosmicKalFitData& kalData, ComboHitCollection& shits, TrkStrawHitVector& tshv ) {
+	   std::cout<<"[In KalFit::MakeTrkStrawHits()]"<<std::endl;
+    std::vector<TrkStrawHitSeed>const hseeds = kalData.cosmicKalSeed->hits();
+    CosmicLineTraj const htraj = *kalData.cosmicTraj;
+    int n=0;
+    std::cout<<"[In KalFit::MakeTrkStrawHits() ] size of hseeds "<<hseeds.size()<<std::endl;
+    for(auto ths : hseeds ){
+  
+      size_t index = ths.index();
+      const ComboHit& strawhit(shits.at(index)); 
+      const Straw& straw = _tracker->getStraw(strawhit.strawId());
+      TrkStrawHit* trkhit = new TrkStrawHit(srep,strawhit,straw,ths.index(),ths.t0(),ths.trkLen(), _maxpull,_strHitW);
+      assert(trkhit != 0);
+      trkhit->setActivity(true);
+      TrkErrCode pstat = trkhit->updatePoca(&htraj);
+      if(pstat.failure()){
+        trkhit->setActivity(false);
+        std::cout<<"Hit Failed"<<endl;
        }
-           
-       std::sort(tshv.begin(),tshv.end(),fcomp());
-      }
+       tshv.push_back(trkhit);
+       n++;
+       std::cout<<"Offline Kal Fit : Attempt : "<<n<<std::endl;
+    }
+    std::cout<<"Offline Kal Fit end "<<n<<std::endl;  
+    std::sort(tshv.begin(),tshv.end(),fcomp());
+  }
 
 	void CosmicKalFit::MakeMaterials( Mu2eDetector::cptr_t detmodel,TrkStrawHitVector const& tshv, CosmicLineTraj const& traj,std::vector<DetIntersection>& detinter) {
-		// loop over strawhits and extract the straws
-		for (auto trkhit : tshv) {
-		// find the DetElem associated this straw
-		const DetStrawElem* strawelem = detmodel->strawElem(trkhit->straw());
-		// create intersection object for this element; it includes all materials
-		DetIntersection strawinter;
-		strawinter.delem = strawelem;
-		strawinter.pathlen = trkhit->fltLen();
-		strawinter.thit = trkhit;
-		// compute initial intersection: this gets updated each fit iteration
-		strawelem->reIntersect(&traj,strawinter);
-		detinter.push_back(strawinter);
-    		}
-  	}
+    // loop over strawhits and extract the straws
+    for (auto trkhit : tshv) {
+      // find the DetElem associated this straw
+      const DetStrawElem* strawelem = detmodel->strawElem(trkhit->straw());
+      // create intersection object for this element; it includes all materials
+      DetIntersection strawinter;
+      strawinter.delem = strawelem;
+      strawinter.pathlen = trkhit->fltLen();
+      strawinter.thit = trkhit;
+      // compute initial intersection: this gets updated each fit iteration
+      strawelem->reIntersect(&traj,strawinter);
+      detinter.push_back(strawinter);
+		}
+	}
 
 	TrkErrCode CosmicKalFit::FitTrack(Mu2eDetector::cptr_t detmodel, CosmicKalFitData& kalData) {
-	    	// loop over external hit errors, ambiguity assignment, t0 toleratnce
-	    	TrkErrCode fitstat;
-	    	for(size_t iherr=0;iherr < _herr.size(); ++iherr) {
-			fitstat = FitIteration(detmodel,kalData,iherr);
-			if(_debug > 0) { 
-				cout << "Iteration " << iherr 
-				     << " NDOF = " << kalData.krep->nDof() 
-				     << " Fit Status = " <<  fitstat << endl;
+  // loop over external hit errors, ambiguity assignment, t0 toleratnce
+ 
+  TrkErrCode fitstat;
+  for(size_t iherr = 0;iherr < _herr.size(); ++iherr) {
+    cout<<"KFit iteration "<<iherr<<std::endl;
+   
+    fitstat = FitIteration(detmodel,kalData,iherr);
+    //if(_debug > 0) { 
+    cout << "Iteration " << iherr 
+         << " NDOF = " << kalData.krep->nDof() 
+         << " Fit Status = " <<  fitstat << endl;
 
-				char msg[200];
-				sprintf(msg,"CosmicKalFit::fitTrack Iteration = %2li success = %i",iherr,fitstat.success());
-				//_printUtils->PrintTrack(kalData.event,kalData.krep,"banner+data+hits",msg);
-			}
-			if(!fitstat.success())break;
-	    	}
-	    	return fitstat;
+    char msg[200];
+    sprintf(msg,"CosmicKalFit::fitTrack Iteration = %2li success = %i",iherr,fitstat.success());
+    
+  //}
+  if(!fitstat.success())break;
+  }
+  return fitstat;
 	}
 
 	TrkErrCode CosmicKalFit::FitIteration(Mu2eDetector::cptr_t detmodel,
 				  CosmicKalFitData& kalData, int iter) {
-
+    std::cout<<"[In FitIteration()]...beginning"<<std::endl;
 		if (iter == -1) iter =  _herr.size()-1;
 		_annealingStep = iter;//used in the printHits routine
-
+  
 		TrkHitVector* thv   = &(kalData.krep->hitVector());
+    std::cout<<"[In FitIteration()]...setting temperature"<<std::endl;
 		for (auto itsh=thv->begin();itsh!=thv->end(); ++itsh){
 			(*itsh)->setTemperature(_herr[iter]);
 		}
@@ -244,9 +260,9 @@ namespace mu2e
 		//bool    flagMaterialAdded(false);
 
 		while(retval.success() && changed && ++niter < _maxIterations){
-
+    std::cout<<"[In FitIteration()]...niter"<<niter<<" o f"<<_maxIterations<<std::endl;
 		krep->resetFit();
-		retval = krep->fit();
+		retval = krep->fit();//HERE
 		if(! retval.success())break;
 
 		/* unsigned nmat(0);
@@ -269,15 +285,14 @@ namespace mu2e
   	}
 
 	BField const& CosmicKalFit::bField() const {
-		//GeomHandle<BFieldManager> *bf;
+		
 		if(_bfield == 0){
-		      GeomHandle<BFieldConfig> bfconf;
-			_bfield= 0;//new BFieldFixed(bfconf->getDSUniformValue());
+      GeomHandle<BFieldConfig> bfconf;
+	    _bfield= 0;
 			
-		      }
-	    	
-    		return *_bfield;
-  	}
+    }
+	  return *_bfield;
+	}
 
 	  const TrkVolume* CosmicKalFit::trkVolume(trkDirection trkdir) const {
     

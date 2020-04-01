@@ -95,34 +95,35 @@ CosmicTrackFinderTight : {
 
 CosmicKFSeed : {
 	module_type            	: KalSeedFit
- 	debug 			: 2
-	maxpull 		: 5
+ 	debug 			            : 10
+	maxpull 		            : 5
 	strawHitT0Weight        : 1
-	minnstraws		: 1
+	minnstraws		          : 1
 	MaxIterations           : 3
 	fieldCorrection	      	: false
 	materialCorrection      : false
-	seedsmear       	: 10000
+	seedsmear       	      : 10000
 	maxhitchi               : 5.0
 	hiterr                  : [ 80., 23.04]
+  MinNDOF                 : 0
 	#printUtils              : { @table::TrkReco.PrintUtils}
 }
 
 CosmicKalFitter : {
 	
 	module_type             	: CosmicKalFitter
-	debugLevel 			:    10
-	diagLevel			:    10
-	printFrequency			:    101
-	CosmicTrackSeedCollection    	: CosmicTrackFinderLoose
-	ComboHitCollection	        : "makePH"
-	minnhits			:    8
-	ParameterErrors			:   [1.0,1.0,1.0,1.0] #how to get these?
-  	saveall				: false
-	fitparticle	      		: @local::Particle.muminus #both
-	CosmicKalFit		 	: @local::CosmicKFSeed
-	UpstreamZ			:-1500
-	DownstreamZ			:1500
+	debugLevel 			          :    10
+	diagLevel			            :    10
+	printFrequency			      :    101
+	CosmicTrackSeedCollection : CosmicTrackFinderLoose
+	ComboHitCollection	      : "makePH"
+	minnhits			            :    8
+	ParameterErrors			      :   [1.0,1.0,1.0,1.0] #how to get these?
+  saveall				            : false
+	fitparticle	      		    : @local::Particle.muminus #both - restored in fitter ..should make this a list?
+	CosmicKalFit		 	        : @local::CosmicKFSeed
+	UpstreamZ			            :-1500 
+	DownstreamZ			          :1500
 
 }
 

@@ -264,44 +264,47 @@ namespace mu2e{
 		_tfit.BeginFit(title.str().c_str(), _stResult);
 
 		if (_stResult._tseed._status.hasAnyProperty(TrkFitFlag::helixOK) && _stResult._tseed._status.hasAnyProperty(TrkFitFlag::helixConverged) && _stResult._tseed._track.converged == true ) { 
-	       		std::vector<CosmicTrackSeed>          track_seed_vec;
-	       
-	      		fillGoodHits(_stResult);
-	      
-	     		 CosmicTrackFinderData tmpResult(_stResult);
-	      		_stResult._tseed._status.merge(TrkFitFlag::helixOK);
-              		if (tmpResult._tseed.status().hasAnyProperty(_saveflag)){
-              	
-				std::vector<uint16_t> chindices;
-				if(tmpResult._tseed._track.converged == false) continue;
-				for(size_t ich= 0; ich<_stResult._chHitsToProcess.size(); ich++) { 
-					chindices.push_back(ich);
-				}
+      std::vector<CosmicTrackSeed>          track_seed_vec;
 
-				std::vector<ComboHitCollection::const_iterator> chids;  
-				tmpResult._chHitsToProcess.fillComboHits(event, chindices, chids); 
-				std::vector<ComboHitCollection::const_iterator> StrawLevelCHitIndices = chids;
-				for (auto const& it : chids){
-				
-					tmpResult._tseed._straw_chits.push_back(it[0]);
-		      	 
-	      	      		}
+      fillGoodHits(_stResult);
+
+      CosmicTrackFinderData tmpResult(_stResult);
+      _stResult._tseed._status.merge(TrkFitFlag::helixOK);
+        		if (tmpResult._tseed.status().hasAnyProperty(_saveflag)){
+        	
+      std::vector<uint16_t> chindices;
+      if(tmpResult._tseed._track.converged == false) continue;
+      for(size_t ich= 0; ich<_stResult._chHitsToProcess.size(); ich++) { 
+        chindices.push_back(ich);
+      }
+
+      std::vector<ComboHitCollection::const_iterator> chids;  
+      tmpResult._chHitsToProcess.fillComboHits(event, chindices, chids); 
+      std::vector<ComboHitCollection::const_iterator> StrawLevelCHitIndices = chids;
+      for (auto const& it : chids){
+
+        tmpResult._tseed._straw_chits.push_back(it[0]);
+       
+      }
 	
-	      	      		for(size_t ich= 0; ich<tmpResult._tseed._straw_chits.size(); ich++) 					{  
-           	        
-			   		std::vector<StrawHitIndex> shitids;          	          		
-			   	        tmpResult._tseed._straw_chits.fillStrawHitIndices(event, ich, shitids);  
-				        tmpResult._tseed._strawHitIdxs.push_back(ich);
-               	        
-					for(auto const& ids : shitids){ 
-						size_t    istraw   = (ids);
-					     	TrkStrawHitSeed tshs;
-					     	tshs._index  = istraw;
-					     	tshs._t0 = tclust._t0;
-					     	tmpResult._tseed._trkstrawhits.push_back(tshs); 
-	     				}  
-	     			}
-	              
+      for(size_t ich= 0; ich<tmpResult._tseed._straw_chits.size(); ich++){  
+        
+        std::vector<StrawHitIndex> shitids;          	          		
+        tmpResult._tseed._straw_chits.fillStrawHitIndices(event, ich, shitids);  
+        tmpResult._tseed._strawHitIdxs.push_back(ich);
+        ComboHit const& strawhit = tmpResult._tseed._straw_chits[ich];
+        
+	      for(auto const& ids : shitids){ 
+		          size_t    istraw   = (ids);
+	           	TrkStrawHitSeed tshs;
+	           	tshs._index  = istraw;
+	           	tshs._t0 = tclust._t0;
+              tshs._sid = strawhit.strawId();
+              //tshs._chit = strawhit;
+	           	tmpResult._tseed._trkstrawhits.push_back(tshs); 
+			      }  
+		      }
+              
 				if( _tfit.goodTrack(tmpResult._tseed._track) == false){
 					tmpResult._tseed._status.clear(TrkFitFlag::helixConverged);
 					tmpResult._tseed._status.clear(TrkFitFlag::helixOK);
