@@ -39,7 +39,8 @@ namespace mu2e{
 
 	NavPanel::NavPanel() : TGMainFrame(gClient->GetRoot(), 320, 320) {}
 
-    void NavPanel::MakeNavPanel(EvtDisplayUtils *visutil_)
+    NavPanel::NavPanel(const TGWindow* p, UInt_t w, UInt_t h, fhicl::ParameterSet const &pset) : 
+        TGMainFrame(p, w, h)
     {
         gClient->GetRoot();
 	    TEveBrowser* browser = gEve->GetBrowser();
@@ -52,6 +53,7 @@ namespace mu2e{
 	    browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
 
 	    TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
+        //_mainCanvas = new TRootEmbeddedCanvas("EventDisplayCanvas",frmMain,1000,600);
 	    frmMain->SetWindowName("EVT NAV");
 	    frmMain->SetCleanup(kDeepCleanup);
 
@@ -59,17 +61,6 @@ namespace mu2e{
 	    TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
 	    {
 		    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
-		    TGPictureButton* b = 0;
-
-		    // ... Create back button and connect to "PrevEvent" rcvr in visutils
-		    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
-		    navFrame->AddFrame(b);
-		    b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
-
-		    // ... Create forward button and connect to "NextEvent" rcvr in visutils
-		    b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
-		    navFrame->AddFrame(b);
-		    b->Connect("Clicked()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
 
 		    // ... Create forward button and connect to "Exit" rcvr in visutils
 		    TGTextButton *fin = new TGTextButton(navFrame,"&Exit","gApplication->Terminate(0)");
@@ -79,6 +70,15 @@ namespace mu2e{
 		    //....Add in check list
 		    TGGroupFrame *options = new TGGroupFrame(navFrame, "Options", kVerticalFrame);
 		    options->SetTitlePos(TGGroupFrame::kLeft);
+            navFrame->AddFrame(options);
+
+            TGTextButton *nextButton         = new TGTextButton(navFrame, "&Next", 1111);
+            TGTextButton *quitButton         = new TGTextButton(navFrame, "&Quit", 1001);
+            navFrame->AddFrame(quitButton, new TGLayoutHints(kLHintsLeft,3,0,3,0));
+            navFrame->AddFrame(nextButton, new TGLayoutHints(kLHintsLeft,3,0,3,0));
+                       
+            quitButton->Associate(this);
+            nextButton->Associate(this);
 		    
 		    // ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
 		    TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
@@ -87,9 +87,9 @@ namespace mu2e{
 		    fTlRun->SetMargins(5,5,5,0);
 		    runoFrame->AddFrame(fTlRun);
         
-		    fTeRun = new TGTextEntry(runoFrame, visutil_->fTbRun = new TGTextBuffer(5), 1);
-		    visutil_->fTbRun->AddText(0, "1");
-		    fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
+		    fTeRun = new TGTextEntry(runoFrame, _runNumber = new TGTextBuffer(5), 1);
+		    _runNumber->AddText(0, "1");
+		    //fTeRun->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
 		    runoFrame->AddFrame(fTeRun,new TGLayoutHints(kLHintsExpandX));
 
 		    // ... Create evt num text entry widget and connect to "GotoEvent" rcvr in visutils
@@ -99,16 +99,18 @@ namespace mu2e{
 		    fTlEvt->SetMargins(5,5,5,0);
 		    evnoFrame->AddFrame(fTlEvt);
 
+             fTeEvt = new TGTextEntry(evnoFrame, _eventNumber = new TGTextBuffer(5), 1);
+		    _eventNumber->AddText(0, "1");
+		   /// fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
+		    evnoFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
+
 		    //Add logo
 		    std::string logoFile = "TEveEventDisplay/src/Icons/mu2e_logo_oval.png";
 		    const TGPicture *logo = gClient->GetPicture(logoFile.c_str());
 		    TGIcon *icon = new TGIcon(navFrame,logo,50,50);
 		    navFrame->AddFrame(icon,new TGLayoutHints(kLHintsLeft,20,0,0,0));
 
-		    fTeEvt = new TGTextEntry(evnoFrame, visutil_->fTbEvt = new TGTextBuffer(5), 1);
-		    visutil_->fTbEvt->AddText(0, "1");
-		    fTeEvt->Connect("ReturnPressed()","mu2e::EvtDisplayUtils", visutil_,"GotoEvent()");
-		    evnoFrame->AddFrame(fTeEvt,new TGLayoutHints(kLHintsExpandX));
+		   
 
 		    // ... Add horizontal run & event number subframes to vertical evtidFrame
 		    evtidFrame->AddFrame(runoFrame,new TGLayoutHints(kLHintsExpandX));
@@ -126,11 +128,15 @@ namespace mu2e{
 
 		    browser->StopEmbedding();
 		    browser->SetTabTitle("Event Nav", 0);
+            
      	 }
+        //syntax for Format from http://root.cern.ch/phpBB3/viewtopic.php?t=8700
+        gPad->AddExec("keyboardInput",TString::Format("((mu2e::TEveEventDisplay)%p)->keyboardInput()",this));
     }
 
+    //void NavPanel::FillGeomView()
+    //{}
 
-/*
     Bool_t NavPanel::ProcessMessage(Long_t msg, Long_t param1, Long_t param2){
       switch (GET_MSG(msg))
       {
@@ -141,21 +147,13 @@ namespace mu2e{
             case kCM_BUTTON: 
                  if(param1==1111)
                  {
-                   gApplication->Terminate();
+                   std::cout<<"Next"<<std::endl;
                  }
-                 if(param1==1112)
+                 if(param1==1001)
                  {
-                   
-                   fillEvent();
+                   std::cout<<"Exit"<<std::endl;
                  }
                  
-                 if(param1==1102)
-                 {
-                   //_eventToFind=atoi(_eventToFindField->GetText());
-                  // _findEvent=true;
-                   
-                   gApplication->Terminate();
-                 }
                 break;
       }
       break;
@@ -166,11 +164,62 @@ namespace mu2e{
 
     void NavPanel::setEvent(const art::Event& event, bool firstLoop)
     {
-      _eventNumber=event.id().event();
-      _subrunNumber=event.id().subRun();
-      _runNumber=event.id().run();
+      _event=event.id().event();
+      _subrun=event.id().subRun();
+      _run=event.id().run();
       //TODO - call event drawing functions from collection interface here!
-       gApplication->Run(true);
+       fillEvent(firstLoop);
+       //gApplication->Run(true);
     }
-*/
+
+    void NavPanel::fillEvent(bool firstLoop)
+    {
+       // _findEvent=false;
+       
+        std::string eventInfoText;
+        eventInfoText=Form("Event #: %i",_event);
+        if(_eventNumberText==nullptr) 
+        {
+            _eventNumberText = new TText(0.6,-0.8, eventInfoText.c_str());
+            _eventNumberText->SetTextColor(5);
+            _eventNumberText->SetTextSize(0.025);
+            _eventNumberText->Draw("same");
+        }
+        else _eventNumberText->SetTitle(eventInfoText.c_str());
+        eventInfoText=Form("Sub Run #: %i",_subrun);
+        if(_subrunNumberText==nullptr)
+        {
+            _subrunNumberText = new TText(0.6,-0.75,eventInfoText.c_str());
+            _subrunNumberText->SetTextColor(5);
+            _subrunNumberText->SetTextSize(0.025);
+            _subrunNumberText->Draw("same");
+        }
+        else _subrunNumberText->SetTitle(eventInfoText.c_str());
+        eventInfoText=Form("Run #: %i",_run);
+          if(_runNumberText==nullptr)
+          {
+            _runNumberText = new TText(0.6,-0.7,eventInfoText.c_str());
+            _runNumberText->SetTextColor(5);
+            _runNumberText->SetTextSize(0.025);
+            _runNumberText->Draw("same");
+          }
+        else _runNumberText->SetTitle(eventInfoText.c_str());
+
+       //Collections Called Here
+
+        this->Layout();
+
+}
+
+    int NavPanel::getEventToFind(bool &findEvent) const
+    {
+      findEvent=_findEvent;
+      return _eventToFind;
+    }
+
+    bool NavPanel::isClosed() const
+    {
+        return _isClosed;
+    }
+
 }

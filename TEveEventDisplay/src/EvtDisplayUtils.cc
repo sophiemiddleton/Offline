@@ -22,7 +22,8 @@ namespace mu2e{
   }
 
  void EvtDisplayUtils::Test(){
-    
+    std::cout<<"Going to next Event"<<std::endl;
+   
 }
 }
 

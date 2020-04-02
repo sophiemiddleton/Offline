@@ -10,6 +10,7 @@
 #include <TObjArray.h>
 #include <Rtypes.h>
 #include <TPolyLine3D.h>
+#include <TCanvas.h>
 // ... libRIO
 #include <TFile.h>
 // ... libGui
@@ -116,6 +117,7 @@ namespace mu2e
 			fhicl::Atom<art::InputTag>crvdigiTag{Name("CrvDigiCollection"),Comment("crvTag")};
 			fhicl::Atom<art::InputTag>cosmicTag{Name("CosmicTrackSeedCollection"),Comment("cosmicTag")};
 			fhicl::Atom<art::InputTag>cluTag{Name("CaloClusterCollection"),Comment("cluTag")};
+      fhicl::Atom<art::InputTag>cryHitTag{Name("CaloCrystalHitCollection"),Comment("cryHitTag")};
 			fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("")};
 			fhicl::Atom<double> minEnergyDep{Name("minEnergyDep"), Comment("choose minium energy"), 50};
 			fhicl::Atom<int> minHits{Name("minHits"), Comment(""), 2};
@@ -126,6 +128,7 @@ namespace mu2e
 			fhicl::Atom<bool> addTracks{Name("addTracks"), Comment("set to add tracks"),false};
 			fhicl::Atom<bool> addClusters{Name("addClusters"), Comment("set to add calo lusters"),false};
 			fhicl::Atom<bool> addCrvHits{Name("addCrvHits"), Comment("set to add crv hits"),false};	
+      fhicl::Atom<bool> addCrystallHits{Name("addCrystalHits"), Comment("for calo cry hits"), false};
 			fhicl::Atom<bool> addCosmicSeedFit{Name("addCosmicSeedFit"), Comment("for fitted cosmic track"), false};
 			fhicl::Atom<bool> isCosmic{Name("isCosmic"), Comment("flag for cosmic track v helix track"), false};	
 	    };
@@ -148,12 +151,14 @@ namespace mu2e
 		     const CosmicTrackSeedCollection* _cosmiccol;
 		     const GenParticleCollection* _gencol;
 		     const CaloClusterCollection* _clustercol;
+         const CaloCrystalHitCollection* _cryHitcol;
 		     art::InputTag chTag_;
 		     art::InputTag gensTag_;
 		     art::InputTag strawdigiTag_;
 		     art::InputTag crvdigiTag_;
 		     art::InputTag cosmicTag_;
 		     art::InputTag cluTag_;
+         art::InputTag cryHitTrag_;
 		     std::string g4ModuleLabel_;
 		     //std::string hitMakerModuleLabel_;
 
@@ -162,6 +167,7 @@ namespace mu2e
 		      bool doDisplay_;
 		      bool clickToAdvance_;
 		      bool showEvent_;
+             
 		      TApplication* application_;
 		      TDirectory*   directory_ = nullptr;
 		      
@@ -200,10 +206,12 @@ namespace mu2e
 		      Geom_Interface *gdml_geom	=new Geom_Interface(); 
 		      Draw_Interface *draw = new Draw_Interface();
 		      //Particle_Interface *particle_info = new Particle_Interface();
+              //NavPanel *_frame;
+              //fhicl::ParameterSet _pset;
 
 		      TGeoManager* geom = new TGeoManager("geom","Geom");
 		      std::vector<CLHEP::Hep3Vector> GDMLt;
-
+          bool _firstLoop = true;
 		      bool foundEvent = false;
 		      void MakeNavPanel();
           
@@ -213,9 +221,11 @@ namespace mu2e
 		      void AddComboHits(const art::Event& event);
 		      void AddCaloCluster(const art::Event& event);
 		      void AddCrvHits(const art::Event& event);
+          void AddCrystalHits(const art::Event& event);
 
-		      bool FindData(const art::Event& event);
+		      bool HasCluster(const art::Event& event);
 		      bool HasTrack(const art::Event& event);
+          bool HasComboHits(const art::Event& event);
 	};
 
 TEveEventDisplay::TEveEventDisplay(const Parameters& conf) :
@@ -246,6 +256,7 @@ TEveEventDisplay::~TEveEventDisplay(){}
 /*-------Create Control Panel For Event Navigation----""*/
 void TEveEventDisplay::MakeNavPanel()
 {
+   
 	TEveBrowser* browser = gEve->GetBrowser();
     FontStruct_t buttonfont = gClient->GetFontByName("-*-helvetica-medium-r-*-*-8-*-*-*-*-*-iso8859-1");
     GCValues_t gval;
@@ -254,8 +265,9 @@ void TEveEventDisplay::MakeNavPanel()
     gClient->GetColorByName("black", gval.fForeground);
    
 	browser->StartEmbedding(TRootBrowser::kLeft); // insert nav frame as new tab in left pane
-
+    
 	TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
+   
 	frmMain->SetWindowName("EVT NAV");
 	frmMain->SetCleanup(kDeepCleanup);
 
@@ -263,16 +275,6 @@ void TEveEventDisplay::MakeNavPanel()
 	TGVerticalFrame* evtidFrame = new TGVerticalFrame(frmMain);
 	{
 		TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
-		
-		// ... Create forward button and connect to "NextEvent" rcvr in visutils
-		//TGPictureButton* f = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoForward.gif"));
-		//navFrame->AddFrame(f);
-		//f->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "NextEvent()");
-
-        // ... Create back button and connect to "PrevEvent" rcvr in visutils
-		//TGPictureButton* b = new TGPictureButton(navFrame, gClient->GetPicture(icondir + "GoBack.gif"));
-		//navFrame->AddFrame(b);
-		//b->Connect("Pressed()", "mu2e::EvtDisplayUtils", visutil_, "PrevEvent()");
 
 		// ... Create forward button and connect to "Exit" 
 		TGTextButton *fin = new TGTextButton(navFrame,"&Exit","gApplication->Terminate(0)");
@@ -281,6 +283,7 @@ void TEveEventDisplay::MakeNavPanel()
 		//....Add in check list
 		TGGroupFrame *options = new TGGroupFrame(navFrame, "Options", kVerticalFrame);
 		options->SetTitlePos(TGGroupFrame::kLeft);
+        navFrame->AddFrame(options);
 		
 		// ... Create run num text entry widget and connect to "GotoEvent" rcvr in visutils
 		TGHorizontalFrame* runoFrame = new TGHorizontalFrame(evtidFrame);
@@ -329,6 +332,7 @@ void TEveEventDisplay::MakeNavPanel()
 		browser->StopEmbedding();
 		browser->SetTabTitle("Event Nav", 0);
  	 }
+  
 }
 
 
@@ -341,6 +345,7 @@ void TEveEventDisplay::beginJob(){
 		application_ = new TApplication( "noapplication", &tmp_argc, tmp_argv );
 	
 	}
+
 	// Initialize global Eve application manager (return gEve)
 	TEveManager::Create();
 
@@ -382,9 +387,11 @@ void TEveEventDisplay::beginJob(){
 	fRZView->AddScene(fEvtRZScene);
 
 	gEve->GetBrowser()->GetTabRight()->SetTab(0);
-    //NavPanel *navpanel_ = new NavPanel();
-	//navpanel_->MakeNavPanel(visutil_);
-    MakeNavPanel();
+    
+  MakeNavPanel();
+    
+  //_frame = new NavPanel(gClient->GetRoot(), 1000,600, _pset);
+    
 	gEve->AddEvent(new TEveEventManager("Event", "Empty Event"));
 
 	TGLViewer *glv = gEve->GetDefaultGLViewer();
@@ -439,15 +446,54 @@ void TEveEventDisplay::beginRun(const art::Run& run){
   	gEve->AddGlobalElement(etopnode);
 }
 
-void TEveEventDisplay::analyze(const art::Event& event){
+/*void TEveEventDisplay::analyze(const art::Event& event)
+  {
+    TVirtualPad *temp_pad=gPad;
+    TDirectory  *temp_dir=gDirectory;
+    if(_firstLoop)
+    {
+      int x,y;
+      unsigned int width,height;
+      gVirtualX->GetWindowSize(gClient->GetRoot()->GetId(),x,y,width,height);
+      width-=30;
+      height-=70;
+      _frame = new NavPanel(gClient->GetRoot(), width, height, _pset);
+      if(!_frame->isClosed()) if(addHits_) AddComboHits(event);
+    }
+    if(!_frame->isClosed())
+    {
+      bool findEvent=false;
+      int eventToFind=_frame->getEventToFind(findEvent);
+      if(findEvent)
+      {
+        int eventNumber=event.id().event();
+        if(eventNumber==eventToFind) _frame->setEvent(event);
+        else std::cout<<"event skipped, since this is not the event we are looking for"<<std::endl;
+      }
+      else
+      {
+        _frame->setEvent(event,_firstLoop);
+      }
+    }
 
+    _firstLoop=false;
+    if(temp_pad) temp_pad->cd(); else gPad=nullptr;
+    if(temp_dir) temp_dir->cd(); else gDirectory=nullptr;
+
+    if(_frame->isClosed()) 
+    {
+      throw cet::exception("CONTROL")<<"QUIT\n";
+    }
+  }
+*/
+void TEveEventDisplay::analyze(const art::Event& event){
+ 
 	cout<<"[TEveEventDisplay :: analyze] Analyzing Event :"<<event.id()<<endl;
 
 	GeomHandle<mu2e::BFieldManager> bfmgr;
 	_evt = event.id().event();
-
 	if(showEvent_ ){
-		if(addHits_) AddComboHits(event);
+		if(HasComboHits(event) and _chcol->size() > minHits_ and addHits_) AddComboHits(event);
 		//if(addClusters_) AddCaloCluster(event);
 		//if(addTracks_ ) AddHelicalTrack(event, *bfmgr);
 		//if(HasTrack(event) and addCosmicSeedFit_ and isCosmic_) AddCosmicTrack(event);
@@ -473,7 +519,9 @@ void TEveEventDisplay::analyze(const art::Event& event){
 
 	//fEvtRZScene->DestroyElements();
 	fRZMgr->ImportElements(currevt, fEvtRZScene);
+    
 	geom->Draw("ogl");
+  
 	gPad->WaitPrimitive();
     char junk;
 	cerr << "Enter any character to continue: ";
@@ -481,9 +529,7 @@ void TEveEventDisplay::analyze(const art::Event& event){
 } 
 
 void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
-        std::cout<<"[In AddCosmicTrack() ] "<<std::endl;
-	
-		 std::cout<<"[In AddCosmicTrack() ] found Track "<<std::endl;
+        
 		TEveStraightLineSet *CosmicTrackList = new TEveStraightLineSet();
 		for(size_t ist = 0; ist < _cosmiccol->size(); ++ist){
 			CosmicTrackSeed sts =(*_cosmiccol)[ist];
@@ -500,7 +546,7 @@ void TEveEventDisplay::AddCosmicTrack(const art::Event& event){
 		
 			cout<<st.InitParams.A0<<"track "<<st.InitParams.A1<<st.InitParams.B1<<st.InitParams.B0<<endl;
 			gEve->AddElement(CosmicTrackList);
-		    	gEve->Redraw3D(kTRUE);
+		    gEve->Redraw3D(kTRUE);
 		
 	}
 }
@@ -557,10 +603,8 @@ void TEveEventDisplay::AddHelicalTrack(const art::Event& event, mu2e::BFieldMana
 }
 
 void TEveEventDisplay::AddComboHits(const art::Event& event){
-   	cout<<"adding hits "<<endl;
 	auto chH = event.getValidHandle<mu2e::ComboHitCollection>(chTag_);
 	_chcol = chH.product(); 
-	cout<<"is cosmics "<<isCosmic_<<endl;
 	if (fHitsList == 0) {
 		fHitsList = new TEveElementList("Hits");
 		fHitsList->IncDenyDestroy();     
@@ -585,6 +629,32 @@ void TEveEventDisplay::AddComboHits(const art::Event& event){
 	
 }
 
+void TEveEventDisplay::AddCrystalHits(const art::Event& event){
+	auto chH = event.getValidHandle<mu2e::CaloCrystalHitCollection>(chTag_);
+	_cryHitcol = chH.product(); 
+	if (fHitsList == 0) {
+		fHitsList = new TEveElementList("Hits");
+		fHitsList->IncDenyDestroy();     
+	}
+	else {
+		fHitsList->DestroyElements();  
+	}
+	TEveElementList* HitsList  = new TEveElementList("Combo Hits");
+	if(!_chcol->empty()){
+	    cout<<"Number of Hits "<<_chcol->size()<<endl;
+	    for(unsigned ih = 0 ; ih < _chcol->size() ; ih ++){
+		    ComboHit const& hit = (*_chcol)[ih];
+		    CLHEP::Hep3Vector HitPos(hit.pos().x(), hit.pos().y(), hit.pos().z());
+		    draw->DrawHit("CrystalHitsHits",kRed, 1, ih, HitPos, HitsList, gdml_geom);
+		    fHitsList->AddElement(HitsList);  
+		    gEve->AddElement(fHitsList);
+		    gEve->Redraw3D(kTRUE);
+	    }
+	}
+
+	
+}
+
 void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 	 auto cluH = event.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
    	_clustercol = cluH.product(); 
@@ -596,7 +666,7 @@ void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 	else {
 		fClusters->DestroyElements();  
 	}
-	TEveElementList* ClusterList  = new TEveElementList("CaloCLusters");
+	TEveElementList* ClusterList  = new TEveElementList("CaloClusters");
 	if(_clustercol->size() !=0){
 		cout<<"in cluster loop "<<endl;
 		
@@ -613,7 +683,7 @@ void TEveEventDisplay::AddCaloCluster(const art::Event& event){
 
 }
 
-bool TEveEventDisplay::FindData(const art::Event& evt){
+bool TEveEventDisplay::HasCluster(const art::Event& evt){
 	_clustercol = 0; 
         auto chH = evt.getValidHandle<mu2e::CaloClusterCollection>(cluTag_);
 	_clustercol = chH.product();
@@ -623,9 +693,16 @@ bool TEveEventDisplay::FindData(const art::Event& evt){
 
 bool TEveEventDisplay::HasTrack(const art::Event& evt){
 	_cosmiccol = 0; 
-        auto chH = evt.getValidHandle<mu2e::CosmicTrackSeedCollection>(cosmicTag_);
+    auto chH = evt.getValidHandle<mu2e::CosmicTrackSeedCollection>(cosmicTag_);
 	_cosmiccol = chH.product();
 	return _cosmiccol != 0;
+  }
+
+bool TEveEventDisplay::HasComboHits(const art::Event& evt){
+	_chcol = 0; 
+    auto chH = evt.getValidHandle<mu2e::ComboHitCollection>(chTag_);
+	_chcol = chH.product();
+	return _chcol != 0;
   }
 
 void TEveEventDisplay::endJob(){

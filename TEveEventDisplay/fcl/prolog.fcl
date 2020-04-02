@@ -7,69 +7,73 @@
 BEGIN_PROLOG
 
 TEveEventDisplayHelix : {
-      module_type : TEveEventDisplay
+    module_type : TEveEventDisplay
 
-      	#strawStepsTag       		: "compressDigiMCs:tracker"
-      	#strawHitsTag         		: "makeSH"
-      	ComboHitCollection 		: "makeSH"
-	GenParticleCollection 		: "compressDigiMCs" #generate"
-	StrawDigiCollection		:  "selectRecoMC"
-	CrvDigiCollection	 	: "CrvDigi"
-	CosmicTrackSeedCollection 	:  NULL
-	CaloClusterCollection		:  NULL
-	g4ModuleLabel        		: "g4run"
-	minEnergyDep         		: 0
-	minHits              		: 1
-	addHits 			: true
-	addTracks 			: false
-	addCrvHits			: false
-	addCosmicSeedFit	        : false
-	addClusters			: false
-	isCosmic			: false
+    #strawStepsTag       		: "compressDigiMCs:tracker"
+    #strawHitsTag         		: "makeSH"
+    ComboHitCollection 		    : "makeSH"
+    GenParticleCollection 		: "compressDigiMCs" #generate"
+    StrawDigiCollection		    :  "selectRecoMC"
+    CrvDigiCollection	 	      : "CrvDigi"
+    CosmicTrackSeedCollection :  NULL
+    CaloClusterCollection		  :  NULL
+    CaloCrystalHitCollection  : "CaloClusterFast"
+    g4ModuleLabel        		  : "g4run"
+    minEnergyDep         		  : 0
+    minHits              		  : 1
+    addHits 			            : false
+    addTracks 			          : true
+    addCrvHits			          : false
+    addCosmicSeedFit	        : false
+    addClusters			          : false
+    isCosmic			            : false
   }   
 
 TEveEventDisplayCosmics : {
-      module_type : TEveEventDisplay
+    module_type : TEveEventDisplay
 
-      	#strawStepsTag       		: "compressDigiMCs:tracker"
-      	#strawHitsTag           	: "makeSH"
-      	ComboHitCollection 		: "makePH"
-	GenParticleCollection 		: "compressDigiMCs" #generate"
-	StrawDigiCollection		:  "makeSD"
-	CrvDigiCollection		: "CrvDigi"
-	CosmicTrackSeedCollection 	: "CosmicTrackFinder"
-	CaloClusterCollection		: NULL
-	g4ModuleLabel        		: "g4run"
-	#hitMakerModuleLabel  		: makeSH
-	#trackerStepPoints    		: tracker
-	minEnergyDep         		: 0
-	minHits              		: 1
-	addHits 			: true
-	addTracks 			: false
-	addCrvHits			: false
-	addCosmicSeedFit		: true
-	isCosmic			: true
+    #strawStepsTag          : "compressDigiMCs:tracker"
+    #strawHitsTag           : "makeSH"
+    ComboHitCollection 		      : "makePH"
+    GenParticleCollection 	    : "compressDigiMCs" #generate"
+    StrawDigiCollection		      :  "makeSD"
+    CrvDigiCollection		        : "CrvDigi"
+    CosmicTrackSeedCollection 	: "CosmicTrackFinder"
+    CaloClusterCollection		    : NULL
+    CaloCrystalHitCollection        : NULL
+    g4ModuleLabel        		    : "g4run"
+    #hitMakerModuleLabel  		  : makeSH
+    #trackerStepPoints    		  : tracker
+    minEnergyDep         		    : 0
+    minHits              		    : 1
+    addHits 			              : true
+    addTracks 			            : false
+    addCrvHits			            : false
+    addCosmicSeedFit	          : false
+    isCosmic			              : true
 
   }   
 
 TEveEventDisplayCaloOnly : {
-      module_type : TEveEventDisplay  
+    module_type : TEveEventDisplay  
 
-      	ComboHitCollection 		: NULL
-	GenParticleCollection 		: NULL
-	StrawDigiCollection		: NULL
-	CrvDigiCollection		: NULL
-	CosmicTrackSeedCollection 	: NULL
-	CaloClusterCollection		: "CaloClusterFast"
-	g4ModuleLabel        		: "g4run"
-	minEnergyDep         		: 0
-	minHits              		: 0
-	addHits 			: false
-	addTracks 			: false
-	addClusters			: true
-	addCrvHits			: false
-	addCosmicSeedFit	        : false
-	isCosmic			: false
+    ComboHitCollection 		      : NULL
+    GenParticleCollection 		  : NULL
+    StrawDigiCollection		      : NULL
+    CrvDigiCollection		        : NULL
+    CosmicTrackSeedCollection 	: NULL
+    CaloClusterCollection		    : "CaloClusterFast"
+    CaloCrystalHitCollection    : "CaloClusterFast"
+    g4ModuleLabel        		    : "g4run"
+    minEnergyDep         		    : 0
+    minHits              		    : 0
+    addHits 			              : false
+    addTracks 			            : false
+    addClusters			            : true
+    addCrvHits			            : false
+    addCosmicSeedFit	          : false
+    addCrystalHits              : True
+    isCosmic			              : false
   }   
 
 TEveDis : {  

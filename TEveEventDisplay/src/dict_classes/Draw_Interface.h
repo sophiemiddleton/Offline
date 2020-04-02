@@ -45,14 +45,14 @@
 namespace mu2e{
 	class Draw_Interface {
             
-               public:
+    public:
 		 #ifndef __CINT__
 		 explicit Draw_Interface();
 		 virtual ~Draw_Interface(){};
 		 void DrawHit(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP::Hep3Vector HitPos, TEveElementList *list, Geom_Interface *g);
 		void DrawCluster(const std::string &pstr, Int_t mColor, Int_t mSize, Int_t n, CLHEP::Hep3Vector ClusterPos, int nDisk, TEveElementList *list, Geom_Interface *g);
 
-	         #endif
+	   #endif
 
 		 ClassDef(Draw_Interface,0);
 
