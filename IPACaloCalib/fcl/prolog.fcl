@@ -4,42 +4,42 @@ BEGIN_PROLOG
 IPACaloCalib: {
 	module_type : IPACaloCalibAna
 	#CaloHitCollection : 
-        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
-        #CaloHitMCTruthCollection :
-	KalRepPtrCollection : "KFFDeM"
-        CaloClusterCollection : "CaloClusterFromProtoCluster"
-        TrackClusterMatchCollection : "TrackCaloMatching"
-	GenParticleCollection : "compressDigiMCs"  
+  CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+  #CaloHitMCTruthCollection :
+KalRepPtrCollection : "KFFDeM"
+  CaloClusterCollection : "CaloClusterFromProtoCluster"
+  TrackClusterMatchCollection : "TrackCaloMatching"
+GenParticleCollection : "compressDigiMCs"  
 	#PIDProductCollection :  "ParticleID"  
 	
 }
 
 IPACaloCluster: {
 	module_type : IPACaloClusterAna
-        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
-        CaloClusterCollection : "CaloClusterFromProtoCluster"
+  CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+  CaloClusterCollection : "CaloClusterFromProtoCluster"
 	GenParticleCollection : "compressDigiMCs"   
 	
 }
 
 IPACaloCrystalHits: {
 	module_type : IPACaloCrystalHitsAna
-        CaloCrystalHitCollection : "CaloCrystalHitFromHit"
+  CaloCrystalHitCollection : "CaloCrystalHitFromHit"
 }
 
 IPACaloMatch: {
 	module_type : IPAMatchAna
 	KalRepPtrCollection : "KFFDeM"
-        TrackClusterMatchCollection : "TrackCaloMatching"
-	
+  TrackClusterMatchCollection : "TrackCaloMatching"
+	#CaloCrystalHitCollection : "CaloCrystalHitFromHit"
 	
 }
 
 CaloEventDisplays: {
 	module_type : CaloEventDisplays
 	CaloCrystalHitCollection : "CaloCrystalHitFromHit"
-        CaloClusterCollection : "CaloClusterFromProtoCluster"
-        doDisplay            : true
+  CaloClusterCollection : "CaloClusterFromProtoCluster"
+  doDisplay            : true
 	
 }
 

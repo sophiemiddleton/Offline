@@ -206,7 +206,7 @@ namespace mu2e {
 	_Ntup->Branch("clusterR", 	&_clusterR,		"clusterR/F");
 	_Ntup->Branch("clusterNHits", 	&_clusterNHits,		"clusterNHits/F");
 	outputfile.open("IPAAnaCaloClusters.csv");
-        outputfile<<event,run,cluster_size<<std::endl;s
+        outputfile<<"event,run,cluster_size"<<std::endl;
   }
 
 
@@ -268,6 +268,7 @@ namespace mu2e {
 //=====================Crystal Hits Info =======================//
 	//std:cout<<"[In Analyze()] Getting Crystal Info..."<<std::endl;
 	_nHits = _calcryhitcol->size();
+  
 	for (unsigned int ic=0; ic<_calcryhitcol->size();++ic) 
 	{	   
 		   CaloCrystalHit const& hit      = (*_calcryhitcol)[ic];
