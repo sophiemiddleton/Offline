@@ -14,6 +14,15 @@ GenParticleCollection : "compressDigiMCs"
 	
 }
 
+  IPAFilter : {
+    module_type : IPACaloCalibFilter
+	  KalRepPtrCollection : "KFFDeM"
+    TrackClusterMatchCollection : "TrackCaloMatching"
+    diagLevel : 1
+	 
+  }
+
+
 IPACaloCluster: {
 	module_type : IPACaloClusterAna
   CaloCrystalHitCollection : "CaloCrystalHitFromHit"
@@ -51,9 +60,12 @@ CaloCalib: {
 		IPACaloCrystalHits: @local::IPACaloCrystalHits
 		CaloEventDisplays: @local::CaloEventDisplays
 		}
+ filters : {
+		IPAFilter: @local::IPAFilter
+   }
 }
 
-CaloCalib.FindNegCalibIPA : [CaloCalib]
+CaloCalib.FindNegCalibIPA : [tprHelixCalibIPADeMTCFilter]
 
 
 END_PROLOG
