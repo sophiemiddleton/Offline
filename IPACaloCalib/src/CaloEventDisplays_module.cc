@@ -3,7 +3,8 @@
 #include <iostream>
 #include <string>
 #include <cmath>
-
+#include <list>
+#include <deque>
 //Mu2e Data Prods:
 #include "MCDataProducts/inc/ProtonBunchIntensity.hh"
 #include "MCDataProducts/inc/EventWeight.hh"
@@ -63,51 +64,50 @@ namespace mu2e
 {
   class CaloEventDisplays : public art::EDAnalyzer {
     public:
-	struct Config{
-	      using Name=fhicl::Name;
-	      using Comment=fhicl::Comment;
-	
-	     fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
-	     //fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
-	     fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
-	      fhicl::Atom<bool> doDisplay{Name("doDisplay"),Comment("use display"), false};
-	      fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"),Comment("next event"), false};
-	 };
-	typedef art::EDAnalyzer::Table<Config> Parameters;
+	    struct Config{
+	          using Name=fhicl::Name;
+	          using Comment=fhicl::Comment;
+	    
+	         fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
+	         //fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
+	         fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
+	          fhicl::Atom<bool> doDisplay{Name("doDisplay"),Comment("use display"), false};
+	          fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"),Comment("next event"), false};
+	     };
+	    typedef art::EDAnalyzer::Table<Config> Parameters;
 
-      	explicit CaloEventDisplays(const Parameters& conf);
-	
-      	virtual ~CaloEventDisplays();
-      	virtual void beginJob();
-      	virtual void analyze(const art::Event& e) override;
+          	explicit CaloEventDisplays(const Parameters& conf);
+	    
+          	virtual ~CaloEventDisplays();
+          	virtual void beginJob();
+          	virtual void analyze(const art::Event& e) override;
     private: 
-	Config _conf;
-      	bool _mcdiag;
-      	Int_t _evt; 
+	    Config _conf;
+    	bool _mcdiag;
+    	Int_t _evt; 
 
-	// The module label of this instance of this module.
-	std::string moduleLabel_;
-	
-	//For Event Displays:
-	TApplication* application_;
-	TDirectory*   directory_ = nullptr;
-	TTree* _cosmic_fit;
-	TCanvas*      canvas_ = nullptr;
-	TH2D* _display = nullptr;
-	TNtuple* _ntTrack = nullptr;
-	TNtuple* _ntHit = nullptr;
+	    // The module label of this instance of this module.
+	    std::string moduleLabel_;
+	    
+	    //For Event Displays:
+	    TApplication* application_;
+	    TDirectory*   directory_ = nullptr;
+	    TCanvas*      canvas_ = nullptr;
+	    TH2D* _display = nullptr;
+	    TNtuple* _ntTrack = nullptr;
+	    TNtuple* _ntHit = nullptr;
 
-	
-        art::InputTag _calocrysTag;
-        art::InputTag _caloclusterTag;
-        const CaloCrystalHitCollection*  _calcryhitcol;
-	const CaloClusterCollection* _calclustercol;
-        
-	bool doDisplay_;
-	bool clickToAdvance_;
-        void plot2d(const art::Event& evt);
-	
-	bool findData(const art::Event& evt);
+	    
+      art::InputTag _calocrysTag;
+      art::InputTag _caloclusterTag;
+      const CaloCrystalHitCollection*  _calcryhitcol;
+      const CaloClusterCollection* _calclustercol;
+
+      bool doDisplay_;
+      bool clickToAdvance_;
+      void plot2d(const art::Event& evt);
+
+      bool findData(const art::Event& evt);
 };
 
     CaloEventDisplays::CaloEventDisplays(const Parameters& conf) :
@@ -137,26 +137,27 @@ namespace mu2e
       int window_size_x(1300);
       int window_size_y(600);
       canvas_ = tfs->make<TCanvas>(name,title,window_size_x,window_size_y);
-      canvas_->Divide(1,2);
+      //canvas_->Divide(1,2);
       
       
       }
-      void CaloEventDisplays::analyze(const art::Event& event) {
+  void CaloEventDisplays::analyze(const art::Event& event) {
 
-	plot2d(event);
-      }
+	  plot2d(event);
+  }
+
   void CaloEventDisplays::plot2d(const art::Event& event){
-	_evt = event.id().event();  
-	findData(event);
+  _evt = event.id().event();  
+  findData(event);
 
-	std::vector<double>  clusterxs;
-	
-	//unsigned  _ncluster = _calclustercol->size();
-	unsigned _ncrystalhits = _calcryhitcol->size();
-	
-      	art::ServiceHandle<GeometryService> geom;
-      	if( ! geom->hasElement<Calorimeter>() ) return;
-      	Calorimeter const & cal = *(GeomHandle<Calorimeter>());
+  std::vector<double>  clusterxs;
+
+  //unsigned  _ncluster = _calclustercol->size();
+  unsigned _ncrystalhits = _calcryhitcol->size();
+
+  art::ServiceHandle<GeometryService> geom;
+  if( ! geom->hasElement<Calorimeter>() ) return;
+  Calorimeter const & cal = *(GeomHandle<Calorimeter>());
 	
 	if (doDisplay_) {
       
@@ -166,65 +167,92 @@ namespace mu2e
 		      
 		     
 		      TText  text;     
-		      TArc arc;
+		      TArc arcOut, arcIn;
 		      TBox box;
 		      canvas_->SetTitle("foo title");
-		      auto pad = canvas_->cd(1);
+		      auto pad = canvas_->cd();
 		      pad->Clear();
 		      canvas_->SetTitle("bar title");
       
 		      auto xyplot = pad->DrawFrame(-1000,-1000, 1000,1000);
 		      xyplot->GetYaxis()->SetTitleOffset(1.25);
-		      xyplot->SetTitle( "XY; Z(mm);Y(mm)");
+		      xyplot->SetTitle( "View of Calo Disk 1 in YZ Plane; Z(mm);Y(mm)");
 		      float _clusterEdep = 0;
-      		      for (unsigned int tclu=0; tclu<_calclustercol->size();++tclu){
-			   CaloCluster const& cluster = (*_calclustercol)[tclu];
-			   _clusterEdep      = cluster.energyDep();
-			}
-		      for(size_t i =0; i < _ncrystalhits; i++){
-				CaloCrystalHit const& hit =(*_calcryhitcol)[i];
-				int diskId     = cal.crystal(hit.id()).diskId();
-				Disk const & disk =  cal.disk(diskId);
-				double outerR = disk.outerRadius();
-				double innerR= disk.innerRadius();
-				
-				CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit.id()).position());
-				int crystalID = hit.id();
-				Crystal const &crystal = cal.crystal(crystalID);
-				double crystalXLen = crystal.size().x();
-				double crystalYLen = crystal.size().y();
-				arc.SetFillStyle(0);
-      		      		arc.DrawArc(0.,0., outerR);
-      	              		arc.DrawArc(0.,0., innerR);
-			      	//box.SetFillStyle(0);
-			      	box.DrawBox(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,crystalPos.x()+crystalXLen/2, crystalPos.y()+crystalYLen/2);
-	
-			        if(hit.energyDep()>0 and _clusterEdep>0){
-					box.SetFillColor(kOrange+hit.energyDep()/_clusterEdep);
-				}
-              	    }
+      		for (unsigned int tclu=0; tclu<_calclustercol->size();++tclu){
+			       CaloCluster const& cluster = (*_calclustercol)[tclu];
+			       _clusterEdep      = cluster.energyDep();
+			    }
+           
+			    Disk const & disk =  cal.disk(1);
+			    double outerR = disk.outerRadius();
+			    double innerR= disk.innerRadius();
+				    
+          arcOut.SetFillColor(kGray);
+          arcIn.SetFillColor(kWhite);
+          arcIn.SetLineColor(kGray+1);
+          arcOut.SetLineColor(kGray+1);
+          arcOut.DrawArc(0.,0., outerR);
+          arcIn.DrawArc(0.,0., innerR);
+          typedef std::list<CaloCrystalHit const*> CaloCrystalList;
+          CaloCrystalList firstlist;
+          for(size_t i =0; i < _ncrystalhits; i++){ 
+            CaloCrystalHit const& hit =(*_calcryhitcol)[i];
+            firstlist.push_back(&hit);
+          }
+          
+          firstlist.sort([] (CaloCrystalHit const* lhs, CaloCrystalHit const* rhs) {return lhs->energyDep() > rhs->energyDep();} );
+          
+          unsigned int i =0;
+		      for(auto const& hit : firstlist){
+				    //CaloCrystalHit const& hit =(*_calcryhitcol).at(i);//_calcryhitcol
+				    int diskId     = cal.crystal(hit->id()).diskId();
+				    
+				    CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit->id()).position());
+				    int crystalID = hit->id();
+				    Crystal const &crystal = cal.crystal(crystalID);
+				    double crystalXLen = crystal.size().x();
+				    double crystalYLen = crystal.size().y();
+				     if(i==0) box.SetFillColor(kRed);
+             if(i==1 or i==2) box.SetFillColor(kOrange);
+             if(i==3 or i==4) box.SetFillColor(kYellow);
+             if(i>5) box.SetFillColor(kGreen);
+             if(i == _ncrystalhits-1) box.SetFillColor(kBlue);
+			      box.DrawBox(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,crystalPos.x()+crystalXLen/2, crystalPos.y()+crystalYLen/2);
+	         
+			      if(hit->energyDep()>0 and _clusterEdep>0){
+					   
+	            TLatex latex;
+	            stringstream crys;
+            	crys<<round(hit->energyDep());
+            	const char* str_crys = crys.str().c_str();
+   	          latex.SetTextSize(0.02);
+   	          latex.DrawLatex(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,str_crys);
+		          cout<<i<<" "<<round(hit->energyDep())<<endl;
+				    }
+            i++;
+  	    }
 	            
     
 		    ostringstream title;
 		      title << "Run: " << event.id().run()
 		      << "  Subrun: " << event.id().subRun()
-		      << "  Event: " << event.id().event()<<".root";
+		      << "  Event: " << event.id().event()<<" Total Cluster E: "<<round(_clusterEdep)<<" MeV.root";
 
 		      text.SetTextAlign(11);
-		      text.DrawTextNDC( 0., 0.01, title.str().c_str() );
+		      text.DrawTextNDC( 0., 0.01, title.str().c_str());
 	
 		      canvas_->Modified();
 		      canvas_->Update();
 		      canvas_->SaveAs(title.str().c_str());
 		      if ( clickToAdvance_ ){
-			cerr << "Double click in the Canvas " << moduleLabel_ << " to continue:" ;
-			gPad->WaitPrimitive();
-	      	      } else{
-			char junk;
-			cerr << "Enter any character to continue: ";
-			cin >> junk;
+			      cerr << "Double click in the Canvas " << moduleLabel_ << " to continue:" ;
+			      gPad->WaitPrimitive();
+	            	      } else{
+			      char junk;
+			      cerr << "Enter any character to continue: ";
+			      cin >> junk;
 		      }
-	      	        cerr << endl;
+	      	cerr << endl;
 		
 		
 	}//display
@@ -232,24 +260,44 @@ namespace mu2e
         
  
 
-bool CaloEventDisplays::findData(const art::Event& evt){
+  bool CaloEventDisplays::findData(const art::Event& evt){
 
 	
-	_calcryhitcol =0;
-	_calclustercol=0;
-	
-	auto cryhit = evt.getValidHandle<CaloCrystalHitCollection>(_calocrysTag);
-	_calcryhitcol =cryhit.product();
-	auto cluster= evt.getValidHandle<CaloClusterCollection>(_caloclusterTag);
-	_calclustercol =cluster.product();
-        
-	return _calcryhitcol!=0 && _calclustercol !=0;
-       }
+	  _calcryhitcol =0;
+	  _calclustercol=0;
+	  
+	  auto cryhit = evt.getValidHandle<CaloCrystalHitCollection>(_calocrysTag);
+	  _calcryhitcol =cryhit.product();
+	  auto cluster= evt.getValidHandle<CaloClusterCollection>(_caloclusterTag);
+	  _calclustercol =cluster.product();
+          
+	  return _calcryhitcol!=0 && _calclustercol !=0;
+  }
 
 
 }  // end namespace mu2e 
 
 using mu2e::CaloEventDisplays;
 DEFINE_ART_MODULE(CaloEventDisplays);
-    
+    /*
+          std::deque<CaloCrystalHit> *EorderedHits;
+          double HighestEDep = 0;
+
+          for(size_t i =0; i < _ncrystalhits; i++){ 
+            CaloCrystalHit const& hit =(*_calcryhitcol)[i];
+            if(hit.energyDep() > HighestEDep){//its the highest - put at front!
+              HighestEDep = hit.energyDep();
+              EorderedHits->push_front(hit);
+            }
+            else{ //not the highest so need to find its positon in the list
+              std::deque<int>::iterator p;
+  
+              for(size_t j=0; j < EorderedHits->size();j++){
+                p++;
+                CaloCrystalHit const& prev_hit =(*EorderedHits)[j];
+                if(hit.energyDep() > prev_hit.energyDep() ) p = j-1;
+                }
+                EorderedHits->insert(p,hit);
+            }
+          }*/
    
