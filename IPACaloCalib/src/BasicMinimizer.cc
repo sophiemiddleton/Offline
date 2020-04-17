@@ -30,7 +30,7 @@ unsigned int N_CONVERGED = 0;
 unsigned int N_CRYSTALS = 674;
 unsigned int N_TOTALHITS = 0;
 double Loss = 0;
-double step_size = 0.00035;
+double step_size = 0.000001;
 double error =1;
 double MaxIterations = 1000;
 double MaxFunction = 100;
@@ -49,15 +49,20 @@ struct CrystalList{
 
 struct Event{
   unsigned int EventNumber;
-	double track_energy;
+  double calo_energy;
+  double track_energy;
+  double track_mom;
 	unsigned int cluster_size;
 	CrystalList crystal_list;
 	Event();
 	Event(unsigned int _n, double _energy, double _size) : EventNumber(_n),
 	  track_energy(_energy), cluster_size(_size){};
+
 	Event(unsigned int _n, double _energy, double _size, CrystalList _list )
 	   : EventNumber(_n), track_energy(_energy), cluster_size(_size), crystal_list(_list){};
 
+ Event(unsigned int _n, double _caloenergy, double _trackenergy, double _mom, double _size, CrystalList _list)
+	   : EventNumber(_n), calo_energy(_caloenergy), track_energy(_trackenergy), track_mom(_mom),  cluster_size(_size), crystal_list(_list){};
 };
 
 std::vector<Event> FakeDateMaker(std::vector<double> RawCalibrationResults, std::vector<double> offset_vector){
@@ -106,13 +111,16 @@ void SetOffsetVector(std::vector<double> &RawCalibrationResults, std::vector<dou
 
     std::random_device rd;
     std::mt19937 mt(rd());
-    std::uniform_real_distribution<double> randoff(0.1, 1.0);
-
+    //std::uniform_real_distribution<double> randoff(0.1, 1.0);
+    std::normal_distribution<double> randoff(1.0,0.2);
+    ofstream rawfile;
+    rawfile.open("raw.csv");
     for(unsigned int c=0;c<N_CRYSTALS;c++){
         std::cout<<"[In OffsetMaker()] Finding Raw Values ..."<<std::endl;
         auto const off = randoff(mt);
         offset_vector.push_back(off);
 				RawCalibrationResults.push_back(off*0.8);
+        rawfile<<off*0.8<<std::endl;
 	 }
 }
 
@@ -155,13 +163,13 @@ std::vector<Event> BuildEventsFromData(const char *CrystalsFile, const char *Tra
 		exit(1);
 	}
 
-  float EoP, E, P;
+  float CaloE, TrackerE, P;
   unsigned int eventT, runT;
 
-	while(fscanf(fT, "%i,%i,%f,%f,%f\n", &eventT, &runT, &EoP, &E, &P)!=EOF){
+	while(fscanf(fT, "%i,%i,%f,%f,%f\n", &eventT, &runT, &CaloE, &TrackerE, &P)!=EOF){
     unsigned int clSize;
     CrystalList crystal_list = FillCrystals(CrystalsFile, clSize, eventT);
-	  Event e(eventT, E, clSize ,crystal_list);
+	  Event e(eventT, CaloE, TrackerE, P, clSize ,crystal_list);
     event.push_back(e);
 	}
 	std::cout<<"[In ReadInputData()] : closing "<<TrackFile<<" and "<<CrystalsFile<<std::endl;
@@ -203,6 +211,72 @@ double F(Event event, std::vector<double> constants){
 		}
   F+= pow((sum - event.track_energy)*(1/error) ,2);
 	return F;
+}
+
+double F_EoP(Event event, std::vector<double> constants){
+    double F = 0;
+    unsigned int sum = 0;
+    for(unsigned int c=0;c < event.cluster_size;c++){
+			unsigned int cry_i = event.crystal_list.crystal_number[c];
+	    sum += constants[cry_i]*event.crystal_list.crystal_energy[c]/event.track_mom;
+		}
+  F+= pow((sum - (event.track_energy/event.track_mom))*(1/error) ,2);
+	return F;
+}
+
+std::vector<double> SGD_EoP(Event event, unsigned int j, std::vector<double> constants, double& FVAL){
+	std::cout<<"[In SGD ()] Beginning ..."<<std::endl;
+	N_EVENTS =  GetLines("Tracks.csv");
+	double Loss = FVAL;
+	double old_c ;
+	double new_c ;
+	double dc;
+	double dFdCi;
+	bool converged =false;
+
+	double InitLoss = F_EoP(event, constants);
+	std::cout<<"[In SGD()] Initial Loss is "<<InitLoss<<std::endl;
+	std::vector<double> previous_constants = constants;
+	unsigned int k = 0;
+	double Etrk = event.track_energy;
+
+	while(converged == false and k < MaxIterations){
+  	for(unsigned int m=0; m<event.cluster_size;m++){
+			unsigned int Cm = event.crystal_list.crystal_number[m];
+			old_c = constants[Cm];
+			double Vm=event.crystal_list.crystal_energy[m];
+			double prediction =0;
+
+			for(unsigned int i=0;i<event.cluster_size;i++){
+          unsigned int Ci = event.crystal_list.crystal_number[i];
+          prediction +=constants[Ci]*event.crystal_list.crystal_energy[i]/event.track_mom;
+       }
+
+      dFdCi = 2*Vm*(1/pow(error,2))*(prediction -Etrk/event.track_mom);
+      new_c = (old_c - step_size*constants[Cm]*dFdCi);
+      dc = abs(new_c - old_c);
+      if(dc > dcmin ){
+        constants[Cm] = new_c;
+      }
+    }
+    Loss = F_EoP(event, constants);
+		if((Loss <  InitLoss) and (Loss < MaxFunction)){
+      converged =true;
+      N_CONVERGED +=1;
+    }
+		k++;
+
+  }
+	if(converged ==true){
+		for(unsigned int m=0; m<event.cluster_size;m++){
+        int Ci = event.crystal_list.crystal_number[m];
+        cout<<"[In SGD() ] Updated "<<Ci<<" from "<<previous_constants[Ci]<<" to "<<constants[Ci]<<" with k iterations "<<k<<endl;
+        if (m==event.cluster_size-1) Loss = F_EoP(event,constants);
+    }
+		return constants;
+    }else {
+      return previous_constants;
+    }
 }
 
 std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constants, double& FVAL){
@@ -326,8 +400,8 @@ int main(int argc, char* argv[]){
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
 
-    double endLoss = FullF(event_list, CalibrationConstants);
-    cout<<"NEvents Processed "<<N_EVENTS<<" NEVents converged "<<N_CONVERGED<<"Time  taken to converge "<<duration.count()<<" Final Loss function "<<endLoss<<endl;
+    //double endLoss = FullF(event_list, CalibrationConstants);
+    cout<<"NEvents Processed "<<N_EVENTS<<" NEVents converged "<<N_CONVERGED<<"Time  taken to converge "<<duration.count()<<endl;
 
 	return 0;
 }

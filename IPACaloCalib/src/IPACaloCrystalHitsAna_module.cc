@@ -168,8 +168,8 @@ namespace mu2e {
 	_Ntup->Branch("cryTime",      	&_cryTime ,     "cryTime[nCry]/F");
 	_Ntup->Branch("cryDose",      	&_cryDose ,     "cryDose[nCry]/F");
 	_Ntup->Branch("cryRadius",	&_cryRadius,	"cryRadius[nCry]/F");
-	outputfile.open("IPAAnaCaloCrystalHits.csv");
-	outputfile<<"event,run,cryId,cryE"<<std::endl;
+	outputfile.open("Crystals.csv");
+	//outputfile<<"event,run,cryId,cryE"<<std::endl;
   }
 
 

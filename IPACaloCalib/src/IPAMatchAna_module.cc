@@ -214,8 +214,8 @@ namespace mu2e {
   _Ntup->Branch("EoP_diff",	&_EoP_diff,		"_EoP_diff/F");
   _Ntup->Branch("E_diff",	&_E_diff,		"_E_diff/F");
   
-  outputfile.open("IPAAnaMatchedTrackClusters.csv");
-        outputfile<<"event,run,size,CaloEoP,CaloE,TrackerEoP,TrackerE,P"<<std::endl;
+  outputfile.open("Tracks.csv");
+ //       outputfile<<"event,run,size,CaloEoP,CaloE,TrackerEoP,TrackerE,P"<<std::endl;
   }
 
 
@@ -353,7 +353,7 @@ namespace mu2e {
           _EoP_diff = _CaloEoP - _TrackEoP;
           _E_diff = ClosestCluster->energyDep() - _TrackEnergy;
         
-          outputfile<<_evt<<","<<_run<<","<<_matchClusterSize<<","<<_CaloEoP<<","<<ClosestCluster->energyDep()<<","<<_TrackEoP<<","<<_TrackEnergy<<","<<_TrackMom<<std::endl;
+          outputfile<<_evt<<","<<_run<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<std::endl;
         }
         _nTrackMatched++;
 
