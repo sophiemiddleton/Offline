@@ -1,4 +1,3 @@
-
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "GlobalConstantsService/inc/ParticleDataTable.hh"
@@ -105,7 +104,7 @@ namespace mu2e {
 	 	     fhicl::Atom<int> diagLevel{Name("diagLevel"),Comment("diag level"),0};
 		     fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("mc diag level"),0};
 		     fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
-		  
+
 	    	};
 		typedef art::EDAnalyzer::Table<Config> Parameters;
 
@@ -127,7 +126,7 @@ namespace mu2e {
 		art::InputTag _caloclusterTag;
 		art::InputTag _genTag;
 
-		const CaloCrystalHitCollection*  _calcryhitcol;	
+		const CaloCrystalHitCollection*  _calcryhitcol;
 		const CaloClusterCollection* _calclustercol;
 		const GenParticleCollection *_gencol;
 
@@ -135,11 +134,14 @@ namespace mu2e {
 
 		Int_t   _nEvents = 0;
 		Int_t _evt, _run, _nHits;
-		
-		Int_t   _cryId[16384], _crySectionId[16384], _crySimIdx[16384], _crySimLen[16384];
-		Float_t _cryTime[16384], _cryEdep[16384],_cryDose[16384], _cryPosX[16384], _cryPosY[16384], _cryPosZ[16384], _cryLeak[16384], _cryTotE[16384], _cryTotSum[16384], _cryTotEErr[16384], _cryRadius[16384],  _cryMaxR[16384];
 
-		
+		Int_t   _cryId[16384], _crySectionId[16384], _crySimIdx[16384], _crySimLen[16384];
+		Float_t _cryTime[16384], _cryEdep[16384],_cryDose[16384], _cryPosX[16384],
+    _cryPosY[16384], _cryPosZ[16384], _cryLeak[16384], _cryTotE[16384],
+    _cryTotSum[16384], _cryTotEErr[16384], _cryRadius[16384],  _cryMaxR[16384],
+    _cryEdepErr[16384];
+
+
 		bool findData(const art::Event& evt);
 
 	};
@@ -148,7 +150,7 @@ namespace mu2e {
 		art::EDAnalyzer(conf),
 		_diagLevel(conf().diagLevel()),
 		_mcdiag(conf().mcdiag()),
-		_calocrysTag(conf().calocrysTag())	
+		_calocrysTag(conf().calocrysTag())
 	{}
 
   void IPACaloCrystalHitsAna::beginJob(){
@@ -165,6 +167,7 @@ namespace mu2e {
 	_Ntup->Branch("cryPosY",      	&_cryPosY ,     "cryPosY[nCry]/F");
 	_Ntup->Branch("cryPosZ",      	&_cryPosZ ,     "cryPosZ[nCry]/F");
 	_Ntup->Branch("cryEdep",      	&_cryEdep ,     "cryEdep[nCry]/F");
+  _Ntup->Branch("cryEdepErr",      	&_cryEdepErr ,     "cryEdepErr[nCry]/F");
 	_Ntup->Branch("cryTime",      	&_cryTime ,     "cryTime[nCry]/F");
 	_Ntup->Branch("cryDose",      	&_cryDose ,     "cryDose[nCry]/F");
 	_Ntup->Branch("cryRadius",	&_cryRadius,	"cryRadius[nCry]/F");
@@ -178,33 +181,33 @@ namespace mu2e {
 	_evt = event.id().event();
 	_run = event.run();
 
-	if(!findData(event)) 
-		throw cet::exception("RECO")<<"No data in  event"<< endl; 
+	if(!findData(event))
+		throw cet::exception("RECO")<<"No data in  event"<< endl;
 
 	//std::cout<<"[In Analyze()] Found Data ..."<<std::endl;
 
       	art::ServiceHandle<GeometryService> geom;
       	if( ! geom->hasElement<Calorimeter>() ) return;
-      	Calorimeter const & cal = *(GeomHandle<Calorimeter>());	
+      	Calorimeter const & cal = *(GeomHandle<Calorimeter>());
 //=====================Crystal Hits Info =======================//
 	//std::cout<<"[In Analyze()] Getting Crystal Info..."<<std::endl;
 	_nHits = _calcryhitcol->size();
-	for (unsigned int ic=0; ic<_calcryhitcol->size();++ic) 
-	{	   
+	for (unsigned int ic=0; ic<_calcryhitcol->size();++ic)
+	{
 		   CaloCrystalHit const& hit      = (*_calcryhitcol)[ic];
 		   int diskId                     = cal.crystal(hit.id()).diskId();
-		   CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit.id()).position());  
+		   CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit.id()).position());
 		   _cryId[ic] 	 	= hit.id();
 		   _cryTime[ic]       	= hit.time();
 		   _cryEdep[ic]       	= hit.energyDep();
-		   _cryTotE[ic]  		= hit.energyDepTot();
+       _cryEdepErr[ic]       	= hit.energyDepErr();
+		   _cryTotE[ic]  		    = hit.energyDepTot();
 		   _cryTotEErr[ic]  		= hit.energyDepTotErr();
 		   _cryPosX[ic]      	= crystalPos.x();
 		   _cryPosY[ic]       	= crystalPos.y();
 		   _cryPosZ[ic]       	= crystalPos.z();
-		   _cryRadius[ic]  	 	= sqrt(crystalPos.x()*crystalPos.x() +  
-						    crystalPos.y()*crystalPos.y());
-		   outputfile<<_evt<<","<<_run<<","<<hit.id()<<","<<hit.energyDep()<<std::endl;
+		   _cryRadius[ic]  	 	= sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y());
+		   outputfile<<_evt<<","<<_run<<","<<hit.id()<<","<<hit.energyDep()<<","<<hit.energyDepErr()<<std::endl;
 	}
 	_Ntup->Fill();
 	_nEvents++;
@@ -218,8 +221,9 @@ bool IPACaloCrystalHitsAna::findData(const art::Event& evt){
 	return   _calcryhitcol!=0;
 }
 
- void IPACaloCrystalHitsAna::endJob(){} 
+ void IPACaloCrystalHitsAna::endJob(){}
 
 }
 
 DEFINE_ART_MODULE(mu2e::IPACaloCrystalHitsAna);
+

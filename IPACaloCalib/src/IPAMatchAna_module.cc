@@ -1,4 +1,4 @@
-// Author : S. middleton 
+// Author : S. middleton
 // Date: March 2020
 // Purpose: IPA Analysis
 #include "CLHEP/Units/SystemOfUnits.h"
@@ -120,7 +120,7 @@ namespace mu2e {
 		explicit IPAMatchAna(const Parameters& conf);
 		virtual ~IPAMatchAna() {}
 
-    
+
 		virtual void beginJob();
 		virtual void endJob();
 		virtual void analyze(const art::Event& e) override;
@@ -133,18 +133,23 @@ namespace mu2e {
 
 		art::InputTag _kalrepTag;
 		art::InputTag _tcmatchTag;
-    
-		
-		const KalRepPtrCollection* _kalrepcol;		
+
+
+		const KalRepPtrCollection* _kalrepcol;
 		const TrackClusterMatchCollection* _tcmatchcol;
 
 		TTree* _Ntup;
 
 		Int_t   _nEvents = 0;
 		Int_t _evt, _run, _nTracks, _nMatches, _nTrackMatched;
-		Float_t _TrackT0, _TrackT0Err, _TrackMom, _MaxEoP, _TrackBackTime , _TrackBackOmega ,_TrackBackD0 , _TrackBackZ0, _TrackBackPhi0, _TrackBackTanDip, _TrackChi2, _TrackChi2DOF, _TrackCosTheta, _TrackEnergy, _TrackEoP;
+		Float_t _TrackT0, _TrackT0Err, _TrackMom, _MaxEoP, _TrackBackTime ,
+    _TrackBackOmega ,_TrackBackD0 , _TrackBackZ0, _TrackBackPhi0,
+    _TrackBackTanDip, _TrackChi2, _TrackChi2DOF, _TrackCosTheta, _TrackEnergy,
+    _TrackEoP,  _TrackMomErr;
 
-		Float_t _matchChi2, _matchEDep, _matchPosXCl, _matchPosYCl, _matchPosZCl, _matchPathLen, _matchR, _matchDt, _matchPosXtrk, _matchPosYtrk, _matchPosZtrk,_matchTtrk, _matchClusterSize, _CaloEoP, _matchcrySum;
+		Float_t _matchChi2, _matchEDep, _matchPosXCl, _matchPosYCl, _matchPosZCl,
+    _matchPathLen, _matchR, _matchDt, _matchPosXtrk, _matchPosYtrk,
+    _matchPosZtrk,_matchTtrk, _matchClusterSize, _CaloEoP, _matchcrySum, _matchErrEdep;
 
     int _minTrackerHits, _minCrystalHits;
     float _minClusterEDep, _minTrackChi2;
@@ -163,7 +168,7 @@ namespace mu2e {
 		art::EDAnalyzer(conf),
 		_diagLevel(conf().diagLevel()),
 		_mcdiag(conf().mcdiag()),
-		_kalrepTag(conf().kalrepTag()),		
+		_kalrepTag(conf().kalrepTag()),
 		_tcmatchTag(conf().tcmatchTag()),
     _minTrackerHits(conf().minTrackerHits()),
     _minCrystalHits(conf().minCrystalHits()),
@@ -181,9 +186,9 @@ namespace mu2e {
   _Ntup->Branch("nTracks",	&_nTracks,		"nTracks/I");
   _Ntup->Branch("TrackT0", 	&_TrackT0, 		"TrackT0/F");
   _Ntup->Branch("TrackT0Err", 	&_TrackT0Err,		"TrackT0Err/F");
-  _Ntup->Branch("TrackBackTime", 	&_TrackBackTime,   	"TrackBackTime/F"); 
+  _Ntup->Branch("TrackBackTime", 	&_TrackBackTime,   	"TrackBackTime/F");
   _Ntup->Branch("TrackBackOmega", &_TrackBackOmega,	"TrackBackOmega/F");
-  _Ntup->Branch("TrackBackD0",  	&_TrackBackD0, 		"TrackBackD0/F"); 	
+  _Ntup->Branch("TrackBackD0",  	&_TrackBackD0, 		"TrackBackD0/F");
   _Ntup->Branch("TrackBackZ0", 	&_TrackBackZ0, 		"TrackBackZ0/F");
   _Ntup->Branch("TrackBackPhi0",	&_TrackBackPhi0,	"TrackBackPhi0/F");
   _Ntup->Branch("TrackBackTanDip",&_TrackBackTanDip,	"TrackBackTanDip/F");
@@ -193,8 +198,9 @@ namespace mu2e {
   _Ntup->Branch("TrackEnergy",  	&_TrackEnergy,		"TrackEnergy/F");
   _Ntup->Branch("TrackMom",	&_TrackMom, 		"TrackMom/F");
   _Ntup->Branch("TrackEoP",		&_TrackEoP,			"TrackEoP/F");
+  _Ntup->Branch("TrackMomErr",		&_TrackMomErr,			"TrackMomErr/F");
 
-  _Ntup->Branch("nMatches",	&_nMatches,		"nMatches/I");	
+  _Ntup->Branch("nMatches",	&_nMatches,		"nMatches/I");
   _Ntup->Branch("matchPosXtrk",	&_matchPosXtrk,		"matchPosXtrk/F");
   _Ntup->Branch("matchPosYtrk",	&_matchPosYtrk,		"matchPosYtrk/F");
   _Ntup->Branch("matchPosZtrk",	&_matchPosZtrk,		"matchPosZtrk/F");
@@ -203,17 +209,18 @@ namespace mu2e {
   _Ntup->Branch("matchEDep", 	&_matchEDep, 		"matchEDep/F");
   _Ntup->Branch("matchPosXcl", 	&_matchPosXCl, 		"matchPosXCl/F");
   _Ntup->Branch("matchPosYCl", 	&_matchPosYCl, 		"matchPosYCl/F");
-  _Ntup->Branch("matchPosZCl", 	&_matchPosZCl, 		"matchPosZCl/F"); 
+  _Ntup->Branch("matchPosZCl", 	&_matchPosZCl, 		"matchPosZCl/F");
   _Ntup->Branch("matchPathLen", 	&_matchPathLen,	        "matchPathLen/F");
   _Ntup->Branch("matchR",		&_matchR, 		"matchR/F");
   _Ntup->Branch("matchDt",	&_matchDt,		"matchDt/F");
   _Ntup->Branch("matchClusterSize",	&_matchClusterSize,		"matchClusterSize/F");
   _Ntup->Branch("CaloEoP", 	&_CaloEoP, 		"CaloEoP/F");
   _Ntup->Branch("matchcrySum", 	&_matchcrySum, 		"_matchcrySum/F");
+  _Ntup->Branch("matchErrEdep", 	&_matchErrEdep, 		"_matchErrEdep/F");
 
   _Ntup->Branch("EoP_diff",	&_EoP_diff,		"_EoP_diff/F");
   _Ntup->Branch("E_diff",	&_E_diff,		"_E_diff/F");
-  
+
   outputfile.open("Tracks.csv");
  //       outputfile<<"event,run,size,CaloEoP,CaloE,TrackerEoP,TrackerE,P"<<std::endl;
   }
@@ -224,8 +231,8 @@ namespace mu2e {
 	_evt = event.id().event();
 	_run = event.run();
 
-	if(!findData(event)) 
-		throw cet::exception("RECO")<<"No data in  event"<< endl; 
+	if(!findData(event))
+		throw cet::exception("RECO")<<"No data in  event"<< endl;
   //if(!Dofilter(event)) continue;
 
 	art::ServiceHandle<mu2e::GeometryService>   geom;
@@ -287,7 +294,7 @@ namespace mu2e {
     sz1    = sz+(Z-z0)/dzds;	          // should be good enough
 
     double EndMom= TrackKrep->momentum(sz1).mag();//TODO
-   
+
     //============================= Add Matches ===============================//
     if(_tcmatchcol->size() ==0) continue;
     for(unsigned int c=0;c<_tcmatchcol->size();c++){
@@ -297,7 +304,7 @@ namespace mu2e {
         const KalRep* Krep  = extrk->trk().get();
         if (Krep == TrackKrep) {
           const mu2e::CaloCluster* cl = tcm.caloCluster();
-        
+
           _matchcrySum = 0;
           for(unsigned i =0 ; i< cl->caloCrystalHitsPtrVector().size();i++){
 			       art::Ptr< CaloCrystalHit>  cry=cl->caloCrystalHitsPtrVector()[i] ;
@@ -312,6 +319,7 @@ namespace mu2e {
         }
         _matchClusterSize = cl->size();
         _matchEDep = cl->energyDep();
+        _matchErrEdep = cl->energyDepErr();
         _matchPosXtrk = tcm.xtrk();
         _matchPosYtrk = tcm.ytrk();
         _matchPosZtrk = tcm.ztrk();
@@ -323,7 +331,7 @@ namespace mu2e {
         _matchPathLen = tcm.ds();
         _matchDt = tcm.dt();
         _matchR = sqrt(x1.x()*x1.x() + x1.y()*x1.y());
-        
+
         _nMatches++;
       }
       }
@@ -333,11 +341,13 @@ namespace mu2e {
         _TrackMom = TrackKrep->momentum(sz1).mag();
         _TrackBackTime =   TrackKrep->arrivalTime(sz1);
         HelixParams helx  = TrackKrep->helix(sz1);
-        _TrackBackOmega       = helx.omega(); 
+        _TrackBackOmega       = helx.omega();
         _TrackBackD0       = helx.d0();
         _TrackBackZ0       = helx.z0();
         _TrackBackPhi0     = helx.phi0();
-        _TrackBackTanDip   = helx.tanDip(); 
+        _TrackBackTanDip   = helx.tanDip();
+        BbrVectorErr TrackMomErrVec    = TrackKrep->momentumErr(sz1);
+        _TrackMomErr = TrackMomErrVec.mag();
         _TrackEnergy = sqrt(TrackKrep->momentum(sz1).mag()*TrackKrep->momentum(sz1).mag() + me*me);
         double entlen         = std::min(s1,s2);
         CLHEP::Hep3Vector fitmom = TrackKrep->momentum(entlen);
@@ -347,13 +357,13 @@ namespace mu2e {
         _TrackChi2DOF= TrackKrep->chisq()/TrackKrep->nActive();
         _nTracks ++;
 
-        if(EndMom!=0 and ClosestCluster != nullptr) { 
+        if(EndMom!=0 and ClosestCluster != nullptr) {
           _CaloEoP = ClosestCluster->energyDep()/EndMom;
           _TrackEoP = _TrackEnergy/EndMom;
           _EoP_diff = _CaloEoP - _TrackEoP;
           _E_diff = ClosestCluster->energyDep() - _TrackEnergy;
-        
-          outputfile<<_evt<<","<<_run<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<std::endl;
+
+          outputfile<<_evt<<","<<_run<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;
         }
         _nTrackMatched++;
 
@@ -365,21 +375,21 @@ namespace mu2e {
 
 bool IPAMatchAna::DoFilter(art::Event& event) {
     std::cout<<"=========== In Filter =========="<<std::endl;
-    if(!findData(event)) 
-		  throw cet::exception("RECO")<<"No data in  event"<< endl; 
+    if(!findData(event))
+		  throw cet::exception("RECO")<<"No data in  event"<< endl;
 
 	  art::ServiceHandle<mu2e::GeometryService>   geom;
-	
+
     mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
     mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
-   
+
     Hep3Vector vd_tt_back = ds->toDetector(vdet->getGlobal(mu2e::VirtualDetectorId::TT_Back));
     double     Z      = vd_tt_back.z();
 
     for(unsigned int i=0;i<_kalrepcol->size();i++){
       art::Ptr<KalRep> const& ptr = _kalrepcol->at(i);
       const KalRep* TrackKrep = ptr.get();
-     
+
       double  ds(10.), s0, s1, s2, z0, z1, z2, dzds, sz, sz1, z01;
       const TrkHitVector* hots = &TrackKrep->hitVector();
       int nh = hots->size();
@@ -425,7 +435,7 @@ bool IPAMatchAna::DoFilter(art::Event& event) {
       std::cout<<"passes chi2 "<<std::endl;
       passChi2ndf = true;
     }
-    
+
     //============================= Add Matches ===============================//
     if(_tcmatchcol->size() ==0) continue;
     for(unsigned int c=0;c<_tcmatchcol->size();c++){
@@ -434,7 +444,7 @@ bool IPAMatchAna::DoFilter(art::Event& event) {
         const KalRep* Krep  = extrk->trk().get();
         if (Krep == TrackKrep) {
           const mu2e::CaloCluster* cl = tcm.caloCluster();
-            if(cl->size() > _minCrystalHits) { 
+            if(cl->size() > _minCrystalHits) {
               std::cout<<"passes cl size "<<cl->size()<<std::endl;
               passCH = true;
           }
@@ -455,7 +465,7 @@ bool IPAMatchAna::DoFilter(art::Event& event) {
 
 bool IPAMatchAna::findData(const art::Event& evt){
 
-	
+
 	_tcmatchcol=0;
 	_kalrepcol = 0;
 
@@ -463,15 +473,16 @@ bool IPAMatchAna::findData(const art::Event& evt){
 	_kalrepcol =kalrep.product();
 	auto tcmatch = evt.getValidHandle<TrackClusterMatchCollection>(_tcmatchTag);
 	_tcmatchcol = tcmatch.product();
-  
+
 
 	return _kalrepcol!=0 and _tcmatchcol!=0;
        }
 
  void IPAMatchAna::endJob(){
-	
-  } 
+
+  }
 
 }
 
 DEFINE_ART_MODULE(mu2e::IPAMatchAna);
+

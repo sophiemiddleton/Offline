@@ -198,6 +198,12 @@ BEGIN_PROLOG
 	  suffix : "UmuP" 
   }
 
+ GenAnalyzer : {
+  module_type : GenAnalyzer
+  GenParticleCollection : "compressDigiMCs"  
+
+
+ }
 
   TrackAnalysisReco : {
     module_type : TrackAnalysisReco
@@ -219,6 +225,12 @@ BEGIN_PROLOG
       SimParticleCollectionTag : "compressRecoMCs"
       TimeMaps : [ @sequence::RecoCompression.TimeMaps ]
       MinGoodMomFraction : 0.9
+    }
+  }
+  
+  GenAna : {
+    analyzers : {
+      GenAnalyzer : @local::GenAnalyzer
     }
   }
 
