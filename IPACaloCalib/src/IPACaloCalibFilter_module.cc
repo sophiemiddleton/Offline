@@ -70,8 +70,9 @@ namespace mu2e {
 		     fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match"), "TrackCaloMatching"};
           fhicl::Atom<int> minTrackerHits {Name("minTrackerHits"), Comment("minimum number of straw hits in tracker "),25};//From Pasha's Study
           fhicl::Atom<int> minCrystalHits{Name("minCrystalHits"), Comment("minimum number of crystal hits "), 4};
-		      fhicl::Atom<float> minClusterEDep {Name("minClusterEDep"), Comment("minimum amount of energy deposited "),10};
+		      fhicl::Atom<float> minClusterEDep {Name("minClusterEDep"), Comment("minimum amount of energy deposited "),20};
           fhicl::Atom<float>  maxTrackChi2 {Name("maxTrackChi2"), Comment("minimum allowed chi2 "),3};
+          //fhicl::Atom<float>  minPathLen {Name("minPathLen"), Comment("minimum allowed track-mathc path len "),280};
 	    	};
   
     typedef art::EDFilter::Table<Config> Parameters;

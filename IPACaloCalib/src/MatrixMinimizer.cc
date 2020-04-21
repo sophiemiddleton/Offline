@@ -12,8 +12,12 @@
 #include<mutex>
 #include <future>
 #include "ThreaderPool.hh"
-using namespace std;
+/*#include "TROOT.h"
+#include "TMatrixDSym.h"
+#include "TVectorD.h"*/
 
+using namespace std;
+//using namespace ROOT;
 bool use_multi = false;
 //System Details - from /proc/cpuinfo or lscpu can remain hardcoded once we know system (?)
 unsigned N_cores_per_socket = 14;
@@ -30,17 +34,16 @@ unsigned int N_EVENTS;
 unsigned int N_CONVERGED = 0;
 unsigned int N_CRYSTALS = 674;
 double Loss = 0;
-double step_size = 0.00001;
+double step_size = 0.0001;
 double error = 0.14;//0.2671; //sigma of response.
 double MaxIterations = 1000;
-double MaxFunction = 100;
+double MaxFunction = 10;
 double dcmin = 0.0001;//0.0001
 
 
 std::vector<double> CalibrationConstants;
-std::vector<double> RawCalibrationResults;
 std::vector<double> TrueConstants;
- 
+
 struct CrystalList{
 	std::vector<double> crystal_energy;
 	std::vector<unsigned int> crystal_number;
@@ -126,8 +129,8 @@ void SetOffsetVector(std::vector<double> &RawCalibrationResults, std::vector<dou
         auto const off = randoff(mt);
         offset_vector.push_back(off);
         TrueConstants.push_back(off);
-				RawCalibrationResults.push_back(off*0.8);
-        rawfile<<off*0.8<<std::endl;
+				RawCalibrationResults.push_back(off*0.9);
+        rawfile<<off*0.0<<std::endl;
 	 }
 }
 
@@ -149,10 +152,10 @@ CrystalList FillCrystals(const char *CrystalsFile, unsigned int &n, unsigned int
     n=0;
 		while(fscanf(fC, "%i,%i,%i,%f,%f\n", &eventC, &runC, &CryId, &CryE, &CryErr)!=EOF){
             if (eventC == eventN){
-                crystal_energy.push_back(CryE*RawCalibrationResults[CryId]);
+                crystal_energy.push_back(CryE);
                 crystal_number.push_back(CryId);
 								crystal_energy_error.push_back(CryErr);
-
+//TODO
                 n++;
             }
 	}
@@ -216,7 +219,7 @@ double F(Event event, std::vector<double> constants){
     double F = 0;
     unsigned int sum = 0;
 		double sigma = error*error;
-   
+
     for(unsigned int c=0;c < event.cluster_size;c++){
 			unsigned int cry_i = event.crystal_list.crystal_number[c];
 	    sum += constants[cry_i]*event.crystal_list.crystal_energy[c];
@@ -239,7 +242,7 @@ double F_EoP(Event event, std::vector<double> constants){
 
 std::vector<double> SGD_EoP(Event event, unsigned int j, std::vector<double> constants, double& FVAL){
 	if(diag) std::cout<<"[In SGD ()] Beginning ..."<<std::endl;
-	N_EVENTS =  GetLines("Tracks.csv");
+	N_EVENTS =  GetLines("20kTracks.csv");
 	double Loss = FVAL;
 	double old_c ;
 	double new_c ;
@@ -292,9 +295,69 @@ std::vector<double> SGD_EoP(Event event, unsigned int j, std::vector<double> con
     }
 }
 
+std::vector<std::vector<double>>* a0_; //matrix A,  NCRxNCR
+ std::vector<double>* b0_;   // vector B, size=NCR
+ std::vector<int>* count_;  // number of actuations for crystal, size=NCR
+ std::vector<double>* c0_;   // vector of calibration coeffs, size=NCR
+ std::vector<double>* res0_;   // vector of renormed calibration coeffs, size=NCR
+
+ std::vector<std::vector<double>>* a1_;  //matrix A,  ncr x ncr
+ std::vector<double>* b1_;  // matrix B,  size=ncr
+ std::vector<int>* icrystal_;  //active crystals numbers, size=ncr
+ std::vector<double>* c1_;   // vector of calibration coeffs, size=nc
+
+
+
+std::vector<double> SGDMatrix(std::vector<Event> events,  std::vector<double> &constants){
+	a0_ = new std::vector<std::vector<double>> (N_CRYSTALS,std::vector<double>(N_CRYSTALS,0));
+	std::vector<std::vector<double>>& a0 = *a0_;
+	b0_ = new std::vector<double>(N_CRYSTALS,0);
+	std::vector<double>& b0 = *b0_;
+	count_ = new std::vector<int>(N_CRYSTALS,0);
+	std::vector<int>& count = *count_;
+  cout<<"starting ... "<<endl;
+	for (auto const& event : events) { //loop over events
+		  for(unsigned int m=0; m < event.cluster_size; m++){
+        cout<<"first loop"<<endl;
+			  unsigned int Cm = event.crystal_list.crystal_number[m];
+        if(Cm > N_CRYSTALS) continue;
+			  count[Cm]++; //add entry to the count for crystal m
+			  //old_c = constants[Cm];
+			  double Vm = event.crystal_list.crystal_energy[m];
+			  b0[Cm] += event.track_energy*Vm;
+			  for(unsigned int i=0;i<event.cluster_size;i++){
+          cout<<"second loop"<<endl;
+				  unsigned int Ci = event.crystal_list.crystal_number[i];
+          cout<<"A"<<endl;
+				  double Ei = event.crystal_list.crystal_energy[m];
+          cout<<"Cons"<<Cm<<" "<<Ci<<endl;
+				  a0[Cm][Ci] += Ei*Vm;//*Cm*Ci;
+          cout<<"C"<<endl;
+	    }
+    }
+  }
+	  TMatrixDSym A2(b0.size());
+	  TVectorD B2(b0.size());
+	  for (unsigned int i=0; i<b0.size(); i++){
+		  B2(i) = b0[i];
+		  for (unsigned int j=0; j<b0.size(); j++){
+        A2(i,j) = a0[i][j];
+      }
+	  }
+	  if(A2.IsSymmetric())std::cout<<"Matrix A is symmetrical...ok"<<std::endl;
+	  else assert(0);
+
+	  TVectorD R = (A2.Invert()*B2); //solve linear system
+    for(unsigned int c =0; c< N_CRYSTALS;c++){
+		  constants[c] = R[c];
+	  }
+	  return constants;
+  }
+
+
 std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constants, double& FVAL){
 	if(diag) std::cout<<"[In SGD ()] Beginning ..."<<std::endl;
-	N_EVENTS =  GetLines("Tracks.csv");
+	N_EVENTS =  GetLines("20kTracks.csv");
 	double Loss = FVAL;
 	double old_c ;
 	double new_c ;
@@ -334,7 +397,7 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
     Loss = F(event, constants);
     dF = InitLoss - Loss;
     cout<<"Change in Loss "<<dF<<endl;
-		if(dF < 10 and (Loss <  InitLoss) and (Loss < MaxFunction)){
+		if(dF < 0.1 and (Loss <  InitLoss) and (Loss < MaxFunction)){
       converged =true;
       N_CONVERGED +=1;
     }
@@ -357,15 +420,15 @@ void Randomize(std::vector<Event> &EventList){
     std::random_shuffle (EventList.begin(), EventList.end());
 }
 
-int main(int argc, char* argv[]){
-     std::string thread_arg = argv[1];
+int main(){
+
      bool fake = false;
      std::cout<<"[In Main()] Beginning ..."<<std::endl;
      ofstream outputfile, TrackFile, CrystalsFile;
      outputfile.open("SGDv1.csv");
      outputfile<<"cryId,reco,true,Residual"<<std::endl;
      std::vector<double> offset_vector;
-
+     std::vector<double> RawCalibrationResults;
 
      for(unsigned int c=0;c<N_CRYSTALS;c++){
 			CalibrationConstants.push_back(0);
@@ -375,38 +438,28 @@ int main(int argc, char* argv[]){
     std::vector<Event> event_list;
     if(fake) event_list = FakeDateMaker(RawCalibrationResults, offset_vector);
     if(!fake){
-			event_list = BuildEventsFromData("Crystals.csv","Tracks.csv");
-			//std::cout<<"Found "<<event_list.size()<<" Events "<<std::endl;
+			event_list = BuildEventsFromData("20kCrystals.csv","20kTracks.csv");
+			
      }
      auto start = chrono::high_resolution_clock::now();
      CalibrationConstants = RawCalibrationResults;
-//
-    /* if(use_multi or thread_arg == "--all"){
-      counting_barrier barrier(event_list.size());
-      thread_pool Pool(THREAD_COUNT);}
-     */
+
 
      for(unsigned int l = 0; l < 1 ; l++){
-          
-         N_CONVERGED = 0;  
+
+         N_CONVERGED = 0;
          if(diag) cout<<"Randomizing ... "<<endl;
 	       Randomize(event_list);
-         for(auto const& event : event_list){
-            
-            if(!use_multi or thread_arg == "--single"){
+				 SGDMatrix( event_list,  CalibrationConstants);
+         /*for(auto const& event : event_list){
+
+            if(!use_multi){
               CalibrationConstants = SGD(event, event.EventNumber, CalibrationConstants,  FVAL);
             }
-          /* if(use_multi or thread_arg == "--all"){
-            auto done = Pool.add_task([&barrier, event=event, n= event.EventNumber, constants=CalibrationConstants,&fval=FVAL]{
-
-	            CalibrationConstants = SGD(event, n, constants,  fval);
-               --barrier;
-            });}*/
-         }
+         
+         }*/
      }
-     // if(use_multi || thread_arg == "--all"){
-      // barrier.wait();
-     //}
+
 		 for(unsigned int i =0 ;i<N_CRYSTALS;i++){
 
         std::cout<<"constant for crystal "<<i<<" is "<<CalibrationConstants[i]

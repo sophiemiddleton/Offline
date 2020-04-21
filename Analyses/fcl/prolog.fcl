@@ -21,6 +21,19 @@ TrackSummaryMaker: {
     trackInput : "TrkPatRec:DeM"
 }
 
+GenAnalyzer : {
+  module_type : GenAnalyzer
+  GenParticleCollection : "compressDigiMCs"  
+
+
+ }
+  GenAna : {
+    analyzers : {
+      GenAnalyzer : @local::GenAnalyzer
+    }
+  }
+
+
 VirtualDetectorDefaults: {
 
     module_type            : ReadVirtualDetector

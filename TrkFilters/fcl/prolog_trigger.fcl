@@ -898,7 +898,7 @@ TrkFilters : {
 	tprHelixCalibIPADeMPrescale : {
 	    module_type : PrescaleEvent
 	    useFilteredEvents : true
-	    nPrescale         : 300
+	    nPrescale         : 1 #300
 	    triggerPath       : "tprHelixCalibIPADeM"	    
 	    triggerFlag       : ["PrescaleGoodEvents"]	    
 	}
