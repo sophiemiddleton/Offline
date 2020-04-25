@@ -68,10 +68,13 @@ namespace mu2e {
 		     fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("mc diag level"),0};
 		     fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
 		     fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match"), "TrackCaloMatching"};
-          fhicl::Atom<int> minTrackerHits {Name("minTrackerHits"), Comment("minimum number of straw hits in tracker "),25};//From Pasha's Study
+          fhicl::Atom<int> minTrackerHits {Name("minTrackerHits"), Comment("minimum number of straw hits in tracker "),40};
           fhicl::Atom<int> minCrystalHits{Name("minCrystalHits"), Comment("minimum number of crystal hits "), 4};
+          fhicl::Atom<int> maxCrystalHits{Name("maxCrystalHits"), Comment("max number of crystal hits "), 10};
 		      fhicl::Atom<float> minClusterEDep {Name("minClusterEDep"), Comment("minimum amount of energy deposited "),20};
           fhicl::Atom<float>  maxTrackChi2 {Name("maxTrackChi2"), Comment("minimum allowed chi2 "),3};
+          fhicl::Atom<float>  maxDt {Name("maxDt"), Comment("max allowed dt "),5};
+          fhicl::Atom<float>  maxEoP {Name("maxEoP"), Comment("max allowed chi2 "),1};
           //fhicl::Atom<float>  minPathLen {Name("minPathLen"), Comment("minimum allowed track-mathc path len "),280};
 	    	};
   
@@ -92,8 +95,8 @@ namespace mu2e {
 		const KalRepPtrCollection* _kalrepcol;		
 		const TrackClusterMatchCollection* _tcmatchcol;
 
-    int _minTrackerHits, _minCrystalHits;
-    float _minClusterEDep, _maxTrackChi2, _momCut;
+    int _minTrackerHits, _minCrystalHits, _maxCrystalHits;
+    float _minClusterEDep, _maxTrackChi2, _momCut, _maxDt, _maxEoP;
     
     bool passCH = false;
     bool passEdep = false;
@@ -111,8 +114,11 @@ namespace mu2e {
 		_tcmatchTag(conf().tcmatchTag()),
     _minTrackerHits(conf().minTrackerHits()),
     _minCrystalHits(conf().minCrystalHits()),
+    _maxCrystalHits(conf().minCrystalHits()),
     _minClusterEDep(conf().minClusterEDep()),
-    _maxTrackChi2(conf().maxTrackChi2())
+    _maxTrackChi2(conf().maxTrackChi2()),
+    _maxDt(conf().maxDt()),
+    _maxEoP(conf().maxEoP())
 {}
 
   bool IPACaloCalibFilter::filter(art::Event& event) {
@@ -185,6 +191,7 @@ namespace mu2e {
     if(_tcmatchcol->size() ==0) continue;
     for(unsigned int c=0;c<_tcmatchcol->size();c++){
         TrackClusterMatch const& tcm = (*_tcmatchcol)[c];
+         if( abs(tcm.dt()) > _maxDt) return false;
         const TrkCaloIntersect* extrk = tcm.textrapol();
         const KalRep* Krep  = extrk->trk().get();
         if (Krep == TrackKrep) {
@@ -193,7 +200,7 @@ namespace mu2e {
               std::cout<<"passes cl size "<<cl->size()<<std::endl;
               passCH = true;
           }
-          if(cl->size() < _minCrystalHits) return false;
+          if(cl->size() < _minCrystalHits or cl->size() > _maxCrystalHits) return false;
           if(cl->energyDep() > _minClusterEDep) {
             passEdep = true;
             std::cout<<"passes cl edep "<<cl->energyDep()<<std::endl;

@@ -5,6 +5,16 @@
 #include <cmath>
 #include <list>
 #include <deque>
+//Mu2e Geom:
+#include "CalorimeterGeom/inc/Calorimeter.hh"
+#include "CalorimeterGeom/inc/DiskCalorimeter.hh"
+#include "TrackerGeom/inc/Tracker.hh"
+
+#include "GeometryService/inc/GeomHandle.hh"
+#include "GeometryService/inc/GeometryService.hh"
+#include "GeometryService/inc/VirtualDetector.hh"
+#include "GeometryService/inc/DetectorSystem.hh"
+
 //Mu2e Data Prods:
 #include "MCDataProducts/inc/ProtonBunchIntensity.hh"
 #include "MCDataProducts/inc/EventWeight.hh"
@@ -13,15 +23,13 @@
 #include "RecoDataProducts/inc/CaloHit.hh"
 #include "RecoDataProducts/inc/CaloCluster.hh"
 #include "RecoDataProducts/inc/CaloClusterCollection.hh"
-
+#include "RecoDataProducts/inc/KalRepCollection.hh"
+#include "RecoDataProducts/inc/KalRepPtrCollection.hh"
 // Mu2e Utilities
 #include "GeometryService/inc/GeomHandle.hh"
 #include "Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "TrkDiag/inc/TrkMCTools.hh"
 
-//Mu2e Tracker Geom:
-#include "CalorimeterGeom/inc/Calorimeter.hh"
-#include "CalorimeterGeom/inc/Disk.hh"
 // Mu2e diagnostics
 #include "GeneralUtilities/inc/ParameterSetHelpers.hh"
 
@@ -31,6 +39,17 @@
 #include "art/Framework/Principal/Handle.h"
 #include "art_root_io/TFileService.h"
 #include "art/Framework/Core/ModuleMacros.h"
+
+// BaBar Kalman filter includes
+#include "BTrk/KalmanTrack/KalRep.hh"
+#include "BTrk/TrkBase/HelixTraj.hh"
+#include "BTrk/ProbTools/ChisqConsistency.hh"
+#include "BTrk/BbrGeom/BbrVectorErr.hh"
+#include "BTrk/BbrGeom/TrkLineTraj.hh"
+#include "BTrk/TrkBase/TrkPoca.hh"
+#include "BTrk/KalmanTrack/KalHit.hh"
+#include "BTrk/TrkBase/HelixParams.hh"
+#include "BTrk/BaBar/BaBar.hh"
 
 // ROOT incldues
 #include "TLegend.h"
@@ -65,14 +84,15 @@ namespace mu2e
   class CaloEventDisplays : public art::EDAnalyzer {
     public:
 	    struct Config{
-	          using Name=fhicl::Name;
-	          using Comment=fhicl::Comment;
-	    
-	         fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
-	         //fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
-	         fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
-	          fhicl::Atom<bool> doDisplay{Name("doDisplay"),Comment("use display"), false};
-	          fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"),Comment("next event"), false};
+        using Name=fhicl::Name;
+        using Comment=fhicl::Comment;
+
+        fhicl::Atom<art::InputTag> calocrysTag{Name("CaloCrystalHitCollection"),Comment("cal reco crystal hit info")};
+
+        fhicl::Atom<art::InputTag> caloclusterTag{Name("CaloClusterCollection"),Comment("cal reco cluster info")};
+        fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
+        fhicl::Atom<bool> doDisplay{Name("doDisplay"),Comment("use display"), false};
+        fhicl::Atom<bool> clickToAdvance{Name("clickToAdvance"),Comment("next event"), false};
 	     };
 	    typedef art::EDAnalyzer::Table<Config> Parameters;
 
@@ -100,23 +120,26 @@ namespace mu2e
 	    
       art::InputTag _calocrysTag;
       art::InputTag _caloclusterTag;
+      art::InputTag _kalrepTag;
       const CaloCrystalHitCollection*  _calcryhitcol;
       const CaloClusterCollection* _calclustercol;
+      const KalRepPtrCollection* _kalrepcol;
 
       bool doDisplay_;
       bool clickToAdvance_;
       void plot2d(const art::Event& evt);
 
       bool findData(const art::Event& evt);
-};
+    };
 
     CaloEventDisplays::CaloEventDisplays(const Parameters& conf) :
-	art::EDAnalyzer(conf),
-	_calocrysTag(conf().calocrysTag()),
-    	_caloclusterTag(conf().caloclusterTag()),
-	doDisplay_ (conf().doDisplay()),
-	clickToAdvance_ (conf().clickToAdvance())
-	{}
+    art::EDAnalyzer(conf),
+    _calocrysTag(conf().calocrysTag()),
+    _caloclusterTag(conf().caloclusterTag()),
+    _kalrepTag(conf().kalrepTag()),
+    doDisplay_ (conf().doDisplay()),
+    clickToAdvance_ (conf().clickToAdvance())
+    {}
    
     CaloEventDisplays::~CaloEventDisplays(){}
 
@@ -177,6 +200,62 @@ namespace mu2e
 		      auto xyplot = pad->DrawFrame(-1000,-1000, 1000,1000);
 		      xyplot->GetYaxis()->SetTitleOffset(1.25);
 		      xyplot->SetTitle( "View of Calo Disk 1 in YZ Plane; Z(mm);Y(mm)");
+
+          
+
+ art::ServiceHandle<mu2e::GeometryService>   geom;
+	
+    mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
+    mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
+   
+    Hep3Vector vd_tt_back = ds->toDetector(vdet->getGlobal(mu2e::VirtualDetectorId::TT_Back));
+    double     Z      = vd_tt_back.z();
+    double EndMom = 0;
+    for(unsigned int k=0;k<_kalrepcol->size();k++){
+      art::Ptr<KalRep> const& ptr = _kalrepcol->at(k);
+      const KalRep* TrackKrep = ptr.get();
+     
+      double  ds(10.), s0, s1, s2, z0, z1, z2, dzds, sz, sz1, z01;
+      const TrkHitVector* hots = &TrackKrep->hitVector();
+      int nh = hots->size();
+      
+      const TrkHit *first(nullptr), *last(nullptr);
+
+      for (int ih=0; ih<nh; ++ih) {
+        const TrkHit* hit = hots->at(ih);
+        if (hit  != nullptr) {
+          if (first == nullptr) first = hit;
+          last = hit;
+          }
+          }
+
+          s1 = first->fltLen();
+          s2 = last ->fltLen();
+
+          z1     = TrackKrep->position(s1).z();
+          z2     = TrackKrep->position(s2).z();
+
+          dzds   = (z2-z1)/(s2-s1);
+
+          if (fabs(Z-z1) > fabs(Z-z2)) {
+            z0 = z2;
+            s0 = s2;
+          }
+          else {
+            z0 = z1;
+            s0 = s1;
+          }
+
+          sz    = s0+(Z-z0)/dzds;
+
+          z0     = TrackKrep->position(sz).z();     // z0 has to be close to Z(TT_FrontPA)
+          z01    = TrackKrep->position(sz+ds).z();
+
+          dzds   = (z01-z0)/ds;
+          sz1    = sz+(Z-z0)/dzds;	          // should be good enough
+
+          EndMom= TrackKrep->momentum(sz1).mag();
+
 		      float _clusterEdep = 0;
       		for (unsigned int tclu=0; tclu<_calclustercol->size();++tclu){
 			       CaloCluster const& cluster = (*_calclustercol)[tclu];
@@ -215,8 +294,8 @@ namespace mu2e
 				     if(i==0) box.SetFillColor(kRed);
              if(i==1 or i==2) box.SetFillColor(kOrange);
              if(i==3 or i==4) box.SetFillColor(kYellow);
-             if(i>5) box.SetFillColor(kGreen);
-             if(i == _ncrystalhits-1) box.SetFillColor(kBlue);
+             if(i>5 and i < 7) box.SetFillColor(kGreen);
+             if(i>7) box.SetFillColor(kCyan);
 			      box.DrawBox(crystalPos.x()-crystalXLen/2, crystalPos.y()-crystalYLen/2,crystalPos.x()+crystalXLen/2, crystalPos.y()+crystalYLen/2);
 	         
 			      if(hit->energyDep()>0 and _clusterEdep>0){
@@ -232,11 +311,11 @@ namespace mu2e
             i++;
   	    }
 	            
-    
+       
 		    ostringstream title;
 		      title << "Run: " << event.id().run()
 		      << "  Subrun: " << event.id().subRun()
-		      << "  Event: " << event.id().event()<<" Total Cluster E: "<<round(_clusterEdep)<<" MeV.root";
+		      << "  Event: " << event.id().event()<<" Total Cluster E: "<<round(_clusterEdep)<<" MeV"<<" Tracker E: "<<round(EndMom)<<".root";
 
 		      text.SetTextAlign(11);
 		      text.DrawTextNDC( 0., 0.01, title.str().c_str());
@@ -253,8 +332,7 @@ namespace mu2e
 			      cin >> junk;
 		      }
 	      	cerr << endl;
-		
-		
+	}
 	}//display
 }
         
@@ -265,13 +343,16 @@ namespace mu2e
 	
 	  _calcryhitcol =0;
 	  _calclustercol=0;
-	  
-	  auto cryhit = evt.getValidHandle<CaloCrystalHitCollection>(_calocrysTag);
-	  _calcryhitcol =cryhit.product();
-	  auto cluster= evt.getValidHandle<CaloClusterCollection>(_caloclusterTag);
-	  _calclustercol =cluster.product();
-          
-	  return _calcryhitcol!=0 && _calclustercol !=0;
+	  _kalrepcol = 0;
+
+    auto kalrep = evt.getValidHandle<KalRepPtrCollection>(_kalrepTag);
+    _kalrepcol =kalrep.product();
+    auto cryhit = evt.getValidHandle<CaloCrystalHitCollection>(_calocrysTag);
+    _calcryhitcol =cryhit.product();
+    auto cluster= evt.getValidHandle<CaloClusterCollection>(_caloclusterTag);
+    _calclustercol =cluster.product();
+        
+	  return _calcryhitcol!=0 && _calclustercol !=0 && _kalrepcol!=0;
   }
 
 

@@ -102,188 +102,194 @@ using CLHEP::keV;
 namespace mu2e {
 
   class IPAMatchAna : public art::EDAnalyzer {
-     public:
-	struct Config {
-		     using Name=fhicl::Name;
-		     using Comment=fhicl::Comment;
-	 	     fhicl::Atom<int> diagLevel{Name("diagLevel"),Comment("diag level"),0};
-		     fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("mc diag level"),0};
-		     fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
-		     fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match"), "TrackCaloMatching"};
-          fhicl::Atom<int> minTrackerHits {Name("mintrackerhits"), Comment("minimum number of straw hits in tracker "),25};//From Pasha's Study
-          fhicl::Atom<int> minCrystalHits{Name("mincrystalhits"), Comment("minimum number of crystal hits "), 4};
-		      fhicl::Atom<float> minClusterEDep {Name("minclusterEdep"), Comment("minimum amount of energy deposited "),10};
-          fhicl::Atom<float>  minTrackChi2 {Name("maxtrackchi2"), Comment("minimum allowed chi2 "),2.5};
-	    	};
-		typedef art::EDAnalyzer::Table<Config> Parameters;
+    public:
+      struct Config {
+        using Name=fhicl::Name;
+        using Comment=fhicl::Comment;
+        fhicl::Atom<int> diagLevel{Name("diagLevel"),Comment("diag level"),0};
+        fhicl::Atom<int> mcdiag{Name("mcdiag"),Comment("mc diag level"),0};
+        fhicl::Atom<art::InputTag> kalrepTag{Name("KalRepPtrCollection"),Comment("outcome of Kalman filter (for tracker momentum info)")};
+        fhicl::Atom<art::InputTag> tcmatchTag{Name("TrackClusterMatchCollection"), Comment("track calo match"), "TrackCaloMatching"};
 
-		explicit IPAMatchAna(const Parameters& conf);
-		virtual ~IPAMatchAna() {}
+      };
+    typedef art::EDAnalyzer::Table<Config> Parameters;
+
+    explicit IPAMatchAna(const Parameters& conf);
+    virtual ~IPAMatchAna() {}
 
 
-		virtual void beginJob();
-		virtual void endJob();
-		virtual void analyze(const art::Event& e) override;
+    virtual void beginJob();
+    virtual void endJob();
+    virtual void analyze(const art::Event& e) override;
 
   private:
-		std::ofstream outputfile;
+		std::ofstream Newfile, CrystalMap;
 		Config _conf;
 		int _diagLevel;
 		int _mcdiag;
 
-		art::InputTag _kalrepTag;
-		art::InputTag _tcmatchTag;
+    art::InputTag _kalrepTag;
+    art::InputTag _tcmatchTag;
 
 
-		const KalRepPtrCollection* _kalrepcol;
-		const TrackClusterMatchCollection* _tcmatchcol;
+    const KalRepPtrCollection* _kalrepcol;
+    const TrackClusterMatchCollection* _tcmatchcol;
 
-		TTree* _Ntup;
+    TTree* _Ntup;
 
-		Int_t   _nEvents = 0;
-		Int_t _evt, _run, _nTracks, _nMatches, _nTrackMatched;
-		Float_t _TrackT0, _TrackT0Err, _TrackMom, _MaxEoP, _TrackBackTime ,
+    Int_t   _nEvents = 0;
+    Int_t _evt, _run, _nTracks, _nMatches, _nTrackMatched, _nHits;
+    Float_t _TrackT0, _TrackT0Err, _TrackMom, _MaxEoP, _TrackBackTime ,
     _TrackBackOmega ,_TrackBackD0 , _TrackBackZ0, _TrackBackPhi0,
     _TrackBackTanDip, _TrackChi2, _TrackChi2DOF, _TrackCosTheta, _TrackEnergy,
     _TrackEoP,  _TrackMomErr;
 
-		Float_t _matchChi2, _matchEDep, _matchPosXCl, _matchPosYCl, _matchPosZCl,
+    Float_t _matchChi2, _matchEDep, _matchPosXCl, _matchPosYCl, _matchPosZCl,
     _matchPathLen, _matchR, _matchDt, _matchPosXtrk, _matchPosYtrk,
-    _matchPosZtrk,_matchTtrk, _matchClusterSize, _CaloEoP, _matchcrySum, _matchErrEdep;
+    _matchPosZtrk,_matchTtrk, _matchClusterSize, _CaloEoP, _matchcrySum, _matchErrEdep, _matchSecondMoment, _matchAngle;
 
-    int _minTrackerHits, _minCrystalHits;
-    float _minClusterEDep, _minTrackChi2;
+    Int_t   _cryId[16384], _crySectionId[16384], _crySimIdx[16384], _crySimLen[16384];
+    Float_t _cryTime[16384], _cryEdep[16384],_cryDose[16384], _cryPosX[16384],
+    _cryPosY[16384], _cryPosZ[16384], _cryLeak[16384], _cryTotE[16384],
+    _cryTotSum[16384], _cryTotEErr[16384], _cryRadius[16384],  _cryMaxR[16384],
+    _cryEdepErr[16384];
 
     Float_t _EoP_diff, _E_diff;
-    bool passCH = false;
-    bool passEdep = false;
-    bool passChi2ndf = false;
-    bool passMomCut = false;
-    bool DoFilter(art::Event& event);
-		bool findData(const art::Event& evt);
+
+    bool findData(const art::Event& evt);
 
 	};
 
-   IPAMatchAna::IPAMatchAna(const Parameters& conf):
-		art::EDAnalyzer(conf),
-		_diagLevel(conf().diagLevel()),
-		_mcdiag(conf().mcdiag()),
-		_kalrepTag(conf().kalrepTag()),
-		_tcmatchTag(conf().tcmatchTag()),
-    _minTrackerHits(conf().minTrackerHits()),
-    _minCrystalHits(conf().minCrystalHits()),
-    _minClusterEDep(conf().minClusterEDep()),
-    _minTrackChi2(conf().minTrackChi2())
+  IPAMatchAna::IPAMatchAna(const Parameters& conf):
+    art::EDAnalyzer(conf),
+    _diagLevel(conf().diagLevel()),
+    _mcdiag(conf().mcdiag()),
+    _kalrepTag(conf().kalrepTag()),
+    _tcmatchTag(conf().tcmatchTag())
     {}
 
   void IPAMatchAna::beginJob(){
-	//std::cout<<"[In BeginJob()] Beginning ..."<<std::endl;
-  art::ServiceHandle<art::TFileService> tfs;
-  _Ntup  = tfs->make<TTree>("CaloMatchAna", "CaloMatchAna");
-  _Ntup->Branch("evt",          	&_evt ,        "evt/I");
-  _Ntup->Branch("run",          	&_run ,        "run/I");
+    //std::cout<<"[In BeginJob()] Beginning ..."<<std::endl;
+    art::ServiceHandle<art::TFileService> tfs;
+    _Ntup  = tfs->make<TTree>("CaloMatchAna", "CaloMatchAna");
+    _Ntup->Branch("evt",          	&_evt ,        "evt/I");
+    _Ntup->Branch("run",          	&_run ,        "run/I");
 
-  _Ntup->Branch("nTracks",	&_nTracks,		"nTracks/I");
-  _Ntup->Branch("TrackT0", 	&_TrackT0, 		"TrackT0/F");
-  _Ntup->Branch("TrackT0Err", 	&_TrackT0Err,		"TrackT0Err/F");
-  _Ntup->Branch("TrackBackTime", 	&_TrackBackTime,   	"TrackBackTime/F");
-  _Ntup->Branch("TrackBackOmega", &_TrackBackOmega,	"TrackBackOmega/F");
-  _Ntup->Branch("TrackBackD0",  	&_TrackBackD0, 		"TrackBackD0/F");
-  _Ntup->Branch("TrackBackZ0", 	&_TrackBackZ0, 		"TrackBackZ0/F");
-  _Ntup->Branch("TrackBackPhi0",	&_TrackBackPhi0,	"TrackBackPhi0/F");
-  _Ntup->Branch("TrackBackTanDip",&_TrackBackTanDip,	"TrackBackTanDip/F");
-  _Ntup->Branch("TrackChi2",	&_TrackChi2,		"TrackChi2/F");
-  _Ntup->Branch("TrackChi2DOF", 	&_TrackChi2DOF, 	"TrackCho2DOF/F");
-  _Ntup->Branch("TrackCosTheta",  &_TrackCosTheta,	"TrackCosTheta/F");
-  _Ntup->Branch("TrackEnergy",  	&_TrackEnergy,		"TrackEnergy/F");
-  _Ntup->Branch("TrackMom",	&_TrackMom, 		"TrackMom/F");
-  _Ntup->Branch("TrackEoP",		&_TrackEoP,			"TrackEoP/F");
-  _Ntup->Branch("TrackMomErr",		&_TrackMomErr,			"TrackMomErr/F");
+    _Ntup->Branch("nTracks",	&_nTracks,		"nTracks/I");
+    _Ntup->Branch("TrackT0", 	&_TrackT0, 		"TrackT0/F");
+    _Ntup->Branch("TrackT0Err", 	&_TrackT0Err,		"TrackT0Err/F");
+    _Ntup->Branch("TrackBackTime", 	&_TrackBackTime,   	"TrackBackTime/F");
+    _Ntup->Branch("TrackBackOmega", &_TrackBackOmega,	"TrackBackOmega/F");
+    _Ntup->Branch("TrackBackD0",  	&_TrackBackD0, 		"TrackBackD0/F");
+    _Ntup->Branch("TrackBackZ0", 	&_TrackBackZ0, 		"TrackBackZ0/F");
+    _Ntup->Branch("TrackBackPhi0",	&_TrackBackPhi0,	"TrackBackPhi0/F");
+    _Ntup->Branch("TrackBackTanDip",&_TrackBackTanDip,	"TrackBackTanDip/F");
+    _Ntup->Branch("TrackChi2",	&_TrackChi2,		"TrackChi2/F");
+    _Ntup->Branch("TrackChi2DOF", 	&_TrackChi2DOF, 	"TrackCho2DOF/F");
+    _Ntup->Branch("TrackCosTheta",  &_TrackCosTheta,	"TrackCosTheta/F");
+    _Ntup->Branch("TrackEnergy",  	&_TrackEnergy,		"TrackEnergy/F");
+    _Ntup->Branch("TrackMom",	&_TrackMom, 		"TrackMom/F");
+    _Ntup->Branch("TrackEoP",		&_TrackEoP,			"TrackEoP/F");
+    _Ntup->Branch("TrackMomErr",		&_TrackMomErr,			"TrackMomErr/F");
 
-  _Ntup->Branch("nMatches",	&_nMatches,		"nMatches/I");
-  _Ntup->Branch("matchPosXtrk",	&_matchPosXtrk,		"matchPosXtrk/F");
-  _Ntup->Branch("matchPosYtrk",	&_matchPosYtrk,		"matchPosYtrk/F");
-  _Ntup->Branch("matchPosZtrk",	&_matchPosZtrk,		"matchPosZtrk/F");
-  _Ntup->Branch("matchTtrk",	&_matchTtrk,		"matchTtrk/F");
-  _Ntup->Branch("matchChi2", 	&_matchChi2, 		"matchChi/F");
-  _Ntup->Branch("matchEDep", 	&_matchEDep, 		"matchEDep/F");
-  _Ntup->Branch("matchPosXcl", 	&_matchPosXCl, 		"matchPosXCl/F");
-  _Ntup->Branch("matchPosYCl", 	&_matchPosYCl, 		"matchPosYCl/F");
-  _Ntup->Branch("matchPosZCl", 	&_matchPosZCl, 		"matchPosZCl/F");
-  _Ntup->Branch("matchPathLen", 	&_matchPathLen,	        "matchPathLen/F");
-  _Ntup->Branch("matchR",		&_matchR, 		"matchR/F");
-  _Ntup->Branch("matchDt",	&_matchDt,		"matchDt/F");
-  _Ntup->Branch("matchClusterSize",	&_matchClusterSize,		"matchClusterSize/F");
-  _Ntup->Branch("CaloEoP", 	&_CaloEoP, 		"CaloEoP/F");
-  _Ntup->Branch("matchcrySum", 	&_matchcrySum, 		"_matchcrySum/F");
-  _Ntup->Branch("matchErrEdep", 	&_matchErrEdep, 		"_matchErrEdep/F");
+    _Ntup->Branch("nMatches",	&_nMatches,		"nMatches/I");
+    _Ntup->Branch("matchPosXtrk",	&_matchPosXtrk,		"matchPosXtrk/F");
+    _Ntup->Branch("matchPosYtrk",	&_matchPosYtrk,		"matchPosYtrk/F");
+    _Ntup->Branch("matchPosZtrk",	&_matchPosZtrk,		"matchPosZtrk/F");
+    _Ntup->Branch("matchTtrk",	&_matchTtrk,		"matchTtrk/F");
+    _Ntup->Branch("matchChi2", 	&_matchChi2, 		"matchChi/F");
+    _Ntup->Branch("matchEDep", 	&_matchEDep, 		"matchEDep/F");
+    _Ntup->Branch("matchPosXcl", 	&_matchPosXCl, 		"matchPosXCl/F");
+    _Ntup->Branch("matchPosYCl", 	&_matchPosYCl, 		"matchPosYCl/F");
+    _Ntup->Branch("matchPosZCl", 	&_matchPosZCl, 		"matchPosZCl/F");
+    _Ntup->Branch("matchPathLen", 	&_matchPathLen,	        "matchPathLen/F");
+    _Ntup->Branch("matchR",		&_matchR, 		"matchR/F");
+    _Ntup->Branch("matchDt",	&_matchDt,		"matchDt/F");
+    _Ntup->Branch("matchClusterSize",	&_matchClusterSize,		"matchClusterSize/F");
+    _Ntup->Branch("CaloEoP", 	&_CaloEoP, 		"CaloEoP/F");
+    _Ntup->Branch("matchcrySum", 	&_matchcrySum, 		"_matchcrySum/F");
+    _Ntup->Branch("matchErrEdep", 	&_matchErrEdep, 		"_matchErrEdep/F");
+    _Ntup->Branch("matchAngle", 	&_matchAngle, 		"_matchAngle/F");
+    _Ntup->Branch("matchSecondMoment", 	&_matchSecondMoment, 		"_matchSecondMoment/F");
 
-  _Ntup->Branch("EoP_diff",	&_EoP_diff,		"_EoP_diff/F");
-  _Ntup->Branch("E_diff",	&_E_diff,		"_E_diff/F");
 
-  outputfile.open("Tracks.csv");
- //       outputfile<<"event,run,size,CaloEoP,CaloE,TrackerEoP,TrackerE,P"<<std::endl;
+    _Ntup->Branch("EoP_diff",	&_EoP_diff,		"_EoP_diff/F");
+    _Ntup->Branch("E_diff",	&_E_diff,		"_E_diff/F");
+
+    _Ntup->Branch("nCry",         	&_nHits ,       "nCry/I");
+    _Ntup->Branch("cryId",        	&_cryId ,       "cryId[nCry]/I");
+    _Ntup->Branch("crySectionId", 	&_crySectionId, "crySectionId[nCry]/I");
+    _Ntup->Branch("cryPosX",      	&_cryPosX ,     "cryPosX[nCry]/F");
+    _Ntup->Branch("cryPosY",      	&_cryPosY ,     "cryPosY[nCry]/F");
+    _Ntup->Branch("cryPosZ",      	&_cryPosZ ,     "cryPosZ[nCry]/F");
+    _Ntup->Branch("cryEdep",      	&_cryEdep ,     "cryEdep[nCry]/F");
+    _Ntup->Branch("cryEdepErr",      	&_cryEdepErr ,     "cryEdepErr[nCry]/F");
+    _Ntup->Branch("cryTime",      	&_cryTime ,     "cryTime[nCry]/F");
+    _Ntup->Branch("cryDose",      	&_cryDose ,     "cryDose[nCry]/F");
+    _Ntup->Branch("cryRadius",	&_cryRadius,	"cryRadius[nCry]/F");
+    Newfile.open("Combined.csv");
+    CrystalMap.open("CryMap.csv");
   }
 
 
   void IPAMatchAna::analyze(const art::Event& event) {
-	//std::cout<<"[In Analyze()] Beginning ..."<<std::endl;
-	_evt = event.id().event();
-	_run = event.run();
+    //std::cout<<"[In Analyze()] Beginning ..."<<std::endl;
+    _evt = event.id().event();
+    _run = event.run();
 
-	if(!findData(event))
-		throw cet::exception("RECO")<<"No data in  event"<< endl;
-  //if(!Dofilter(event)) continue;
+    if(!findData(event))
+    throw cet::exception("RECO")<<"No data in  event"<< endl;
+    //if(!Dofilter(event)) continue;
 
-	art::ServiceHandle<mu2e::GeometryService>   geom;
-	const mu2e::Calorimeter* bc(nullptr);
-	if (geom->hasElement<mu2e::DiskCalorimeter>() ) {
-    		mu2e::GeomHandle<mu2e::DiskCalorimeter> h;
-    		bc = (const mu2e::Calorimeter*) h.get();
-  	}
-  mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
-  mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
-  _nTracks = 0;
-  _nMatches =0;
+    art::ServiceHandle<mu2e::GeometryService>   geom;
+    const mu2e::Calorimeter* bc(nullptr);
+    if (geom->hasElement<mu2e::DiskCalorimeter>() ) {
+      mu2e::GeomHandle<mu2e::DiskCalorimeter> h;
+      bc = (const mu2e::Calorimeter*) h.get();
+    }
+    mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
+    mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
+    _nTracks = 0;
+    _nMatches =0;
 
-  Hep3Vector vd_tt_back = ds->toDetector(vdet->getGlobal(mu2e::VirtualDetectorId::TT_Back));
-  double     Z      = vd_tt_back.z();
+    Hep3Vector vd_tt_back = ds->toDetector(vdet->getGlobal(mu2e::VirtualDetectorId::TT_Back));
+    double     Z      = vd_tt_back.z();
 
-  for(unsigned int i=0;i<_kalrepcol->size();i++){
-    int iv = 0;
-    art::Ptr<KalRep> const& ptr = _kalrepcol->at(i);
-    const KalRep* TrackKrep = ptr.get();
-    const CaloCluster* ClosestCluster(nullptr);
-    double best_chi2_match(1.e6); //high number to start
-    double  ds(10.), s0, s1, s2, z0, z1, z2, dzds, sz, sz1, z01;
-    const TrkHitVector* hots = &TrackKrep->hitVector();
-    int nh = hots->size();
-    const TrkHit *first(nullptr), *last(nullptr);
+    for(unsigned int i=0;i<_kalrepcol->size();i++){
+      int iv = 0;
+      art::Ptr<KalRep> const& ptr = _kalrepcol->at(i);
+      const KalRep* TrackKrep = ptr.get();
+      const CaloCluster* ClosestCluster(nullptr);
+      double best_chi2_match(1.e6); //high number to start
+      double  ds(10.), s0, s1, s2, z0, z1, z2, dzds, sz, sz1, z01;
+      const TrkHitVector* hots = &TrackKrep->hitVector();
+      int nh = hots->size();
+      const TrkHit *first(nullptr), *last(nullptr);
 
-    for (int ih=0; ih<nh; ++ih) {
-      const TrkHit* hit = hots->at(ih);
-      if (hit  != nullptr) {
-        if (first == nullptr) first = hit;
-        last = hit;
+      for (int ih=0; ih<nh; ++ih) {
+        const TrkHit* hit = hots->at(ih);
+        if (hit  != nullptr) {
+          if (first == nullptr) first = hit;
+            last = hit;
+          }
         }
-    }
 
-    s1 = first->fltLen();
-    s2 = last ->fltLen();
+      s1 = first->fltLen();
+      s2 = last ->fltLen();
 
-    z1     = TrackKrep->position(s1).z();
-    z2     = TrackKrep->position(s2).z();
+      z1     = TrackKrep->position(s1).z();
+      z2     = TrackKrep->position(s2).z();
 
-    dzds   = (z2-z1)/(s2-s1);
+      dzds   = (z2-z1)/(s2-s1);
 
-    if (fabs(Z-z1) > fabs(Z-z2)) {
-      z0 = z2;
-      s0 = s2;
-    }
-    else {
-      z0 = z1;
-      s0 = s1;
-    }
+      if (fabs(Z-z1) > fabs(Z-z2)) {
+        z0 = z2;
+        s0 = s2;
+      }
+      else {
+        z0 = z1;
+        s0 = s1;
+      }
 
     sz    = s0+(Z-z0)/dzds;
 
@@ -294,174 +300,113 @@ namespace mu2e {
     sz1    = sz+(Z-z0)/dzds;	          // should be good enough
 
     double EndMom= TrackKrep->momentum(sz1).mag();//TODO
-
+    //=========================== Add Tracks =============================//
+    _TrackT0 = TrackKrep->t0().t0();
+    _TrackT0Err = TrackKrep->t0().t0Err();
+    _TrackMom = TrackKrep->momentum(sz1).mag();
+    _TrackBackTime =   TrackKrep->arrivalTime(sz1);
+    HelixParams helx  = TrackKrep->helix(sz1);
+    _TrackBackOmega       = helx.omega();
+    _TrackBackD0       = helx.d0();
+    _TrackBackZ0       = helx.z0();
+    _TrackBackPhi0     = helx.phi0();
+    _TrackBackTanDip   = helx.tanDip();
+    BbrVectorErr TrackMomErrVec    = TrackKrep->momentumErr(sz1);
+    _TrackMomErr = TrackMomErrVec.mag();
+    _TrackEnergy = sqrt(TrackKrep->momentum(sz1).mag()*TrackKrep->momentum(sz1).mag() + me*me);
+    double entlen         = std::min(s1,s2);
+    CLHEP::Hep3Vector fitmom = TrackKrep->momentum(entlen);
+    TLorentzVector  Momentum(fitmom.x(),fitmom.y(),fitmom.z(),0.511);
+    _TrackCosTheta = Momentum.CosTheta();
+    _TrackChi2 =TrackKrep->chisq();
+    _TrackChi2DOF= TrackKrep->chisq()/TrackKrep->nActive();
+    _nTracks ++;
     //============================= Add Matches ===============================//
     if(_tcmatchcol->size() ==0) continue;
     for(unsigned int c=0;c<_tcmatchcol->size();c++){
 
-        TrackClusterMatch const& tcm = (*_tcmatchcol)[c];
-        const TrkCaloIntersect* extrk = tcm.textrapol();
-        const KalRep* Krep  = extrk->trk().get();
-        if (Krep == TrackKrep) {
+      TrackClusterMatch const& tcm = (*_tcmatchcol)[c];
+      const TrkCaloIntersect* extrk = tcm.textrapol();
+      const KalRep* Krep  = extrk->trk().get();
+      if (Krep == TrackKrep) {
           const mu2e::CaloCluster* cl = tcm.caloCluster();
 
           _matchcrySum = 0;
-          for(unsigned i =0 ; i< cl->caloCrystalHitsPtrVector().size();i++){
-			       art::Ptr< CaloCrystalHit>  cry=cl->caloCrystalHitsPtrVector()[i] ;
-            _matchcrySum += cry->energyDep();
-          }
+          
           iv   = cl->diskId();
           CLHEP::Hep3Vector x1   = bc->geomUtil().mu2eToDisk(iv,cl->cog3Vector());
 
-        if ((ClosestCluster == nullptr) || (tcm.chi2() < best_chi2_match )) {
-          ClosestCluster = cl;
-	        best_chi2_match    = tcm.chi2();
+          if ((ClosestCluster == nullptr) || (tcm.chi2() < best_chi2_match )) {
+            ClosestCluster = cl;
+            best_chi2_match    = tcm.chi2();
+          }
+          _matchClusterSize = cl->size();
+          _matchEDep = cl->energyDep();
+          _matchErrEdep = cl->energyDepErr();
+          _matchSecondMoment = cl->secondMoment();
+          _matchAngle = cl->angle();
+          _matchPosXtrk = tcm.xtrk();
+          _matchPosYtrk = tcm.ytrk();
+          _matchPosZtrk = tcm.ztrk();
+          _matchTtrk	 = tcm.ttrk();
+          _matchChi2 = tcm.chi2();
+          _matchPosXCl =x1.x();
+          _matchPosYCl =x1.y();
+          _matchPosZCl = x1.z();
+          _matchPathLen = tcm.ds();
+          _matchDt = tcm.dt();
+          _matchR = sqrt(x1.x()*x1.x() + x1.y()*x1.y());
+
+          _nMatches++;
+          art::ServiceHandle<GeometryService> geom;
+      	  if( ! geom->hasElement<Calorimeter>() ) return;
+      	  Calorimeter const & cal = *(GeomHandle<Calorimeter>());
+          _nHits = cl->caloCrystalHitsPtrVector().size();
+          //================ Add in Crystal Hits ==========================//
+          for(unsigned int ic=0 ; ic< cl->caloCrystalHitsPtrVector().size();ic++){
+            art::Ptr<CaloCrystalHit>  cry=cl->caloCrystalHitsPtrVector()[ic] ;
+            _cryId[ic] = cry->id();
+            int diskId                     = cal.crystal(cry->id()).diskId();
+            CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(cry->id()).position());
+            _cryTime[ic]       	= cry->time();
+            _cryEdep[ic]       	= cry->energyDep();
+            _cryEdepErr[ic]       	= cry->energyDepErr();
+            _cryTotE[ic]  		    = cry->energyDepTot();
+            _cryTotEErr[ic]  		= cry->energyDepTotErr();
+            _cryPosX[ic]      	= crystalPos.x();
+            _cryPosY[ic]       	= crystalPos.y();
+            _cryPosZ[ic]       	= crystalPos.z();
+            _cryRadius[ic]  	 	= sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y());
+            _matchcrySum += cry->energyDep(); 
+          
+            Newfile<<_evt<<","<<_run<<","<<_nHits<<","<<cry->id()<<","
+          <<cry->energyDep()<<","<<cry->energyDepErr()<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;
+          }
+         /* for(int cid=0 ; cid< 674;cid++){
+            int diskId                     = cal.crystal(cid).diskId();
+            CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(cid).position());
+            CrystalMap<<diskId<<","<<cid<<","<<crystalPos.x()   <<","<<crystalPos.y()<<","<<crystalPos.z()
+<<","<<sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y())<<endl;
+      }*/
+
         }
-        _matchClusterSize = cl->size();
-        _matchEDep = cl->energyDep();
-        _matchErrEdep = cl->energyDepErr();
-        _matchPosXtrk = tcm.xtrk();
-        _matchPosYtrk = tcm.ytrk();
-        _matchPosZtrk = tcm.ztrk();
-        _matchTtrk	 = tcm.ttrk();
-        _matchChi2 = tcm.chi2();
-        _matchPosXCl =x1.x();
-        _matchPosYCl =x1.y();
-        _matchPosZCl = x1.z();
-        _matchPathLen = tcm.ds();
-        _matchDt = tcm.dt();
-        _matchR = sqrt(x1.x()*x1.x() + x1.y()*x1.y());
-
-        _nMatches++;
       }
+      if(EndMom!=0 and ClosestCluster != nullptr) {
+        _CaloEoP = ClosestCluster->energyDep()/EndMom;
+        _TrackEoP = _TrackEnergy/EndMom;
+        _EoP_diff = _CaloEoP - _TrackEoP;
+        _E_diff = ClosestCluster->energyDep() - _TrackEnergy;
       }
-      //=========================== Add Tracks =============================//
-        _TrackT0 = TrackKrep->t0().t0();
-        _TrackT0Err = TrackKrep->t0().t0Err();
-        _TrackMom = TrackKrep->momentum(sz1).mag();
-        _TrackBackTime =   TrackKrep->arrivalTime(sz1);
-        HelixParams helx  = TrackKrep->helix(sz1);
-        _TrackBackOmega       = helx.omega();
-        _TrackBackD0       = helx.d0();
-        _TrackBackZ0       = helx.z0();
-        _TrackBackPhi0     = helx.phi0();
-        _TrackBackTanDip   = helx.tanDip();
-        BbrVectorErr TrackMomErrVec    = TrackKrep->momentumErr(sz1);
-        _TrackMomErr = TrackMomErrVec.mag();
-        _TrackEnergy = sqrt(TrackKrep->momentum(sz1).mag()*TrackKrep->momentum(sz1).mag() + me*me);
-        double entlen         = std::min(s1,s2);
-        CLHEP::Hep3Vector fitmom = TrackKrep->momentum(entlen);
-        TLorentzVector  Momentum(fitmom.x(),fitmom.y(),fitmom.z(),0.511);
-        _TrackCosTheta = Momentum.CosTheta();
-        _TrackChi2 =TrackKrep->chisq();
-        _TrackChi2DOF= TrackKrep->chisq()/TrackKrep->nActive();
-        _nTracks ++;
-
-        if(EndMom!=0 and ClosestCluster != nullptr) {
-          _CaloEoP = ClosestCluster->energyDep()/EndMom;
-          _TrackEoP = _TrackEnergy/EndMom;
-          _EoP_diff = _CaloEoP - _TrackEoP;
-          _E_diff = ClosestCluster->energyDep() - _TrackEnergy;
-
-          outputfile<<_evt<<","<<_run<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;
-        }
-        _nTrackMatched++;
+      CrystalMap<<"Sum "<<_matchcrySum<<" cluster "<< ClosestCluster->energyDep()<<"tracker "<<_TrackEnergy <<endl;
+      _nTrackMatched++;
 
     }
     _Ntup->Fill();
     _nEvents++;
-
 }
 
-bool IPAMatchAna::DoFilter(art::Event& event) {
-    std::cout<<"=========== In Filter =========="<<std::endl;
-    if(!findData(event))
-		  throw cet::exception("RECO")<<"No data in  event"<< endl;
 
-	  art::ServiceHandle<mu2e::GeometryService>   geom;
-
-    mu2e::GeomHandle<mu2e::DetectorSystem>      ds;
-    mu2e::GeomHandle<mu2e::VirtualDetector>     vdet;
-
-    Hep3Vector vd_tt_back = ds->toDetector(vdet->getGlobal(mu2e::VirtualDetectorId::TT_Back));
-    double     Z      = vd_tt_back.z();
-
-    for(unsigned int i=0;i<_kalrepcol->size();i++){
-      art::Ptr<KalRep> const& ptr = _kalrepcol->at(i);
-      const KalRep* TrackKrep = ptr.get();
-
-      double  ds(10.), s0, s1, s2, z0, z1, z2, dzds, sz, sz1, z01;
-      const TrkHitVector* hots = &TrackKrep->hitVector();
-      int nh = hots->size();
-      const TrkHit *first(nullptr), *last(nullptr);
-
-      for (int ih=0; ih<nh; ++ih) {
-        const TrkHit* hit = hots->at(ih);
-        if (hit  != nullptr) {
-          if (first == nullptr) first = hit;
-          last = hit;
-          }
-    }
-
-    s1 = first->fltLen();
-    s2 = last ->fltLen();
-
-    z1     = TrackKrep->position(s1).z();
-    z2     = TrackKrep->position(s2).z();
-
-    dzds   = (z2-z1)/(s2-s1);
-
-    if (fabs(Z-z1) > fabs(Z-z2)) {
-      z0 = z2;
-      s0 = s2;
-    }
-    else {
-      z0 = z1;
-      s0 = s1;
-    }
-
-    sz    = s0+(Z-z0)/dzds;
-
-    z0     = TrackKrep->position(sz).z();     // z0 has to be close to Z(TT_FrontPA)
-    z01    = TrackKrep->position(sz+ds).z();
-
-    dzds   = (z01-z0)/ds;
-    sz1    = sz+(Z-z0)/dzds;	          // should be good enough
-
-    double EndMom= TrackKrep->momentum(sz1).mag();
-    if(EndMom > 0) passMomCut = true;
-    //enact tracker cuts:
-    if(TrackKrep->chisq()/TrackKrep->nActive() > _minTrackChi2) {
-      std::cout<<"passes chi2 "<<std::endl;
-      passChi2ndf = true;
-    }
-
-    //============================= Add Matches ===============================//
-    if(_tcmatchcol->size() ==0) continue;
-    for(unsigned int c=0;c<_tcmatchcol->size();c++){
-        TrackClusterMatch const& tcm = (*_tcmatchcol)[c];
-        const TrkCaloIntersect* extrk = tcm.textrapol();
-        const KalRep* Krep  = extrk->trk().get();
-        if (Krep == TrackKrep) {
-          const mu2e::CaloCluster* cl = tcm.caloCluster();
-            if(cl->size() > _minCrystalHits) {
-              std::cout<<"passes cl size "<<cl->size()<<std::endl;
-              passCH = true;
-          }
-          if(cl->energyDep() > _minClusterEDep) {
-            passEdep = true;
-            std::cout<<"passes cl edep "<<cl->energyDep()<<std::endl;
-          }
-      }
-    }
-  }
-  if(passEdep and passCH and passChi2ndf){ return true;}
-  else{ return false; }
- }
-
-
-
-
+       
 
 bool IPAMatchAna::findData(const art::Event& evt){
 
