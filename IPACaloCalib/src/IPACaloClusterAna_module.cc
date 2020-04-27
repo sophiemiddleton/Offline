@@ -261,7 +261,7 @@ namespace mu2e {
 		_clustercog3VectorZ      	= cluster.cog3Vector().z();
 		_clusterR  			= sqrt(cluster.cog3Vector().x()* cluster.cog3Vector().x()
 								+ cluster.cog3Vector().y()*cluster.cog3Vector().y());
-		outputfile<<_evt<<","<<_run<<","<<_calcryhitcol->size()<<std::endl;
+		outputfile<<_evt<<","<<_run<<","<<_calcryhitcol->size()<<","<<_clusterEdep <<std::endl;
         	_nClusters++;
 	}
 		

@@ -161,9 +161,9 @@ namespace mu2e
       int window_size_y(600);
       canvas_ = tfs->make<TCanvas>(name,title,window_size_x,window_size_y);
       //canvas_->Divide(1,2);
-      
-      
-      }
+   
+  }
+
   void CaloEventDisplays::analyze(const art::Event& event) {
 
 	  plot2d(event);

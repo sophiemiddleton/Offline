@@ -275,9 +275,7 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
 	double dFdCm;
 
 	bool converged = false;
-  //double sigma = 0;
-	//double InitLoss = F(event, constants);
-
+  
 	if(diag) std::cout<<"[In SGD()] Initial Loss is "<<InitLoss<<std::endl;
 
 	std::vector<double> previous_constants = constants;
@@ -285,8 +283,6 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
 	double Etrk = event.track_energy;
   cout<<" Extracting energy "<<Etrk<<endl;
 
-  //double gamma = 0.009;
-  //double F_km1 = InitLoss; //Loss from pervious iteration,
   double Csum = 0; double Csum_km1 = 0; double dCsum_km1 = 0; double F_km1 = 0;
 	while(converged == false and k < MaxIterations){
     Csum_km1 = Csum;
@@ -294,7 +290,6 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
   	for(unsigned int m=0; m < event.cluster_size; m++){
       
 			unsigned int Cm = event.crystal_list.crystal_number[m];
-      //if(k==0) Vel[Cm]=0;
 			old_c = constants[Cm];
 			double Vm = event.crystal_list.crystal_energy[m];
       double prediction = 0;
@@ -313,8 +308,6 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
       dFdCm = 2*Vm*(1/1)*(prediction -Etrk); //TODO - ignoring the sigma
       cout<<"Grad Cm "<<dFdCm<<endl;
      
-      //Vel[Cm] = gamma*Vel[Cm]+ step_size*constants[Cm]*dFdCm;
-      //new_c = old_c - Vel[Cm];
       new_c = (old_c - step_size*constants[Cm]*dFdCm);
       cout<<"Old Cm "<<old_c<<" New Cm "<<new_c<<"True Cm "<<TrueConstants[Cm]<<endl;
       Csum +=new_c;
@@ -370,7 +363,7 @@ int main(int argc, char* argv[]){
 
      for(unsigned int c=0;c<N_CRYSTALS;c++){
 			CalibrationConstants.push_back(0);
-      //Vel.push_back(0);
+      
 		}
 
 	  SetOffsetVector(RawCalibrationResults, offset_vector);
@@ -380,16 +373,17 @@ int main(int argc, char* argv[]){
         event_list = FakeDateMaker(RawCalibrationResults, offset_vector);
     }
     if(!fake){
-			//event_list = BuildEventsFromData("CrystalsNew.csv","TracksNew.csv");
-      event_list = BuildEventsFromDataNew("Combined.csv");
+	
+      event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/CombinedFiltered/Combined.csv");
+      //event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/AngleTree/Combined.csv");
 			if(diag) std::cout<<"Found "<<event_list.size()<<" Events "<<std::endl;
      }
       N_EVENTS =  event_list.size();//GetLines("PreScaleTracks.csv");
      auto start = chrono::high_resolution_clock::now();
      CalibrationConstants = RawCalibrationResults;
-//
-     
-      /*counting_barrier barrier(event_list.size());
+
+     /*
+      counting_barrier barrier(event_list.size());
       thread_pool Pool(THREAD_COUNT);*/
      
     
@@ -403,7 +397,7 @@ int main(int argc, char* argv[]){
             if(!use_multi or thread_arg == "--single"){
               CalibrationConstants = SGD(event, event.EventNumber, CalibrationConstants);
             }
-          /* if(use_multi or thread_arg == "--all"){
+           /*if(use_multi or thread_arg == "--all"){
             auto done = Pool.add_task([&barrier, event=event, n= event.EventNumber, constants=CalibrationConstants]{
 
 	            CalibrationConstants = SGD(event, n, constants);

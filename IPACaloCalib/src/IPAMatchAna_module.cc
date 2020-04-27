@@ -92,7 +92,7 @@
 #include <map>
 #include <memory>
 #include <vector>
-
+#include <algorithm> 
 using namespace std;
 using CLHEP::Hep3Vector;
 using CLHEP::keV;
@@ -123,7 +123,7 @@ namespace mu2e {
     virtual void analyze(const art::Event& e) override;
 
   private:
-		std::ofstream Newfile, CrystalMap;
+		std::ofstream Newfile, CrystalMap, DescisionFile;
 		Config _conf;
 		int _diagLevel;
 		int _mcdiag;
@@ -212,7 +212,6 @@ namespace mu2e {
     _Ntup->Branch("matchAngle", 	&_matchAngle, 		"_matchAngle/F");
     _Ntup->Branch("matchSecondMoment", 	&_matchSecondMoment, 		"_matchSecondMoment/F");
 
-
     _Ntup->Branch("EoP_diff",	&_EoP_diff,		"_EoP_diff/F");
     _Ntup->Branch("E_diff",	&_E_diff,		"_E_diff/F");
 
@@ -228,7 +227,8 @@ namespace mu2e {
     _Ntup->Branch("cryDose",      	&_cryDose ,     "cryDose[nCry]/F");
     _Ntup->Branch("cryRadius",	&_cryRadius,	"cryRadius[nCry]/F");
     Newfile.open("Combined.csv");
-    CrystalMap.open("CryMap.csv");
+    //CrystalMap.open("CryMap.csv");
+     DescisionFile.open("List.csv");
   }
 
 
@@ -357,11 +357,43 @@ namespace mu2e {
           _matchDt = tcm.dt();
           _matchR = sqrt(x1.x()*x1.x() + x1.y()*x1.y());
 
-          _nMatches++;
           art::ServiceHandle<GeometryService> geom;
       	  if( ! geom->hasElement<Calorimeter>() ) return;
       	  Calorimeter const & cal = *(GeomHandle<Calorimeter>());
           _nHits = cl->caloCrystalHitsPtrVector().size();
+
+          
+          unsigned int i =0;
+          double Emax = 0;
+          double Emin =1000;
+          double Xmax = -100000; double Xmin=100000; double Ymin=100000; double Ymax=-100000; 
+		      for(unsigned int ic=0 ; ic< cl->caloCrystalHitsPtrVector().size();ic++){
+            art::Ptr<CaloCrystalHit>  hit=cl->caloCrystalHitsPtrVector()[ic] ;
+            if( hit->energyDep() > Emax) Emax = hit->energyDep();
+            int diskId                     = cal.crystal(hit->id()).diskId();
+            CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(hit->id()).position());
+            if(crystalPos.x()>Xmax) Xmax = crystalPos.x();
+            if(crystalPos.x()<Xmin) Xmin = crystalPos.x();
+            if(crystalPos.y()>Ymax) Ymax = crystalPos.y();
+            if(crystalPos.y()<Ymin) Ymin = crystalPos.y();
+            if(hit->energyDep()<Emin) Emin = hit->energyDep();
+            i++;
+          }
+          double EnergySpread = Emax - Emin;
+          double ShowerArea = sqrt((Xmax-Xmin)*(Xmax-Xmin)+(Ymax-Ymin)*(Ymax-Ymin));
+          double EnergyDensity = EnergySpread/ShowerArea;
+          double EnergyPerCrystal = ClosestCluster->energyDep()/_matchClusterSize;
+          int _GoodDE = 0;
+          if(abs(ClosestCluster->energyDep()-_TrackEnergy) < 10) _GoodDE = 1;
+
+          DescisionFile<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<","<<_GoodDE<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
+<<_matchSecondMoment<<","<<_matchClusterSize<<","<<_TrackBackD0<<","<<_TrackBackPhi0     <<","<<_TrackChi2DOF<<","<<Emax<<","<<EnergySpread<<","<<ShowerArea<<","
+<<EnergyDensity<<","<<EnergyPerCrystal<<endl;
+
+
+          
+          _nMatches++;
+        
           //================ Add in Crystal Hits ==========================//
           for(unsigned int ic=0 ; ic< cl->caloCrystalHitsPtrVector().size();ic++){
             art::Ptr<CaloCrystalHit>  cry=cl->caloCrystalHitsPtrVector()[ic] ;
@@ -397,7 +429,7 @@ namespace mu2e {
         _EoP_diff = _CaloEoP - _TrackEoP;
         _E_diff = ClosestCluster->energyDep() - _TrackEnergy;
       }
-      CrystalMap<<"Sum "<<_matchcrySum<<" cluster "<< ClosestCluster->energyDep()<<"tracker "<<_TrackEnergy <<endl;
+      
       _nTrackMatched++;
 
     }
