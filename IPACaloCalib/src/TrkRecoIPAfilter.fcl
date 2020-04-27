@@ -7,10 +7,14 @@
 #include "CaloMC/fcl/prolog.fcl"
 #include "TrackCaloMatching/fcl/prolog.fcl"
 #include "IPACaloCalib/fcl/prolog.fcl"
+#include "CalPatRec/fcl/prolog.fcl"
+#include "Filters/fcl/prolog.fcl"
+
+
 #include "JobConfig/reco/mcdigis_primary.fcl"
 
 source : { module_type : RootInput
-maxEvents : 1000000000
+maxEvents : 1000000
 }
 process_name : IPAReco
 
@@ -21,7 +25,7 @@ physics.producers: {
   @table::CaloReco.producers
   @table::CaloCluster.producers
   @table::TrackCaloMatching.producers
- 
+  @table::CalPatRec.producers
 }
 physics.analyzers: {
   @table::physics.analyzers
@@ -29,7 +33,19 @@ physics.analyzers: {
   @table::CaloCalib.analyzers
 }
 
+physics.filters: {
+  @table::CaloCalib.filters
+  @table::CalPatRec.filters
+  @table::CprTrigger.filters
+  @table::TrkFilters.filters
+  @table::CaloFilters.filters 
+  @table::Trigger.filters 
+  @table::Reconstruction.filters
+}
 
+physics.filters.CalTimePeakFinderDe.caloClusterModuleLabel : CaloClusterFromProtoCluster
+physics.filters.CalTimePeakFinder.caloClusterModuleLabel : CaloClusterFromProtoCluster
+physics.filters.CalTimePeakFinder.StrawHitCollectionLabel : "makeSH"
 
 physics.producers.compressRecoMCs.extraStepPointMCTags : [] # don't look for VD and PA hits 
 
@@ -43,8 +59,7 @@ physics.analyzers.TrkAnaPos.FillMCInfo : true
 physics.producers.TrackCaloMatching.fitterModuleLabel : KFFDeM
 physics.producers.TrackCaloIntersection.fitterModuleLabel : KFFDeM
 
-physics.TriggerPath : [ FindMCPrimary]
-physics.EndPath : [ @sequence::TrkAnaReco.EndSequence, IPACaloCluster, IPACaloMatch]//,CaloEventDisplays
+
 
 CommonMC.PrimaryDigiSim : [ @sequence::CommonMC.TimeMapsPrimary, EWMProducer ]
 
@@ -64,9 +79,8 @@ services.TFileService.fileName: "nts.owner.RecoIPAMichel.version.sequencer.root"
 
 physics.producers.KSFDeM.MaxDoca : 80
 physics.producers.KSFDeM.FilterOutliers : true
-physics.producers.KSFDeM.KalFit.maxPull : 10
-physics.producers.KSFDeM.KalFit.maxhitchi : 10
-physics.producers.KSFDeM.KalFit.maxAddChi : 10
+
+
 physics.producers.KSFDeM.KalFit.rescueHits : true
 physics.producers.KSFDeM.ParameterErrors : [20.0, 0.1, 0.01, 20.0, 0.1]
 # find low-momentum helices 
@@ -85,7 +99,7 @@ physics.producers.HelixFinderDe.RobustHelixFit.maxdist : 250
 physics.producers.HelixFinderDe.RobustHelixFit.minArea : 800
 ##physics.producers.HelixFinderDe.minNHit : 40
 physics.producers.TimeClusterFinderDe.UseCaloCluster : true
-physics.producers.TimeClusterFinderDe.CaloClusterMinE : 10
+
 physics.producers.TimeClusterFinderDe.AveragePitch : 0.5
 # turn off the rest
 physics.producers.TimeClusterFinderDmu.ymin : 1e7
@@ -102,6 +116,12 @@ physics.producers.MHDmuP.HelixFinders : []
 physics.filters.RecoFilter.TrkTags : [ "KFFDeM" ]
 physics.filters.RecoFilter.MomentumCutoff : [40.0] //40
 
+#Cuts:
+physics.producers.HelixFinderDe.minNHit : 40
+physics.producers.TimeClusterFinderDe.CaloClusterMinE : 10
+physics.producers.KSFDeM.KalFit.maxPull : 10
+physics.producers.KSFDeM.KalFit.maxhitchi : 10
+physics.producers.KSFDeM.KalFit.maxAddChi : 10
 
 physics.producers.FindMCPrimary.TimeOffsets : [ @sequence::DigiCompression.NoCosmicTimeMaps ]
 physics.producers.SelectRecoMC.TimeOffsets : [ @sequence::DigiCompression.NoCosmicTimeMaps ]
@@ -111,6 +131,7 @@ physics.analyzers.RecoCheck.OldTimeOffsets.inputs :[  @sequence::DigiCompression
 physics.analyzers.RecoCheck.NewTimeOffsets.inputs :[  @sequence::RecoCompression.NoCosmicTimeMaps ]
 
 
-physics.RecoPath : [cosmicTimeMap, protonBunchIntensity, @sequence::Reconstruction.RecoMCPath, @sequence::TrkAnaReco.TrigSequence,KFFDeM, @sequence::CaloReco.Reco, @sequence::CaloCluster.Reco, @sequence::TrackCaloMatching.matching]
-
+physics.RecoPath : [cosmicTimeMap, protonBunchIntensity, @sequence::Reconstruction.RecoMCPath, @sequence::TrkAnaReco.TrigSequence,KFFDeM, @sequence::CaloReco.Reco, @sequence::CaloCluster.Reco, @sequence::TrackCaloMatching.matching, IPAFilter ]
+//physics.TriggerPath : [ FindMCPrimary, ]
+physics.EndPath : [ @sequence::TrkAnaReco.EndSequence,IPACaloMatch ]
 

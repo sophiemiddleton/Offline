@@ -48,6 +48,7 @@ CaloEventDisplays: {
 	module_type : CaloEventDisplays
 	CaloCrystalHitCollection : "CaloCrystalHitFromHit"
   CaloClusterCollection : "CaloClusterFromProtoCluster"
+  KalRepPtrCollection : "KFFDeM"
   doDisplay            : true
 	
 }
