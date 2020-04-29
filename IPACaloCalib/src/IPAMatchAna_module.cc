@@ -383,10 +383,10 @@ namespace mu2e {
           double ShowerArea = sqrt((Xmax-Xmin)*(Xmax-Xmin)+(Ymax-Ymin)*(Ymax-Ymin));
           double EnergyDensity = EnergySpread/ShowerArea;
           double EnergyPerCrystal = ClosestCluster->energyDep()/_matchClusterSize;
-          int _GoodDE = 0;
-          if(abs(ClosestCluster->energyDep()-_TrackEnergy) < 10) _GoodDE = 1;
+          //int _GoodDE = 0;
+          //if(abs(ClosestCluster->energyDep()-_TrackEnergy) < 10) _GoodDE = 1;
 
-          DescisionFile<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<","<<_GoodDE<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
+          DescisionFile<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
 <<_matchSecondMoment<<","<<_matchClusterSize<<","<<_TrackBackD0<<","<<_TrackBackPhi0     <<","<<_TrackChi2DOF<<","<<Emax<<","<<EnergySpread<<","<<ShowerArea<<","
 <<EnergyDensity<<","<<EnergyPerCrystal<<endl;
 

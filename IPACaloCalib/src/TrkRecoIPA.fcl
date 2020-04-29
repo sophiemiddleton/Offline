@@ -44,7 +44,7 @@ physics.producers.TrackCaloMatching.fitterModuleLabel : KFFDeM
 physics.producers.TrackCaloIntersection.fitterModuleLabel : KFFDeM
 
 physics.TriggerPath : [ FindMCPrimary]
-physics.EndPath : [ @sequence::TrkAnaReco.EndSequence, IPACaloCluster, IPACaloMatch]//,CaloEventDisplays
+physics.EndPath : [ @sequence::TrkAnaReco.EndSequence,CaloEventDisplays]
 
 CommonMC.PrimaryDigiSim : [ @sequence::CommonMC.TimeMapsPrimary, EWMProducer ]
 
