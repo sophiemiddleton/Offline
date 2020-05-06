@@ -383,15 +383,18 @@ namespace mu2e {
           double ShowerArea = sqrt((Xmax-Xmin)*(Xmax-Xmin)+(Ymax-Ymin)*(Ymax-Ymin));
           double EnergyDensity = EnergySpread/ShowerArea;
           double EnergyPerCrystal = ClosestCluster->energyDep()/_matchClusterSize;
-          //int _GoodDE = 0;
-          //if(abs(ClosestCluster->energyDep()-_TrackEnergy) < 10) _GoodDE = 1;
-
+          
           DescisionFile<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
 <<_matchSecondMoment<<","<<_matchClusterSize<<","<<_TrackBackD0<<","<<_TrackBackPhi0     <<","<<_TrackChi2DOF<<","<<Emax<<","<<EnergySpread<<","<<ShowerArea<<","
 <<EnergyDensity<<","<<EnergyPerCrystal<<endl;
-
-
+_matchPosXCl =x1.x();
           
+            Newfile<<_TrackEnergy - ClosestCluster->energyDep()<<","<< _TrackEnergy<<","<<_matchR<<","<<_matchPosXCl<<","<<_matchPosYCl<<","<<_matchDt<<","
+<<_matchPathLen<<","<<_matchAngle<<","
+<<_matchSecondMoment<<","<<_matchClusterSize
+<<","<<_TrackBackD0<<","<<_TrackBackZ0<<","<<_TrackBackPhi0<<","
+<<_TrackBackTanDip<<","<<_TrackChi2DOF<<","<<_TrackCosTheta<<endl;
+         
           _nMatches++;
         
           //================ Add in Crystal Hits ==========================//
@@ -411,8 +414,8 @@ namespace mu2e {
             _cryRadius[ic]  	 	= sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y());
             _matchcrySum += cry->energyDep(); 
           
-            Newfile<<_evt<<","<<_run<<","<<_nHits<<","<<cry->id()<<","
-          <<cry->energyDep()<<","<<cry->energyDepErr()<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;
+            /* Newfile<<_evt<<","<<_run<<","<<_nHits<<","<<cry->id()<<","
+          <<cry->energyDep()<<","<<cry->energyDepErr()<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;*/
           }
          /* for(int cid=0 ; cid< 674;cid++){
             int diskId                     = cal.crystal(cid).diskId();
