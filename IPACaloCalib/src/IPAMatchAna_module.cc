@@ -226,9 +226,9 @@ namespace mu2e {
     _Ntup->Branch("cryTime",      	&_cryTime ,     "cryTime[nCry]/F");
     _Ntup->Branch("cryDose",      	&_cryDose ,     "cryDose[nCry]/F");
     _Ntup->Branch("cryRadius",	&_cryRadius,	"cryRadius[nCry]/F");
-    Newfile.open("Combined.csv");
+    Newfile.open("Combined.csv.root");
     //CrystalMap.open("CryMap.csv");
-     DescisionFile.open("List.csv");
+     DescisionFile.open("List.csv.root");
   }
 
 
@@ -383,17 +383,11 @@ namespace mu2e {
           double ShowerArea = sqrt((Xmax-Xmin)*(Xmax-Xmin)+(Ymax-Ymin)*(Ymax-Ymin));
           double EnergyDensity = EnergySpread/ShowerArea;
           double EnergyPerCrystal = ClosestCluster->energyDep()/_matchClusterSize;
-          
-          DescisionFile<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
+          if(_matchClusterSize>2){
+          DescisionFile<<_evt<<","<<_run<<","<<abs(ClosestCluster->energyDep()-_TrackEnergy)<<","<<_TrackEnergy<<","<<_matchPathLen<<","<<_matchAngle<<","
 <<_matchSecondMoment<<","<<_matchClusterSize<<","<<_TrackBackD0<<","<<_TrackBackPhi0     <<","<<_TrackChi2DOF<<","<<Emax<<","<<EnergySpread<<","<<ShowerArea<<","
 <<EnergyDensity<<","<<EnergyPerCrystal<<endl;
-_matchPosXCl =x1.x();
-          
-            Newfile<<_TrackEnergy - ClosestCluster->energyDep()<<","<< _TrackEnergy<<","<<_matchR<<","<<_matchPosXCl<<","<<_matchPosYCl<<","<<_matchDt<<","
-<<_matchPathLen<<","<<_matchAngle<<","
-<<_matchSecondMoment<<","<<_matchClusterSize
-<<","<<_TrackBackD0<<","<<_TrackBackZ0<<","<<_TrackBackPhi0<<","
-<<_TrackBackTanDip<<","<<_TrackChi2DOF<<","<<_TrackCosTheta<<endl;
+        }
          
           _nMatches++;
         
@@ -413,16 +407,12 @@ _matchPosXCl =x1.x();
             _cryPosZ[ic]       	= crystalPos.z();
             _cryRadius[ic]  	 	= sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y());
             _matchcrySum += cry->energyDep(); 
-          
-            /* Newfile<<_evt<<","<<_run<<","<<_nHits<<","<<cry->id()<<","
-          <<cry->energyDep()<<","<<cry->energyDepErr()<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;*/
+          if(_matchClusterSize>2){
+          Newfile<<_evt<<","<<_run<<","<<_nHits<<","<<cry->id()<<","
+          <<cry->energyDep()<<","<<cry->energyDepErr()<<","<<ClosestCluster->energyDep()<<","<<_TrackEnergy<<","<<_TrackMom<<","<<_TrackMomErr<<std::endl;
+}
           }
-         /* for(int cid=0 ; cid< 674;cid++){
-            int diskId                     = cal.crystal(cid).diskId();
-            CLHEP::Hep3Vector crystalPos   = cal.geomUtil().mu2eToDiskFF(diskId,cal.crystal(cid).position());
-            CrystalMap<<diskId<<","<<cid<<","<<crystalPos.x()   <<","<<crystalPos.y()<<","<<crystalPos.z()
-<<","<<sqrt(crystalPos.x()*crystalPos.x() + crystalPos.y()*crystalPos.y())<<endl;
-      }*/
+        
 
         }
       }

@@ -2,26 +2,30 @@
 BEGIN_PROLOG
 
 IPACaloCalib: {
-	module_type : IPACaloCalibAna
-	#CaloHitCollection : 
+  module_type : IPACaloCalibAna
+  #CaloHitCollection : 
   CaloCrystalHitCollection : "CaloCrystalHitFromHit"
   #CaloHitMCTruthCollection :
-KalRepPtrCollection : "KFFDeM"
+  KalRepPtrCollection : "KFFDeM"
   CaloClusterCollection : "CaloClusterFromProtoCluster"
   TrackClusterMatchCollection : "TrackCaloMatching"
-GenParticleCollection : "compressDigiMCs"  
-	#PIDProductCollection :  "ParticleID"  
+  GenParticleCollection : "compressDigiMCs"  
+  #PIDProductCollection :  "ParticleID"  
 	
 }
 
-  IPAFilter : {
+IPAFilter : {
     module_type : IPACaloCalibFilter
 	  KalRepPtrCollection : "KFFDeM"
     TrackClusterMatchCollection : "TrackCaloMatching"
     diagLevel : 1
-	 
-  }
+}
 
+IPABasicFilter : {
+    module_type : IPABasicFilter
+	  KalRepPtrCollection : "KFFDeM"
+    TrackClusterMatchCollection : "TrackCaloMatching"
+}
 
 IPACaloCluster: {
 	module_type : IPACaloClusterAna
