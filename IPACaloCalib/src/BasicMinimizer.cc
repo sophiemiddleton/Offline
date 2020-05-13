@@ -401,7 +401,7 @@ int main(int argc, char* argv[]){
         event_list = FakeDateMaker(RawCalibrationResults, offset_vector);
     }
     if(!fake){
-	    event_list = BuildEventsFromDataNew("Combined.csv", "predicted.csv");
+	    event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/Combined.csv", "/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/PredicteddE.csv");
       //event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/CombinedFiltered/Combined.csv");
       //event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/AngleTree/Combined.csv");
 			if(diag) std::cout<<"Found "<<event_list.size()<<" Events "<<std::endl;
