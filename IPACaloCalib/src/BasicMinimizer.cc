@@ -15,6 +15,9 @@
 using namespace std;
 
 bool use_multi = false;
+bool mixed = false;
+bool primary = true;
+
 //System Details - from /proc/cpuinfo or lscpu can remain hardcoded once we know system (?)
 unsigned N_cores_per_socket = 14;
 unsigned N_sockets = 2;
@@ -24,12 +27,12 @@ unsigned N_Management_Threads =1; //used to oversee threading
 unsigned MAX_THREADS = N_cores_per_socket*N_threads_per_core*N_sockets;
 unsigned THREAD_COUNT = 1500;//MAX_THREADS;
 
-bool diag = true;
+bool diag = false;
 unsigned int 	N_EVENTS;
 unsigned int N_CONVERGED = 0;
 unsigned int N_CRYSTALS = 674;
 double Loss = 0;
-double step_size = 0.0001;
+double step_size = 0.00015;
 double error = 1; //0.2671; //sigma of response.
 double MaxIterations = 100;
 double MaxFunction = 10;
@@ -171,11 +174,11 @@ CrystalList FillCrystals(const char *CrystalsFile, unsigned int &n, unsigned int
 }
 
 std::vector<Event> BuildEventsFromDataNew(const char *TrackFile, const char *predicteddE){
-
+  
 	std::vector<Event> event;
 	FILE *fT = fopen(TrackFile, "r");
   FILE *fP = fopen(predicteddE, "r");
-	if (fT == NULL ) {
+	if (fT == NULL or fP==NULL ) {
 		std::cout<<"[In ReadDataInput()] : Error: Cannot open Track files "<<std::endl;
 		exit(1);
 	}
@@ -207,10 +210,7 @@ std::vector<Event> BuildEventsFromDataNew(const char *TrackFile, const char *pre
 		    crystal_energy_error.push_back(CryErr);
         count++;
         CaloE = predicted[EvCount];
-      /*  double weight =CryE/CaloE;
-        correctiondE = predicted[EvCount];
-        corrected_crystal_energy.push_back(weight*(correctiondE));
-        cout<<"EvCount "<<EvCount<<" weight "<<weight<<" correction "<<correctiondE<<" CaloE "<<CaloE<<" tracker "<<TrackerE<<endl;*/
+        
          if(count==clSize){ 
             endEvent =true;
             EvCount +=1;  
@@ -226,10 +226,7 @@ std::vector<Event> BuildEventsFromDataNew(const char *TrackFile, const char *pre
 		    crystal_energy_error.push_back(CryErr);
         count ++;
         CaloE = predicted[EvCount];
-        /*double weight = CryE/CaloE;
-        correctiondE = predicted[EvCount];
-        corrected_crystal_energy.push_back(weight*(correctiondE));
-         cout<<"EvCount "<<EvCount<<" weight "<<weight<<" correction "<<correctiondE<<" CaloE "<<CaloE<<" tracker "<<TrackerE<<endl;*/
+     
         if(count==clSize){ 
             endEvent =true;
             EvCount +=1;
@@ -308,7 +305,7 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
 	unsigned int k = 0;
 	double Etrk = event.track_energy;
   double Ecalo = event.calo_energy;
-  cout<<" Extracting energy "<<Etrk<<endl;
+  
 
   double Csum = 0; double Csum_km1 = 0; double dCsum_km1 = 0; double F_km1 = 0;
 	while(converged == false and k < MaxIterations){
@@ -327,31 +324,31 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
           prediction +=constants[Ci]*event.crystal_list.crystal_energy[i];
           Esum+=event.crystal_list.crystal_energy[i];
        }
-      cout<<"Calo E"<<Esum<<" tracker e "<<Etrk<<" calo e "<<0.8*Ecalo<<endl;
+      if(diag) cout<<"Calo E"<<Esum<<" tracker e "<<Etrk<<" calo e "<<0.8*Ecalo<<endl;
       Loss = pow((prediction - Etrk + Ecalo) ,2);
       if(k==0) {
         InitLoss = Loss;
         F_km1 = InitLoss;
       }
       dFdCm = 2*Vm*(1/1)*(prediction -Etrk + Ecalo); //TODO - ignoring the sigma
-      //cout<<"Grad Cm "<<dFdCm<<endl;
+      if(diag) cout<<"Grad Cm "<<dFdCm<<endl;
      
       new_c = (old_c - step_size*constants[Cm]*dFdCm);
-     // cout<<"Old Cm "<<old_c<<" New Cm "<<new_c<<"True Cm "<<TrueConstants[Cm]<<endl;
+      if (diag) cout<<"Old Cm "<<old_c<<" New Cm "<<new_c<<"True Cm "<<TrueConstants[Cm]<<endl;
       Csum +=new_c;
       dc = abs(new_c - old_c);
-      if(dc > dcmin and dc < dcmax and abs(new_c) < max_c){
+      if(!isnan(new_c ) and dc > dcmin and dc < dcmax and abs(new_c) < max_c){
         constants[Cm] = new_c;
-        //cout<<"constants updated"<<endl;
+        if(diag) cout<<"constants updated"<<endl;
       }
     }
     
     double dF = Loss-F_km1;
     double dCsum = Csum - Csum_km1;
-    cout<<"init  loss "<<InitLoss<<" new loss"<<Loss<<" previous "<<F_km1<<"change "<<dF<<endl;
-    cout<<"dc Csum "<<Csum<<" - "<<Csum_km1<<" = "<<dCsum<<" ddCsum "<<dCsum-dCsum_km1<<endl;
+    if (diag) cout<<"init  loss "<<InitLoss<<" new loss"<<Loss<<" previous "<<F_km1<<"change "<<dF<<endl;
+    if (diag) cout<<"dc Csum "<<Csum<<" - "<<Csum_km1<<" = "<<dCsum<<" ddCsum "<<dCsum-dCsum_km1<<endl;
 		if(k>0 and dCsum < dSumMax and Loss<MaxFunction and abs(dF)<dFmax){
-     // cout<<"Converged with "<<k<<" iterations "<<endl;
+      if (diag) cout<<"Converged with "<<k<<" iterations "<<endl;
       converged =true;
       N_CONVERGED +=1;
     }
@@ -365,7 +362,7 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
    
 		  for(unsigned int m=0; m<event.cluster_size;m++){
           int Ci = event.crystal_list.crystal_number[m];
-          cout<<"[In SGD() ] Updated "<<Ci<<" from "<<previous_constants[Ci]<<" to "<<constants[Ci]<<" with k iterations "<<k<<" True "<<TrueConstants[Ci]<<endl;
+          if (diag) cout<<"[In SGD() ] Updated "<<Ci<<" from "<<previous_constants[Ci]<<" to "<<constants[Ci]<<" with k iterations "<<k<<" True "<<TrueConstants[Ci]<<endl;
           
       }
 	    return constants;
@@ -401,18 +398,17 @@ int main(int argc, char* argv[]){
         event_list = FakeDateMaker(RawCalibrationResults, offset_vector);
     }
     if(!fake){
-	    event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/Combined.csv", "/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/PredicteddE.csv");
-      //event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/CombinedFiltered/Combined.csv");
-      //event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/AngleTree/Combined.csv");
+	    if(mixed) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/Combined.csv", "/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/PredicteddE.csv");
+      if(primary) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/Simulations/IPAFromMDC/Combined.csv", "/mu2e/data/users/sophie/Simulations/IPAFromMDC//PredicteddE.csv");
 			if(diag) std::cout<<"Found "<<event_list.size()<<" Events "<<std::endl;
      }
       N_EVENTS =  event_list.size();//GetLines("PreScaleTracks.csv");
      auto start = chrono::high_resolution_clock::now();
      CalibrationConstants = RawCalibrationResults;
 
-     /*
+    
       counting_barrier barrier(event_list.size());
-      thread_pool Pool(THREAD_COUNT);*/
+      thread_pool Pool(THREAD_COUNT);
      
     
      for(unsigned int l = 0; l < 1 ; l++){
@@ -425,17 +421,17 @@ int main(int argc, char* argv[]){
             if(!use_multi or thread_arg == "--single"){
               CalibrationConstants = SGD(event, event.EventNumber, CalibrationConstants);
             }
-           /*if(use_multi or thread_arg == "--all"){
+           if(use_multi or thread_arg == "--all"){
             auto done = Pool.add_task([&barrier, event=event, n= event.EventNumber, constants=CalibrationConstants]{
 
 	            CalibrationConstants = SGD(event, n, constants);
                --barrier;
-            });}*/
+            });}
          }
      }
-      /*if(use_multi || thread_arg == "--all"){
+      if(use_multi || thread_arg == "--all"){
        barrier.wait();
-     }*/
+     }
 		 for(unsigned int i =0 ;i<N_CRYSTALS;i++){
 
         std::cout<<"End Offset "<<i<<" is "<<CalibrationConstants[i]
