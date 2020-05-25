@@ -48,9 +48,12 @@ Services : {
   }
 
   SimOnly   : {
-    RandomNumberGenerator   : { defaultEngineKind: "MixMaxRng" }
-    SeedService		    : @local::automaticSeeds
-    G4Helper: {}
+      RandomNumberGenerator : { defaultEngineKind: "MixMaxRng" }
+      SeedService	    : { @table::automaticSeeds
+	  baseSeed          :  8
+	  maxUniqueEngines  :  20
+      }
+      G4Helper: {}
   }
 
   #RecoOnly : {
