@@ -1,3 +1,4 @@
+# -*- mode:tcl -*-
 #include "fcl/minimalMessageService.fcl"
 #include "fcl/standardServices.fcl"
 #include "CaloMC/fcl/prolog.fcl"
@@ -6,20 +7,10 @@
 
 BEGIN_PROLOG
 
-mu2e.services.simServices: {
-   message: @local::default_message
-   TFileService: { fileName: @nil }
-   RandomNumberGenerator: {defaultEngineKind: "MixMaxRng" }
-   GeometryService: { inputFile: "JobConfig/common/geom_baseline.txt" }
-   ConditionsService: { conditionsfile: "Mu2eG4/test/conditions_01.txt" }
-   GlobalConstantsService: { inputFile: "Mu2eG4/test/globalConstants_01.txt" }
-   G4Helper: {}
-   SeedService: @local::automaticSeeds
-}
+mu2e.services.simServices: { @table::Services.Sim }
 
-// Default seeding of random engines - the seed will be overwritten in grid jobs
-mu2e.services.simServices.SeedService.baseSeed:  8
-mu2e.services.simServices.SeedService.maxUniqueEngines:  20
+services.TFileService.fileName     : @nil
+services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
 
 // Limit the amount of "Begin processing the ... record" messages
 mu2e.services.simServices.message.destinations.log.categories.ArtReport.reportEvery: 1
@@ -224,10 +215,12 @@ mu2e.physics.g4s4Muons.producers.genCounter: {
    module_type: GenEventCounter
 }
 
-mu2e.physics.g4s4Muons.crvPath: [ generate, genCounter,  @sequence::crvPathCommon ]
-mu2e.physics.g4s4Muons.detPath: [ generate, genCounter,  @sequence::detPathCommon ]
+mu2e.physics.g4s4Muons.crvPath:       [ generate, genCounter,  @sequence::crvPathCommon ]
+mu2e.physics.g4s4Muons.detPath:       [ generate, genCounter,  @sequence::detPathCommon ]
 mu2e.physics.g4s4Muons.g4StatusPath:  [ generate, genCounter, @sequence::g4StatusPathCommon ]
-mu2e.physics.Signal.detPath : [ generate, genCounter,  g4run, g4consistent, CaloShowerStepFromStepPt, TrkStepFilter, detectorFilter, CaloShowerCrystalSteps, CaloShowerROSteps, compressPVDetector ]
+mu2e.physics.Signal.detPath :         [ generate, genCounter,  g4run, g4consistent, CaloShowerStepFromStepPt,
+					TrkStepFilter, detectorFilter, CaloShowerCrystalSteps, CaloShowerROSteps,
+					compressPVDetector ]
 
 #================================================================
 

@@ -1,3 +1,4 @@
+/ -*- mode:tcl -*-
 // Andrei Gaponenko, 2013
 // Jake Colston & Joseph Brock, 2015 (edit for cd3)--> rhb adapts for antiprotons
 //starts at VD91 and propagates to Coll31Out, use to study collar collimator and then TS3 central window
@@ -23,16 +24,7 @@ source : {
     module_type : EmptyEvent maxEvents: @nil
 }
 
-services : {
-    message                : @local::default_message
-    TFileService           : { fileName : "nts.owner.pbar_s2_toColl31Out.version.sequencer.root" }
-    RandomNumberGenerator  : {defaultEngineKind: "MixMaxRng"}
-    GeometryService        : { inputFile      : "JobConfig/cd3/geom_baseline.txt"    }
-    ConditionsService      : { conditionsfile : "Mu2eG4/test/conditions_01.txt"      }
-    GlobalConstantsService : { inputFile      : "Mu2eG4/test/globalConstants_01.txt" }
-    G4Helper               : {}
-    SeedService            : @local::automaticSeeds
-}
+services : { @table::Services.Sim }
 
 physics : {
 
@@ -40,23 +32,21 @@ physics : {
 
         g4run : {
 
-            module_type       : Mu2eG4
-            physics           : @local::mu2eg4DefaultPhysics
-            ResourceLimits    : @local::mu2eg4DefaultResourceLimits
-            TrajectoryControl : @local::mu2eg4NoTrajectories
-            debug             : @local::mu2eg4DefaultDebug
-            visualization     : @local::mu2eg4NoVisualization
+	    module_type       : Mu2eG4
+	    physics           : @local::mu2eg4DefaultPhysics
+	    ResourceLimits    : @local::mu2eg4DefaultResourceLimits
+	    TrajectoryControl : @local::mu2eg4NoTrajectories
+	    debug             : @local::mu2eg4DefaultDebug
+	    visualization     : @local::mu2eg4NoVisualization
 
-            generatorModuleLabel : generate 
-            MultiStageParameters : {
-                 simParticleNumberOffset : 2000000
-                 genInputHits               : ["g4filter:enterTS"]
-                 inputSimParticles          : "g4filter"
-                 inputMCTrajectories        : ""
-                 inputPhysVolumeMultiInfo   : ""
-          }
-
-            doWriteLegacyPhysVolumeInfo : false
+	    generatorModuleLabel : generate 
+	    MultiStageParameters : {
+		simParticleNumberOffset : 2000000
+		genInputHits               : ["g4filter:enterTS"]
+		inputSimParticles          : "g4filter"
+		inputMCTrajectories        : ""
+		inputPhysVolumeMultiInfo   : ""
+	    }
 
             SDConfig : {
                 enableSD         : [ virtualdetector ] // activate just the explicitly listed SDs
@@ -151,13 +141,15 @@ outputs : {
    }
 }
 
+#----------------------------------------------------------------------------------------
+# redefined variables
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.pbar_s2_toColl31Out.version.sequencer.root"
+services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+
 physics.producers.g4run.physics.minRangeCut : 1.0 // mm
 
 // Limit the rate of "Begin processing the ... record" messages
 services.message.destinations.log.categories.ArtReport.reportEvery : 1
 services.message.destinations.log.categories.ArtReport.limit : 1
 services.message.destinations.log.categories.ArtReport.timespan : 300
-
-// Initialze seeding of random engines: do not put these lines in base .fcl files for grid jobs.
-//services.SeedService.baseSeed          : 8
-//services.SeedService.maxUniqueEngines  : 20

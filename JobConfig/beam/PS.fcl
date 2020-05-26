@@ -92,7 +92,7 @@ source : {
    maxEvents : @nil
 }
 
-services : @local::Services.Sim
+services : { @table::Services.Sim }
 
 physics : {
    analyzers: {
@@ -304,13 +304,12 @@ outputs: {
    }
 
 }
+#------------------------------------------------------------------------------
+# redefined parameters
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.TFileService.fileName     : "nts.owner.PS.version.sequencer.root"
+
 // Larger range cut for the first stage
 physics.producers.g4run.physics.minRangeCut : 1. // mm
-
-// Initialze seeding of random engines: do not put these lines in base .fcl files for grid jobs.
-services.SeedService.baseSeed         :  8
-services.SeedService.maxUniqueEngines :  20
-
-services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
-services.TFileService.fileName     : "nts.owner.PS.version.sequencer.root"
 

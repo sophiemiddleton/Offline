@@ -1,3 +1,4 @@
+# -*- mode:tcl -*-
 // Andrei Gaponenko, 2015
 #include "fcl/minimalMessageService.fcl"
 #include "fcl/standardProducers.fcl"
@@ -8,18 +9,7 @@ process_name : DS
 
 source : { module_type : RootInput }
 
-services : {
-
-   message               : @local::default_message
-   TFileService          : { fileName : "nts.owner.DS.version.sequencer.root" }
-   RandomNumberGenerator : {defaultEngineKind: "MixMaxRng" }
-
-   GeometryService        : { inputFile      : "JobConfig/common/geom_baseline.txt" }
-   ConditionsService      : { conditionsfile : "Mu2eG4/test/conditions_01.txt"      }
-   GlobalConstantsService : { inputFile      : "Mu2eG4/test/globalConstants_01.txt" }
-   G4Helper               : { }
-   SeedService            : @local::automaticSeeds
-}
+services : { @table::Services.Sim }
 
 physics : {
 
@@ -277,14 +267,13 @@ outputs: {
       fileName    : "sim.owner.DS-truncated.version.sequencer.art"
    }
 }
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.DS.version.sequencer.root"
 
-// Limit the amount of "Begin processing the ... record" messages
+# Limit the amount of "Begin processing the ... record" messages
+
 services.message.destinations.log.categories.ArtReport.reportEvery : 1
-services.message.destinations.log.categories.ArtReport.limit : 1
-services.message.destinations.log.categories.ArtReport.timespan : 300
+services.message.destinations.log.categories.ArtReport.limit       : 1
+services.message.destinations.log.categories.ArtReport.timespan    : 300
 
 physics.producers.g4run.physics.minRangeCut : 0.010 // mm
-
-// Initialze seeding of random engines: do not put these lines in base .fcl files for grid jobs.
-services.SeedService.baseSeed         :  8
-services.SeedService.maxUniqueEngines :  20

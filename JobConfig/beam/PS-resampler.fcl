@@ -8,7 +8,9 @@
 process_name: psresampler
 
 source: { module_type : EmptyEvent }
-services: { @table::mu2e.services.simServices }
+
+services: { @table::Services.Sim }
+
 physics: { @table::mu2e.physics.g4s4Flash }
 outputs: { @table::mu2e.outputs.g4s4Defs }
 

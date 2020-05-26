@@ -1,3 +1,4 @@
+# -*- mode:tcl -*-
 // Andrei Gaponenko, 2013
 // Jake Colston & Joseph Brock, 2015 (edit for cd3)
 // Hasung William Song (UCB) 2018 MDC2018 (merge g4s2 & g4s3)
@@ -24,16 +25,7 @@ source : {
     module_type : RootInput
 }
 
-services : {
-    message                : @local::default_message
-    TFileService           : { fileName : "nts.owner.DS-pions.version.sequencer.root" }
-    RandomNumberGenerator  : {defaultEngineKind: "MixMaxRng"}
-    GeometryService        : { inputFile      : "JobConfig/common/geom_baseline.txt"    }
-    ConditionsService      : { conditionsfile : "Mu2eG4/test/conditions_01.txt"      }
-    GlobalConstantsService : { inputFile      : "Mu2eG4/test/globalConstants_01.txt" }
-    G4Helper               : {}
-    SeedService            : @local::automaticSeeds
-}
+services : { @table::Services.Sim }
 
 physics : {
 
@@ -150,6 +142,11 @@ outputs : {
         fileName       : "sim.owner.DS-pions.version.sequencer.art"
     }
 }
+#------------------------------------------------------------------------------
+# redefined variables
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.DS-pions.version.sequencer.root"
+services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
 
 physics.producers.g4run.physics.minRangeCut : 1.0 // mm
 physics.producers.g4run.physics.noDecay     : [ 211, -211 ]
@@ -158,7 +155,3 @@ physics.producers.g4run.physics.noDecay     : [ 211, -211 ]
 services.message.destinations.log.categories.ArtReport.reportEvery : 1
 services.message.destinations.log.categories.ArtReport.limit : 1
 services.message.destinations.log.categories.ArtReport.timespan : 300
-
-// Initialze seeding of random engines: do not put these lines in base .fcl files for grid jobs.
-services.SeedService.baseSeed          : 8
-services.SeedService.maxUniqueEngines  : 20
