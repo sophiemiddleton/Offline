@@ -1,0 +1,55 @@
+#
+* changes in JobConfig: 
+
+* define default seeds in a useful way
+
+* use scripting-style comments and tcl mode
+
+* make sure all configurations in JobConfig use the same geometry 
+
+   JobConfig/common/geom_baseline.txt = Mu2eG4/geom/geom_common.txt,
+   do not retire JobConfig/common/geom_baseline.txt 
+
+   this is what we want: smth like file:Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt
+
+   files , for which th changes have  been made:
+
+/projects/mu2e/app/users/murat/su2020>source JobConfig/doc/change_geom_def.sh
+OK --- JobConfig/extmon/extmonbeam_g4s2.fcl
+OK --- JobConfig/pions/pions_g4s4_IntConv.fcl
+OK --- JobConfig/pions/pions_g4s3.fcl
+OK --- JobConfig/pions/pions_nts3tgtstops.fcl
+OK --- JobConfig/pions/pions_g4s2.fcl
+OK --- JobConfig/pions/pions_g4s1.fcl
+OK --- JobConfig/pions/pions_g4s4_RPC.fcl
+OK --- JobConfig/beam/DS_pions.fcl
+OK --- JobConfig/beam/TS-CRV.fcl
+OK --- JobConfig/beam/TGTpionstops.fcl
+OK --- JobConfig/beam/PS.fcl
+OK --- JobConfig/beam/beam_test_4_replicated.fcl
+OK --- JobConfig/beam/prolog.fcl
+OK --- JobConfig/pbar/vertex_s0.fcl
+OK --- JobConfig/pbar/vertex_s1.fcl
+OK --- JobConfig/pbar/resample_vertex_s1.fcl
+OK --- JobConfig/pbar/resample_vertex_s2.fcl
+OK --- JobConfig/common/prolog.fcl
+
+* use Services.Sim from fcl/standardServices.fcl                 
+   doesn't matter which one is used, what matters - is that only one
+   - I like Yuri's style, but...
+
+* [[https://docs.google.com/spreadsheets/d/1tf5MH28FF6yf9CrWrQQ5U6KkeXwwkFatdfeuBfFXwDY/edit#gid=0][Dave's spreadsheet]]
+
+* size of the running mu2e executable at stage 3: 
+
+Tasks: 329 total,   2 running, 327 sleeping,   0 stopped,   0 zombie
+%Cpu(s): 35.1 us,  8.9 sy,  0.3 ni, 49.5 id,  4.9 wa,  0.3 hi,  0.9 si,  0.0 st
+MiB Mem :  15860.2 total,   3277.0 free,   5666.4 used,   6916.7 buff/cache
+MiB Swap:  16775.0 total,  13820.5 free,   2954.5 used.   8849.9 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND 
+ 210381 murat     20   0 2237124   1.6g 240472 R  99.3  10.5   1:07.87 mu2e    
+ 182978 murat     20   0  315784  96872   9284 S  24.3   0.6   7:51.11 mu      
+  96481 murat     20   0 4348440 477436   9280 S  17.6   2.9 126:00.33 java    
+
+

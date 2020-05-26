@@ -1,0 +1,20 @@
+# <2020-05-25 Mon> trying
+
+
+  *General*
+
+this package contains standard Mu2e job configuration files
+
+
+- make sure all top level config files here include deometry definitions explicitly
+
+- top level FCL is printed into the GRID job log files, having exlicit information 
+  about the geometry there is critical
+
+- <2020-05-25 Mon> : default geometry: file:../../Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt
+
+
+- for services, use Services.Sim from file:../../fcl/standardServices.fcl::Services.Sim 
+   doesn't matter which one is used, what matters - is that only one
+   - Yuri's style is nicer, but the one above has less redirections
+
