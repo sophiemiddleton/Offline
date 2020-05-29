@@ -15,7 +15,6 @@
 #include "Mu2eG4/inc/Mu2eG4EventAction.hh"
 #include "Mu2eG4/inc/Mu2eG4RunAction.hh"
 #include "Mu2eG4/inc/Mu2eG4MasterRunAction.hh"
-#include "Mu2eG4/inc/ExtMonFNALPixelSD.hh"
 #include "Mu2eG4/inc/SensitiveDetectorHelper.hh"
 #include "Mu2eG4/inc/IMu2eG4Cut.hh"
 #include "Mu2eG4/inc/Mu2eG4PerThreadStorage.hh"

@@ -24,7 +24,6 @@
 #include "Mu2eG4/inc/preG4InitializeTasks.hh"
 #include "Mu2eG4/inc/Mu2eSensitiveDetector.hh"
 #include "Mu2eG4/inc/SensitiveDetectorName.hh"
-#include "Mu2eG4/inc/ExtMonFNALPixelSD.hh"
 #include "ConfigTools/inc/ConfigFileLookupPolicy.hh"
 #include "Mu2eG4/inc/generateFieldMap.hh"
 #include "SeedService/inc/SeedService.hh"

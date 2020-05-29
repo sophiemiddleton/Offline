@@ -9,7 +9,9 @@
 #endif/*__GCCXML__*/
 
 //Mu2e Cosmics:
+#include "CosmicReco/inc/CosmicTrackFinderData.hh"
 #include "RecoDataProducts/inc/CosmicTrackSeed.hh"
+#include "CosmicReco/inc/CosmicTrackFinderData.hh"
 
 // Products
 #include "RecoDataProducts/inc/ComboHit.hh"
@@ -69,13 +71,12 @@ namespace mu2e
               fhicl::Atom<float> maxTres{Name("MaxTimeResidual"),Comment("The maxiumum allowed time residual for any hit used for full drift fit"), 40 };
 	      fhicl::Atom<float> maxd{Name("MaxTrackLength"),Comment("The maxiumum allowed length of track") ,2000.};
 	      fhicl::Atom<float> maxpull{Name("MaxHitPullForSeed"),Comment("The maxiumum allowed combo hit pull from fit") ,100.};
-              fhicl::Atom<bool> UseTSeedDirection{Name("UseTSeedDirection"),Comment("Uses the direction in the input tseed to initialize fit"), false};
     	};
 		
 		explicit CosmicTrackFit(const Config& conf);
     		virtual ~CosmicTrackFit(){};
 
-                bool initCosmicTrack(const char* title, CosmicTrackSeed& tseed, ComboHitCollection &combohits);
+                bool initCosmicTrack(const char* title, CosmicTrackFinderData& TrackData);
 		std::vector<XYZVec> SortPoints(std::vector<XYZVec> pointY);
                 XYZVec InitLineDirection(const ComboHit *ch0, const ComboHit *chN);
                 
@@ -83,15 +84,14 @@ namespace mu2e
                 XYZVec ConvertPointToDetFrame(XYZVec vec);
 
                 XYZVec GetTrackDirection(std::vector<XYZVec> hitXYZ, XYZVec XDoublePrime, XYZVec YDoublePrime, XYZVec ZPrime); 
-                void BeginFit(const char* title, CosmicTrackSeed &tseed, art::Event const& event, ComboHitCollection const& chcol, std::vector<StrawHitIndex> &panelHitIdxs);
-                void RunFitChi2(const char* title, CosmicTrackSeed& tseed, ComboHitCollection &combohits);
-                void FitAll(const char* title, CosmicTrackSeed &tseed, ComboHitCollection &combohits, CosmicTrack* cosmictrack);
-                void FillTrackHitCollections(CosmicTrackSeed &tseed, art::Event const& event, ComboHitCollection const& chcol, std::vector<StrawHitIndex> &panelHitIdxs);
+                void BeginFit(const char* title, CosmicTrackFinderData& TrackData);
+                void RunFitChi2(const char* title, CosmicTrackFinderData& trackData);
+                void FitAll(const char* title, CosmicTrackFinderData& trackData,CosmicTrack* track);
 
-		void ConvertFitToDetectorFrame(TrackAxes axes, XYZVec Position, XYZVec Direction, CosmicTrack* cosmictrack, bool isseed, bool det);
+		void ConvertFitToDetectorFrame(CosmicTrackFinderData& trackData, TrackAxes axes, XYZVec Position, XYZVec Direction, CosmicTrack* cosmictrack, bool isseed, bool det);
 		
                 bool goodTrack(CosmicTrack& track);
-		void DriftFit(CosmicTrackSeed& tseed, StrawResponse const& srep);
+		void DriftFit(CosmicTrackFinderData& trackData, StrawResponse const& srep);
 		
                 const Tracker*            _tracker;
     		void  setTracker    (const Tracker*    Tracker) { _tracker     = Tracker; }
@@ -118,7 +118,6 @@ namespace mu2e
 		float _maxTres;//maximum allowed time residual in drift fit
 		float _maxd;//unused
 		float _maxpull;
-                bool _useTSeedDirection;
   };
 	
 
