@@ -38,20 +38,12 @@
 #include "MCDataProducts/inc/EventWeight.hh"
 #include "Mu2eUtilities/inc/Table.hh"
 #include "Mu2eUtilities/inc/RootTreeSampler.hh"
+#include "Mu2eUtilities/inc/GammaPairConversionSpectrum.hh"
 #include "GeneralUtilities/inc/RSNTIO.hh"
 #include "Mu2eG4/inc/findMaterialOrThrow.hh"
 
 // G4 includes.
 #include "G4Material.hh"
-#include "G4ParticleTable.hh"
-#include "G4ParticleDefinition.hh"
-#include "G4ProcessManager.hh"
-#include "G4VProcess.hh"
-#include "G4ProcessVector.hh"
-#include "G4GammaConversion.hh"
-#include "G4VEmModel.hh"
-#include "G4BetheHeitlerModel.hh"
-#include "G4DynamicParticle.hh"
 
 // ROOT includes
 #include "TTree.h"
@@ -124,11 +116,9 @@ namespace mu2e {
     std::string defaultMat_; //for testing the pair production spectrum for a given material
     double testE_; //for testing the pair production spectrum for a given Energy
     
+    GammaPairConversionSpectrum* spectrum_; //pair production spectrum
     double xOffset_; //ds axis x offset
 
-    G4ParticleDefinition* photon_; //for passing into the pair production spectrum
-    G4BetheHeitlerModel* g4bhm_; //pair production spectrum
-    
     TH1D* _hgencuts; //records number of events attempted
     TH1F* _hmomentum;
     TH1F* _hcos;
@@ -143,6 +133,8 @@ namespace mu2e {
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
     TH1F* _hy;				// splitting function
+    TH1F* _henergyChange;
+    TH1F* _hcosChange;
   };
 
   //================================================================
@@ -167,14 +159,13 @@ namespace mu2e {
     , czMax_           (pset().czMax())
     , defaultMat_      (pset().defaultMat())
     , testE_           (pset().testE())
+    , spectrum_        (new GammaPairConversionSpectrum(&randomFlat_))
     , xOffset_         (pset().xOffset())
   {
     produces<mu2e::GenParticleCollection>();
     produces<mu2e::EventWeight>();
     produces<GenParticle>("photon"); //store photon generation energy for RMC weights
 
-    photon_ = 0;
-    // objsize_ = sizeof(*photon_) + sizeof(*g4bhm_);
 
     if(verbosityLevel_ > 0) {
       std::cout<<"GammaConversionGun: using = "
@@ -226,6 +217,8 @@ namespace mu2e {
       _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
       _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
       _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+      _henergyChange = tfdir.make<TH1F>("henergyChange", "E(photon) - E(e+e-)", 200,-1.,1.);
+      _hcosChange = tfdir.make<TH1F>("hcosChange", "cos(photon) - cos(e+e-)", 200,-1.,1.);
 
     }
 
@@ -234,6 +227,7 @@ namespace mu2e {
   //================================================================
   void GammaConversionGun::produce(art::Event& event) {
 
+    
     std::unique_ptr<GenParticleCollection> output(new GenParticleCollection);
     
     //fields in the stop ntuple 
@@ -244,48 +238,8 @@ namespace mu2e {
 
     bool passed = false;
     CLHEP::Hep3Vector pos(0.,0.,0.);
-    CLHEP::HepLorentzVector mome, momp;
+    CLHEP::HepLorentzVector momg, mome, momp;
 
-    //Get the process information for photon conversions to sample from
-    if(!photon_) {
-      G4ParticleTable* ptable = G4ParticleTable::GetParticleTable();
-      if(ptable) {
-	photon_ = ptable->FindParticle(22);
-	if(photon_) {
-	  const G4ProcessManager* g4pm = photon_->GetProcessManager();
-	  if(g4pm) {
-	    G4VProcess* g4vp = g4pm->GetProcess("conv");
-	    if(g4vp) {
-	      G4GammaConversion* g4pprm = (G4GammaConversion*) g4vp;
-	      if(g4pprm) {
-		G4VEmModel* emmodel = g4pprm->EmModel(0); //BetheHeitler model, E_gamma < 80 GeV
-		if(emmodel) {
-		  g4bhm_ = (G4BetheHeitlerModel*) emmodel;
-		  if(g4bhm_) {
-		    printf("GammaConversionGun::produce : Successfully initialized Bethe Heitler Model\n");
-		  } else
-		    throw cet::exception("ERROR")
-		      << "GammaConversionGun::produce : Failed to initialize Bethe Heitler Model\n";
-		} else
-		  throw cet::exception("ERROR")
-		    << "GammaConversionGun::produce : Failed to initialize EM Model\n";
-	      } else
-		throw cet::exception("ERROR")
-		  << "GammaConversionGun::produce : Failed to initialize GammaConversion process\n";
-	    } else
-	      throw cet::exception("ERROR")
-		<< "GammaConversionGun::produce : Failed to initialize conversion process\n";
-	  } else
-	    throw cet::exception("ERROR")
-	      << "GammaConversionGun::produce : Failed to initialize a process manager \n";
-	} else
-	  throw cet::exception("ERROR")
-	    << "GammaConversionGun::produce : Failed to initialize a G4 photon \n";
-      } else
-	throw cet::exception("ERROR")
-	  << "GammaConversionGun::produce : Failed to initialize a particle table\n";
-    }
-    
     //loop through generations until an event passes the generation cuts
     do {
       const auto& stop = stops_.fire();
@@ -296,9 +250,11 @@ namespace mu2e {
       weight = stop.weight; gen_energy = stop.genEnergy;
       
       if(verbosityLevel_ > 2) {
-	printf("Next Stop Attempt: (x,y,z,t) = (%.2f,%.2f,%.2f,%.2f), ",x,y,z,t);
-	printf("(px,py,pz,gen_energy) = (%.2f,%.2f,%.2f,%.2f), ",px,py,pz,gen_energy);
-	printf("material = %s\n", mat);
+	std::cout << "Next Stop Attempt: (x,y,z,t) = (" << x << "," << y
+	     << "," << z << "," << t << "), "
+	     << "(px,py,pz,gen_energy) = (" << px << "," << py << ","
+	     << pz << "," << gen_energy << "), "
+	     << "material = " << mat << std::endl;
       }
       _hgencuts->Fill(1); //all generations
       passed = !(x < xMin_ || x > xMax_
@@ -310,16 +266,18 @@ namespace mu2e {
       if(!passed) continue;
       _hgencuts->Fill(2); //passed spacial cut
       if(verbosityLevel_ > 2) 
-	printf("Passed spacial cut\n");
+	std::cout << "Passed spacial cut\n";
 
-      CLHEP::Hep3Vector mom(px, py, pz);
+      CLHEP::Hep3Vector mom(px,py,pz);
       if(testE_ > 0.) mom.setMag(testE_);
+      momg.setVect(mom);
+      momg.setE(mom.mag());
       
       passed = passed && (pMax_ < 0. || pMax_ > gen_energy);
       if(!passed) continue;
       _hgencuts->Fill(3); //passed maximum gen photon momentum cut
       if(verbosityLevel_ > 2) 
-	printf("Passed gen energy cut\n");
+	std::cout << "Passed gen energy cut\n";
 
       double cz = mom.cosTheta();
       passed = passed && cz >= czMin_ && cz <= czMax_;
@@ -328,50 +286,34 @@ namespace mu2e {
 
       //can't make a daughter of pMin if energy below pmin + electron mass already
       //use slightly less than electron mass here to be safe
-      double photonE = mom.mag();
+      double photonE = momg.e();
       if(verbosityLevel_ > 2) 
-	printf("Passed cos theta cut\nPhoton energy = %.2f\n", photonE);
+	std::cout << "Passed cos theta cut\nPhoton energy = " << photonE << std::endl;
       passed = passed && (photonE - 0.500) > pMin_;
       if(!passed) continue;
       _hgencuts->Fill(5); //passed initial minimum momentum cut
       if(verbosityLevel_ > 2) 
-	printf("Passed min photon energy cut\n");
+	std::cout << "Passed min photon energy cut\n";
 
       //sample the spectrum
-      std::vector<G4DynamicParticle*> *g4dpv = new std::vector<G4DynamicParticle*>();
-      G4Material* material = findMaterialOrThrow(mat);
-      G4MaterialCutsCouple* matcut = new G4MaterialCutsCouple(material);
-      mom.setMag(1.); //just need momentum direction with the energy
-      G4DynamicParticle* g4dp = new G4DynamicParticle(photon_, mom, photonE);
-      g4bhm_->SampleSecondaries(g4dpv, matcut, g4dp,0.,0.);
-
-      //get e+- pair
-      mome = (*g4dpv)[0]->Get4Momentum();
-      momp = (*g4dpv)[1]->Get4Momentum();
-
-      //release memory
-      delete g4dp;
-      delete matcut;
-      for(auto dp : *g4dpv)
-	delete dp;
-      delete g4dpv;
+      // G4Material* material = findMaterialOrThrow(mat);
+      spectrum_->fire(momg, spectrum_->_elementMap[13], mome, momp);
 
       passed = passed && (mome.vect().mag() > pMin_ || momp.vect().mag() > pMin_);
       if(!passed) continue;
       _hgencuts->Fill(6); //Final momentum cut
       if(verbosityLevel_ > 2) 
-	printf("Passed min daughter energy cut\n");
+	std::cout << "Passed min daughter energy cut\n";
 
       pos.setX(x); pos.setY(y); pos.setZ(z);
 
     } while(!passed);
     _hgencuts->Fill(10); //passing all cuts
     
-                                                                                   //GenId = 44
     output->emplace_back(PDGCode::e_minus, GenId::gammaPairProduction, pos, mome, t);
     output->emplace_back(PDGCode::e_plus , GenId::gammaPairProduction, pos, momp, t);
-    event.put(move(output));
 
+    event.put(move(output));
     //add event weight and gen photon energy to the output
     std::unique_ptr<EventWeight> evtwt ( new EventWeight(weight) );
     event.put(move(evtwt));
@@ -405,9 +347,9 @@ namespace mu2e {
 
     _hy->Fill(lepy);
 
-    
     _hmomentum->Fill(energy);
-
+    _henergyChange->Fill(momg.e()-energy);
+    _hcosChange->Fill(momg.vect().cosTheta()-(mome+momp).vect().cosTheta());
   }
 
 
