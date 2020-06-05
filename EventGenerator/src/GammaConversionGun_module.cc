@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <algorithm>
+#include <map>
 
 // cetlib includes
 #include "cetlib_except/exception.h"
@@ -51,7 +52,9 @@
 #include "G4GammaConversion.hh"
 #include "G4VEmModel.hh"
 #include "G4BetheHeitlerModel.hh"
+#include "G4PairProductionRelModel.hh"
 #include "G4DynamicParticle.hh"
+#include "G4EmElementSelector.hh"
 
 // ROOT includes
 #include "TTree.h"
@@ -128,7 +131,9 @@ namespace mu2e {
 
     G4ParticleDefinition* photon_; //for passing into the pair production spectrum
     G4BetheHeitlerModel* g4bhm_; //pair production spectrum
-    
+    G4PairProductionRelModel* g4ppr_; //pair production spectrum (E > 80 GeV in for v4.10.(<6), E > 2*me else) 
+    std::map<std::string, G4MaterialCutsCouple*> materialMap;
+
     TH1D* _hgencuts; //records number of events attempted
     TH1F* _hmomentum;
     TH1F* _hcos;
@@ -143,6 +148,8 @@ namespace mu2e {
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
     TH1F* _hy;				// splitting function
+    TH2F* _hcosEvsP;                    //E(e-)/M(e-)*theta(e-) vs E(e+)/M(e+)*theta(e+) wrt photon direction
+    TH1F* _hcosChange;
   };
 
   //================================================================
@@ -226,6 +233,8 @@ namespace mu2e {
       _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
       _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
       _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+      _hcosEvsP  = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 150, 0., 15., 150, 0., 15.);
+      _hcosChange= tfdir.make<TH1F>("hcosChange", "cos(#theta) Change", 200,  -1.,  1.  );
 
     }
 
@@ -244,7 +253,7 @@ namespace mu2e {
 
     bool passed = false;
     CLHEP::Hep3Vector pos(0.,0.,0.);
-    CLHEP::HepLorentzVector mome, momp;
+    CLHEP::HepLorentzVector mome, momp, momg;
 
     //Get the process information for photon conversions to sample from
     if(!photon_) {
@@ -260,12 +269,21 @@ namespace mu2e {
 	      if(g4pprm) {
 		G4VEmModel* emmodel = g4pprm->EmModel(0); //BetheHeitler model, E_gamma < 80 GeV
 		if(emmodel) {
+#if G4VERSION<4106
 		  g4bhm_ = (G4BetheHeitlerModel*) emmodel;
 		  if(g4bhm_) {
-		    printf("GammaConversionGun::produce : Successfully initialized Bethe Heitler Model\n");
+		    printf("GammaConversionGun::produce : Successfully retrieved Bethe Heitler Model\n");
 		  } else
 		    throw cet::exception("ERROR")
-		      << "GammaConversionGun::produce : Failed to initialize Bethe Heitler Model\n";
+		      << "GammaConversionGun::produce : Failed to retrieve Bethe Heitler Model\n";
+#else
+		  g4ppr_ = (G4PairProductionRelModel*) emmodel;
+		  if(g4ppr_) {
+		    printf("GammaConversionGun::produce : Successfully retrieved PairProductionRel Model\n");
+		  } else
+		    throw cet::exception("ERROR")
+		      << "GammaConversionGun::produce : Failed to retrieve PairProductionRel Model\n";
+#endif
 		} else
 		  throw cet::exception("ERROR")
 		    << "GammaConversionGun::produce : Failed to initialize EM Model\n";
@@ -314,7 +332,8 @@ namespace mu2e {
 
       CLHEP::Hep3Vector mom(px, py, pz);
       if(testE_ > 0.) mom.setMag(testE_);
-      
+      momg.setVect(mom);
+      momg.setE(mom.mag());
       passed = passed && (pMax_ < 0. || pMax_ > gen_energy);
       if(!passed) continue;
       _hgencuts->Fill(3); //passed maximum gen photon momentum cut
@@ -339,19 +358,51 @@ namespace mu2e {
 
       //sample the spectrum
       std::vector<G4DynamicParticle*> *g4dpv = new std::vector<G4DynamicParticle*>();
-      G4Material* material = findMaterialOrThrow(mat);
-      G4MaterialCutsCouple* matcut = new G4MaterialCutsCouple(material);
+      G4MaterialCutsCouple* matcut;
+      std::string matString(mat);
+      if(!materialMap[matString]) {
+	//create a material cut couple, then find a selector to point to with the right material
+	G4Material* material = findMaterialOrThrow(mat);
+	matcut = new G4MaterialCutsCouple(material);
+	//search for an element selector with the right material and set the index to it
+	std::vector<G4EmElementSelector*>* elmSelectors;
+#if G4VERSION<4106      
+	elmSelectors = g4bhm_->GetElementSelectors();
+#else
+	elmSelectors = g4ppr_->GetElementSelectors();
+#endif
+	unsigned nSelectors = (*elmSelectors).size();
+	for(unsigned index = 0; index < nSelectors; ++index) {
+	  G4EmElementSelector* elmSelect;
+	  elmSelect = (*elmSelectors)[index];
+	  if(matString == elmSelect->GetMaterial()->GetName()) {
+	    materialMap[matString] = matcut;
+	    matcut->SetIndex(index);
+	    if(verbosityLevel_ > 0)
+	      std::cout << "Added material " << mat << " to the map with index "
+			<< index << std::endl;
+	  }
+	  if(matcut->GetIndex() < 0) {
+	    mf::LogWarning("G4") <<
+	      "No Material Cut Couple selector found corresponding to " << mat << "! Continuing...\n";
+	    continue;
+	  }
+	}
+      } else
+	matcut = materialMap[matString];
       mom.setMag(1.); //just need momentum direction with the energy
       G4DynamicParticle* g4dp = new G4DynamicParticle(photon_, mom, photonE);
+#if G4VERSION<4106      
       g4bhm_->SampleSecondaries(g4dpv, matcut, g4dp,0.,0.);
-
+#else
+      g4ppr_->SampleSecondaries(g4dpv, matcut, g4dp,0.,0.);
+#endif
       //get e+- pair
       mome = (*g4dpv)[0]->Get4Momentum();
       momp = (*g4dpv)[1]->Get4Momentum();
 
       //release memory
       delete g4dp;
-      delete matcut;
       for(auto dp : *g4dpv)
 	delete dp;
       delete g4dpv;
@@ -405,6 +456,9 @@ namespace mu2e {
 
     _hy->Fill(lepy);
 
+    CLHEP::Hep3Vector p_e = mome.vect(), p_p = momp.vect(), p_g = momg.vect();
+    _hcosEvsP->Fill((p_p.angle(p_g))*momp.e()/0.511, (p_e.angle(p_g))*mome.e()/0.511);
+    _hcosChange->Fill(p.cosTheta()-p_g.cosTheta());
     
     _hmomentum->Fill(energy);
 
