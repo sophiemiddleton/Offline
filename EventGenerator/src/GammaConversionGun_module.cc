@@ -218,7 +218,7 @@ namespace mu2e {
       _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
       _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
       _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
-      _hcosEvsP  = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 100, 0., 315., 100, 0., 315.);
+      _hcosEvsP  = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 150, 0., 15., 150, 0., 15.);
       _henergyChange = tfdir.make<TH1F>("henergyChange", "E(photon) - E(e+e-)", 200,-1.,1.);
       _hcosChange = tfdir.make<TH1F>("hcosChange", "cos(photon) - cos(e+e-)", 200,-1.,1.);
 
@@ -352,10 +352,9 @@ namespace mu2e {
     _hmomentum->Fill(energy);
     _henergyChange->Fill(momg.e()-energy);
     _hcosChange->Fill(momg.vect().cosTheta()-(mome+momp).vect().cosTheta());
-    p=(momg.vect());
 
-    CLHEP::Hep3Vector p_e = mome.vect(), p_p = momp.vect();
-    _hcosEvsP->Fill(acos(p_p.angle(p))*p_p.mag(), acos(p_e.angle(p))*p_e.mag());
+    CLHEP::Hep3Vector p_e = mome.vect(), p_p = momp.vect(), p_g = momg.vect();
+    _hcosEvsP->Fill((p_p.angle(p_g))*momp.e()/0.511, (p_e.angle(p_g))*mome.e()/0.511);
   }
 
 
