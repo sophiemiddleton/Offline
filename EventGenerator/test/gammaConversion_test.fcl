@@ -57,7 +57,8 @@ physics : {
 	
 }
     e1 : [ ] 
-    p1 : [ generate, g4run ] // g4run is needed to build physics process list
+    p1 : [ generate ] // g4run is needed to build physics process list
+    # p1 : [ generate, g4run ] // g4run is needed to build physics process list
     # p1 : [ generate, genfilter, g4run ] // g4run is needed to build physics process list
     trigger_paths : [ p1 ]
     end_paths : [ e1 ]
