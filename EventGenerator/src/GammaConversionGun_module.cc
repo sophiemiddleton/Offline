@@ -42,9 +42,6 @@
 #include "GeneralUtilities/inc/RSNTIO.hh"
 #include "Mu2eG4/inc/findMaterialOrThrow.hh"
 
-// G4 includes.
-#include "G4Material.hh"
-
 // ROOT includes
 #include "TTree.h"
 #include "TFile.h"
@@ -298,7 +295,6 @@ namespace mu2e {
 	std::cout << "Passed min photon energy cut\n";
 
       //sample the spectrum
-      // G4Material* material = findMaterialOrThrow(mat);
       spectrum_->fire(momg, spectrum_->_elementMap[13], mome, momp);
 
       passed = passed && (mome.vect().mag() > pMin_ || momp.vect().mag() > pMin_);
