@@ -158,11 +158,14 @@ namespace mu2e {
     double cosp = std::cos(phi);
 
     double cost = GammaPairConversionSpectrum::sampleCosTheta(electron_ke);
+    //cos = u*ke/m
     double sint = std::sqrt((1.-cost)*(1.+cost));
 
     electron_dir.set(sint*cosp, sint*sinp, cost);
     electron_dir.rotateUz(photon_dir);
 
+    // double u = _me*cos/electron_ke;
+    // cost = u*positron_ke/_me;
     cost = GammaPairConversionSpectrum::sampleCosTheta(positron_ke);
     sint = std::sqrt((1.-cost)*(1.+cost));
 
