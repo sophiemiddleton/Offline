@@ -14,11 +14,12 @@
 
 * STAGE 0: From protons to inelastic vertices on production target 
 ** define stage and fclname
+   user=`whoami`
    stage=0
    fclname=vertex_s0.fcl
    file:vertex_s0.fcl
 ** Define working dir in /mu2e/data2
-   stage0dir=/mu2e/data2/${user}/pbar/stage$stage
+   stage0dir=/mu2e/data2/users/${user}/pbar/stage$stage
    mkdir -p $stage0dir
 ** Copy fcl in working dir and move there
    cp $fclname $stage0dir
@@ -48,11 +49,12 @@ uintmu2e::PhysicalVolumeInfomvstd::pairs    compressPV  pbars0  3468039105
 
 * STAGE 1: From inelastic vertices to TS entrance (VD91) 
 ** define stage and fclname
+   user=`whoami`
    stage=1
    fclname=vertex_s1_sdf.fcl
    file:vertex_s1_sdf.fcl
-** Define working dir in /mu2e/data2
-   stage1dir=/mu2e/data2/${user}/pbar/stage$stage
+** Define working dir in /mu2e/data2/users
+   stage1dir=/mu2e/data2/users/${user}/pbar/stage$stage
    mkdir -p $stage1dir
 ** Copy fcl in working dir and move there
    cp $fclname $stage1dir
@@ -90,11 +92,12 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
 
 * STAGE 2: From TS entrance (VD91) to Coll31Out (VD31) before TS3 window 
 ** define stage and fclname
+   user=`whoami`
    stage=2
-   fclname=vertex_s2_sdf.fcl
-   file:vertex_s2_sdf.fcl
-** Define working dir in /mu2e/data2
-   stage2dir=/mu2e/data2/${user}/pbar/stage$stage
+   fclname=vertex_s2.fcl
+   file:vertex_s2.fcl
+** Define working dir in /mu2e/data2/users
+   stage2dir=/mu2e/data2/users/${user}/pbar/stage$stage
    mkdir -p $stage2dir
 ** Copy fcl in working dir and move there
    cp $fclname $stage2dir
@@ -109,6 +112,75 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
    mv sim.owner.pbar_s2toColl31Out.version.sequencer.art $stage2File
 ** Dump Data Products
    mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage2File -n 1 
+*** The result is 
+****     *Event*
+
+
+****     *SubRun*
+
+** Come back 
+   cd $startdir
+
+
+* STAGE 3: From Coll31Out (VD31) before TS3 window to TS5 
+** define stage and fclname
+   user=`whoami`
+   stage=3
+   fclname=vertex_s3.fcl
+   file:vertex_s3.fcl
+** Define working dir in /mu2e/data2/users
+   stage3dir=/mu2e/data2/users/${user}/pbar/stage$stage
+   mkdir -p $stage3dir
+** Copy fcl in working dir and move there
+   cp $fclname $stage3dir
+   cd $stage3dir
+** Define number of events log file and output file
+   nev=10000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage3File=stage${stage}_test${nev}.art
+** Run fcl file
+   mu2e -c $fclname -n $nev -T $rootFile -s ${stage2dir}/$stage2File | tee $logfile
+   mv sim.owner.pbar_s3.version.sequencer.art $stage3File
+** Dump Data Products
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage3File -n 1 
+*** The result is 
+****     *Event*
+
+
+****     *SubRun*
+
+** Come back 
+   cd $startdir
+
+
+* STAGE 4: From TS5 to Stopping Target 
+** define stage and fclname
+   user=`whoami`
+   stage=4
+   prevstage=$(( $stage - 1 ))
+   fclname=vertex_s4.fcl
+   file:vertex_s4.fcl 
+   inspired by file:/mu2e/app/users/murat/beamline_prof/ts_warm_bore/760_1011/DS_pbar_760_1011.fcl
+   including file:../../../JobConfig/beam/DS.fcl
+** Define working dir in /mu2e/data2/users
+   stagedir=/mu2e/data2/users/${user}/pbar/stage$stage
+   prevstagedir=/mu2e/data2/users/${user}/pbar/stage$prevstage
+   mkdir -p $stagedir
+** Copy fcl in working dir and move there
+   cp $fclname $stagedir
+   cd $stagedir
+** Define number of events log file and output file
+   nev=10000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stageFile=stage${stage}_test${nev}.art
+   prevstageFile=stage${prevstage}_test${nev}.art
+** Run fcl file
+   mu2e -c $fclname -n $nev -T $rootFile -s ${prevstagedir}/$prevstageFile | tee $logfile
+   mv sim.owner.pbar_s4.version.sequencer.art $stage3File
+** Dump Data Products
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage3File -n 1 
 *** The result is 
 ****     *Event*
 
