@@ -42,7 +42,7 @@ services.message.destinations.log.categories.ArtReport.timespan    : 300
 services.scheduler.wantSummary                                     : true
 
 services.GeometryService.inputFile       : "JobConfig/common/geom_baseline.txt" 
-services.TFileService.fileName           : "nts.owner.vertex_s2.version.sequencer.root"
+services.TFileService.fileName           : "nts.owner.pbar_s2.version.sequencer.root"
 
  services.SeedService.baseSeed          : 8
  services.SeedService.maxUniqueEngines  : 20
@@ -63,10 +63,10 @@ physics : {
             //generatorModuleLabel : generate 
             MultiStageParameters : {
 		simParticleNumberOffset : 2000000
-		genInputHits               : ["g4filter:enterTS"]
-		inputSimParticles          : "g4filter:enterTS"
+		genInputHits               : ["g4filter:VirtualDetectorPSPbarIn"]
+		inputSimParticles          : "g4filter"
 		inputMCTrajectories        : ""
-		inputPhysVolumeMultiInfo   : ""
+		inputPhysVolumeMultiInfo   : "" # "compressPV"
 	    }
 
           #  doWriteLegacyPhysVolumeInfo : false
@@ -92,14 +92,14 @@ physics : {
 		      pars: [
      		     {
                         type  : inVolume
-                        pars  : [Coll31_Out]
+                        pars  : [Coll31OutRecord]
 		     },
 		     {
 			type: pdgId
 			pars: [ -2212 ]
 		     }
 		     ]
-                        write : Coll31Out
+                        write : Coll31OutRecord
                     }
                 ]
             }
@@ -116,7 +116,7 @@ physics : {
         readAntiProtonSteps : {
 	    module_type : MyReadAntiProtonSteps
 	    savePDG : [-2212]
-	    psVacuumStepPoints : "Coll31Out"
+	    psVacuumStepPoints : "Coll31OutRecord"
 	    diagLevel 	       : 0
 	}
 
@@ -125,7 +125,7 @@ physics : {
     filters : {
         g4filter : {
             module_type               : FilterG4Out
-            mainHitInputs             : [ "g4run:Coll31Out" ]
+            mainHitInputs             : [ "g4run:Coll31OutRecord" ]
             extraHitInputs            : [ "g4run:virtualdetector"]
             vetoDaughters             : []
         }
