@@ -1,0 +1,27 @@
+# -*- mode:tcl -*-
+#include "JobConfig/beam/DS.fcl"
+
+# physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+
+physics.producers.g4run.MultiStageParameters.simParticleNumberOffset    : 4000000
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo   : "" # "compressPVmuonBeam"
+
+physics.producers.stoppedMuonFinder.particleTypes                       : [ -2212 ]
+physics.producers.stoppedMuonFinder.particleOffsetThreshold             : 4000000
+
+physics.producers.outOfTargetMuonFinder.particleTypes                   : [ -2212 ]
+physics.producers.outOfTargetMuonFinder.particleOffsetThreshold         : 4000000
+
+
+#------------------------------------------------------------------------------
+# take out volume info
+#------------------------------------------------------------------------------
+physics.tgtFilter      : [ g4run, g4consistent, stoppedMuonFinder    , tgtStopFilter] # , compressPVTGTStops]
+physics.ootFilter      : [ g4run, g4consistent, outOfTargetMuonFinder, ootStopFilter] # , compressPVOOTStops]
+physics.g4StatusFilter : [ g4run, "!g4status"]                                        # , compressPVFull ]
+
+# trigger_paths  : [motherFilter, trigCRV, tgtFilter, ootFilter, g4StatusFilter]
+physics.trigger_paths  : [ tgtFilter, ootFilter, g4StatusFilter]
+
+physics.out            : [ tgtStopOutput]
+physics.end_paths      : [ out ]                                                        # , gcl]
