@@ -1,0 +1,120 @@
+#+TITLE: pbar generation
+
+#+DESCRIPTION: Instructions to test pbars generation
+
+* SETUP
+  startdir=`pwd`
+  setup mu2e
+  cd ../../../
+  Offline=`pwd`
+  echo Offline set to $Offline
+  source setup.sh
+  cd $startdir
+  user=`whoami`
+
+* STAGE 0: From protons to inelastic vertices on production target 
+** define stage and fclname
+   stage=0
+   fclname=vertex_s0.fcl
+   file:vertex_s0.fcl
+** Define working dir in /mu2e/data2
+   stage0dir=/mu2e/data2/${user}/pbar/stage$stage
+   mkdir -p $stage0dir
+** Copy fcl in working dir and move there
+   cp $fclname $stage0dir
+   cd $stage0dir
+** Define number of events log file and output file
+   nev=10000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage0File=stage${stage}_test${nev}.art
+** Run fcl file
+   mu2e -c $fclname -n $nev -T $rootFile | tee $logfile
+   mv sim.owner.vertex_s0.version.sequencer.art $stage0File
+** Dump Data Products
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage0File -n 1 
+*** The result is:
+****   *Event* 
+   mu2e::StatusG4                           g4run       pbars0  1355898525
+   mu2e::SimParticlemv                      g4run       pbars0  2556726704
+   mu2e::GenParticles                       generate    pbars0  3296348036
+****   *SubRun* 
+   mu2e::GenEventCount                      genCounter  pbars0  1037629646
+uintmu2e::PhysicalVolumeInfomvstd::pairs    compressPV  pbars0  3468039105
+
+** Come back 
+   cd $startdir
+
+
+* STAGE 1: From inelastic vertices to TS entrance (VD91) 
+** define stage and fclname
+   stage=1
+   fclname=vertex_s1_sdf.fcl
+   file:vertex_s1_sdf.fcl
+** Define working dir in /mu2e/data2
+   stage1dir=/mu2e/data2/${user}/pbar/stage$stage
+   mkdir -p $stage1dir
+** Copy fcl in working dir and move there
+   cp $fclname $stage1dir
+   cd $stage1dir
+** Define number of events log file and output file 
+   nev=10000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage1File=stage${stage}_test${nev}.art
+** Run fcl file 
+   mu2e -c $fclname -n $nev -T $rootFile -s ${stage0dir}/$stage0File | tee $logfile
+   mv sim.owner.pbar_s1toVD91.version.sequencer.art $stage1File
+** Dump Data Products
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage1File -n 1 
+*** The result is 
+****     *Event*
+***** pbars0 
+     mu2e::StatusG4        g4run                      pbars0  1355898525
+mu2e::SimParticlemv        g4run                      pbars0  2556726704
+ mu2e::GenParticles      generate                     pbars0  3296348036 
+***** pbars1 
+ mu2e::StepPointMCs      g4filter    virtualdetector  pbars1   841414781
+     mu2e::StatusG4         g4run                     pbars1  1238003676
+mu2e::SimParticlemv      g4filter                     pbars1  1673729632
+mu2e::SimParticlemv         g4run                     pbars1  2172632305
+ mu2e::StepPointMCs      g4filter VirtualDetectorPSPbarIn pbars1  2609269859
+mu2e::SimParticlemv     pbarWrite                     pbars1  2811951926
+
+****     *SubRun*
+mu2e::GenEventCount    genCounter                       pbars0  1037629646
+
+** Come back 
+   cd $startdir
+
+
+* STAGE 2: From TS entrance (VD91) to Coll31Out (VD31) before TS3 window 
+** define stage and fclname
+   stage=2
+   fclname=vertex_s2_sdf.fcl
+   file:vertex_s2_sdf.fcl
+** Define working dir in /mu2e/data2
+   stage2dir=/mu2e/data2/${user}/pbar/stage$stage
+   mkdir -p $stage2dir
+** Copy fcl in working dir and move there
+   cp $fclname $stage2dir
+   cd $stage2dir
+** Define number of events log file and output file
+   nev=10000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage2File=stage${stage}_test${nev}.art
+** Run fcl file
+   mu2e -c $fclname -n $nev -T $rootFile -s ${stage1dir}/$stage1File | tee $logfile
+   mv sim.owner.pbar_s2toColl31Out.version.sequencer.art $stage2File
+** Dump Data Products
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage2File -n 1 
+*** The result is 
+****     *Event*
+
+
+****     *SubRun*
+
+** Come back 
+   cd $startdir
+
