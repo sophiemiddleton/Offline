@@ -135,7 +135,14 @@ outputs : {
     filteredOutput     : {
 	module_type    : RootOutput
 	SelectEvents   : ["trigFilter"]
-	outputCommands : [ "drop art::TriggerResults_*_*_*"]
+	outputCommands : [ "drop *_*_*_*",
+                           "keep mu2e::GenParticles_*_*_*",
+                           "keep mu2e::GenEventCount_*_*_*",
+        		   "keep mu2e::SimParticle*_*_*_*",
+                           "keep mu2e::StatusG4_*_*_*",
+                           "keep *_g4filter_*_*",
+                           "keep *_compressPV_*_pbars3" ]
+# [ "drop art::TriggerResults_*_*_*"]
       fileName       : "sim.owner.pbar_s3.version.sequencer.art"
     }
 }
