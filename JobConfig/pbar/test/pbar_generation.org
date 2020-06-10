@@ -16,24 +16,26 @@
 ** define stage and fclname
    user=`whoami`
    stage=0
-   fclname=vertex_s0.fcl
+   fclname=vertex_s${stage}.fcl
    file:vertex_s0.fcl
 ** Define working dir in /mu2e/data2
-   stage0dir=/mu2e/data2/users/${user}/pbar/stage$stage
-   mkdir -p $stage0dir
+   stagedir=/mu2e/data2/users/${user}/pbar/stage$stage
+   mkdir -p $stagedir
 ** Copy fcl in working dir and move there
-   cp $fclname $stage0dir
-   cd $stage0dir
+   cp $fclname $stagedir
+   cd $stagedir
 ** Define number of events log file and output file
    nev=10000
    logfile=stage${stage}_test${nev}.log
    rootFile=stage${stage}_test${nev}.root
-   stage0File=stage${stage}_test${nev}.art
+   stageFile=stage${stage}_test${nev}.art
 ** Run fcl file
    mu2e -c $fclname -n $nev -T $rootFile | tee $logfile
-   mv sim.owner.vertex_s0.version.sequencer.art $stage0File
+   mv sim.owner.vertex_s0.version.sequencer.art $stageFile
+*** Result
+TrigReport Events total = 10000 passed = 10000 failed = 0
 ** Dump Data Products
-   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage0File -n 1 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
 *** The result is:
 ****   *Event* 
    mu2e::StatusG4                           g4run       pbars0  1355898525
@@ -51,24 +53,32 @@ uintmu2e::PhysicalVolumeInfomvstd::pairs    compressPV  pbars0  3468039105
 ** define stage and fclname
    user=`whoami`
    stage=1
-   fclname=vertex_s1_sdf.fcl
-   file:vertex_s1_sdf.fcl
+   prevstage=$(( $stage - 1 ))
+   fclname=vertex_s1.fcl
+   file:vertex_s1.fcl
 ** Define working dir in /mu2e/data2/users
-   stage1dir=/mu2e/data2/users/${user}/pbar/stage$stage
-   mkdir -p $stage1dir
+   stagedir=/mu2e/data2/users/${user}/pbar/stage$stage   
+   prevstagedir=/mu2e/data2/users/${user}/pbar/stage$prevstage
+   mkdir -p $stagedir
 ** Copy fcl in working dir and move there
-   cp $fclname $stage1dir
-   cd $stage1dir
+   cp $fclname $stagedir
+   cd $stagedir
 ** Define number of events log file and output file 
    nev=10000
    logfile=stage${stage}_test${nev}.log
    rootFile=stage${stage}_test${nev}.root
-   stage1File=stage${stage}_test${nev}.art
+   stageFile=stage${stage}_test${nev}.art
+   prevstageFile=stage${prevstage}_test${nev}.art
 ** Run fcl file 
-   mu2e -c $fclname -n $nev -T $rootFile -s ${stage0dir}/$stage0File | tee $logfile
-   mv sim.owner.pbar_s1toVD91.version.sequencer.art $stage1File
+   mu2e -c $fclname -n $nev -T $rootFile -s ${prevstagedir}/$prevstageFile | tee $logfile
+   mv sim.owner.pbar_s1toVD91.version.sequencer.art $stageFile
+*** Number of events passed
+    grep "Events total" $logfile
+    returns:
+    TrigReport Events total = 10000 passed = 18 failed = 9982
+
 ** Dump Data Products
-   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage1File -n 1 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
 *** The result is 
 ****     *Event*
 ***** pbars0 
@@ -80,7 +90,7 @@ mu2e::SimParticlemv        g4run                      pbars0  2556726704
      mu2e::StatusG4         g4run                     pbars1  1238003676
 mu2e::SimParticlemv      g4filter                     pbars1  1673729632
 mu2e::SimParticlemv         g4run                     pbars1  2172632305
- mu2e::StepPointMCs      g4filter VirtualDetectorPSPbarIn pbars1  2609269859
+ mu2e::StepPointMCs      g4filter *VirtualDetectorPSPbarIn* pbars1  2609269859
 mu2e::SimParticlemv     pbarWrite                     pbars1  2811951926
 
 ****     *SubRun*
@@ -94,25 +104,32 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
 ** define stage and fclname
    user=`whoami`
    stage=2
+   prevstage=$(( $stage - 1 ))
    fclname=vertex_s2.fcl
    file:vertex_s2.fcl
 ** Define working dir in /mu2e/data2/users
-   stage2dir=/mu2e/data2/users/${user}/pbar/stage$stage
-   mkdir -p $stage2dir
+   stagedir=/mu2e/data2/users/${user}/pbar/stage$stage
+   prevstagedir=/mu2e/data2/users/${user}/pbar/stage$prevstage
+   mkdir -p $stagedir
 ** Copy fcl in working dir and move there
-   cp $fclname $stage2dir
-   cd $stage2dir
+   cp $fclname $stagedir
+   cd $stagedir
 ** Define number of events log file and output file
    nev=10000
    logfile=stage${stage}_test${nev}.log
    rootFile=stage${stage}_test${nev}.root
-   stage2File=stage${stage}_test${nev}.art
+   stageFile=stage${stage}_test${nev}.art
+   prevstageFile=stage${prevstage}_test${nev}.art
 ** Run fcl file
-   mu2e -c $fclname -n $nev -T $rootFile -s ${stage1dir}/$stage1File | tee $logfile
-   mv sim.owner.pbar_s2toColl31Out.version.sequencer.art $stage2File
+   mu2e -c $fclname -n $nev -T $rootFile -s ${prevstagedir}/$prevstageFile | tee $logfile
+   mv sim.owner.pbar_s2toColl31Out.version.sequencer.art $stageFile
+*** Number of events passed
+    grep "Events total" $logfile
+    returns:
+    TrigReport Events total = 18 passed = 0 failed = 18
 ** Dump Data Products
-   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage2File -n 1 
-*** The result is 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
+*** The result is (NO EVENTS!)
 ****     *Event*
 
 
@@ -126,25 +143,32 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
 ** define stage and fclname
    user=`whoami`
    stage=3
+   prevstage=$(( $stage - 1 ))
    fclname=vertex_s3.fcl
    file:vertex_s3.fcl
 ** Define working dir in /mu2e/data2/users
-   stage3dir=/mu2e/data2/users/${user}/pbar/stage$stage
-   mkdir -p $stage3dir
+   stagedir=/mu2e/data2/users/${user}/pbar/stage$stage
+   prevstagedir=/mu2e/data2/users/${user}/pbar/stage$prevstage
+   mkdir -p $stagedir
 ** Copy fcl in working dir and move there
-   cp $fclname $stage3dir
-   cd $stage3dir
+   cp $fclname $stagedir
+   cd $stagedir
 ** Define number of events log file and output file
    nev=10000
    logfile=stage${stage}_test${nev}.log
    rootFile=stage${stage}_test${nev}.root
-   stage3File=stage${stage}_test${nev}.art
+   stageFile=stage${stage}_test${nev}.art
+   prevstageFile=stage${prevstage}_test${nev}.art
 ** Run fcl file
-   mu2e -c $fclname -n $nev -T $rootFile -s ${stage2dir}/$stage2File | tee $logfile
-   mv sim.owner.pbar_s3.version.sequencer.art $stage3File
+   mu2e -c $fclname -n $nev -T $rootFile -s ${prevstagedir}/$prevstageFile | tee $logfile
+   mv sim.owner.pbar_s3.version.sequencer.art $stageFile*** Number of events passed
+*** Number of events passed
+    grep "Events total" $logfile
+    returns:
+    TrigReport Events total = 0 passed = 0 failed = 0
 ** Dump Data Products
-   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage3File -n 1 
-*** The result is 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
+*** The result is  (NO EVENTS!)
 ****     *Event*
 
 
@@ -178,10 +202,15 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
    prevstageFile=stage${prevstage}_test${nev}.art
 ** Run fcl file
    mu2e -c $fclname -n $nev -T $rootFile -s ${prevstagedir}/$prevstageFile | tee $logfile
-   mv sim.owner.pbar_s4.version.sequencer.art $stage3File
+   mv sim.owner.pbar_s4.version.sequencer.art $stageFile
+*** Number of events passed
+    grep "Events total" $logfile
+    returns:
+    TrigReport Events total = 0 passed = 0 failed = 0
+
 ** Dump Data Products
-   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage3File -n 1 
-*** The result is 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
+*** The result is (NO EVENTS!)
 ****     *Event*
 
 
