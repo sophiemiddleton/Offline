@@ -126,14 +126,34 @@ mu2e::GenEventCount    genCounter                       pbars0  1037629646
 *** Number of events passed
     grep "Events total" $logfile
     returns:
+**** nev=10000
     TrigReport Events total = 18 passed = 0 failed = 18
+**** nev=100000
+     TrigReport Events total = 224 passed = 2 failed = 222
+
+    
 ** Dump Data Products
    mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stageFile -n 1 
-*** The result is (NO EVENTS!)
+*** The result is 
 ****     *Event*
 
+mu2e::StepPointMCs      g4filter          virtualdetector        pbars2   420195262
+ mu2e::StepPointMCs      g4filter          Coll31OutRecord        pbars2   798645169
+ mu2e::StepPointMCs      g4filter          virtualdetector        pbars1   841414781
+mu2e::SimParticlemv      g4filter                                 pbars2  1223574947
+     mu2e::StatusG4         g4run                                 pbars1  1238003676
+     mu2e::StatusG4         g4run                                 pbars0  1355898525
+     mu2e::StatusG4         g4run                                 pbars2  1659321375
+mu2e::SimParticlemv      g4filter                                 pbars1  1673729632
+mu2e::SimParticlemv         g4run                                 pbars1  2172632305
+mu2e::SimParticlemv         g4run                                 pbars0  2556726704
+ mu2e::StepPointMCs      g4filter  VirtualDetectorPSPbarIn        pbars1  2609269859
+mu2e::SimParticlemv     pbarWrite                                 pbars1  2811951926
+mu2e::SimParticlemv         g4run                                 pbars2  2857561906
+ mu2e::GenParticles      generate                                 pbars0  3296348036
 
 ****     *SubRun*
+mu2e::GenEventCount    genCounter                       pbars0  1037629646
 
 ** Come back 
    cd $startdir
