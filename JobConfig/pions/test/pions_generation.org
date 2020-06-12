@@ -1,0 +1,98 @@
+#+TITLE: pions generation
+
+#+DESCRIPTION: Instructions to test pion generation
+
+* SETUP 
+  startdir=`pwd`
+  setup mu2e
+  cd ../../../
+  Offline=`pwd`
+  echo Offline set to $Offline
+  source setup.sh
+  cd $startdir
+  user=`whoami`
+  
+* STAGE 1: From proton beam to  
+** define stage and fclname
+   stage=1
+   fclname=pions_g4s1.fcl
+   file:pions_g4s1.fcl
+** Define working dir in /mu2e/data2 
+   stage1dir=/mu2e/data2/${user}/pions/stage$stage
+   mkdir -p $stage1dir
+** Copy fcl in working dir and move there 
+   cp $fclname $stage1dir
+   cd $stage1dir 
+** Define number of events log file and output file 
+   *NB* Need  *~1 hour* to generate *10^5* events
+   nev=100000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage1File=stage${stage}_test${nev}.art
+** Run fcl file 
+   mu2e -c $fclname -n $nev -T $rootFile | tee $logfile
+   mv sim.owner.pions-g4s1.version.sequencer.art $stage1File
+** Summary 
+   TrigReport Events total = 100000 passed = 2657 failed = 97343
+
+** Dump Data Products 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage1File -n 1 
+*** The result is: 
+****   *Event*  
+     mu2e::StatusG4         g4run                      pionsg4s1   292315768
+mu2e::SimParticlemv      g4filter                      pionsg4s1  1510547261
+ mu2e::StepPointMCs      g4filter  virtualdetector     pionsg4s1  1584064474
+ mu2e::GenParticles      generate                      pionsg4s1  3634309483
+ mu2e::StepPointMCs      g4filter         vacuuas1     pionsg4s1  4248005543
+
+****   *SubRun* 
+uintmu2e::PhysicalVolumeInfomvstd::pairs    compressPV pionsg4s1  3804983425
+mu2e::GenEventCount    genCounter pionsg4s1  426294  
+** Back to start dir  
+   cd $startdir
+
+
+
+* STAGE 2: From  to  
+** define stage and fclname
+   stage=2
+   fclname=pions_g4s2.fcl
+   file:pions_g4s2.fcl
+** Define working dir in /mu2e/data2 
+   stage2dir=/mu2e/data2/${user}/pions/stage$stage
+   mkdir -p $stage2dir
+** Copy fcl in working dir and move there 
+   cp $fclname $stage2dir
+   cd $stage2dir 
+** Define number of events log file and output file 
+   nev=100000
+   logfile=stage${stage}_test${nev}.log
+   rootFile=stage${stage}_test${nev}.root
+   stage2File=stage${stage}_test${nev}.art
+** Run fcl file 
+   mu2e -c $fclname -n $nev -T $rootFile -s ${stage1dir}/$stage1File | tee $logfile
+   mv sim.owner.pions-g4s2.version.sequencer.art $stage2File
+** Summary 
+   TrigReport Events total = 2657 passed = 406 failed = 2251
+** Dump Data Products 
+   mu2e -c $Offline/Print/fcl/dumpDataProducts.fcl -s $stage2File -n 1 
+*** The result is:
+****   *Event*     
+***** pionsg4s1
+     mu2e::StatusG4         g4run                      pionsg4s1   292315768
+ mu2e::GenParticles      generate                      pionsg4s1  3634309483
+***** pionsg4s2
+     mu2e::StatusG4         g4run                      pionsg4s2   977351099
+mu2e::SimParticlemv      g4filter                      pionsg4s2  1898204414
+ mu2e::StepPointMCs      g4filter  virtualdetector     pionsg4s2  1967633433
+ mu2e::StepPointMCs      g4filter         vacuuas2     pionsg4s2  2709580436
+ mu2e::StepPointMCs      g4filter         vacuuas1     pionsg4s2  3592304740
+
+****   *SubRun* 
+uintmu2e::PhysicalVolumeInfomvstd::pairs    compressPV pionsg4s2  3387302722
+                     mu2e::GenEventCount    genCounter pionsg4s1  4262940983
+
+** Come back 
+   cd $startdir
+
+
