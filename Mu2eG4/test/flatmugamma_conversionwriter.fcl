@@ -1,0 +1,79 @@
+# -*- mode:tcl -*-
+# flat range of photons from muon stops to study external RMC background
+#include "JobConfig/primary/flatE.fcl"
+process_name: flatmugammaconversionwriter
+
+# services : 
+#     @local::services
+
+# source       : { module_type : RootInput   }
+
+services.TimeTracker : {
+	printSummary : true
+	dbOutput : {
+	    filename  : ""
+	    overwrite : false
+	}
+    }
+
+outputs : {
+    Output : {
+	module_type : RootOutput
+	SelectEvents : [ p1 ]
+	fileName    : @nil
+	# drop StepPoints from calorimeter
+	outputCommands : @local::DigiCompression.OutputCommands
+    }
+}
+
+physics : {
+    producers : { @table::Primary.producers
+	generate :  @local::EventGenerator.producers.RMCGun
+    }
+    analyzers : { @table::Primary.analyzers }
+    filters : { @table::Primary.filters
+	conversionwriter : {
+	    module_type : GammaConversionPoints
+	    g4ModuleLabel      : "g4run"
+	    generatorLabel     : "generate"
+	    # g4ModuleLabel      : "compressDigiMCs"
+	    # defaultMat         : "StoppingTarget_Al"
+	    # rMin               : -1.
+	    # rMax               : 500
+	    # zMin               : 5000
+	    # zMax               : 8000
+	}
+    }
+    e1 :  [ ] 
+    p1 : [ generate, g4run, conversionwriter ]
+    # e1 :  @local::Primary.EndPath 
+    # p1 : [ @sequence::Primary.TriggerPath , conversionwriter ]
+
+    trigger_paths : [ p1 ]
+    end_paths : [ e1 ]
+}
+
+#include "JobConfig/primary/epilog.fcl"
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+physics.producers.generate.physics.generateIntConversion : 0
+physics.producers.generate.physics.spectrumShape : "flat"
+physics.producers.generate.physics.ehi : 93.
+physics.producers.generate.doHistograms : true
+physics.producers.generate.physics.elow : 85.0
+
+#make it so the event always fails and will quit after the conversion in geant4
+# physics.producers.g4run.steppingAction.minRMCDaughterEnergy : 84.5 // MeV
+# physics.producers.g4run.steppingAction.maxRMCEndpoint : 93.0 // MeV
+
+physics.producers.generate.doEnergyWeights  : false
+physics.producers.generate.energyFuncString : "1/((90.-x)^4 + 0.1)"
+
+physics.producers.generate.doCosWeights  : false
+physics.producers.generate.czFuncString : "max(500*(0.1-abs(x)), 0.1)"
+
+#digi compression check issue, solve by not doing check
+physics.analyzers.digiCompressionCheck.checkTrackerDuplicateSteps : false
+
+services.TFileService.fileName: "nts.owner.flatmugamma_conversionwriter.version.sequencer.root"
+outputs.Output.fileName:        "dig.owner.flatmugamma_conversionwriter.version.sequencer.art"
+

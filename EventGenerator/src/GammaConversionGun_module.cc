@@ -134,6 +134,7 @@ namespace mu2e {
     TH2F* _hcosEvsP;                    //E(e-)/M(e-)*theta(e-) vs E(e+)/M(e+)*theta(e+) wrt photon direction
     TH1F* _henergyChange;
     TH1F* _hcosChange;
+    TH1F* _hRecoilMsq; //Mass^2 of recoiling particle 
   };
 
   //================================================================
@@ -219,6 +220,7 @@ namespace mu2e {
       _hcosEvsP  = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 150, 0., 15., 150, 0., 15.);
       _hcosChange= tfdir.make<TH1F>("hcosChange", "cos(#theta) Change", 200,  -1.,  1.  );
       _henergyChange = tfdir.make<TH1F>("henergyChange", "E(photon) - E(e+e-)", 200,-1.,1.);
+      _hRecoilMsq= tfdir.make<TH1F>("hRecoilMsq", "Mass^2(p(photon) - p(e+e-))", 240,-10.,50.);
 
     }
 
@@ -352,6 +354,11 @@ namespace mu2e {
 
     CLHEP::Hep3Vector p_e = mome.vect(), p_p = momp.vect(), p_g = momg.vect();
     _hcosEvsP->Fill((p_p.angle(p_g))*momp.e()/0.511, (p_e.angle(p_g))*mome.e()/0.511);
+
+    CLHEP::HepLorentzVector recoil = momg - (mome+momp);
+    double recoil_msq = recoil.m2();
+    _hRecoilMsq->Fill(recoil_msq);
+    
   }
 
 
