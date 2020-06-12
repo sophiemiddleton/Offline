@@ -6,6 +6,7 @@
 #ifndef GeneralUtilities_inc_RSNTIO_hh
 #define GeneralUtilities_inc_RSNTIO_hh
 
+
 namespace mu2e {
   namespace IO {
 
@@ -64,6 +65,7 @@ namespace mu2e {
 
     //================================================================
     //For resampling photon conversions
+    enum {kMaxConversionMaterialElements = 10};
     struct ConversionPointF {
       float x;
       float y;
@@ -74,15 +76,22 @@ namespace mu2e {
       float pz;
       float weight;
       float genEnergy;
-      char  mat[40];
+      int   matN; //number of elements in material stored
+      int   matZ[kMaxConversionMaterialElements]; //10 highest fraction materials' z values
+      float matZeff[kMaxConversionMaterialElements]; //10 highest fraction materials' effective z values
+      float matFrac[kMaxConversionMaterialElements]; //10 highest fraction materials' fractions
 
-      ConversionPointF() : x(), y(), z(), time(), px(), py(), pz(), weight(), genEnergy(), mat() {}
+      ConversionPointF() : x(), y(), z(), time(), px(), py(), pz(), weight(), genEnergy(), matN(), matZ(), matZeff(), matFrac() {}
 
-      static const char *branchDescription() {
-        return "x/F:y/F:z/F:time/F:px/F:py/F:pz/F:weight/F:genEnergy/F:mat/C";
+      static const std::string branchDescription() {
+	char description[200];
+	sprintf(description,"x/F:y/F:z/F:time/F:px/F:py/F:pz/F:weight/F:genEnergy/F:matN/I:matZ[%i]/I:matZeff[%i]/F:matFrac[%i]/F",
+		kMaxConversionMaterialElements,kMaxConversionMaterialElements,kMaxConversionMaterialElements);
+	const std::string description_s = description;
+	return description_s;
       }
 
-      static unsigned numBranchLeaves() { return 10; }
+      static unsigned numBranchLeaves() { return 13; }
     };
 
     //================================================================

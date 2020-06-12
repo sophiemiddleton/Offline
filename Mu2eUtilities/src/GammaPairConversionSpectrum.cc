@@ -41,6 +41,30 @@ namespace mu2e {
       
   }
 
+  //select a random element and then get a random conversion event
+  void GammaPairConversionSpectrum::fire(const CLHEP::HepLorentzVector &photon, 
+					 GammaPairConversionSpectrum::materialData &material, 
+					 CLHEP::HepLorentzVector &electron, 
+					 CLHEP::HepLorentzVector &positron) {
+    if(photon.e() < 2.*_me)
+      throw cet::exception("ERROR") << "GammaPairConversion::" << __func__ 
+				    << " Photon energy below conversion threshold!";
+    if(material.elements.size() < 1)
+      throw cet::exception("ERROR") << "GammaPairConversion::" << __func__ 
+				    << " Conversion material has no elements!";
+    //select a random element
+    double r, frac;
+    unsigned nElements = material.elements.size(), index;
+    do {
+      r = _rndFlat->fire();
+      index = (unsigned) nElements*_rndFlat->fire();
+      frac = material.elementFractions[index];
+    } while(r > frac);
+    //fire with the specific material
+    fire(photon, material.elements[index], electron, positron);
+      
+  }
+
   //recommended spectrum to use for photon energies below 80 GeV
   //From G4BetheHeitlerModel::SampleSecondaries
   void GammaPairConversionSpectrum::betheHeitlerModel(const CLHEP::HepLorentzVector &photon,

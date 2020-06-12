@@ -76,7 +76,7 @@ namespace mu2e {
       fhicl::Atom<double> czMax{Name("czMax"), Comment("Stop maximum cos(theta) value"),  1.};
       fhicl::Atom<double> pMin{Name("pMin"), Comment("Minimum photon daughter momentum (MeV/c)"), -1.};
       fhicl::Atom<double> pMax{Name("pMax"), Comment("Maximum photon generated energy (MeV/c) ( < 0 to ignore)"),  -1.};
-      fhicl::Atom<std::string> defaultMat{Name("defaultMaterial"), Comment("Override ntuple material with a given material"),  ""};
+      fhicl::Atom<int>    defaultZ{Name("defaultMaterialZ"), Comment("Override ntuple material with a given material Z"),  -1};
       fhicl::Atom<double> testE{Name("testE"), Comment("Test photon energy to override ntuple energy with (MeV/c) ( < 0 to ignore)"), -1.};
       fhicl::Atom<double> xOffset{Name("solenoidXOffset"), Comment("X coordinate offset for radius calculations (mm)"), -3904.};
     };
@@ -111,7 +111,7 @@ namespace mu2e {
     double czMin_;
     double czMax_;
 
-    std::string defaultMat_; //for testing the pair production spectrum for a given material
+    int defaultZ_; //for testing the pair production spectrum for a given material
     double testE_; //for testing the pair production spectrum for a given Energy
     
     GammaPairConversionSpectrum* spectrum_; //pair production spectrum
@@ -157,7 +157,7 @@ namespace mu2e {
     , pMax_            (pset().pMax())
     , czMin_           (pset().czMin())
     , czMax_           (pset().czMax())
-    , defaultMat_      (pset().defaultMat())
+    , defaultZ_        (pset().defaultZ())
     , testE_           (pset().testE())
     , spectrum_        (new GammaPairConversionSpectrum(&randomFlat_))
     , xOffset_         (pset().xOffset())
@@ -183,9 +183,9 @@ namespace mu2e {
 	<< zMin_ << " < z < " << zMax_ << ", "
 	<< rMin_ << " < r < " << rMax_ << "\n";
 
-    if(defaultMat_.size() > 0)
-      std::cout << "GammaConversionGun: Overriding Ntuple defined material and instead using "
-		<< defaultMat_.c_str() << std::endl;
+    if(defaultZ_ > 0)
+      std::cout << "GammaConversionGun: Overriding Ntuple defined material and instead using Z = "
+		<< defaultZ_ << std::endl;
     if(testE_ > 0) {
       std::cout << "GammaConversionGun: Overriding Ntuple defined energy and instead using "
 		<< testE_ << std::endl;
@@ -234,9 +234,13 @@ namespace mu2e {
     
     //fields in the stop ntuple 
     double x, y, z, t, px, py, pz;
-    char* mat = new char[40];
     double weight;
     double gen_energy;
+    int matN;
+    int maxElem = IO::kMaxConversionMaterialElements;
+    int matZ[maxElem];
+    double matZeff[maxElem], matFrac[maxElem];
+    
 
     bool passed = false;
     CLHEP::Hep3Vector pos(0.,0.,0.);
@@ -247,16 +251,28 @@ namespace mu2e {
       const auto& stop = stops_.fire();
       x  = stop.x;  y  = stop.y;  z  = stop.z;  t = stop.time;
       px = stop.px; py = stop.py; pz = stop.pz; 
-      if(defaultMat_.size() == 0) sprintf(mat,"%s",stop.mat); 
-      else                        sprintf(mat,"%s",defaultMat_.c_str()); 
       weight = stop.weight; gen_energy = stop.genEnergy;
+      if(defaultZ_ > 0) {matN = 1; matZ[0] = defaultZ_; matZeff[0] = defaultZ_; matFrac[0] = 1.;}
+      else {
+	matN = stop.matN;
+	for(int index = 0; index < matN; ++index) {
+	  matZ   [index] = stop.matZ   [index];
+	  matZeff[index] = stop.matZeff[index];
+	  matFrac[index] = stop.matFrac[index];
+	}
+      }
       
       if(verbosityLevel_ > 2) {
 	std::cout << "Next Stop Attempt: (x,y,z,t) = (" << x << "," << y
-	     << "," << z << "," << t << "), "
-	     << "(px,py,pz,gen_energy) = (" << px << "," << py << ","
-	     << pz << "," << gen_energy << "), "
-	     << "material = " << mat << std::endl;
+		  << "," << z << "," << t << "), "
+		  << "(px,py,pz,gen_energy) = (" << px << "," << py << ","
+		  << pz << "," << gen_energy << ") " << std::endl
+		  << "material: N(Elements) = " << matN << " (Z, Zeff, Fraction) -->";
+	for(int index = 0; index < matN; ++index) {
+	  std::cout << " (" << matZ[index] << ", " << matZeff[index] 
+		    << ", " << matFrac[index] << ")";
+	}
+	std::cout << std::endl;
       }
       _hgencuts->Fill(1); //all generations
       passed = !(x < xMin_ || x > xMax_
@@ -297,8 +313,14 @@ namespace mu2e {
       if(verbosityLevel_ > 2) 
 	std::cout << "Passed min photon energy cut\n";
 
+      //create a corresponding material
+      GammaPairConversionSpectrum::materialData material;
+      for(int index = 0; index < matN; ++index) {
+	material.elements.push_back(spectrum_->_elementMap[matZ[index]]);
+	material.elementFractions.push_back(matFrac[index]);
+      }
       //sample the spectrum
-      spectrum_->fire(momg, spectrum_->_elementMap[13], mome, momp);
+      spectrum_->fire(momg, material, mome, momp);
 
       passed = passed && (mome.vect().mag() > pMin_ || momp.vect().mag() > pMin_);
       if(!passed) continue;
@@ -323,8 +345,6 @@ namespace mu2e {
 									 CLHEP::HepLorentzVector(0.,0.,gen_energy,gen_energy),0. ));
     event.put(move(genenergy),"photon"); 
 
-    //release memory
-    delete [] mat;
     if ( !doHistograms_ ) return;
 
     _hcos->Fill((mome+momp).vect().cosTheta());

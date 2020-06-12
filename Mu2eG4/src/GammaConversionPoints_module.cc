@@ -1,7 +1,7 @@
 //
 // Largely based on Filters/src/InflightPionHits and Analyses/src/StoppedParticleFinder
 // Finds and writes out information for generated photons that pair produce
-// Writes conversion point x, y, z, t, px, py, pz, material, event weight, and gen energy
+// Writes conversion point x, y, z, t, px, py, pz, material (z, zeff, and fraction) , event weight, and gen energy
 
 // Mu2e includes.
 #include "MCDataProducts/inc/GenParticleCollection.hh"
@@ -14,9 +14,12 @@
 #include "MCDataProducts/inc/PhysicalVolumeInfoMultiCollection.hh"
 #include "Mu2eUtilities/inc/PhysicalVolumeMultiHelper.hh"
 #include "Mu2eG4/inc/findMaterialOrThrow.hh"
+#include "GeneralUtilities/inc/RSNTIO.hh"
 
 // G4 includes.
 #include "G4Material.hh"
+#include "G4Element.hh"
+#include "G4ElementVector.hh"
 
 // Framework includes.
 #include "canvas/Persistency/Common/Ptr.h"
@@ -41,23 +44,6 @@ using namespace std;
 
 namespace mu2e {
 
-  namespace {
-    struct StopInfo {
-      float x;
-      float y;
-      float z;
-      float time;
-      float px;
-      float py;
-      float pz;
-      float weight;    // for generation weights
-      float genEnergy; // for RMC weights
-      char  mat[40]; // material converted in
-
-      StopInfo() : x(), y(), z(), time(), px(), py(), pz(), weight(), genEnergy(), mat() {}
-    };
-  }
-
   class GammaConversionPoints : public art::EDFilter {
   public:
 
@@ -67,7 +53,7 @@ namespace mu2e {
       fhicl::Atom<std::string> g4ModuleLabel{Name("g4ModuleLabel"), Comment("Geant module label")};
       fhicl::Atom<std::string> simCollectionLabel{Name("simCollectionLabel"), Comment("Sim particle collection module label ("" to use geant label)"),""};
       fhicl::Atom<std::string> generatorLabel{Name("generatorLabel"), Comment("Generator module label for event weights ("" to ignore)"),""};
-      fhicl::Atom<std::string> defaultMat{Name("defaultMat"), Comment("Assume stop is in this given material"),  ""};
+      fhicl::Atom<int> defaultZ{Name("defaultZ"), Comment("Assume stop is in this given material Z"),  -1};
       fhicl::Atom<bool> doFilter{Name("doFilter"), Comment("Whether or not to filter passing events (true/false)"), false};
       fhicl::Atom<double> rMin{Name("rMin"), Comment("Stop minimum radius in the DS (mm)"), -1.};
       fhicl::Atom<double> rMax{Name("rMax"), Comment("Stop maximum radius in the DS (mm)"),  1.e9};
@@ -94,8 +80,8 @@ namespace mu2e {
     std::string simCollectionLabel_;
     std::string generatorLabel_;
 
-    std::string defaultMat_; //default to use if defined
-    bool doFilter_; //whether or not to filter non-conversions
+    int    defaultZ_; //default material Z to use if defined
+    bool   doFilter_; //whether or not to filter non-conversions
     double rMin_; //spacial cuts
     double rMax_; //
     double zMin_; //
@@ -110,7 +96,7 @@ namespace mu2e {
     int nPassed_;
 
     //struct of stop info
-    StopInfo data_;
+    IO::ConversionPointF data_;
 
     const PhysicalVolumeInfoMultiCollection *vols_;
 
@@ -121,7 +107,7 @@ namespace mu2e {
     g4ModuleLabel_(pset().g4ModuleLabel()),
     simCollectionLabel_(pset().simCollectionLabel()),
     generatorLabel_(pset().generatorLabel()),
-    defaultMat_(pset().defaultMat()),
+    defaultZ_(pset().defaultZ()),
     doFilter_(pset().doFilter()),
     rMin_(pset().rMin()),
     rMax_(pset().rMax()),
@@ -131,10 +117,9 @@ namespace mu2e {
     hStoppingcode_(0),
     hStoppingMat_(0),
     ntup_(0),
-    nPassed_(0),
-    data_() {
-      if(defaultMat_.size() > 0)
-	printf("GammaConversionPionts: Using %s material for all stops!\n", defaultMat_.c_str());
+    nPassed_(0) {
+      if(defaultZ_ > 0)
+	printf("GammaConversionPionts: Using Z=%i material for all stops!\n", defaultZ_);
       if(generatorLabel_.size() == 0)
 	printf("GammaConversionPionts: No generator label passed, assuming all events have weight 1\n");
       art::ServiceHandle<art::TFileService> tfs;
@@ -144,12 +129,11 @@ namespace mu2e {
       hStoppingMat_  = tfdir.make<TH1D>( "hStoppingMat", "Photon stopping material",  1, 0.,  1.);
     
       ntup_ = tfdir.make<TTree>( "conversions", "Photon Conversions");
-      ntup_->Branch("stops", &data_, "x/F:y/F:z/F:time/F:px/F:py/F:pz/F:weight/F:genEnergy/F:mat/C");
-
+      ntup_->Branch("stops", &data_, IO::ConversionPointF::branchDescription().c_str());
     }  
 
   bool GammaConversionPoints::beginSubRun(art::SubRun& sr) {
-    if(defaultMat_.size() > 0) return true; //assuming a material so don't need the volume info
+    if(defaultZ_ > 0) return true; //assuming a material so don't need the volume info
     art::Handle<PhysicalVolumeInfoMultiCollection> volh;
     sr.getByLabel(g4ModuleLabel_, volh);
     vols_ = &*volh;
@@ -241,18 +225,29 @@ namespace mu2e {
 	  data_.weight = weight;
 	  data_.genEnergy = pStart.mag();
 
-	  if(defaultMat_.size() == 0) { //find actual Z of the material
+	  //get material properties
+	  if(defaultZ_ <= 0) { //find actual Z of the material
 	    PhysicalVolumeMultiHelper vi(*vols_);
 	    PhysicalVolumeInfo const& endVolParent = vi.endVolume(parent);
 	    const std::string& materialName = endVolParent.materialName();
 	    hStoppingMat_->Fill(materialName.c_str(), 1.);
-	    if(materialName.size() > 40) 
-	      printf("GammaConverionPoints::%s: Warning! Material name longer than material name array! (%s)\n", 
-		     __func__, materialName.c_str());
-
-	    sprintf(data_.mat, "%s",materialName.c_str());
-	    // std::cout << "mat : " << data_.mat << " material : " << materialName.c_str() << std::endl;
-	  } else sprintf(data_.mat,"%s",defaultMat_.c_str());
+	    const G4Material* material = findMaterialOrThrow(materialName);
+	    const int nElements = material->GetNumberOfElements();
+	    const G4ElementVector* elementVector = material->GetElementVector();
+	    const double* fractionVector = material->GetFractionVector();
+	    data_.matN = std::min(nElements, (int) IO::kMaxConversionMaterialElements);
+	    for(int index = 0; index < data_.matN; ++index) {
+	      float matZeff((*elementVector)[index]->GetZ()), matFrac(fractionVector[index]);
+	      data_.matZ   [index] = (*elementVector )[index]->GetZasInt();
+	      data_.matZeff[index] = matZeff;
+	      data_.matFrac[index] = matFrac;
+	    }
+	  } else {
+	    data_.matN = 1;
+	    data_.matZ   [0] = defaultZ_;
+	    data_.matZeff[0] = defaultZ_;
+	    data_.matFrac[0] = 1.;
+	  }
 
 	  ntup_->Fill();
 	  ++nPassed_; 

@@ -49,6 +49,9 @@ namespace mu2e {
     void fire(const CLHEP::HepLorentzVector &photon, elementData &material, 
 	      CLHEP::HepLorentzVector &electron, CLHEP::HepLorentzVector &positron);
 
+    void fire(const CLHEP::HepLorentzVector &photon, materialData &material,  //will randomly select an element in the material
+	      CLHEP::HepLorentzVector &electron, CLHEP::HepLorentzVector &positron);
+
     void betheHeitlerModel(const CLHEP::HepLorentzVector &photon, elementData &material, 
 			   CLHEP::HepLorentzVector &electron, CLHEP::HepLorentzVector &positron);
 
