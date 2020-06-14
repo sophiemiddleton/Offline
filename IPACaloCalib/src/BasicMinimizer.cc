@@ -15,8 +15,8 @@
 using namespace std;
 
 bool use_multi = false;
-bool mixed = false;
-bool MDCprimaryNofilter = true;
+bool mixed = true;
+bool MDCprimaryNofilter = false;
 bool MDCprimaryPrescale = false;
 //System Details - from /proc/cpuinfo or lscpu can remain hardcoded once we know system (?)
 unsigned N_cores_per_socket = 14;
@@ -402,7 +402,7 @@ int main(int argc, char* argv[]){
         event_list = FakeDateMaker(RawCalibrationResults, offset_vector);
     }
     if(!fake){
-	    if(mixed) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/Combined.csv", "/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/PredicteddE.csv");
+	    if(mixed) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/Combined.csv", "/mu2e/data/users/sophie/mixed-IPA/GridOutcomes/Filtered200K/predicteddEXboost.csv");
       /*if(MDCprimaryNofilter) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/Simulations/IPAFromMDC/Combined.csv", "/mu2e/data/users/sophie/Simulations/IPAFromMDC/PredicteddE.csv");*/
       if(MDCprimaryNofilter) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/Simulations/Primary/RecoResults/BigCombined.csv", "/mu2e/data/users/sophie/Simulations/Primary/RecoResults/predicteddEXBoost.csv");
       if(MDCprimaryPrescale) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/new_format/Prescaler/ForGrid/GridOutcomes/Combined.csv", "/mu2e/data/users/sophie/primary-IPA/new_format/Prescaler/ForGrid/GridOutcomes/predicteddE.csv");
