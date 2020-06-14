@@ -145,7 +145,7 @@ outputs : {
 # redefined variables
 #------------------------------------------------------------------------------
 services.TFileService.fileName     : "nts.owner.pbar_s2_toColl31Out.version.sequencer.root"
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 physics.producers.g4run.physics.minRangeCut : 1.0 // mm
 

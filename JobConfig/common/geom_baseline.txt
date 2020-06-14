@@ -1,4 +1,4 @@
-#include "Mu2eG4/geom/geom_common.txt"
+#include "Mu2eG4/geom/geom_common_su2020.txt"
 
 // This tells emacs to view this file in c++ mode.
 // Local Variables:

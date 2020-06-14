@@ -3,11 +3,12 @@
 # default geometry definition: Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt
 #  previous one              : JobConfig/common/geom_baseline.txt
 
-oldgeom="JobConfig/common/geom_baseline.txt"
-newgeom="Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+# oldgeom="Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+oldgeom="Mu2eG4/geom/geom_common_su2020.txt"
+newgeom="JobConfig/common/geom_baseline.txt"
 
 for f in `find JobConfig -name \*.fcl`; do
-    x=`grep JobConfig/common/geom_baseline.txt $f`
+    x=`grep $oldgeom $f`
     if [ ".$x" != "." ] ; then
 	echo --- $f
 	f1=$f.tmp

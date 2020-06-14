@@ -33,7 +33,7 @@ physics : {
 # redefined parameters
 #------------------------------------------------------------------------------
 services.TFileService.fileName     : "nts.owner.pions-nts3.version.sequencer.root" 
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 # Limit the rate of "Begin processing the ... record" messages
 services.message.destinations.log.categories.ArtReport.reportEvery : 1

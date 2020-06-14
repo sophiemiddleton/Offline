@@ -307,7 +307,7 @@ outputs: {
 #------------------------------------------------------------------------------
 # redefined parameters
 #------------------------------------------------------------------------------
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 services.TFileService.fileName     : "nts.owner.PS.version.sequencer.root"
 
 // Larger range cut for the first stage
