@@ -1,3 +1,4 @@
+# -*- mode:tcl -*-
 #include "CRVResponse/fcl/prolog.fcl"
 #include "CaloMC/fcl/prolog.fcl"
 #include "CaloReco/fcl/prolog.fcl"
@@ -89,12 +90,14 @@ BEGIN_PROLOG
   #  TrkQualCatalog.mvaConfigs : [ @sequence::TrkQualCatalog.mvaConfigs, @local::YourNewTrkQualConfig  ] 
 
   TrkQual : {
-  	  module_type : TrackQuality
+      module_type    : TrackQuality
+      TrainingNamePos: "TrkQualPos"
+      TrainingNameNeg: "TrkQualNeg"
   }
   TrkQualNeg : @local::TrkQual
-  TrkQualNeg.TrainingName : "TrkQualNeg"
+  # TrkQualNeg.TrainingName : "TrkQualNeg"
   TrkQualPos : @local::TrkQual
-  TrkQualPos.TrainingName : "TrkQualPos"
+  # TrkQualPos.TrainingName : "TrkQualPos"
 
   TrkQualDeM		       : @local::TrkQualNeg
   TrkQualDeM.KalSeedCollection : "KFFDeM"

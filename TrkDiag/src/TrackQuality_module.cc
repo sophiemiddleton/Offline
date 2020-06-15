@@ -43,9 +43,10 @@ namespace mu2e
       using Name=fhicl::Name;
       using Comment=fhicl::Comment;
 
-      fhicl::Atom<art::InputTag> kalSeedTag{Name("KalSeedCollection"), Comment("Input tag for KalSeedCollection")};
-      fhicl::Atom<std::string> trainName{Name("TrainingName"), Comment("Name of the training (e.g. TrkQual)")};
-      fhicl::Atom<bool> printMVA{Name("PrintMVA"), Comment("Print the MVA used"), false};
+      fhicl::Atom<art::InputTag> kalSeedTag     {Name("KalSeedCollection"), Comment("Input tag for KalSeedCollection")};
+      fhicl::Atom<std::string>   trainingNamePos{Name("TrainingNamePos"  ), Comment("Name of the (+) training (e.g. TrkQualPos)")};
+      fhicl::Atom<std::string>   trainingNameNeg{Name("TrainingNameNeg"  ), Comment("Name of the (-) training (e.g. TrkQualNeg)")};
+      fhicl::Atom<bool>          printMVA       {Name("PrintMVA"         ), Comment("Print the MVA\'s used"), false};
     };
 
     using Parameters = art::EDProducer::Table<Config>;
@@ -56,8 +57,9 @@ namespace mu2e
     void initializeMVA(std::string xmlfilename);
 
     art::InputTag _kalSeedTag;
-    std::string _trainName;
-    bool _printMVA;
+    std::string   _trainingNamePos;
+    std::string   _trainingNameNeg;
+    bool          _printMVA;
 
     mu2e::ProditionsHandle<mu2e::TrkQualCatalog> _trkQualCatalogH;
 
@@ -67,7 +69,8 @@ namespace mu2e
   TrackQuality::TrackQuality(const Parameters& conf) :
     art::EDProducer{conf},
     _kalSeedTag(conf().kalSeedTag()), 
-    _trainName(conf().trainName()),
+    _trainingNamePos(conf().trainingNamePos()),
+    _trainingNameNeg(conf().trainingNameNeg()),
     _printMVA(conf().printMVA())
   {
     produces<TrkQualCollection>();
@@ -85,15 +88,23 @@ namespace mu2e
     const auto& kalSeeds = *kalSeedHandle;
 
     TrkQualCatalog const& trkQualCatalog = _trkQualCatalogH.get(event.id());
-    TrkQualEntry const& trkQualEntry = trkQualCatalog.find(_trainName);
+    TrkQualEntry const& trkQualEntryPos = trkQualCatalog.find(_trainingNamePos);
+    TrkQualEntry const& trkQualEntryNeg = trkQualCatalog.find(_trainingNameNeg);
 
     if(_printMVA) {
-      trkQualEntry._mvaTool->showMVA();
+      trkQualEntryPos._mvaTool->showMVA();
+      trkQualEntryNeg._mvaTool->showMVA();
     }
 
     // Go through the tracks and calculate their track qualities
     for (const auto& i_kalSeed : kalSeeds) {
       TrkQual trkqual;
+
+      const TrkQualEntry* trkQualEntry(nullptr);
+
+      double charge = i_kalSeed.particle().charge();
+      if (charge > 0) trkQualEntry = &trkQualEntryPos;
+      else            trkQualEntry = &trkQualEntryNeg;
 
       static TrkFitFlag goodfit(TrkFitFlag::kalmanOK);
       if (i_kalSeed.status().hasAllProperties(goodfit)) {
@@ -133,15 +144,13 @@ namespace mu2e
 	}
 	kseg = *bestkseg;
 	if (bestkseg != ksegs.end()) {
-	  double charge = i_kalSeed.particle().charge();
 	  
 	  trkqual[TrkQual::momerr] = bestkseg->momerr();
-	  trkqual[TrkQual::d0] = -1*charge*bestkseg->helix().d0();
-	  trkqual[TrkQual::rmax] = -1*charge*(bestkseg->helix().d0() + 2.0/bestkseg->helix().omega());
+	  trkqual[TrkQual::d0    ] = -1*charge*bestkseg->helix().d0();
+	  trkqual[TrkQual::rmax  ] = -1*charge*(bestkseg->helix().d0() + 2.0/bestkseg->helix().omega());
 	  
 	  trkqual.setMVAStatus(MVAStatus::calculated);
-	  trkqual.setMVAValue(trkQualEntry._mvaTool->evalMVA(trkqual.values(), trkQualEntry._mvaMask));
-
+	  trkqual.setMVAValue(trkQualEntry->_mvaTool->evalMVA(trkqual.values(), trkQualEntry->_mvaMask));
 	}
 	else {
 	  trkqual.setMVAStatus(MVAStatus::filled);
@@ -151,9 +160,9 @@ namespace mu2e
 
       // Get the efficiency cut that this track passes
       Float_t passCalib = 0.0; // everything will pass a 100% efficient cut
-      if (trkQualEntry._calibrated) {
+      if (trkQualEntry->_calibrated) {
 	//	std::cout << _trainName << " = " << trkqual.MVAValue() << std::endl;
-	for (const auto& i_pair : trkQualEntry._effCalib) {
+	for (const auto& i_pair : trkQualEntry->_effCalib) {
 	  //	  std::cout << i_pair.first << ", " << i_pair.second << ": ";
 	  if (trkqual.MVAValue() >= i_pair.second) {
 	    //	    std::cout << "PASSES" << std::endl;
