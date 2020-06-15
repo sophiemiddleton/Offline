@@ -24,6 +24,7 @@
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/SubRun.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
@@ -37,6 +38,7 @@
 #include "MCDataProducts/inc/GenParticle.hh"
 #include "MCDataProducts/inc/GenParticleCollection.hh"
 #include "MCDataProducts/inc/EventWeight.hh"
+#include "MCDataProducts/inc/GenEventCount.hh"
 #include "Mu2eUtilities/inc/Table.hh"
 #include "Mu2eUtilities/inc/RootTreeSampler.hh"
 #include "Mu2eUtilities/inc/GammaPairConversionSpectrum.hh"
@@ -78,13 +80,15 @@ namespace mu2e {
       fhicl::Atom<double> pMax{Name("pMax"), Comment("Maximum photon generated energy (MeV/c) ( < 0 to ignore)"),  -1.};
       fhicl::Atom<int>    defaultZ{Name("defaultMaterialZ"), Comment("Override ntuple material with a given material Z"),  -1};
       fhicl::Atom<double> testE{Name("testE"), Comment("Test photon energy to override ntuple energy with (MeV/c) ( < 0 to ignore)"), -1.};
+      fhicl::Atom<int>    requireCharge{Name("requireCharge"), Comment("Require a specific photon daughter to pass the cuts"), 0};
       fhicl::Atom<double> xOffset{Name("solenoidXOffset"), Comment("X coordinate offset for radius calculations (mm)"), -3904.};
     };
     typedef art::EDProducer::Table<Config> Parameters;
 
 
     explicit GammaConversionGun(const Parameters& pset);
-    virtual void produce(art::Event& event);
+    virtual void produce(art::Event& event) override;
+    virtual void endSubRun(art::SubRun& sr) override;
     int                 verbosityLevel_;
 
     art::RandomNumberGenerator::base_engine_t& eng_;
@@ -113,9 +117,13 @@ namespace mu2e {
 
     int defaultZ_; //for testing the pair production spectrum for a given material
     double testE_; //for testing the pair production spectrum for a given Energy
-    
+    int requireCharge_; //require specific charge daughter to pass the cuts
+
     GammaPairConversionSpectrum* spectrum_; //pair production spectrum
     double xOffset_; //ds axis x offset
+
+    GenEventCount::count_t genEvents_; //for normalization
+    GenEventCount::count_t passedEvents_; //produced statistics
 
     TH1D* _hgencuts; //records number of events attempted
     TH1F* _hmomentum;
@@ -159,12 +167,17 @@ namespace mu2e {
     , czMax_           (pset().czMax())
     , defaultZ_        (pset().defaultZ())
     , testE_           (pset().testE())
+    , requireCharge_   (pset().requireCharge())
     , spectrum_        (new GammaPairConversionSpectrum(&randomFlat_))
     , xOffset_         (pset().xOffset())
+    , genEvents_       (0)
+    , passedEvents_    (0)
   {
     produces<mu2e::GenParticleCollection>();
     produces<mu2e::EventWeight>();
     produces<GenParticle>("photon"); //store photon generation energy for RMC weights
+    produces<mu2e::GenEventCount, art::InSubRun>(); //for normalization
+    produces<mu2e::GenEventCount, art::InSubRun>("passedEvents"); //for tracking events actually produced
 
 
     if(verbosityLevel_ > 0) {
@@ -275,6 +288,7 @@ namespace mu2e {
 	std::cout << std::endl;
       }
       _hgencuts->Fill(1); //all generations
+      ++genEvents_;
       passed = !(x < xMin_ || x > xMax_
 		 || y < yMin_ || y > yMax_
 		 || z < zMin_ || z > zMax_
@@ -322,7 +336,11 @@ namespace mu2e {
       //sample the spectrum
       spectrum_->fire(momg, material, mome, momp);
 
-      passed = passed && (mome.vect().mag() > pMin_ || momp.vect().mag() > pMin_);
+      if(requireCharge_ == 0) 
+	passed = passed && (mome.vect().mag() > pMin_ || momp.vect().mag() > pMin_);
+      else
+	//charge specific cut
+	passed = passed && ((requireCharge_ > 0 && momp.vect().mag() > pMin_) || (requireCharge_ < 0 && mome.vect().mag() > pMin_));
       if(!passed) continue;
       _hgencuts->Fill(6); //Final momentum cut
       if(verbosityLevel_ > 2) 
@@ -332,7 +350,7 @@ namespace mu2e {
 
     } while(!passed);
     _hgencuts->Fill(10); //passing all cuts
-    
+    ++passedEvents_;
     output->emplace_back(PDGCode::e_minus, GenId::gammaPairProduction, pos, mome, t);
     output->emplace_back(PDGCode::e_plus , GenId::gammaPairProduction, pos, momp, t);
 
@@ -379,6 +397,17 @@ namespace mu2e {
     double recoil_msq = recoil.m2();
     _hRecoilMsq->Fill(recoil_msq);
     
+  }
+
+  //================================================================
+  void GammaConversionGun::endSubRun(art::SubRun& sr) {
+
+    mf::LogInfo("Summary")<<"Creating GenEventCount records: "<< genEvents_
+                          <<" generated events and "
+			  << passedEvents_ << " passed events for "<<sr.id()<<"\n";
+
+    sr.put(std::unique_ptr<GenEventCount>(new GenEventCount(genEvents_)));
+    sr.put(std::unique_ptr<GenEventCount>(new GenEventCount(passedEvents_)), "passedEvents");
   }
 
 

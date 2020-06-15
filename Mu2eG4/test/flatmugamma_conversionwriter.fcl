@@ -62,8 +62,9 @@ physics.producers.generate.doHistograms : true
 physics.producers.generate.physics.elow : 85.0
 
 #make it so the event always fails and will quit after the conversion in geant4
-# physics.producers.g4run.steppingAction.minRMCDaughterEnergy : 84.5 // MeV
-# physics.producers.g4run.steppingAction.maxRMCEndpoint : 93.0 // MeV
+physics.producers.g4run.physics.steppingActionMinRMCDaughterEnergy : 84.5 // MeV
+physics.producers.g4run.physics.steppingActionMaxRMCEndpoint : 93.0 // MeV
+physics.producers.g4run.physics.steppingActionRMCKillAfterConvert : true
 
 physics.producers.generate.doEnergyWeights  : false
 physics.producers.generate.energyFuncString : "1/((90.-x)^4 + 0.1)"

@@ -1,8 +1,12 @@
 # -*- mode:tcl -*-
-#include "JobConfig/primary/flatE.fcl"
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
 
 process_name: conversionsampler
 
+source       : { module_type : EmptyEvent   }
+services : @local::Services.Sim
 services.TimeTracker : {
 	printSummary : true
 	dbOutput : {
@@ -13,7 +17,7 @@ services.TimeTracker : {
 services.scheduler.wantSummary: true
 
 physics : {
-    producers : { @table::Primary.producers
+    producers : { 
 	generate: {  module_type: GammaConversionGun
 	    verbosityLevel : 0	  
 	    doHistograms   : true
@@ -22,25 +26,24 @@ physics : {
 	    	branchName: "stops"
 	    	treeName: "conversionwriter/gammaStops/conversions"
 	    }
-	    # # pMax            : 90.1 // MeV, maximum photon energy
-	    # pMin            : 88.5 // MeV, minimum daughter energy
-	    # czMin           : -0.2 // minimum photon cos(theta)
-	    # czMax           :  0.2 // maximum photon cos(theta)
-	    # testE           : 90   // MeV, test photon energy to use
-	    # defaultMaterial : StoppingTarget_Al // test stopping material to use
-	    # doOneLepton     : true // only put high energy lepton in the event
-	    # xMin            : -490 // mm, photon vertex cuts 
-	    # xMax            : -290 // mm, photon vertex cuts 
-	    # yMin            : -100 // mm, photon vertex cuts 
-	    # yMax            :  100 // mm, photon vertex cuts 
-	    # zMin            :  350 // mm, photon vertex cuts 
-	    # zMax            :  800 // mm, photon vertex cuts 
-	    # rMin            :  0   // mm, photon vertex cuts 
-	    # rMax            :  500 // mm, photon vertex cuts 	    
+	    # pMax             : 90.1 // MeV, maximum photon energy
+	    # pMin             : 84.489 // MeV, minimum daughter energy
+	    # czMin            : -0.2 // minimum photon cos(theta)
+	    # czMax            :  0.2 // maximum photon cos(theta)
+	    # testE            : 90   // MeV, test photon energy to use
+	    # defaultMaterialZ : 13 // test stopping material to use
+	    # xMin             : -490 // mm, photon vertex cuts
+	    # xMax             : -290 // mm, photon vertex cuts
+	    # yMin             : -100 // mm, photon vertex cuts
+	    # yMax             :  100 // mm, photon vertex cuts
+	    # zMin             :  350 // mm, photon vertex cuts
+	    # zMax             :  800 // mm, photon vertex cuts
+	    # rMin             :  0   // mm, photon vertex cuts
+	    # rMax             :  500 // mm, photon vertex cuts
+	    # requireCharge    : 1 //require positron passes the cuts (only pMin applies)
 	}
     }
-    analyzers : { @table::Primary.analyzers }
-    filters :   { @table::Primary.filters   
+    filters :   { 
 	genfilter: {  module_type: GammaConversionFilter //filtering in a separate module is 1000x slower to generate
 	    doHistograms   : true
 	    # pMax            : 90.1 // MeV, maximum photon energy
@@ -55,39 +58,19 @@ physics : {
 	    # rMax            :  500 // mm, photon vertex cuts 	    
 	}
 	
-}
+    }
     e1 : [ ] 
-    p1 : [ generate ] // g4run is needed to build physics process list
-    # p1 : [ generate, g4run ] // g4run is needed to build physics process list
-    # p1 : [ generate, genfilter, g4run ] // g4run is needed to build physics process list
+    p1 : [ generate ] 
     trigger_paths : [ p1 ]
     end_paths : [ e1 ]
 }
-
-#From JobConfig/primary/epilog.fcl, can't include due to muonStops definition in generate
-physics.producers.cosmicTimeMap.tmin : 400
-physics.producers.cosmicTimeMap.tmax : 1705
-physics.producers.makeSD.AllHitsPlanes : [34,35]
-services.ConditionsService.StrawElectronics.FlashStart : 1705
-services.ConditionsService.StrawElectronics.DiscriminatorThreshold : [ 12.2 , 11.3 , 12.6 , 12.5 , 12.7 , 12.5 , 12.3 , 11.1 , 11.3 , 12.1 , 11.6 , 11.5 , 13.0 , 11.1 , 10.5 , 11.4 , 11.0 , 12.0 , 12.8 , 12.8 , 12.1 , 11.2 , 11.6 , 13.1 , 12.3 , 12.3 , 12.2 , 11.8 , 13.5 , 13.4 , 10.7 , 11.7 , 13.6 , 12.3 , 9.9 , 12.1 , 10.4 , 13.2 , 11.9 , 13.5 , 12.5 , 12.6 , 12.1 , 14.2 , 13.3 , 11.5 , 11.5 , 11.7 , 11.6 , 13.2 , 14.9 , 12.7 , 12.7 , 12.6 , 11.4 , 13.5 , 12.2 , 12.6 , 11.9 , 10.3 , 12.4 , 12.3 , 11.1 , 10.7 , 12.0 , 12.9 , 13.4 , 13.8 , 11.1 , 13.1 , 13.2 , 12.3 , 13.3 , 12.6 , 11.6 , 11.4 , 11.6 , 11.9 , 10.9 , 10.8 , 11.5 , 12.4 , 11.5 , 11.0 , 12.3 , 12.4 , 12.2 , 10.9 , 11.7 , 11.3 , 12.8 , 13.3 , 11.4 , 12.6 , 10.7 , 12.0 , 14.3 , 12.1 , 12.4 , 12.6 , 11.5 , 13.3 , 11.8 , 13.3 , 11.4 , 11.0 , 11.8 , 13.1 , 12.6 , 11.5 , 10.5 , 11.2 , 12.5 , 11.9 , 11.4 , 12.3 , 11.7 , 12.2 , 13.4 , 10.5 , 12.6 , 11.7 , 12.3 , 11.3 , 12.0 , 12.6 , 12.5 , 12.1 , 11.2 , 13.6 , 11.9 , 11.4 , 12.6 , 12.9 , 11.4 , 12.8 , 11.4 , 13.2 , 13.0 , 11.4 , 13.2 , 12.4 , 13.1 , 14.9 , 12.4 , 11.2 , 10.6 , 10.4 , 11.3 , 13.0 , 10.8 , 11.9 , 11.6 , 12.3 , 11.4 , 12.6 , 12.3 , 13.7 , 12.7 , 12.1 , 12.3 , 10.2 , 9.9 , 10.9 , 11.6 , 12.6 , 12.7 , 12.4 , 10.9 , 12.2 , 13.2 , 13.2 , 11.3 , 12.8 , 11.7 , 12.7 , 13.3 , 12.4 , 12.0 , 12.3 , 12.0 , 12.9 , 11.9 , 12.6 , 11.6 , 13.6 , 12.8 , 13.6 , 13.3 , 13.2 , 12.4 , 11.6 ]
-# save the MC Trajectories of primary particles
-physics.producers.g4run.TrajectoryControl: @local::mu2eg4DefaultTrajectories
 # test values
 services.SeedService.baseSeed         :  773651
 services.SeedService.maxUniqueEngines :  20
-
-
-
-#To speed up test running
-physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
-#kill all events in geant to test generator without simulation (much faster)
-# physics.producers.g4run.steppingAction.minRMCDaughterEnergy : 90.0 // MeV
-# physics.producers.g4run.steppingAction.maxRMCEndpoint       : 80.0 // MeV
-
-
 services.TFileService.fileName: "nts.owner.conversionsampler.version.sequencer.root"
 outputs.Output.fileName:        "dig.owner.conversionsampler.version.sequencer.art"
 #hack to access the root file on /pnfs/mu2e/resilient/
 #can instead put the file in the $MU2E_BASE_RELEASE directory to run until is in /cvmfs/mu2e.opensciencegrid.org/DataFiles/
-physics.producers.generate.gammaStops.inputFiles : [ "../../../pnfs/mu2e/resilient/users/mmackenz/gammastops/gamma_stops.root" ]
-
+physics.producers.generate.gammaStops.inputFiles : [ "../../../pnfs/mu2e/resilient/users/mmackenz/gammastops/gamma_stops_material_array.root" ]
+# physics.producers.generate.gammaStops.inputFiles : [ "nts.owner.flatmugamma_conversionwriter.version.sequencer.root" ]
+# physics.producers.generate.verbosityLevel : 10
