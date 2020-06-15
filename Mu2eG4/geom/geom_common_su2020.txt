@@ -1,0 +1,24 @@
+
+// A geometry that uses all the latest Offline code
+// and features that will eventually become default - 
+// the latest for testing..
+
+#include "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+//-----------------------------------------------------------------------------
+// TS3 window: 150 um Ti
+//-----------------------------------------------------------------------------
+string pbar.materialName                  = "G4_Ti";
+double pbar.halfLength                    = 0.075;   // 150 um thick
+//-----------------------------------------------------------------------------
+// TS3 pbar wedge : 2 strips 127 um starting from 50 mm
+//                  heights 90mm and 140 mm
+//-----------------------------------------------------------------------------
+string         pbar.Type                  = "wedge";
+int            pbarwedge.nStrips          = 2;
+vector<double> pbarwedge.stripThicknesses = { 0.127, 0.127 };  // mm
+vector<double> pbarwedge.stripHeights     = {  90.0, 140.0 };  // mm
+
+// This tells emacs to view this file in c++ mode.
+// Local Variables:
+// mode:c++
+// End:

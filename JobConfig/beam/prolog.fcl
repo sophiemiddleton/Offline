@@ -10,7 +10,7 @@ BEGIN_PROLOG
 mu2e.services.simServices: { @table::Services.Sim }
 
 services.TFileService.fileName     : @nil
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 // Limit the amount of "Begin processing the ... record" messages
 mu2e.services.simServices.message.destinations.log.categories.ArtReport.reportEvery: 1

@@ -524,8 +524,8 @@ CalPatRec : { @table::CalPatRec
 	}
 
 	MHFinderTprDmu : { @table::CalPatRec.producers.MergeHelixFinder 
-	    tprHelixCollTag : "HelixFinderMu:Positive"
-	    cprHelixCollTag : "HelixFinderMu:Negative"
+	    tprHelixCollTag : "HelixFinderDmu:Positive"
+	    cprHelixCollTag : "HelixFinderDmu:Negative"
 	}
 
 	MHFinderCprDmu : { @table::CalPatRec.producers.MergeHelixFinder 

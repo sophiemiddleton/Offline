@@ -146,5 +146,5 @@ outputs: {
 // Not too coarse - we care about stopped muon positions.
 physics.producers.g4run.physics.minRangeCut : 0.010 // mm
 
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 services.TFileService.fileName : "nts.owner.stoppedMuonsSingleStage.version.sequencer.root"

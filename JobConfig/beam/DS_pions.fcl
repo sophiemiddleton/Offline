@@ -146,7 +146,7 @@ outputs : {
 # redefined variables
 #------------------------------------------------------------------------------
 services.TFileService.fileName     : "nts.owner.DS-pions.version.sequencer.root"
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 physics.producers.g4run.physics.minRangeCut : 1.0 // mm
 physics.producers.g4run.physics.noDecay     : [ 211, -211 ]

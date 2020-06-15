@@ -159,7 +159,7 @@ draTopLevelDefs: {
 }
 
 draTopLevelDefs.services.TFileService.fileName : @nil
-draTopLevelDefs.services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+draTopLevelDefs.services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 
 dra.filteredOutputDef: {

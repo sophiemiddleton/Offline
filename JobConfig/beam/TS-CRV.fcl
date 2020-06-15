@@ -145,7 +145,7 @@ outputs: {
 # redefined parameters
 #------------------------------------------------------------------------------
 services.TFileService.fileName : "nts.owner.beam-g4s2-crv.version.sequencer.root"
-services.GeometryService.inputFile : "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
 
 //physics.producers.g4run.physics.minRangeCut : 1. // mm
 
