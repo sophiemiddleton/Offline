@@ -79,7 +79,7 @@ namespace mu2e
 
   void TrackQuality::produce(art::Event& event ) {
     // create output
-    unique_ptr<TrkQualCollection> tqcol(new TrkQualCollection());
+    unique_ptr<TrkQualCollection>  tqcol(new TrkQualCollection());
     unique_ptr<RecoQualCollection> rqcol(new RecoQualCollection());
 
     // get the KalSeeds
@@ -87,14 +87,16 @@ namespace mu2e
     event.getByLabel(_kalSeedTag, kalSeedHandle);
     const auto& kalSeeds = *kalSeedHandle;
 
-    TrkQualCatalog const& trkQualCatalog = _trkQualCatalogH.get(event.id());
-    TrkQualEntry const& trkQualEntryPos = trkQualCatalog.find(_trainingNamePos);
-    TrkQualEntry const& trkQualEntryNeg = trkQualCatalog.find(_trainingNameNeg);
+    TrkQualCatalog const& trkQualCatalog  = _trkQualCatalogH.get(event.id());
+    TrkQualEntry   const& trkQualEntryPos = trkQualCatalog.find(_trainingNamePos);
+    TrkQualEntry   const& trkQualEntryNeg = trkQualCatalog.find(_trainingNameNeg);
 
     if(_printMVA) {
       trkQualEntryPos._mvaTool->showMVA();
       trkQualEntryNeg._mvaTool->showMVA();
     }
+
+    printf("TrackQuality::produce: after _printMVA\n");
 
     // Go through the tracks and calculate their track qualities
     for (const auto& i_kalSeed : kalSeeds) {

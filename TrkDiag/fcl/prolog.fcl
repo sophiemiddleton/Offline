@@ -89,6 +89,14 @@ BEGIN_PROLOG
   #		     	    }
   #  TrkQualCatalog.mvaConfigs : [ @sequence::TrkQualCatalog.mvaConfigs, @local::YourNewTrkQualConfig  ] 
 
+##   TrkQual : {
+##       module_type    : TrackQuality
+##   }
+##   TrkQualNeg : @local::TrkQual
+##   TrkQualNeg.TrainingName : "TrkQualNeg"
+##   TrkQualPos : @local::TrkQual
+##   TrkQualPos.TrainingName : "TrkQualPos"
+
   TrkQual : {
       module_type    : TrackQuality
       TrainingNamePos: "TrkQualPos"
@@ -98,6 +106,15 @@ BEGIN_PROLOG
   # TrkQualNeg.TrainingName : "TrkQualNeg"
   TrkQualPos : @local::TrkQual
   # TrkQualPos.TrainingName : "TrkQualPos"
+
+##   # Track quality module
+##   TrkQual : {
+##   	  module_type : TrackQuality
+##   }
+##   TrkQualNeg : @local::TrkQual
+##   TrkQualNeg.TrkQualMVA.MVAWeights : "AnalysisConditions/weights/TrkQual.weights.xml"
+##   TrkQualPos : @local::TrkQual
+##   TrkQualPos.TrkQualMVA.MVAWeights : "AnalysisConditions/weights/TrkQualPos.weights.xml"
 
   TrkQualDeM		       : @local::TrkQualNeg
   TrkQualDeM.KalSeedCollection : "KFFDeM"

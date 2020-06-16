@@ -16,11 +16,17 @@ namespace mu2e {
 
   template <class T>
   struct MVAEntry {
+    
+    MVAEntry() { 
+      _mvaTool = nullptr;
+    }
+
     MVAEntry(std::string trainName, std::string xmlFileName, bool calibrated = false) : 
       _trainName(trainName), _xmlFileName(xmlFileName), _calibrated(calibrated)
-    { }
+    { _mvaTool = nullptr; }
+
     ~MVAEntry() {
-      delete _mvaTool;
+      if (_mvaTool) delete _mvaTool;
     }
 
     void initializeMVA() {
