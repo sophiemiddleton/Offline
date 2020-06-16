@@ -164,8 +164,7 @@ namespace mu2e {
                                              double properTime,
                                              const G4ThreeVector& mom)
   {
-    // Create a new vertex
-    G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, time);
+    int error(0);
 
     if ( verbosityLevel_ > 1) {
       cout << __func__ << " pdgId   : " <<pdgId << endl;
@@ -226,9 +225,13 @@ namespace mu2e {
 
       // the ids should be the same
       if ( !pDef || pdgId != pDef->GetPDGEncoding() ) {
-        if (pDef) {cout << __func__ << " got " << pDef->GetPDGEncoding() << " expected " << pdgId << endl;}
-        throw cet::exception("GENE")
-          << "Problem creating " << pdgId << "\n";
+
+	printf("ERROR in PrimaryGeneratorAction::addG4Particle : ignore particle with unknown PDG code: %i\n",pdgId);
+	error = 1;
+	
+        // if (pDef) {cout << __func__ << " got " << pDef->GetPDGEncoding() << " expected " << pdgId << endl;}
+        // throw cet::exception("GENE")
+        //   << "Problem creating " << pdgId << "\n";
 
       }
 
@@ -241,17 +244,22 @@ namespace mu2e {
 
     }
 
-    G4PrimaryParticle* particle =
-      new G4PrimaryParticle(pdgId,
-                            mom.x(),
-                            mom.y(),
-                            mom.z());
+    if (error == 0) {
+      // Create a new vertex
+      G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, time);
 
-    // Add the particle to the event.
-    vertex->SetPrimary( particle );
+      G4PrimaryParticle* particle =
+	new G4PrimaryParticle(pdgId,
+			      mom.x(),
+			      mom.y(),
+			      mom.z());
 
-    // Add the vertex to the event.
-    event->AddPrimaryVertex( vertex );
+      // Add the particle to the event.
+      vertex->SetPrimary( particle );
+
+      // Add the vertex to the event.
+      event->AddPrimaryVertex( vertex );
+    }
   }
 
 
