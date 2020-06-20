@@ -43,7 +43,9 @@ inline
 std::string
 mu2e::ConfigFileLookupPolicy::
 operator()(std::string const &filename) {
-  return path().find_file(filename);
+  // 2020-06-19 P.M. : add access over XROOTD, assume file name is correct
+  if (filename.find("xroot://") == 0) return filename;
+  else                                return path().find_file(filename);
 }
 
 #endif /* ConfigTools_ConfigFileLookupPolicy_hh */

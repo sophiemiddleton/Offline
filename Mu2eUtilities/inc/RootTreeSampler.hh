@@ -377,7 +377,8 @@ namespace mu2e {
     // Load the records
     for(const auto& fn : inputFiles) {
       const std::string resolvedFileName = ConfigFileLookupPolicy()(fn);
-      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      //      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      TFile *infile = TFile::Open(resolvedFileName.c_str(), "READ");
 
       TTree *nt = dynamic_cast<TTree*>(infile->Get(treeName.c_str()));
       if(!nt) {
@@ -485,7 +486,8 @@ namespace mu2e {
     // Load the records
     for(const auto& fn : inputFiles) {
       const std::string resolvedFileName = ConfigFileLookupPolicy()(fn);
-      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      //      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      TFile *infile = TFile::Open(resolvedFileName.c_str(), "READ");
 
       TTree *nt = dynamic_cast<TTree*>(infile->Get(treeName.c_str()));
       if(!nt) {
@@ -558,7 +560,8 @@ namespace mu2e {
     long res=0;
     for(const auto& fn : inputFiles) {
       const std::string resolvedFileName = ConfigFileLookupPolicy()(fn);
-      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      //      TFile *infile = tfs->make<TFile>(resolvedFileName.c_str(), "READ");
+      TFile *infile = TFile::Open(resolvedFileName.c_str(), "READ");
       TTree *nt = dynamic_cast<TTree*>(infile->Get(treeName.c_str()));
       if(!nt) {
         throw cet::exception("BADINPUT")<<"Could not get tree \""<<treeName
