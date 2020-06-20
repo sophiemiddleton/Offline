@@ -96,8 +96,6 @@ namespace mu2e
       trkQualEntryNeg._mvaTool->showMVA();
     }
 
-    printf("TrackQuality::produce: after _printMVA\n");
-
     // Go through the tracks and calculate their track qualities
     for (const auto& i_kalSeed : kalSeeds) {
       TrkQual trkqual;
