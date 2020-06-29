@@ -15,9 +15,10 @@
 using namespace std;
 
 bool use_multi = false;
-bool mixed = true;
+bool mixed = false;
 bool MDCprimaryNofilter = false;
 bool MDCprimaryPrescale = false;
+bool testCE = true;
 //System Details - from /proc/cpuinfo or lscpu can remain hardcoded once we know system (?)
 unsigned N_cores_per_socket = 14;
 unsigned N_sockets = 2;
@@ -30,7 +31,7 @@ unsigned THREAD_COUNT = 1500;//MAX_THREADS;
 bool diag = true;
 unsigned int 	N_EVENTS;
 unsigned int N_CONVERGED = 0;
-unsigned int N_CRYSTALS = 674;
+unsigned int N_CRYSTALS = 1348;
 double Loss = 0;
 double step_size = 0.0001;
 double error = 1; //0.2671; //sigma of response.
@@ -313,10 +314,10 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
     Csum_km1 = Csum;
     Csum = 0;
   	for(unsigned int m=0; m < event.cluster_size; m++){
-      
+      cout<<"Cluster Size "<<event.cluster_size<<endl;
 			unsigned int Cm = event.crystal_list.crystal_number[m];
 			old_c = constants[Cm];
-			
+			cout<<"Crystal Number "<<Cm<<endl;
       double prediction = 0;
 
 			double sigma = 1;//sqrt(1.68*1.68 +(old_c*event.crystal_list.crystal_energy_error[m]*event.crystal_list.crystal_energy_error[m]));
@@ -324,8 +325,7 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
 			for(unsigned int i=0;i<event.cluster_size;i++){
           unsigned int Ci = event.crystal_list.crystal_number[i];
           prediction +=constants[Ci]*event.crystal_list.crystal_energy[i];
-          Esum+=event.crystal_list.crystal_energy[i];
-        
+          Esum+=event.crystal_list.crystal_energy[i];      
        }
       if(diag) cout<<"Calo E"<<Esum<<" tracker e "<<Etrk<<" calo e "<<Ecalo<<endl;
       double Vm = (event.crystal_list.crystal_energy[m]);
@@ -338,12 +338,12 @@ std::vector<double> SGD(Event event, unsigned int j, std::vector<double> constan
       if(diag) cout<<"Grad Cm "<<dFdCm<<endl;
      
       new_c = (old_c - (1/sigma*sigma)*step_size*constants[Cm]*dFdCm);
-      if (diag) cout<<"Old Cm "<<old_c<<" New Cm "<<new_c<<"True Cm "<<TrueConstants[Cm]<<endl;
+      
       Csum +=new_c;
       dc = abs(new_c - old_c);
-      if(!isnan(new_c ) and dc > dcmin and dc < dcmax and abs(new_c) < max_c){
+      if(!isinf(new_c) and !isnan(new_c ) and dc > dcmin and dc < dcmax and abs(new_c) < max_c){
         constants[Cm] = new_c;
-        if(diag) cout<<"constants updated"<<endl;
+        if (diag) cout<<"Old Cm "<<old_c<<" New Cm "<<new_c<<"True Cm "<<TrueConstants[Cm]<<endl;
       }
     }
     
@@ -384,8 +384,9 @@ int main(int argc, char* argv[]){
      std::string thread_arg = argv[1];
      bool fake = false;
      std::cout<<"[In Main()] Beginning ..."<<std::endl;
-     ofstream outputfile, TrackFile, CrystalsFile;
+     ofstream outputfile, TrackFile, CrystalsFile,truefile;
      outputfile.open("SGDv1.csv");
+     truefile.open("True.csv");
      outputfile<<"cryId,reco,true,Residual"<<std::endl;
      std::vector<double> offset_vector;
 
@@ -396,6 +397,10 @@ int main(int argc, char* argv[]){
 		}
 
 	  SetOffsetVector(RawCalibrationResults, offset_vector);
+    for(unsigned int c=0;c<N_CRYSTALS;c++){
+			truefile<<offset_vector[c]<<endl;
+      
+		}
     std::vector<Event> event_list;
     if(fake) {
         N_EVENTS = 10000;
@@ -406,6 +411,8 @@ int main(int argc, char* argv[]){
       /*if(MDCprimaryNofilter) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/Simulations/IPAFromMDC/Combined.csv", "/mu2e/data/users/sophie/Simulations/IPAFromMDC/PredicteddE.csv");*/
       if(MDCprimaryNofilter) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/Simulations/Primary/RecoResults/BigCombined.csv", "/mu2e/data/users/sophie/Simulations/Primary/RecoResults/predicteddEXBoost.csv");
       if(MDCprimaryPrescale) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/primary-IPA/new_format/Prescaler/ForGrid/GridOutcomes/Combined.csv", "/mu2e/data/users/sophie/primary-IPA/new_format/Prescaler/ForGrid/GridOutcomes/predicteddE.csv");
+      if(testCE) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/CE/MDCReco/Combined.csv", "/mu2e/data/users/sophie/CE/MDCReco/predictedXGboost.csv");
+     // if(testDIO) event_list = BuildEventsFromDataNew("/mu2e/data/users/sophie/CE/MDCReco/Combined.csv", "/mu2e/data/users/sophie/CE/MDCReco/predicteddE.csv");
 			if(diag) std::cout<<"Found "<<event_list.size()<<" Events "<<std::endl;
      }
       N_EVENTS =  event_list.size();//GetLines("PreScaleTracks.csv");
