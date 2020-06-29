@@ -15,9 +15,10 @@
 
 
 namespace mu2e {
-  GammaPairConversionSpectrum::GammaPairConversionSpectrum(CLHEP::RandFlat* rndFlat):  
-    _rndFlat      (rndFlat          ),
-    _gMaxZet(120){
+  GammaPairConversionSpectrum::GammaPairConversionSpectrum(CLHEP::RandFlat* rndFlat, bool correlateAngleOverKE):
+    _rndFlat             (rndFlat),
+    _correlateAngleOverKE(correlateAngleOverKE),
+    _gMaxZet             (120){
 
     GlobalConstantsHandle<ParticleDataTable> pdt;
     _me    = pdt->particle(PDGCode::e_minus ).ref().mass().value();
@@ -181,39 +182,58 @@ namespace mu2e {
     double sinp = std::sin(phi);
     double cosp = std::cos(phi);
 
-    double cost = GammaPairConversionSpectrum::sampleCosTheta(electron_ke);
-    //cos = u*ke/m
-    double sint = std::sqrt((1.-cost)*(1.+cost));
+    double u, theta, cost, sint;
+    if(_correlateAngleOverKE) {
+      u = GammaPairConversionSpectrum::sampleThetaU(electron_ke);
+      theta = u*_me/electron_ke;
+      cost = cos(theta);
+    } else
+      cost = GammaPairConversionSpectrum::sampleCosTheta(electron_ke);
+    sint = std::sqrt((1.-cost)*(1.+cost));
 
     electron_dir.set(sint*cosp, sint*sinp, cost);
     electron_dir.rotateUz(photon_dir);
 
-    // double u = _me*cos/electron_ke;
-    // cost = u*positron_ke/_me;
-    cost = GammaPairConversionSpectrum::sampleCosTheta(positron_ke);
+    if(_correlateAngleOverKE) {
+      theta = u*_me/positron_ke;
+      cost = cos(theta);
+    } else
+      cost = GammaPairConversionSpectrum::sampleCosTheta(positron_ke);
     sint = std::sqrt((1.-cost)*(1.+cost));
 
     positron_dir.set(-sint*cosp, -sint*sinp, cost);
     positron_dir.rotateUz(photon_dir);
-
-    
   }
 
   //From G4ModifiedTsai::SampleCosTheta(G4double kinEnergy)
   double GammaPairConversionSpectrum::sampleCosTheta(double ke) {
     double uMax = 2.*(1. + ke/_me);
-    const double a1 = 1.6;
-    const double a2 = a1/3.;
-    const double border = 0.25;
+    static const double a1 = 1.6;
+    static const double a2 = a1/3.;
+    static const double border = 0.25;
     double u;
     do {
       double rndnum1 = _rndFlat->fire();
-      double rndnum2 = _rndFlat->fire();
-      double uu = -log(rndnum1*rndnum2);
+      const double rndnum2 = _rndFlat->fire();
+      const double uu = -log(rndnum1*rndnum2);
       rndnum1 = _rndFlat->fire();
       u = (border > rndnum1) ? uu*a1 : uu*a2;
     } while(u > uMax);
+    //in GEANT 4.10.p03b used cos(u*me/ke) ~ 1 - (u*me/ke)^2 / 2 = 1 - 2*u^2/ (2 ke/me)^2 ~ 1 - 2*u^2/(2*(1+ke/me))^2
     return 1. - 2.*u*u/uMax/uMax;
+  }
+
+  //From G4BetheHeitlerModel::SampleSecondaries, used in 4.10.4.p03b
+  double GammaPairConversionSpectrum::sampleThetaU(double ke) {
+    static const double a1 = 1.6;
+    static const double a2 = a1/3.;
+    static const double border = 0.25;
+    // double uMax = M_PI*ke/_me; //if above this angle > pi
+    double rndnum1 = _rndFlat->fire(), rndnum2 = _rndFlat->fire();
+    const double uu = -log(rndnum1*rndnum2);
+    rndnum1 = _rndFlat->fire();
+    const double u = (border > rndnum1) ? uu*a1 : uu*a2;
+    return u;
   }
 
   void GammaPairConversionSpectrum::initializeElementData() {

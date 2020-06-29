@@ -39,10 +39,10 @@ namespace mu2e {
       std::vector<double>      elementFractions;
     };
     
-    GammaPairConversionSpectrum(){}
+    GammaPairConversionSpectrum(){ _correlateAngleOverKE = true;}
 
     // random number generators are owned by the callers, no memory cleanup needed
-    GammaPairConversionSpectrum(CLHEP::RandFlat* randFlat);
+    GammaPairConversionSpectrum(CLHEP::RandFlat* randFlat, bool correlateAngleOverKE = true);
 
     ~GammaPairConversionSpectrum(){}
    
@@ -63,7 +63,9 @@ namespace mu2e {
     void samplePairDirections(const CLHEP::HepLorentzVector &photon, double electron_ke,
 			      double positron_ke, CLHEP::Hep3Vector &electron_dir,
 			      CLHEP::Hep3Vector &positron_dir);
+
     double sampleCosTheta(double ke);
+    double sampleThetaU(double ke);
 
     void initializeElementData();
 
@@ -72,8 +74,9 @@ namespace mu2e {
   private:
 
     CLHEP::RandFlat*   _rndFlat;
-    double             _me; // electron mass
+    bool               _correlateAngleOverKE; //add or remove correlation that disappeared in GEANT 4.10.4p03b --> 4.10.5.p01a
     int                _gMaxZet; //maximum element Z
+    double             _me; // electron mass
   };
 
 } // end of namespace mu2e
