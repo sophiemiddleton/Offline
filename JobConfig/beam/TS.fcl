@@ -132,8 +132,8 @@ outputs: {
          "keep mu2e::GenParticles_*_*_*",
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
-         "keep *_muonBeamFilter_*_TS",
-         "keep *_compressPVmuonBeam_*_TS"
+         "keep *_muonBeamFilter_*_*",
+         "keep *_compressPVmuonBeam_*_*"
       ]
       fileName    : "sim.owner.TS-mubeam.version.sequencer.art"
    }
@@ -145,8 +145,8 @@ outputs: {
          "keep mu2e::GenParticles_*_*_*",
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
-         "keep *_crvFilter_*_TS",
-         "keep *_compressPVCRV_*_TS"
+         "keep *_crvFilter_*_*",
+         "keep *_compressPVCRV_*_*"
       ]
       fileName    : "sim.owner.TS-crv.version.sequencer.art"
    }
@@ -168,5 +168,6 @@ outputs: {
 }
 #----------------------------------------------------------------------------------
 services.TFileService.fileName              : "nts.owner.TS.version.sequencer.root"
+services.scheduler.wantSummary              : true
 physics.producers.g4run.physics.minRangeCut : 1. // mm
 
