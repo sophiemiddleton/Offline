@@ -269,6 +269,7 @@ outputs: {
 }
 #------------------------------------------------------------------------------
 services.TFileService.fileName     : "nts.owner.DS.version.sequencer.root"
+services.scheduler.wantSummary     : true
 
 # Limit the amount of "Begin processing the ... record" messages
 
