@@ -97,8 +97,9 @@ physics.detPath: [ "genCounter", "flashResample",
 ]
 
 // Set output file names
-services.TFileService.fileName: "nts.owner.PS-resampler.version.sequencer.root"
-outputs.detectorOutput.fileName: "sim.owner.PS-resampler-TrkCalCRV.version.sequencer.art"
+services.TFileService.fileName     : "nts.owner.PS-resampler.version.sequencer.root"
+services.scheduler.wantSummary     : true
+outputs.detectorOutput.fileName    : "sim.owner.PS-resampler-TrkCalCRV.version.sequencer.art"
 services.GeometryService.simulatedDetector.tool_type : "Mu2e"
 services.GeometryService.inputFile : "Mu2eG4/geom/geom_common_phase1.txt"
 

@@ -308,6 +308,7 @@ outputs: {
 # redefined parameters
 #------------------------------------------------------------------------------
 services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
+services.scheduler.wantSummary     : true
 services.TFileService.fileName     : "nts.owner.PS.version.sequencer.root"
 
 // Larger range cut for the first stage
