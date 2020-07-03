@@ -182,7 +182,7 @@ namespace mu2e {
     double sinp = std::sin(phi);
     double cosp = std::cos(phi);
 
-    double u, theta, cost, sint;
+    double u(0), theta, cost, sint;
     if(_correlateAngleOverKE) {
       u = GammaPairConversionSpectrum::sampleThetaU(electron_ke);
       theta = u*_me/electron_ke;
