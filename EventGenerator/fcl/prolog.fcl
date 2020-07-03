@@ -21,7 +21,7 @@ muonStops : {
 merged_tgtStops_tdr           : [ "mergedMuonStops/mustops.1025a_1426a_1504a.15318715.root" ]
 merged_tgtStops_cd3           : [ "mergedMuonStops/nts.mu2e.cd3-beam-nts3-tgtstops.v533_v543_v563b.001002_00000000.root" ]
 mergedMuon_tgtStops_mdc2018_1 : [ "mergedMuonStops/nts.mu2e.DS-TGTstops.MDC2018a.001002_00000000.root" ]
-mergedMuon_tgtStops_su2020_1  : [ "xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/murat/DataFiles/mergedMuonStops/nts.murat.su2020.bmum0s31b0.001000_00000000.root" ]
+mergedMuon_tgtStops_su2020_1  : [ "xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/mu2epro/su2020/stops/nts.mu2e.su2020.bmum0s31b0.001000_10000000.root" ]
 
 merged_ootStops_tdr           : [ "mergedMuonStops/mustops.1025a_1426a_1504a.15318715.root" ]
 merged_ootStops_cd3           : [ "mergedMuonStops/nts.mu2e.cd3-beam-nts3-ootstops.v533_v543_v563b.001002_00000000.root" ]
