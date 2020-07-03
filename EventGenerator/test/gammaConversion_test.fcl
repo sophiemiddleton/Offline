@@ -30,8 +30,8 @@ physics : {
 	    # pMin             : 84.489 // MeV, minimum daughter energy
 	    # czMin            : -0.2 // minimum photon cos(theta)
 	    # czMax            :  0.2 // maximum photon cos(theta)
-	    # testE            : 90   // MeV, test photon energy to use
-	    # defaultMaterialZ : 13 // test stopping material to use
+	    testE            : 90   // MeV, test photon energy to use
+	    defaultMaterialZ : 13 // test stopping material to use
 	    # xMin             : -490 // mm, photon vertex cuts
 	    # xMax             : -290 // mm, photon vertex cuts
 	    # yMin             : -100 // mm, photon vertex cuts
@@ -41,6 +41,7 @@ physics : {
 	    # rMin             :  0   // mm, photon vertex cuts
 	    # rMax             :  500 // mm, photon vertex cuts
 	    # requireCharge    : 1 //require positron passes the cuts (only pMin applies)
+	    useCorrelatedAngleOverKE : true //whether or not to use cos/KE correlation
 	}
     }
     filters :   { 

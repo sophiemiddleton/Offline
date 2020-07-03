@@ -81,6 +81,7 @@ namespace mu2e {
       fhicl::Atom<int>    defaultZ{Name("defaultMaterialZ"), Comment("Override ntuple material with a given material Z"),  -1};
       fhicl::Atom<double> testE{Name("testE"), Comment("Test photon energy to override ntuple energy with (MeV/c) ( < 0 to ignore)"), -1.};
       fhicl::Atom<int>    requireCharge{Name("requireCharge"), Comment("Require a specific photon daughter to pass the cuts"), 0};
+      fhicl::Atom<bool>   useCorrelatedAngleOverKE{Name("useCorrelatedAngleOverKE"), Comment("Flag to use correlated e+e- cos/KE"), true};
       fhicl::Atom<double> xOffset{Name("solenoidXOffset"), Comment("X coordinate offset for radius calculations (mm)"), -3904.};
     };
     typedef art::EDProducer::Table<Config> Parameters;
@@ -119,6 +120,7 @@ namespace mu2e {
     double testE_; //for testing the pair production spectrum for a given Energy
     int requireCharge_; //require specific charge daughter to pass the cuts
 
+    bool   useCorrelatedAngleOverKE_; //correlate the cos/ke for the e+ and e-
     GammaPairConversionSpectrum* spectrum_; //pair production spectrum
     double xOffset_; //ds axis x offset
 
@@ -148,28 +150,29 @@ namespace mu2e {
   //================================================================
   GammaConversionGun::GammaConversionGun(const Parameters& pset)
     : EDProducer(pset)
-    , verbosityLevel_  (pset().verbosityLevel())
-    , eng_(createEngine(art::ServiceHandle<SeedService>()->getSeed()))
-    , randomFlat_      (eng_)
-    , stops_           (eng_, pset().stops())
-    , doHistograms_    (pset().doHistograms())
-    , xMin_            (pset().xMin())
-    , xMax_            (pset().xMax())
-    , yMin_            (pset().yMin())
-    , yMax_            (pset().yMax())
-    , zMin_            (pset().zMin())
-    , zMax_            (pset().zMax())
-    , rMin_            (pset().rMin())
-    , rMax_            (pset().rMax())
-    , pMin_            (pset().pMin())
-    , pMax_            (pset().pMax())
-    , czMin_           (pset().czMin())
-    , czMax_           (pset().czMax())
-    , defaultZ_        (pset().defaultZ())
-    , testE_           (pset().testE())
-    , requireCharge_   (pset().requireCharge())
-    , spectrum_        (new GammaPairConversionSpectrum(&randomFlat_))
-    , xOffset_         (pset().xOffset())
+    , verbosityLevel_          (pset().verbosityLevel())
+    , eng_(createEngine        (art::ServiceHandle<SeedService>()->getSeed()))
+    , randomFlat_              (eng_)
+    , stops_                   (eng_, pset().stops())
+    , doHistograms_            (pset().doHistograms())
+    , xMin_                    (pset().xMin())
+    , xMax_                    (pset().xMax())
+    , yMin_                    (pset().yMin())
+    , yMax_                    (pset().yMax())
+    , zMin_                    (pset().zMin())
+    , zMax_                    (pset().zMax())
+    , rMin_                    (pset().rMin())
+    , rMax_                    (pset().rMax())
+    , pMin_                    (pset().pMin())
+    , pMax_                    (pset().pMax())
+    , czMin_                   (pset().czMin())
+    , czMax_                   (pset().czMax())
+    , defaultZ_                (pset().defaultZ())
+    , testE_                   (pset().testE())
+    , requireCharge_           (pset().requireCharge())
+    , useCorrelatedAngleOverKE_(pset().useCorrelatedAngleOverKE())
+    , spectrum_                (new GammaPairConversionSpectrum(&randomFlat_, useCorrelatedAngleOverKE_))
+    , xOffset_                 (pset().xOffset())
     , genEvents_       (0)
     , passedEvents_    (0)
   {
@@ -187,6 +190,7 @@ namespace mu2e {
                <<std::endl;
 
       std::cout<<"GammaConversionGun: producing photon " << std::endl;
+      std::cout << "GammaConversionGun: useCorrelatedAngleOverKE = " << useCorrelatedAngleOverKE_ << std::endl;
     }
     if(xMin_ >= xMax_ || yMin_ >= yMax_ || zMin_ >= zMax_ || rMin_ >= rMax_)
       throw cet::exception("BADCONFIG")
