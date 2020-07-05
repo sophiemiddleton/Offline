@@ -21,11 +21,7 @@ physics : {
 	generate: {  module_type: GammaConversionGun
 	    verbosityLevel : 0	  
 	    doHistograms   : true
-	    gammaStops: {
-		@table::muonStops
-	    	branchName: "stops"
-	    	treeName: "conversionwriter/gammaStops/conversions"
-	    }
+	    gammaStops: @local::mu2e.gammaStops
 	    # pMax             : 90.1 // MeV, maximum photon energy
 	    # pMin             : 84.489 // MeV, minimum daughter energy
 	    # czMin            : -0.2 // minimum photon cos(theta)
@@ -70,8 +66,3 @@ services.SeedService.baseSeed         :  773651
 services.SeedService.maxUniqueEngines :  20
 services.TFileService.fileName: "nts.owner.conversionsampler.version.sequencer.root"
 outputs.Output.fileName:        "dig.owner.conversionsampler.version.sequencer.art"
-#hack to access the root file on /pnfs/mu2e/resilient/
-#can instead put the file in the $MU2E_BASE_RELEASE directory to run until is in /cvmfs/mu2e.opensciencegrid.org/DataFiles/
-physics.producers.generate.gammaStops.inputFiles : [ "../../../pnfs/mu2e/resilient/users/mmackenz/gammastops/gamma_stops_material_array.root" ]
-# physics.producers.generate.gammaStops.inputFiles : [ "nts.owner.flatmugamma_conversionwriter.version.sequencer.root" ]
-# physics.producers.generate.verbosityLevel : 10

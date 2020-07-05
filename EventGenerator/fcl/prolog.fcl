@@ -60,6 +60,17 @@ mu2e.IPAMuonStops: {
     verbosityLevel        : 0
 }
 
+# Photon conversion points
+mergedGamma_tgtRegionStops_su2020_1  : [ "xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/mmackenz/gammastops/nts.mu2e.su2020.rmce0s00b0.001000_10000000.root" ]
+
+mu2e.gammaStops : {
+    inputFiles            : @local::mergedGamma_tgtRegionStops_su2020_1
+    averageNumRecordsToUse: 1000000
+    treeName              : "conversionwriter/gammaStops/conversions"
+    branchName            : "stops"
+    verbosityLevel        : 0
+}
+
 # Generate Event
 generate: {
     module_type          : EventGenerator
