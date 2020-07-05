@@ -39,11 +39,11 @@ namespace mu2e {
       std::vector<double>      elementFractions;
     };
     
-    GammaPairConversionSpectrum(){ _correlateAngleOverKE = true;}
+    GammaPairConversionSpectrum(){ _correlateAngleOverKE = false;}
+
+    GammaPairConversionSpectrum(CLHEP::RandFlat* randFlat, bool correlateAngleOverKE = false);
 
     // random number generators are owned by the callers, no memory cleanup needed
-    GammaPairConversionSpectrum(CLHEP::RandFlat* randFlat, bool correlateAngleOverKE = true);
-
     ~GammaPairConversionSpectrum(){}
    
     void fire(const CLHEP::HepLorentzVector &photon, elementData &material, 
