@@ -1,0 +1,238 @@
+# -*- mode:tcl -*- 
+#------------------------------------------------------------------------------
+# su2020/common/templates.fcl 
+# all prolog files have to be included before the templates files
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# global defaults 
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  bgHitFiles   : @nil
+  INPUT_MODULE : EmptyEvent             # EmptyEvent / RootInput
+  TRIGGER_PATH : p1
+  PROCESS_NAME : Stnmaker
+END_PROLOG
+#------------------------------------------------------------------------------
+# no more prologs beyond this point
+# 
+# (1): services section (Services.SimAndReco and Services.Sim today are the same)
+#       add time tracker template
+#------------------------------------------------------------------------------
+services : { @table::Services.SimAndReco
+    TimeTracker : {
+	printSummary : true
+	dbOutput : {
+	    filename  : ""
+	    overwrite : false
+	}
+    }
+}
+
+services.scheduler.wantSummary: true
+services.TFileService.fileName        : "nts._USER_._DATASET_._DSCONF_.sequencer.root" 
+
+#------------------------------------------------------------------------------
+# (2): definition of the input module - can redefine in the top-level prolog
+#------------------------------------------------------------------------------
+source : { 
+    module_type : @local::INPUT_MODULE
+    #    fileNames : ["/mu2e/data/tdr/beam/g4s4p5/tdr.beam.g4s4.conversion.1504a.15729672/good/00000/dsStopsToHitsConversion.root"]
+    #    maxEvents   : 100
+    inputCommands : ['keep *_*_*_*'
+		     #		     , 'drop *_muonTimeMap_*_*'
+		     #		     , 'drop *_protonTimeMap_*_*'
+		     #		     , 'drop mu2eStrawDigis_*_*_*'
+		     #		     , 'drop mu2eStrawHits_*_*_*'
+		     #		     , 'drop *_CaloReadoutHitsMaker_*_*'
+		     #		     , 'drop *_CaloCrystalHitsMaker_*_*'
+		     # Uncomment the above lines to reduce file size.
+		    ]
+}
+
+su2020 : {
+    producers : { 
+#------------------------------------------------------------------------------
+# MC producers
+#------------------------------------------------------------------------------
+	@table::EventGenerator.producers  # defined in EventGenerator
+	@table::CommonMC.producers        # FIXME
+	@table::Mu2eG4.producers          # defined in Mu2eG4/fcl
+	@table::CaloDigiMC.producers      # defined in CaloDigiMC
+	@table::CaloDigiMC.producersMC    # defined in CaloDigiMC
+	@table::CaloCluster.producersMC   # defined in CaloCluster
+	@table::TrackerMC.producers       # defined in TrackerMC
+
+	compressDigiMCs : { @table::DigiCompression.Primary       # defined in Filters/fcl/
+	    crvDigiMCTag         : ""
+	    extraStepPointMCTags : [ "g4run:virtualdetector" ]
+	}
+
+	generate  : { @table::EventGenerator.producers.egun }      # to avoid unnecessary diagnostics
+	genCounter: { module_type: GenEventCounter }
+#------------------------------------------------------------------------------
+# reco producers
+#------------------------------------------------------------------------------
+
+	@table::Reconstruction.producers   # inherited from JobConfig/reco/prolog.fcl
+
+	@table::ParticleID.producers
+	@table::TrackCaloMatching.producers
+
+	@table::CommonTrk.producers
+
+	TrkQualDeMHPar  : { @table::TrkQualDeM  KalSeedCollection: "KFFDeMHPar"  }
+	TrkQualDeMHDar  : { @table::TrkQualDeM  KalSeedCollection: "KFFDeMHDar"  }
+	TrkQualDmuMHPar : { @table::TrkQualDmuM KalSeedCollection: "KFFDmuMHPar" }
+	TrkQualDmuMHDar : { @table::TrkQualDmuM KalSeedCollection: "KFFDmuMHDar" }
+
+#------------------------------------------------------------------------------
+# helix mergers: each combines all found helices with the same direction and mass 
+# into one collection
+#------------------------------------------------------------------------------
+	MHFinderDe : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderDe:Positive", "CalHelixFinderDe:Positive", "HelixFinderDe:Negative", "CalHelixFinderDe:Negative"]
+	}
+	MHFinderDmu : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderDmu:Positive", "CalHelixFinderDmu:Positive", "HelixFinderDe:Negative", "CalHelixFinderDe:Negative"]
+	}
+	MHFinderUe : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderUe:Positive", "HelixFinderUe:Negative"]
+	}
+	MHFinderUmu : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderUe:Positive", "HelixFinderUe:Negative"]
+	}
+
+#------------------------------------------------------------------------------
+# track fit, downstream electron hypothesis
+#------------------------------------------------------------------------------
+	KSFDeMH     : { @table::KSFDeM                            SeedCollection : MHFinderDe  CheckHelicity:false }
+	KFFDeMHPar  : { @table::KFFDeM                            SeedCollection : KSFDeMH  }
+	KFFDeMHDar  : { @table::CalPatRec.producers.CalTrkFitDem  SeedCollection : KSFDeMH  }
+
+#------------------------------------------------------------------------------
+# track fit, downstream muon hypothesis
+#------------------------------------------------------------------------------
+	KSFDmuMH    : { @table::KSFDmuM                           SeedCollection : MHFinderDmu CheckHelicity:false}
+	KFFDmuMHPar : { @table::KFFDmuM                           SeedCollection : KSFDmuMH }
+	KFFDmuMHDar : { @table::CalPatRec.producers.CalTrkFitDmm  SeedCollection : KSFDmuMH }
+
+#------------------------------------------------------------------------------
+# track fit, upstream electron hypothesis
+#------------------------------------------------------------------------------
+	KSFUeMH     : { @table::KSFUeM                            SeedCollection : MHFinderUe  CheckHelicity:false }
+	KFFUeMHPar  : { @table::KFFUeM                            SeedCollection : KSFUeMH  }
+# 	KFFUeMHDar  : { @table::CalPatRec.producers.CalTrkFitUem  
+# 	    SeedCollection : KSFUeMH  
+# 	    fitparticle    : @local::Particle.eplus               # it is only the mass which matters
+# 	    fitdirection   : @local::FitDir.upstream
+# 	}
+
+	#------------------------------------------------------------------------------
+	# track fit, upstream muon hypothesis
+	#------------------------------------------------------------------------------
+	KSFUmuMH    : { @table::KSFUmuM                           SeedCollection : MHFinderUmu CheckHelicity:false}
+	KFFUmuMHPar : { @table::KFFUmuM                           SeedCollection : KSFUmuMH }
+# 	KFFUmuMHDar : { @table::CalPatRec.producers.CalTrkFitDmm  
+# 	    SeedCollection : KSFUmuMH 
+# 	    fitparticle    : @local::Particle.muplus              # it is only the mass which matters
+# 	    fitdirection   : @local::FitDir.upstream
+# 	}
+    }
+#------------------------------------------------------------------------------
+#  filters
+#------------------------------------------------------------------------------
+    filters : {
+	detectorFilter : { @table::FilterStepPointMomentum }
+
+	@table::CalPatRec.filters
+
+	StrawDigiMCFilter : {
+	    module_type           : StrawDigiMCFilter
+	    StrawDigiMCCollection : "makeSD"
+	    MinNDigis             : 10
+	    particleTypes         : [ 11, -11, 13, -13 ]
+	    MinParticleMom        : 40.0
+	    MaxParticleMom        : 1e8
+	}
+    }
+
+    analyzers : {
+	genCountLogger      : { module_type: GenEventCountReader } # defalt: 1 StepPointMC, 10 MeV
+    }
+#------------------------------------------------------------------------------
+# outputs: by default, keep everything
+#------------------------------------------------------------------------------
+    outputs: {
+	defaultOutput : {
+	    module_type   : RootOutput
+	    SelectEvents  : [] 
+	    outputCommands: [ "keep *_*_*_*" 
+# (example)		      , "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_g4run_*_*"
+			     ]
+	}
+    }
+}
+
+#------------------------------------------------------------------------------
+# module sequences - by functionality
+#------------------------------------------------------------------------------
+su2020.gen_g4              : [ generate, genCounter, g4run ]
+
+su2020.gen_g4_detFilter    : [ generate, g4run, detectorFilter ]
+
+su2020.gen_g4_time_map     : [ @sequence::su2020.gen_g4, @sequence::CommonMC.DigiSim ]
+
+su2020.digis               : [ @sequence::TrackerMC.DigiSim, StrawDigiMCFilter, 
+			       @sequence::CaloDigiMC.DigiSim, 
+			       @sequence::CrvDAQPackage.CrvDAQSequence, 
+			       compressDigiMCs 
+			      ]
+
+# calorimeter reconstruction
+su2020.calo_reco            : [ CaloRecoDigiFromDigi ,CaloCrystalHitFromHit, 
+				 CaloProtoClusterFromCrystalHit, CaloClusterFromProtoCluster ]
+
+# track hit reconstruction
+su2020.trk_hit_reco         : [ makeSH, makePH, FlagBkgHits]
+
+
+# CRV reconstruction
+su2020.crv_reco             : [ @sequence::CrvRecoMCPackage.CrvRecoMCSequence ]
+
+# downstream electron reconstruction: e- and e+ combined
+su2020.trk_reco_de  : [
+		       TimeClusterFinderDe, HelixFinderDe,                     # TrkPatRec
+		       CalTimePeakFinder, DeltaFinder, CalHelixFinderDe,       # CalPatRec
+		       MHFinderDe,                                             # helix merging
+		       KSFDeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFDeMHPar, KFFDeMHDar                                  # final Kalman filter fit with the Panel-based AR
+		      ]
+
+# downstream muon reconstruction: mu- and mi+ combined
+su2020.trk_reco_dmu : [
+		       TimeClusterFinderDmu, HelixFinderDmu,                   # TrkPatRec
+		       CalTimePeakFinderMu, DeltaFinderMu, CalHelixFinderDmu,  # CalPatRec
+		       MHFinderDmu,                                            # helix merging
+		       KSFDmuMH,                                               # Seed fit (chisquared, no drift)
+		       KFFDmuMHPar, KFFDmuMHDar                                # final Kalman filter fit with the panel-based AR
+		      ]
+
+# upstream electron reconstruction (e- and e+): standalone-only pattern recognition, 
+# calorimeter-seeded algorithm is designed to deal only with the downstream tracks
+su2020.trk_reco_ue  : [
+		       TimeClusterFinderUe, HelixFinderUe,   
+		       MHFinderUe,                                             # helix merging
+		       KSFUeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFUeMHPar , KFFUeMHDar                                 # final Kalman filter fit
+		      ]
+
+# upstream muon reconstruction (mu- and mu+): standalone-only pattern recognition, 
+# calorimeter-seeded algorithm is designed to deal only with the downstream tracks
+su2020.trk_reco_umu : [
+		       TimeClusterFinderUmu, HelixFinderUmu,   
+		       MHFinderUmu,                                            # helix merging
+		       KSFUmuMH,                                               # Seed fit (chisquared, no drift)
+		       KFFUmuMHPar , KFFUeMHDar                                # final Kalman filter fit
+		      ]
+#------------------------------------------------------------------------------
