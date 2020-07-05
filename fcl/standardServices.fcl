@@ -51,7 +51,7 @@ Services : {
       RandomNumberGenerator : { defaultEngineKind: "MixMaxRng" }
       SeedService	    : { @table::automaticSeeds
 	  baseSeed          :  8
-	  maxUniqueEngines  :  20
+	  maxUniqueEngines  :  100
       }
       G4Helper: {}
   }
