@@ -115,8 +115,9 @@ namespace mu2e {
 
             if(part->genParticle()->generatorId() == GenId::StoppedParticleReactionGun    ||
                part->genParticle()->generatorId() == GenId::dioTail                       ||
-               part->genParticle()->generatorId().isConversion()  ||
-               part->genParticle()->generatorId() == GenId::ExternalRMC          ||
+               part->genParticle()->generatorId().isConversion()                          ||
+               part->genParticle()->generatorId() == GenId::gammaPairProduction           ||
+               part->genParticle()->generatorId() == GenId::ExternalRMC                   ||
                part->genParticle()->generatorId() == GenId::InternalRMC )
 
               {

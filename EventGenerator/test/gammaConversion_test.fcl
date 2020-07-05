@@ -18,7 +18,8 @@ services.scheduler.wantSummary: true
 
 physics : {
     producers : { 
-	generate: {  module_type: GammaConversionGun
+	generate: { 
+	    module_type: GammaConversionGun
 	    verbosityLevel : 0	  
 	    doHistograms   : true
 	    gammaStops: @local::mu2e.gammaStops
@@ -37,7 +38,7 @@ physics : {
 	    # rMin             :  0   // mm, photon vertex cuts
 	    # rMax             :  500 // mm, photon vertex cuts
 	    # requireCharge    : 1 //require positron passes the cuts (only pMin applies)
-	    useCorrelatedAngleOverKE : true //whether or not to use cos/KE correlation
+	    # useCorrelatedAngleOverKE : true //whether or not to use cos/KE correlation
 	}
     }
     filters :   { 

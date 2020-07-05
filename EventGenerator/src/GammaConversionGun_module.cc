@@ -81,7 +81,7 @@ namespace mu2e {
       fhicl::Atom<int>    defaultZ{Name("defaultMaterialZ"), Comment("Override ntuple material with a given material Z"),  -1};
       fhicl::Atom<double> testE{Name("testE"), Comment("Test photon energy to override ntuple energy with (MeV/c) ( < 0 to ignore)"), -1.};
       fhicl::Atom<int>    requireCharge{Name("requireCharge"), Comment("Require a specific photon daughter to pass the cuts"), 0};
-      fhicl::Atom<bool>   useCorrelatedAngleOverKE{Name("useCorrelatedAngleOverKE"), Comment("Flag to use correlated e+e- cos/KE"), true};
+      fhicl::Atom<bool>   useCorrelatedAngleOverKE{Name("useCorrelatedAngleOverKE"), Comment("Flag to use correlated e+e- cos/KE"), false};
       fhicl::Atom<double> xOffset{Name("solenoidXOffset"), Comment("X coordinate offset for radius calculations (mm)"), -3904.};
     };
     typedef art::EDProducer::Table<Config> Parameters;
@@ -178,8 +178,8 @@ namespace mu2e {
   {
     produces<mu2e::GenParticleCollection>();
     produces<mu2e::EventWeight>();
-    produces<GenParticle>("photon"); //store photon generation energy for RMC weights
-    produces<mu2e::GenEventCount, art::InSubRun>(); //for normalization
+    produces<mu2e::GenParticle>("photon"); //store photon generation energy for RMC weights
+    produces<mu2e::GenEventCount, art::InSubRun>("genEvents"); //for normalization
     produces<mu2e::GenEventCount, art::InSubRun>("passedEvents"); //for tracking events actually produced
 
 
@@ -406,11 +406,11 @@ namespace mu2e {
   //================================================================
   void GammaConversionGun::endSubRun(art::SubRun& sr) {
 
-    mf::LogInfo("Summary")<<"Creating GenEventCount records: "<< genEvents_
+    mf::LogInfo("Summary")<<"Creating GenEventCount records in the GammaConversionGun: "<< genEvents_
                           <<" generated events and "
 			  << passedEvents_ << " passed events for "<<sr.id()<<"\n";
 
-    sr.put(std::unique_ptr<GenEventCount>(new GenEventCount(genEvents_)));
+    sr.put(std::unique_ptr<GenEventCount>(new GenEventCount(genEvents_)), "genEvents");
     sr.put(std::unique_ptr<GenEventCount>(new GenEventCount(passedEvents_)), "passedEvents");
   }
 

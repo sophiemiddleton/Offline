@@ -361,6 +361,14 @@ EventGenerator : { @table::EventGenerator
 	    muonStops                 : { @table::EventGenerator.muonStops  }
 
 	}
+
+	GammaConversionGun : {
+	    module_type: GammaConversionGun
+	    verbosityLevel : 0	  
+	    doHistograms   : true
+	    gammaStops: @local::mu2e.gammaStops
+	}
+
     }
 }
 
