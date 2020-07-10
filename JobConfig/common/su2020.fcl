@@ -78,6 +78,8 @@ su2020.physics : {
 su2020.physics.producers.cosmicTimeMap.tmin   : 400 
 su2020.physics.producers.makeSD.AllHitsPlanes : [34,35]
 
+su2020.physics.producers.g4run.SDConfig.enableSD : [ @sequence::su2020.physics.producers.g4run.SDConfig.enableSD, "protonabsorber" ]
+
 services.ConditionsService : { @table::services.ConditionsService
     StrawElectronics: { 
 	FlashStart             : 1705
@@ -104,4 +106,3 @@ services.ConditionsService : { @table::services.ConditionsService
 				  12.4 , 11.6 ]
     }
 }
-

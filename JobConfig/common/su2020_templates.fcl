@@ -65,11 +65,17 @@ su2020 : {
 
 	compressDigiMCs : { @table::DigiCompression.Primary       # defined in Filters/fcl/
 	    crvDigiMCTag         : ""
-	    extraStepPointMCTags : [ "g4run:virtualdetector" ]
 	}
 
 	generate  : { @table::EventGenerator.producers.egun }      # to avoid unnecessary diagnostics
 	genCounter: { module_type: GenEventCounter }
+
+	# dummy protonBunchIntensity objects for primary-only datasets
+	protonBunchIntensity : {
+	    module_type: ProtonBunchIntensityFlat
+	    mean: 0.0 # No PBI possible for pure signal! 
+	    halfWidth : 1.0
+	}
 #------------------------------------------------------------------------------
 # reco producers
 #------------------------------------------------------------------------------
@@ -176,7 +182,7 @@ su2020 : {
 #------------------------------------------------------------------------------
 # output event formats
 #------------------------------------------------------------------------------
-su2020.gen_sim_gidi_output  : [ "drop    *_*_*_*",
+su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 				"keep    *_compressDigiMCs_*_*",
 				"keep    mu2e::GenEventCount_*_*_*",
 				"keep    mu2e::StatusG4_g4run_*_*",
@@ -185,12 +191,13 @@ su2020.gen_sim_gidi_output  : [ "drop    *_*_*_*",
 				"keep    mu2e::StrawDigis_makeSD_*_*",
 				"keep    art::TriggerResults_TriggerResults_*_*",
 				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
-				"keep    mu2e::StrawGasSteps_makeSGS_*_*"
+				"keep    mu2e::StrawGasSteps_makeSGS_*_*",
+				"keep    mu2e::ProtonBunchIntensity_*_*_*"
 			       ]
 #------------------------------------------------------------------------------
 # module sequences - by functionality
 #------------------------------------------------------------------------------
-su2020.gen_g4              : [ generate, genCounter, g4run ]
+su2020.gen_g4              : [ generate, genCounter, g4run, protonBunchIntensity ]
 
 su2020.gen_g4_detFilter    : [ generate, g4run, detectorFilter ]
 
