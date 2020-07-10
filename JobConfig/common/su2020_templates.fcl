@@ -255,4 +255,19 @@ su2020.trk_reco_umu : [
 		       KSFUmuMH,                                               # Seed fit (chisquared, no drift)
 		       KFFUmuMHPar , KFFUeMHDar                                # final Kalman filter fit
 		      ]
+
+# tracks reconstructions: positive and negative charges separate
+# use sequecnes defined in JobConfig/reco/prolog.fcl
+su2020.trk_reco_sep  : [ @sequence::Reconstruction.DeSequence,
+			 @sequence::Reconstruction.UeSequence,
+			 @sequence::Reconstruction.DmuSequence,
+			 @sequence::Reconstruction.UmuSequence
+		       ]
+
+# MC compression at the end of reco
+su2020.reco_compression : [ protonBunchIntensity, # for signal-only
+			    FindMCPrimary,  # find the primary particle
+			    SelectRecoMC,   # identify the MC information we want to keep
+			    compressRecoMCs # compress
+			  ]
 #------------------------------------------------------------------------------

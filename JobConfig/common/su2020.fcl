@@ -50,7 +50,9 @@ su2020.physics : {
     su2020_p2 : [ @sequence::su2020.calo_reco,
 		  @sequence::su2020.trk_hit_reco,
 		  @sequence::su2020.trk_reco_de ,
-		  @sequence::su2020.trk_reco_dmu
+		  @sequence::su2020.trk_reco_dmu , 
+		  @sequence::su2020.trk_reco_sep ,
+		  @sequence::su2020.reco_compression
 		 ]
 
 #------------------------------------------------------------------------------
@@ -106,3 +108,9 @@ services.ConditionsService : { @table::services.ConditionsService
 				  12.4 , 11.6 ]
     }
 }
+
+# for reco compression we don't have CRV reco path at the moment
+su2020.physics.producers.SelectRecoMC.SkipCrv : true
+su2020.physics.producers.compressRecoMCs.crvDigiMCTag : ""
+su2020.physics.producers.compressRecoMCs.crvDigiMCIndexMapTag : ""
+su2020.physics.producers.compressRecoMCs.crvCoincClusterMCTag : ""
