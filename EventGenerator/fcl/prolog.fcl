@@ -4,6 +4,8 @@
 #------------------------------------------------------------------------------
 BEGIN_PROLOG
 #------------------------------------------------------------------------------
+GEN_ID : CeEndpoint # to be redefined
+
 # "muonStops" is a TDR config, deprecated for CD3:
 muonStops : {
 #    inputFiles            : [ "mergedMuonStops/mustops.1025a_1426a_1504a.15318715.root" ]
@@ -87,10 +89,10 @@ dummyGenerator : {
 CeEndpointGun: {
     module_type    : StoppedParticleReactionGun
     physics: {
-      genId : CeEndpoint 
-      pdgId : 11
-      spectrumShape: CeEndpoint
-      spectrumVariable: totalEnergy
+      genId            : @local::GEN_ID 
+      pdgId            : 11
+      spectrumShape    : CeEndpoint
+      spectrumVariable : totalEnergy
     }
     muonStops      : @local::mu2e.tgtMuonStops
 }
@@ -98,7 +100,7 @@ CeEndpointGun: {
 CeplusEndpointGun : {
     module_type    : StoppedParticleReactionGun
     physics: {
-	genId           : CeEndpoint 
+	genId           : @local::GEN_ID
 	pdgId           : -11
 # temporary hack until we get this number into code FIXME!
 	spectrumShape: flat
@@ -226,7 +228,7 @@ EventGenerator : { @table::EventGenerator
 #------------------------------------------------------------------------------
 # generic electron and muon guns, default momentum is that of the CE on Al
 #------------------------------------------------------------------------------
-  	egun : { @table::StoppedParticleReactionGun 
+  	egun : { @table::CeEndpointGun 
 	    physics : { @table::StoppedParticleReactionGun.physics
 		pdgId            : 11
 		elow             : 104.97175
@@ -239,7 +241,7 @@ EventGenerator : { @table::EventGenerator
 #------------------------------------------------------------------------------
 # hypothetic generator option - muons coming out of the stopping target
 #------------------------------------------------------------------------------
-  	mgun : { @table::StoppedParticleReactionGun 
+  	mgun : { @table::CeEndpointGun 
 	    physics : { @table::StoppedParticleReactionGun.physics
 		pdgId            : 13
 		elow             : 104.97175
@@ -339,8 +341,8 @@ EventGenerator : { @table::EventGenerator
 	    physics : {
 		generateIntConversion : 0
 		spectrumShape         : "flat"
-		elow                  : 60
-		ehi                   : 110
+		elow                  : 57.             # reported RMC BR's are measured for Egamam > 57 MeV
+		ehi                   : 102.            # kinematic limit for RMC on Al is at 101.87
 		spectrumResolution    : 0.1
 	    }
 	    muonStops      : { @table::EventGenerator.muonStops }
