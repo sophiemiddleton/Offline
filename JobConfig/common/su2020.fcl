@@ -12,10 +12,10 @@
 # job configuration file using "@protect_ignore:" FCL construct
 #------------------------------------------------------------------------------
 BEGIN_PROLOG
-  bgHitFiles   : @nil
-  INPUT_MODULE : EmptyEvent
-  TRIGGER_PATH : su2020_p1
-  PROCESS_NAME : su2020
+  bgHitFiles    : @nil
+  INPUT_MODULE  : EmptyEvent
+  TRIGGER_PATHS : [ su2020_p1 ]
+  PROCESS_NAME  : su2020
 END_PROLOG
 
 #include "fcl/minimalMessageService.fcl"
@@ -25,53 +25,46 @@ END_PROLOG
 #include "JobConfig/reco/prolog.fcl"
 #include "TrkDiag/fcl/prolog.fcl"
 
-#include "JobConfig/common/su2020_templates.fcl"
+#include "TrkPatRec/fcl/prolog_trigger.fcl"
+#include "CalPatRec/fcl/prolog_trigger.fcl"
+#include "CaloReco/fcl/prolog_trigger.fcl"
+#include "CaloCluster/fcl/prolog_trigger.fcl"
+#include "TrkHitReco/fcl/prolog_trigger.fcl"
+#include "TrkReco/fcl/prolog_trigger.fcl"
+#include "TrkFilters/fcl/prolog_trigger.fcl"
+#include "CaloFilters/fcl/prolog_trigger.fcl"
 
+#include "JobConfig/common/su2020_templates.fcl"
+#include "JobConfig/common/trigger_templates.fcl"
 
 process_name : @local::PROCESS_NAME
 outputs      : { @table::su2020.outputs   }
 
 su2020.physics : {
-    producers: { @table::su2020.producers }
-    filters  : { @table::su2020.filters   }
-    analyzers: { @table::su2020.analyzers }
+    producers: { 
+	@table::su2020.producers 
+	@table::Trigger.producers
+    }
+    filters  : { 
+	@table::su2020.filters   
+	@table::Trigger.filters
+    }
+    analyzers: { 
+	@table::su2020.analyzers 
+	@table::Trigger.analyzers 
+    }
 #------------------------------------------------------------------------------
 # paths
-# p1: MC generation, G4, digitization
 #------------------------------------------------------------------------------
-    su2020_p1 : [ @sequence::su2020.gen_g4_time_map,
-		  @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
-		  @sequence::su2020.digis          
-		 ]
+    @table::su2020.paths
+    @table::Trigger.paths
+#------------------------------------------------------------------------------
+# final part
+#------------------------------------------------------------------------------
+    trigger_paths   : [ @local::TRIGGER_PATHS ]
 
-#------------------------------------------------------------------------------
-# p2: read digis, do reconstruction: run downstream electron and muon reco paths
-#------------------------------------------------------------------------------
-    su2020_p2 : [ @sequence::su2020.calo_reco,
-		  @sequence::su2020.trk_hit_reco,
-		  @sequence::su2020.trk_reco_de ,
-		  @sequence::su2020.trk_reco_dmu , 
-		  @sequence::su2020.trk_reco_sep ,
-		  @sequence::su2020.reco_compression
-		 ]
-
-#------------------------------------------------------------------------------
-# p3: read digis, do reconstruction: run downstream electron and muon reco paths
-#------------------------------------------------------------------------------
-    su2020_p21 : [ @sequence::su2020.calo_reco,
-		   @sequence::su2020.trk_hit_reco,
-		   @sequence::su2020.trk_reco_de ,
-		   @sequence::su2020.trk_reco_dmu
-		  ]
-
-#------------------------------------------------------------------------------
-# p100: concatenation job, trigger path is empty
-#------------------------------------------------------------------------------
-    su2020_p100 : [ ]
-
-    trigger_paths : [ @local::TRIGGER_PATH ]
-    output_path   : [     ]
-    end_paths     : [ output_path ]
+    output_path     : [     ]
+    end_paths       : [ output_path ]
 }
 
 #------------------------------------------------------------------------------
@@ -110,7 +103,11 @@ services.ConditionsService : { @table::services.ConditionsService
 }
 
 # for reco compression we don't have CRV reco path at the moment
-su2020.physics.producers.SelectRecoMC.SkipCrv : true
-su2020.physics.producers.compressRecoMCs.crvDigiMCTag : ""
+su2020.physics.producers.SelectRecoMC.SkipCrv                 : true
+su2020.physics.producers.compressRecoMCs.crvDigiMCTag         : ""
 su2020.physics.producers.compressRecoMCs.crvDigiMCIndexMapTag : ""
 su2020.physics.producers.compressRecoMCs.crvCoincClusterMCTag : ""
+
+#------------------------------------------------------------------------------
+# nothing below this line
+#------------------------------------------------------------------------------
