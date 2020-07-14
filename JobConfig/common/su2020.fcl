@@ -35,7 +35,6 @@ END_PROLOG
 #include "CaloFilters/fcl/prolog_trigger.fcl"
 
 #include "JobConfig/common/su2020_templates.fcl"
-#include "JobConfig/common/trigger_templates.fcl"
 
 process_name : @local::PROCESS_NAME
 outputs      : { @table::su2020.outputs   }
@@ -43,25 +42,27 @@ outputs      : { @table::su2020.outputs   }
 su2020.physics : {
     producers: { 
 	@table::su2020.producers 
-	@table::Trigger.producers
     }
     filters  : { 
 	@table::su2020.filters   
-	@table::Trigger.filters
     }
     analyzers: { 
 	@table::su2020.analyzers 
-	@table::Trigger.analyzers 
     }
 #------------------------------------------------------------------------------
 # paths
 #------------------------------------------------------------------------------
     @table::su2020.paths
-    @table::Trigger.paths
+}
+
+#------------------------------------------------------------------------------
+# unfortunately, FCL sucks... and one has to jump over the hurdles
+#------------------------------------------------------------------------------
+su2020.physics: { @table::su2020.physics 
 #------------------------------------------------------------------------------
 # final part
 #------------------------------------------------------------------------------
-    trigger_paths   : [ @local::TRIGGER_PATHS ]
+    trigger_paths   : [ @sequence::TRIGGER_PATHS ]
 
     output_path     : [     ]
     end_paths       : [ output_path ]

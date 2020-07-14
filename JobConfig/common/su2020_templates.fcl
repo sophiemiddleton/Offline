@@ -32,7 +32,6 @@ services : { @table::Services.SimAndReco
 
 services.scheduler.wantSummary: true
 services.TFileService.fileName        : "nts._USER_._DATASET_._DSCONF_.sequencer.root" 
-
 #------------------------------------------------------------------------------
 # (2): definition of the input module - can redefine in the top-level prolog
 #------------------------------------------------------------------------------
@@ -56,6 +55,7 @@ su2020 : {
 #------------------------------------------------------------------------------
 # MC producers
 #------------------------------------------------------------------------------
+	@table::Trigger.producers
 	@table::EventGenerator.producers  # defined in EventGenerator
 	@table::CommonMC.producers        # FIXME
 	@table::Mu2eG4.producers          # defined in Mu2eG4/fcl
@@ -63,7 +63,6 @@ su2020 : {
 	@table::CaloDigiMC.producersMC    # defined in CaloDigiMC
 	@table::CaloCluster.producersMC   # defined in CaloCluster
 	@table::TrackerMC.producers       # defined in TrackerMC
-	@table::Trigger.producers         # defined in Trigger
 
 	compressDigiMCs : { @table::DigiCompression.Primary       # defined in Filters/fcl/
 	    crvDigiMCTag         : ""
@@ -151,9 +150,10 @@ su2020 : {
 #  filters
 #------------------------------------------------------------------------------
     filters : {
+	@table::Trigger.filters
+
 	detectorFilter : { @table::FilterStepPointMomentum }
 
-	@table::Trigger.filters 
 	@table::CalPatRec.filters
 
 	StrawDigiMCFilter : {
@@ -168,8 +168,7 @@ su2020 : {
 
     analyzers : {
 	@table::Trigger.analyzers
-
-	genCountLogger      : { module_type: GenEventCountReader } # defalt: 1 StepPointMC, 10 MeV
+        genCountLogger            : { module_type: GenEventCountReader } # defalt: 1 StepPointMC, 10 MeV
     }
 #------------------------------------------------------------------------------
 # outputs: by default, keep everything
@@ -179,11 +178,12 @@ su2020 : {
 	    module_type   : RootOutput
 	    SelectEvents  : [ @sequence::TRIGGER_PATHS ]
 	    outputCommands: [ "keep *_*_*_*" 
-# (example)		      , "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_g4run_*_*"
+			      # (example)		      , "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_g4run_*_*"
 			     ]
 	}
     }
 }
+
 #------------------------------------------------------------------------------
 # output event formats
 #------------------------------------------------------------------------------
@@ -224,6 +224,13 @@ su2020.trk_hit_reco         : [ makeSH, makePH, FlagBkgHits]
 
 # CRV reconstruction
 su2020.crv_reco             : [ @sequence::CrvRecoMCPackage.CrvRecoMCSequence ]
+
+# downstream e+/e- helix reconstruction
+su2020.helix_reco_de : [
+			TimeClusterFinderDe, HelixFinderDe,                     # TrkPatRec
+			CalTimePeakFinder, DeltaFinder, CalHelixFinderDe,       # CalPatRec
+			MHFinderDe                                              # helix merging
+		       ]
 
 # downstream electron reconstruction: e- and e+ combined
 su2020.trk_reco_de  : [
@@ -271,52 +278,63 @@ su2020.trk_reco_sep  : [ @sequence::Reconstruction.DeSequence,
 
 # MC compression at the end of reco
 su2020.reco_compression : [ protonBunchIntensity, # for signal-only
-			    FindMCPrimary,  # find the primary particle
-			    SelectRecoMC,   # identify the MC information we want to keep
-			    compressRecoMCs # compress
+			    FindMCPrimary,        # find the primary particle
+			    SelectRecoMC,         # identify the MC information we want to keep
+			    compressRecoMCs       # compress
 			  ]
+
+
 #------------------------------------------------------------------------------
 # SU2020 paths
 #------------------------------------------------------------------------------
-su2020.paths : {
+    su2020.paths : {
+	@table::Trigger.paths
 #------------------------------------------------------------------------------
 # start from including the trigger paths
 #------------------------------------------------------------------------------
-    @table::Trigger.paths
 #------------------------------------------------------------------------------
 # gcl: an attempt to introduce a standard name for genCountLogger path
 #------------------------------------------------------------------------------
-    gcl        : [ genCountLogger ]
+	gcl        : [ genCountLogger ]
 #------------------------------------------------------------------------------
 # p1: MC generation, G4, digitization
 #------------------------------------------------------------------------------
-    su2020_p1 : [ @sequence::su2020.gen_g4_time_map,
-		  @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
-		  @sequence::su2020.digis          
-		 ]
+	su2020_p1 : [ @sequence::su2020.gen_g4_time_map,
+		      @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
+		      @sequence::su2020.digis          
+		     ]
 
 #------------------------------------------------------------------------------
 # p2: read digis, do reconstruction: run downstream electron and muon reco paths
 #------------------------------------------------------------------------------
-    su2020_p2 : [ @sequence::su2020.calo_reco,
-		  @sequence::su2020.trk_hit_reco,
-		  @sequence::su2020.trk_reco_de ,
-		  @sequence::su2020.trk_reco_dmu , 
-		  @sequence::su2020.trk_reco_sep ,
-		  @sequence::su2020.reco_compression
-		 ]
+	su2020_p2 : [ @sequence::su2020.calo_reco,
+		      @sequence::su2020.trk_hit_reco,
+		      @sequence::su2020.trk_reco_de ,
+		      @sequence::su2020.trk_reco_dmu , 
+		      @sequence::su2020.trk_reco_sep ,
+		      @sequence::su2020.reco_compression
+		     ]
 
 #------------------------------------------------------------------------------
-# p3: read digis, do reconstruction: run downstream electron and muon reco paths
+# p21: read digis, do reconstruction: run downstream electron and muon reco paths
 #------------------------------------------------------------------------------
-    su2020_p21 : [ @sequence::su2020.calo_reco,
-		   @sequence::su2020.trk_hit_reco,
-		   @sequence::su2020.trk_reco_de ,
-		   @sequence::su2020.trk_reco_dmu
-		  ]
+	su2020_p21 : [ @sequence::su2020.calo_reco,
+		       @sequence::su2020.trk_hit_reco,
+		       @sequence::su2020.trk_reco_de ,
+		       @sequence::su2020.trk_reco_dmu
+		      ]
+
+#------------------------------------------------------------------------------
+# p22: read digis, reconstruct helices
+#------------------------------------------------------------------------------
+	su2020_p22 : [ @sequence::su2020.calo_reco,
+		       @sequence::su2020.trk_hit_reco,
+		       @sequence::su2020.helix_reco_de
+		      ]
 
 #------------------------------------------------------------------------------
 # p100: concatenation job, trigger path is empty
 #------------------------------------------------------------------------------
-    su2020_p100 : [ ]
-}
+	su2020_p100 : [ ]
+    }
+
