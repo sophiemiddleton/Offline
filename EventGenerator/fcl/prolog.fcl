@@ -307,6 +307,7 @@ EventGenerator : { @table::EventGenerator
 		spectrumVariable : "momentum"
 		spectrumShape    : "flat"
 	    }
+	    muonStops            : {  @table::EventGenerator.muonStops }
 	}
 
   	photonGun : { @table::StoppedParticleReactionGun # p(photon)=100 MeV/c
