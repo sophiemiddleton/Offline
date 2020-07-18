@@ -137,6 +137,8 @@ namespace mu2e {
     TH1F* _hPosiMom  {nullptr};
     TH1F* _hTotMom   {nullptr};
     TH1F* _hTotMomWt {nullptr};
+    TH1F* _hTotEnergy   {nullptr};
+    TH1F* _hTotEnergyWt {nullptr};
     TH1F* _hMee;
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
@@ -221,23 +223,25 @@ namespace mu2e {
     _hgencuts  = tfdir.make<TH1D>( "hgencuts", "Attempts to generate vs cut number", 10,  0.5,  10.5  );
     if ( doHistograms_ ) {
 
-      _hmomentum = tfdir.make<TH1F>("hmomentum", "Given photon momentum", 1000,  0.,  200.  );
-      _hcos      = tfdir.make<TH1F>("hcos"     , "Given photon cos(#theta)", 1000,  -1.,  1.  );
-      _hcosWt    = tfdir.make<TH1F>("hcosWt"   , "Given photon cos(#theta) weighted", 1000,  -1.,  1.  );
-      _hr        = tfdir.make<TH1F>("hr"       , "Given photon radius from the DS axis", 1000,  0.,  2000.  );
-      _hz        = tfdir.make<TH1F>("hz"       , "Given photon Z", 1000,  0., 15000.  );
-      _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 2000,  0. , 200.);
-      _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 2000,  0. , 200.);
-      _hTotMom   = tfdir.make<TH1F>("hTotMom"   , "Produced total momentum", 2000.,  0. , 200.);
-      _hTotMomWt = tfdir.make<TH1F>("hTotMomWt" , "Produced total momentum weighted", 2000.,  0. , 200.);
-      _hMee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
-      _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
-      _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
-      _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
-      _hcosEvsP  = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 150, 0., 15., 150, 0., 15.);
-      _hcosChange= tfdir.make<TH1F>("hcosChange", "cos(#theta) Change", 200,  -1.,  1.  );
+      _hmomentum     = tfdir.make<TH1F>("hmomentum", "Given photon momentum", 1000,  0.,  200.  );
+      _hcos          = tfdir.make<TH1F>("hcos"     , "Given photon cos(#theta)", 1000,  -1.,  1.  );
+      _hcosWt        = tfdir.make<TH1F>("hcosWt"   , "Given photon cos(#theta) weighted", 1000,  -1.,  1.  );
+      _hr            = tfdir.make<TH1F>("hr"       , "Given photon radius from the DS axis", 1000,  0.,  2000.  );
+      _hz            = tfdir.make<TH1F>("hz"       , "Given photon Z", 1000,  0., 15000.  );
+      _hElecMom      = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 2000,  0. , 200.);
+      _hPosiMom      = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 2000,  0. , 200.);
+      _hTotMom       = tfdir.make<TH1F>("hTotMom"   , "Produced total momentum", 2000.,  0. , 200.);
+      _hTotMomWt     = tfdir.make<TH1F>("hTotMomWt" , "Produced total momentum weighted", 2000.,  0. , 200.);
+      _hTotEnergy    = tfdir.make<TH1F>("hEnergyMom"   , "Produced total energy", 1000.,  0. , 200.);
+      _hTotEnergyWt  = tfdir.make<TH1F>("hEnergyMomWt" , "Produced total energy weighted", 1000.,  0. , 200.);
+      _hMee          = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
+      _hMeeVsE       = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
+      _hMeeOverE     = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
+      _hy            = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+      _hcosEvsP      = tfdir.make<TH2F>("hcosEvsP" , "p*theta(e-) vs p*theta(e+) wrt photon", 150, 0., 15., 150, 0., 15.);
+      _hcosChange    = tfdir.make<TH1F>("hcosChange", "cos(#theta) Change", 200,  -1.,  1.  );
       _henergyChange = tfdir.make<TH1F>("henergyChange", "E(photon) - E(e+e-)", 200,-1.,1.);
-      _hRecoilMsq= tfdir.make<TH1F>("hRecoilMsq", "Mass^2(p(photon) - p(e+e-))", 240,-10.,50.);
+      _hRecoilMsq    = tfdir.make<TH1F>("hRecoilMsq", "Mass^2(p(photon) - p(e+e-))", 240,-10.,50.);
 
     }
 
@@ -383,6 +387,8 @@ namespace mu2e {
     double mee = (mome+momp).m();
     _hMee->Fill(mee);
     double energy = (mome+momp).e();
+    _hTotEnergy  ->Fill(energy);
+    _hTotEnergyWt->Fill(energy, weight);
     _hMeeVsE->Fill(energy,mee);
     _hMeeOverE->Fill(mee/energy);
 
