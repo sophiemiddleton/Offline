@@ -25,6 +25,9 @@ merged_tgtStops_cd3           : [ "mergedMuonStops/nts.mu2e.cd3-beam-nts3-tgtsto
 mergedMuon_tgtStops_mdc2018_1 : [ "mergedMuonStops/nts.mu2e.DS-TGTstops.MDC2018a.001002_00000000.root" ]
 mergedMuon_tgtStops_su2020_1  : [ "xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/mu2epro/su2020/stops/nts.mu2e.su2020.bmum0s31b0.001000_10000000.root" ]
 
+# new in SU2020: stopped pbar ntuple
+mergedPbar_tgtStops_su2020_1  : [ "xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/defelice/su2020/stops/nts.mu2e.pbar0s41b0.su2020.001000_00000000.root" ]
+
 merged_ootStops_tdr           : [ "mergedMuonStops/mustops.1025a_1426a_1504a.15318715.root" ]
 merged_ootStops_cd3           : [ "mergedMuonStops/nts.mu2e.cd3-beam-nts3-ootstops.v533_v543_v563b.001002_00000000.root" ]
 mergedMuon_ootStops_mdc2018_1 : [ "mergedMuonStops/nts.mu2e.DS-OOTstops.MDC2018a.001002_00000000.root" ]
@@ -164,6 +167,14 @@ EventGenerator : {
 #	inputFiles : @local::mergedMuon_tgtStops_mdc2018_1
 	inputFiles : @local::mergedMuon_tgtStops_su2020_1
     } 
+# SU2020 stopped antiproton config.
+    pbarStops: {
+	inputFiles            : @local::mergedPbar_tgtStops_su2020_1
+	averageNumRecordsToUse: 500000
+	treeName              : "stoppedAntipDumper/stops"
+	branchName            : "stops"
+	verbosityLevel        : 0
+    }
 }
 
 EventGenerator : { @table::EventGenerator 
@@ -307,7 +318,6 @@ EventGenerator : { @table::EventGenerator
 		spectrumVariable : "momentum"
 		spectrumShape    : "flat"
 	    }
-	    muonStops            : {  @table::EventGenerator.muonStops }
 	}
 
   	photonGun : { @table::StoppedParticleReactionGun # p(photon)=100 MeV/c
@@ -319,6 +329,19 @@ EventGenerator : { @table::EventGenerator
 		spectrumShape    : "flat"
 	    }
 	    muonStops            : {  @table::EventGenerator.muonStops }
+	}
+
+  	antiprotonGun : { 
+	    module_type : StoppedPbarGun
+	    physics : {
+		genId            : @local::GEN_ID
+		pdgId            : -2212
+		elow             : 1.0e-10
+		ehi              : 1.1e-10
+		spectrumVariable : "momentum"
+		spectrumShape    : "flat"
+	    }
+	    pbarStops            : {  @table::EventGenerator.pbarStops}
 	}
 
 	RPCGun : { 

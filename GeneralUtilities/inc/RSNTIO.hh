@@ -44,6 +44,25 @@ namespace mu2e {
     };
 
     //================================================================
+    struct StoppedPbar {
+      float x;
+      float y;
+      float z;
+      float t;
+      float tauNormalized;
+      float momentum;
+      float cosTheta;
+
+      StoppedPbar() : x(), y(), z(), t(), tauNormalized(), momentum(), cosTheta() {}
+
+      static const char *branchDescription() {
+        return "x/F:y/F:z/F:time/F:tauNormalized/F:mom/F:costh/F";
+      }
+
+      static unsigned numBranchLeaves() { return 7; }
+    };
+
+    //================================================================
     struct InFlightParticleD {
       double x;
       double y;

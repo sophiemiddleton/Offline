@@ -49,16 +49,20 @@ namespace mu2e {
       float y;
       float z;
       float t;
-      float tau; // proper time, for stopped pion weights
+      float tau;	      // proper time, for stopped pion weights
+      float momentum;	      // momentum and costh for pbars
+      float cosTheta;
 
-      StopInfo() : x(), y(), z(), t(), tau() {}
+      StopInfo() : x(), y(), z(), t(), tau(), momentum(), cosTheta() {}
 
-      StopInfo(const art::Ptr<SimParticle>& p, const VspMC& spMCcolls, float tt)
+      StopInfo(const art::Ptr<SimParticle>& p, const VspMC& spMCcolls, float tt, float mom, float costh)
         : x(p->endPosition().x())
         , y(p->endPosition().y())
         , z(p->endPosition().z())
         , t(p->endGlobalTime())
         , tau(tt)
+	, momentum(mom)
+	, cosTheta(costh)
       {
         if(!p->endDefined()) {
           throw cet::exception("BADINPUTS")
@@ -101,6 +105,12 @@ namespace mu2e {
           false
           };
 
+      fhicl::Atom<bool> writePbars {
+        Name("writePbars"),
+          Comment("if true, write out momentum and costh of the first particle (need for pbars)"),
+          false
+          };
+
       fhicl::Sequence<int> decayOffPDGCodes {
         Name("decayOffPDGCodes"),
           Comment("A list of PDG IDs of particles that had their decay process turned off during\n"
@@ -126,6 +136,7 @@ namespace mu2e {
     bool dumpSimParticleLeaves_;
     art::InputTag input_;
     bool writeProperTime_;
+    bool writePbars_;
     std::vector<art::InputTag> hitColls_;
 
     std::vector<int> decayOffCodes_;
@@ -134,7 +145,7 @@ namespace mu2e {
     StopInfo data_;
 
     bool is_leave(const SimParticle& p);
-    void process(const art::Ptr<SimParticle>& p, const VspMC& spMCcolls);
+    void process (const art::Event& event, const art::Ptr<SimParticle>& p, const VspMC& spMCcolls);
   };
 
   //================================================================
@@ -143,6 +154,7 @@ namespace mu2e {
     dumpSimParticleLeaves_(conf().dumpSimParticleLeaves()),
     input_(conf().inputCollection()),
     writeProperTime_(conf().writeProperTime()),
+    writePbars_(conf().writePbars()),
     nt_()
   {
     if(writeProperTime_) {
@@ -158,9 +170,15 @@ namespace mu2e {
   void StoppedParticlesDumper::beginJob() {
     art::ServiceHandle<art::TFileService> tfs;
     std::string branchDesc("x/F:y/F:z/F:time/F");
-    if(writeProperTime_) {
+
+				// don't change the order of ifs here! 
+    if (writePbars_) {
+      branchDesc += ":tauNormalized/F:momentum/F:cosTheta/F";
+    }
+    else if (writeProperTime_) {
       branchDesc += ":tauNormalized/F";
     }
+    
     nt_ = tfs->make<TTree>( "stops", "Stopped particles ntuple");
     nt_->Branch("stops", &data_, branchDesc.c_str());
   }
@@ -181,23 +199,48 @@ namespace mu2e {
       for(const auto& p : *ih) {
         if(is_leave(p.second)) {
           art::Ptr<SimParticle> pp(ih, p.first.asUint());
-          process(pp, spMCColls);
+          process(event, pp, spMCColls);
         }
       }
     }
     else {
       auto ih = event.getValidHandle<SimParticlePtrCollection>(input_);
       for(const auto& p : *ih) {
-        process(p, spMCColls);
+        process(event, p, spMCColls);
       }
     }
 
   }
 
   //================================================================
-  void StoppedParticlesDumper::process(const art::Ptr<SimParticle>& p, const VspMC& spMCColls) {
+  void StoppedParticlesDumper::process(const art::Event& event, const art::Ptr<SimParticle>& p, 
+				       const VspMC& spMCColls) {
+
     const float tau = writeProperTime_ ? SimParticleGetTau::calculate(p,spMCColls,decayOffCodes_) : -1;
-    data_ = StopInfo(p, spMCColls, tau);
+
+    float mom(-1), costh(-2);
+
+    const CLHEP::HepLorentzVector *prot(nullptr),  *pbar(nullptr);
+
+    auto ih = event.getValidHandle<SimParticleCollection>(input_);
+
+    for (const auto& iSim: *ih) {
+				// parent of the simParticle
+      art::Ptr<SimParticle> const& pptr = iSim.second.parent();
+      int pkey = -1;
+      if (pptr) pkey = int(pptr.key());
+
+      if      (pkey == -1) prot = &iSim.second.endMomentum();
+      else if (pkey ==  1) {
+	pbar = &iSim.second.startMomentum();
+	break ;
+      }
+    }
+
+    mom    = pbar->vect().mag();
+    costh  = pbar->vect().cosTheta(prot->vect());
+
+    data_ = StopInfo(p, spMCColls, tau, mom, costh);
     nt_->Fill();
   }
 
