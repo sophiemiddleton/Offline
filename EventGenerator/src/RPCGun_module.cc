@@ -62,10 +62,10 @@ namespace mu2e {
     BinnedSpectrum spectrum_;
 
     int                 verbosityLevel_;
-    int                 generateInternalConversion_;
-    bool applySurvivalProbability_;
-    double survivalProbScaling_;
-    double tmin_;
+    GenId               genId_;
+    bool                applySurvivalProbability_;
+    double              survivalProbScaling_;
+    double              tmin_;
 
     double              czmin_;
     double              czmax_;
@@ -82,7 +82,7 @@ namespace mu2e {
     RootTreeSampler<IO::StoppedParticleTauNormF> stops_;
     std::unique_ptr<ProtonPulseRandPDF>  protonPulse_;
 
-    bool doHistograms_;
+    bool                doHistograms_;
     fhicl::ParameterSet protonPset_;
 
     double generateEnergy();
@@ -107,7 +107,7 @@ namespace mu2e {
     , psphys_(pset.get<fhicl::ParameterSet>("physics"))
     , spectrum_                  (BinnedSpectrum(psphys_))
     , verbosityLevel_            (pset.get<int>   ("verbosityLevel", 0))
-    , generateInternalConversion_{psphys_.get<int>("generateIntConversion", 0)}
+    , genId_  (GenId::findByName (psphys_.get<std::string>("genId"              )))
     , applySurvivalProbability_  (psphys_.get<bool>("ApplySurvivalProb",false))
     , survivalProbScaling_       (psphys_.get<double>("SurvivalProbScaling",1))
     , tmin_                      (pset.get<double>("tmin",-1))
@@ -121,13 +121,21 @@ namespace mu2e {
     , randomUnitSphere_   (eng_, czmin_,czmax_,phimin_,phimax_)
     , pionCaptureSpectrum_(&randomFlat_,&randomUnitSphere_)
     //    , randomUnitSphere_(eng_)
-    , stops_(eng_, pset.get<fhicl::ParameterSet>("pionStops"))
+    , stops_(eng_,   pset.get<fhicl::ParameterSet>("pionStops"))
     , doHistograms_( pset.get<bool>("doHistograms",true ) )
-    , protonPset_( pset.get<fhicl::ParameterSet>("randPDFparameters", fhicl::ParameterSet() ) )
+    , protonPset_  ( pset.get<fhicl::ParameterSet>("randPDFparameters", fhicl::ParameterSet() ) )
     {
       produces<mu2e::GenParticleCollection>();
       produces<mu2e::EventWeight>();
       produces<mu2e::FixedTimeMap>();
+
+//-----------------------------------------------------------------------------
+// make sure the requested genID makes sense
+//-----------------------------------------------------------------------------
+      if ((genId_ != GenId::InternalRPC) && (genId_ != GenId::ExternalRPC)) {
+	throw cet::exception("BADCONFIG") << "RPCGun: wrong process ID: " 
+					  << genId_.name() << "BAIL OUT!\n";
+      }
 
       if(verbosityLevel_ > 0) {
         std::cout<<"RPCGun: using = "
@@ -144,7 +152,7 @@ namespace mu2e {
 
         _hmomentum     = tfdir.make<TH1F>( "hmomentum", "Produced photon momentum", 100,  40.,  140.  );
 
-        if(generateInternalConversion_){
+        if (genId_ == GenId::InternalRPC) {
           _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 140,  0. , 140.);
           _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 140,  0. , 140.);
           _hMee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
@@ -153,7 +161,7 @@ namespace mu2e {
           _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
         }
       }
-
+      
     }
 
   //================================================================
@@ -215,7 +223,10 @@ namespace mu2e {
 
     const double energy = generateEnergy();
 
-    if(!generateInternalConversion_){
+    if (genId_ == GenId::ExternalRPC) {
+//-----------------------------------------------------------------------------
+// generate photon - external conversions
+//-----------------------------------------------------------------------------
       output->emplace_back( PDGCode::gamma,
                             GenId::ExternalRPC,
                             pos,
@@ -225,6 +236,9 @@ namespace mu2e {
       event.put(std::move(output));
       event.put(std::move(timemap));
     } else {
+//-----------------------------------------------------------------------------
+// generate internal conversions
+//-----------------------------------------------------------------------------
       CLHEP::HepLorentzVector mome, momp;
       pionCaptureSpectrum_.getElecPosiVectors(energy,mome,momp);
       // Add particles to list

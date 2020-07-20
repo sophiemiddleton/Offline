@@ -61,7 +61,8 @@ namespace mu2e {
     struct PhysConfig {
       using Name=fhicl::Name;
       using Comment=fhicl::Comment;
-      fhicl::Atom<int> generateIntConversion{Name("generateIntConversion"), Comment("Generate internal conversion (>=0)"), 0};
+      //      fhicl::Atom<int> generateIntConversion{Name("generateIntConversion"), Comment("Generate internal conversion (>=0)"), 0};
+      fhicl::Atom<std::string> genId{Name("genId"), Comment("gen process ID: InternalRMC/ExternalRMC")};
       fhicl::Atom<double> elow{Name("elow"), Comment("Minimum energy value (MeV)")};
       fhicl::Atom<double> ehi{Name("ehi"), Comment("Maximum energy value (MeV)")};
       fhicl::Atom<std::string> spectrumShape{Name("spectrumShape"), Comment("Spectrum shape (e.g. RMC or flat)")};
@@ -110,7 +111,9 @@ namespace mu2e {
                                              double *ehi);
 
     int                 verbosityLevel_;
-    int                 generateInternalConversion_;
+    GenId               genId_         ;    // GenId::InternalRMC or GenId::ExternalRMC
+
+    //    int                 generateInternalConversion_;
 
     double              czmin_;
     double              czmax_;
@@ -176,7 +179,7 @@ namespace mu2e {
     : EDProducer{pset}
     , psphys_()
     , verbosityLevel_            (pset().verbosityLevel())
-    , generateInternalConversion_{pset().psphys().generateIntConversion()}
+    //    , generateInternalConversion_{pset().psphys().generateIntConversion()}
     , czmin_                     (pset().czmin())
     , czmax_                     (pset().czmax())
     , phimin_                    (pset().phimin())
@@ -200,6 +203,16 @@ namespace mu2e {
     //Binned spectrum still takes a fhicl parameter set
     const fhicl::ParameterSet physps = pset().psphys.get_PSet();
     psphys_ = fhicl::ParameterSet(physps);
+
+    genId_  =  GenId::findByName(psphys_.get<std::string>("genId"));
+//-----------------------------------------------------------------------------
+// make sure the requested genID makes sense
+//-----------------------------------------------------------------------------
+    if ((genId_ != GenId::InternalRMC) && (genId_ != GenId::ExternalRMC)) {
+      throw cet::exception("BADCONFIG") << "RMCGun: wrong process ID: " 
+					<< genId_.name() << "BAIL OUT!\n";
+    }
+
     if(verbosityLevel_ > 1) {
       std::cout << "RMCGun: Physics parameter set: \n" << physps.to_indented_string().c_str() << std::endl;
     }
@@ -213,7 +226,7 @@ namespace mu2e {
                <<std::endl;
 
       std::cout << "RMCGun: producing " 
-		<< ((generateInternalConversion_) ? "internal conversion" : "photon")
+		<< ((genId_ == GenId::InternalRMC) ? "internal conversion" : "photon")
 		<< std::endl;
     }
 
@@ -226,7 +239,7 @@ namespace mu2e {
       _hmomentumwt   = tfdir.make<TH1F>( "hmomentumwt", "Weighted Produced photon momentum", 1000,  0.,  200.  );
       _hcoswt        = tfdir.make<TH1F>( "hcoswt"     , "Weighted Produced photon cos(#theta)", 1000,  -1.,  1.  );
 
-      if(generateInternalConversion_){
+      if (genId_ == GenId::InternalRMC) {
         _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 1000,  0. , 200.);
         _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 1000,  0. , 200.);
         _hTotMom   = tfdir.make<TH1F>("hTotMom" , "Produced total momentum", 200,  0. , 200.);
@@ -239,7 +252,7 @@ namespace mu2e {
 
     //initialize TF1 for cos/energy generation if needed
     if(doCosWeights_) {
-      if(generateInternalConversion_)
+      if(genId_ == GenId::InternalRMC)
 	throw cet::exception("BADCONFIG")
 	  << "RMCGun: Cos generation weights not defined for internal conversions!\n";
       else {
@@ -314,7 +327,7 @@ namespace mu2e {
     const double energy = generateEnergy();
     double weight = getEnergyWeight(energy);
 
-    if(!generateInternalConversion_){
+    if (genId_ != GenId::InternalRMC) {
       if(!doCosWeights_) {
 	CLHEP::HepLorentzVector mom( randomUnitSphere_.fire(energy), energy);
 	double cosTheta = mom.cosTheta();
@@ -352,6 +365,9 @@ namespace mu2e {
 
       }
     } else {
+//-----------------------------------------------------------------------------
+// generate internal RMC (off-shell photons)
+//-----------------------------------------------------------------------------
       CLHEP::HepLorentzVector mome, momp;
       muonCaptureSpectrum_.getElecPosiVectors(energy,mome,momp);
       // Add particles to list

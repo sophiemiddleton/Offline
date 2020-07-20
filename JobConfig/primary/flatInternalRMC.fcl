@@ -23,10 +23,10 @@ outputs : {
 # final configuration
 #
 #include "JobConfig/primary/epilog.fcl"
-physics.producers.generate.physics.generateIntConversion : 1
+physics.producers.generate.physics.genID         : InternalRMC
 physics.producers.generate.physics.spectrumShape : "flat"
-physics.producers.generate.physics.elow : 40.0
-physics.filters.DigiFilter.MinParticleMom : 40.0
+physics.producers.generate.physics.elow          : 40.0
+physics.filters.DigiFilter.MinParticleMom        : 40.0
 #
 # customize the output
 services.TFileService.fileName: "nts.owner.flatInternalRMC.version.sequencer.root"

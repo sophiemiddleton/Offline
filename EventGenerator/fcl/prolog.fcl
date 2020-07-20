@@ -349,11 +349,12 @@ EventGenerator : { @table::EventGenerator
 	    verbosityLevel : 0
 	    doHistograms   : false
 	    physics : {
-		generateIntConversion : 0    # 0:photons 1: e+e- internal conversion pairs 
+		genId                 : @local::GEN_ID  # InternalRPC or ExternalRPC, defines the generated process
+		generateIntConversion : 0               # 0:photons 1: e+e- internal conversion pairs 
 		spectrumShape         : "Bistirlich"    # could also be "flat"
 		elow                  : 1.5
 		ehi                   : 140.1
-		spectrumResolution    : 0.1 # hopefully, in MeV
+		spectrumResolution    : 0.1             # hopefully, in MeV
 	    }
 	    pionStops                 : { @table::EventGenerator.pionStops }
 	}
@@ -363,7 +364,7 @@ EventGenerator : { @table::EventGenerator
 	    verbosityLevel : 0
 	    doHistograms   : false
 	    physics : {
-		generateIntConversion : 0
+		genId                 : @local::GEN_ID  #  InternalRMC or ExternalRMC, defines the generated process
 		spectrumShape         : "flat"
 		elow                  : 57.             # reported RMC BR's are measured for Egamam > 57 MeV
 		ehi                   : 102.            # kinematic limit for RMC on Al is at 101.87
@@ -380,8 +381,8 @@ EventGenerator : { @table::EventGenerator
 	        rhoInternal    : 1.0
 	        elow           : 1.5
 	        ehi            : 120.0 
-		generateIntConversion : 0    # 0:photons 1: e+e- internal conversion pairs 
-		spectrumShape         : "flat"    # could also be "flat"
+		generateIntConversion : 0               # 0:photons 1: e+e- internal conversion pairs 
+		spectrumShape         : "flat"          # could also be "flat"
 		physicsVerbosityLevel : 0
 	    }
 	    muonStops                 : { @table::EventGenerator.muonStops  }
