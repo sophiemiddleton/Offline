@@ -204,7 +204,7 @@ namespace mu2e {
     const fhicl::ParameterSet physps = pset().psphys.get_PSet();
     psphys_ = fhicl::ParameterSet(physps);
 
-    genId_  =  GenId::findByName(pset().psphys().genId());
+    genId_  =  GenId::findByName(psphys_.get<std::string>("genId"));
 //-----------------------------------------------------------------------------
 // make sure the requested genID makes sense
 //-----------------------------------------------------------------------------
