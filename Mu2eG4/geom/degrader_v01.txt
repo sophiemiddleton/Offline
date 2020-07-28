@@ -18,7 +18,8 @@ double degrader.rotation = -90.0; // (degrees)
 
 double degrader.upstreamEdge.z             = 4235.0;
 
-string degrader.filter.materialName        = "G4_Be";
+//string degrader.filter.materialName        = "G4_Be"; // Old material
+string degrader.filter.materialName        = "G4_Ti";  // New material
 string degrader.frame.materialName         = "G4_Al";
 string degrader.counterweight.materialName = "StainlessSteel";
 string degrader.rod.materialName           = "G4_Al";
@@ -31,7 +32,8 @@ double degrader.frame.centerOffFromPivot   = 300.0;  // dist from pivot of
 
 double degrader.filter.rIn		   = 0.0;
 double degrader.filter.rOut                = 172.7;
-double degrader.filter.halfLength          = 1.75;
+// double degrader.filter.halfLength          = 1.75; // Old material thickness
+double degrader.filter.halfLength          = 1.5; // New material thickness
 
 double degrader.counterweight.rIn	   = 0.0;
 double degrader.counterweight.rOut	   = 57.0;
