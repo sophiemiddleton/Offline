@@ -180,7 +180,7 @@ namespace mu2e {
   {
     produces<mu2e::GenParticleCollection>();
     produces<mu2e::EventWeight>();
-    produces<mu2e::GenParticle>("photon"); //store photon generation energy for RMC weights
+    produces<mu2e::GenParticleCollection>("photon"); //store photon generation energy for RMC weights
     produces<mu2e::GenEventCount, art::InSubRun>("genEvents"); //for normalization
     produces<mu2e::GenEventCount, art::InSubRun>("passedEvents"); //for tracking events actually produced
 
@@ -366,10 +366,9 @@ namespace mu2e {
     //add event weight and gen photon energy to the output
     std::unique_ptr<EventWeight> evtwt ( new EventWeight(weight) );
     event.put(move(evtwt));
-    std::unique_ptr<mu2e::GenParticle> genenergy ( new mu2e::GenParticle(PDGCode::gamma, GenId::ExternalRMC, 
-									 CLHEP::Hep3Vector(0.,0.,0.),
-									 CLHEP::HepLorentzVector(0.,0.,gen_energy,gen_energy),0. ));
-    event.put(move(genenergy),"photon"); 
+    std::unique_ptr<GenParticleCollection> output_photon(new GenParticleCollection);
+    output_photon->emplace_back(PDGCode::gamma, GenId::ExternalRMC,CLHEP::Hep3Vector(0.,0.,0.),CLHEP::HepLorentzVector(0.,0.,gen_energy,gen_energy),0.);
+    event.put(move(output_photon),"photon"); 
 
     if ( !doHistograms_ ) return;
 
