@@ -171,6 +171,10 @@ su2020 : {
 	    MinParticleEnergy : 40.0
 	    MinTotalEnergy    : 10000.0 # disable
 	}
+	GammaFilter : { 
+	    module_type : GammaDaughterFilter
+	    doFilter    : false 
+	}
     }
 
     analyzers : {
@@ -311,11 +315,13 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 # p1: MC generation, G4, digitization
 #------------------------------------------------------------------------------
 	su2020_p1 : [ @sequence::su2020.gen_g4_time_map,
+		      GammaFilter, #does nothing by default
 		      @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
 		      @sequence::su2020.digis          
 		     ]
 	# same as su2020_p1, but using a calo filter instead of straw digi filter
 	su2020_p1calo : [ @sequence::su2020.gen_g4_time_map,
+			  GammaFilter, #does nothing by default
 			  @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
 			  @sequence::su2020.digisCaloFilter           
 			 ]

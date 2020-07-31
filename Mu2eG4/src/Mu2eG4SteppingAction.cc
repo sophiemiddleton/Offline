@@ -180,7 +180,7 @@ namespace mu2e {
        (minRMCConversionEnergy_ > 0. && processRMCMaxEndpoint_ > 0. && //parameters are set
 	((minRMCConversionEnergy_ > processRMCMaxEndpoint_) || //kill all events if min energy > kmax
 	 (!rmcAccepted_ && killLowMomentumGammaDaughters(track))))) //kill if not accepted yet and fails check
-      killTrack(track, ProcessCode::NotSpecified, fStopAndKill);
+      killTrack(track, ProcessCode::mu2eLowEnergyGammaKilled, fStopAndKill);
     
     if(steppingCuts_->steppingActionCut(step)) {
       killTrack(track, ProcessCode::mu2eKillerVolume, fStopAndKill);
