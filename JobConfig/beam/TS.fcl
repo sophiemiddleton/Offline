@@ -23,6 +23,8 @@ physics : {
     }
 
     producers: {
+	genCounter: { module_type : GenEventCounter }
+
 	g4run : {
 	    module_type: Mu2eG4
 	    physics: @local::mu2eg4DefaultPhysics
@@ -63,7 +65,6 @@ physics : {
 		      ]
 	    }
 
-	    genCounter: { module_type : GenEventCounter }
 	}
 
 	compressPVmuonBeam : {
