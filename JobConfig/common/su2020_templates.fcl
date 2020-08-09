@@ -30,7 +30,7 @@ services : { @table::Services.SimAndReco
     }
 }
 
-services.scheduler.wantSummary: true
+services.scheduler.wantSummary        : true
 services.TFileService.fileName        : "nts._USER_._DATASET_._DSCONF_.sequencer.root" 
 #------------------------------------------------------------------------------
 # (2): definition of the input module - can redefine in the top-level prolog
@@ -315,17 +315,22 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 # p1: MC generation, G4, digitization
 #------------------------------------------------------------------------------
 	su2020_p1 : [ @sequence::su2020.gen_g4_time_map,
-		      GammaFilter, #does nothing by default
-		      @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
+		      GammaFilter,                            # does nothing by default
+		      @sequence::CommonMC.DigiSim      ,      # 
 		      @sequence::su2020.digis          
 		     ]
 	# same as su2020_p1, but using a calo filter instead of straw digi filter
 	su2020_p1calo : [ @sequence::su2020.gen_g4_time_map,
-			  GammaFilter, #does nothing by default
-			  @sequence::CommonMC.DigiSim      ,  # @sequence::Stntuple.gen_g4_time_map,
+			  GammaFilter,                        # does nothing by default
+			  @sequence::CommonMC.DigiSim      ,  # 
 			  @sequence::su2020.digisCaloFilter           
 			 ]
 
+	su2020_p11 : [ g4run, protonBunchIntensity,            # what's left of @sequence::su2020.gen_g4_time_map,
+		       @sequence::CommonMC.DigiSim, 
+		       GammaFilter,                            # does nothing by default
+		       @sequence::su2020.digis          
+		     ]
 #------------------------------------------------------------------------------
 # p2: read digis, do reconstruction: run downstream electron and muon reco paths
 #------------------------------------------------------------------------------
