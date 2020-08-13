@@ -423,7 +423,14 @@ namespace mu2e {
     double a         = (cylinderRad*cylinderRad-radius*radius+d*d)/2.0/d;
 
     //if a <cylinderRad, track never crosses cylinder, return overflow value
-    if (a>cylinderRad) return 1e6;
+    //    if (a>cylinderRad) return 1e6;
+
+    if (fabs(radius) + d < cylinderRad) return 1e6;
+
+    if (fabs(a) >=cylinderRad) {
+      printf(" ERROR in TrackCaloIntersection::extendToRadius: a case not handled by the coded in formula. Call Bertrand. -- Pasha\n");
+      return 1e6;
+    }
 
     double h       = sqrt(cylinderRad*cylinderRad-a*a);
     double xi1     = (a*centerX+h*centerY)/d;
