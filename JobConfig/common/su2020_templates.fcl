@@ -78,7 +78,7 @@ su2020 : {
 	    halfWidth : 1.0
 	}
 #------------------------------------------------------------------------------
-# reco producers
+# reco producers, compressDigiMCs defined there 
 #------------------------------------------------------------------------------
 
 	@table::Reconstruction.producers   # inherited from JobConfig/reco/prolog.fcl
