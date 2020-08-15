@@ -327,7 +327,7 @@ CalPatRec : { @table::CalPatRec
 	    fitparticle                                 : @local::Particle.eminus
 	    fitdirection                                : @local::FitDir.downstream
 	    KalFit                                      : { @table::CalPatRec.CprKFFinal }
-	    TimeOffsets                                 : { inputs : [ "protonTimeMap", "muonTimeMap" ] }
+	    TimeOffsets                                 : { inputs : [ @sequence::TIME_MAPS ] }  # defined in CommonMC/fcl/prolog.fcl
 	    diagPlugin : { tool_type  : "KalFinalFitDiag" 
 		mcTruth       : 0
 		mcUtils       : { @table::TrkReco.McUtils }
