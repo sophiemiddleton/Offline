@@ -171,7 +171,7 @@ namespace mu2e {
         if(iter.second.isPrimary()) {
           art::Ptr<SimParticle> part(ih, iter.first.asUint());
           // don't re-simulate if particle is already present.  This can happen if there is an input map
-          if(res->find(part) == res->end()){
+          if (res->find(part) == res->end()){
             const auto genId = part->genParticle()->generatorId();
 
             const bool apply= applyToGenIds_.empty() ?
@@ -180,17 +180,25 @@ namespace mu2e {
               // do just explicitly listed GenIds
               : (applyToGenIds_.find(genId.id()) != applyToGenIds_.end());
 
-            (*res)[part] = apply ? protonPulse_->fire() : 0.;
-            if (!fixedTime_.empty()){
-              (*res)[part] = apply ? ftmHandle->time() : 0;
-            }
+            if (apply ) {
+	      (*res)[part] = protonPulse_->fire() ;
+//-----------------------------------------------------------------------------
+// 2010-08-17 P.M. this is Richie's way : 
+// RPCGun [and only RPCGun] produces fixedTime map, and if that is present, 
+// and its tag is specified in the talk-to, the time from GPCGun overrides 
+// whatever GenerateProtonTimes is doing
+//-----------------------------------------------------------------------------
+	      if (!fixedTime_.empty()) {
+		(*res)[part] = ftmHandle->time();
+	      }
+	    }
           } else if(verbosityLevel_ > 2) {
-            std::cout << "Found existing particle in map" << std::endl;
-          }
+	      std::cout << "Found existing particle in map" << std::endl;
+	  }
         }
       }
     }
-
+      
     if(verbosityLevel_ > 10) {
       std::cout<<"GenerateProtonTimes dump begin"<<std::endl;
       for(const auto& i : *res) {
