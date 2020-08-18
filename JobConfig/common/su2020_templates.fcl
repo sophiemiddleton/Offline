@@ -413,10 +413,20 @@ services.ConditionsService : { @table::services.ConditionsService
 				  12.4 , 11.6 ]
     }
 }
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# 2020-08-18 P.M. : changes to the CRV thresholds wrt CRVResponse/fcl/prolog_v8.fcl (by Ben/Yuri)
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#                       old(v8)  PEthresholds                 : [  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  36 ,  22 ,  18 ,  20 ,  36 ,  36 ,  28 ,  36 ,  36 ,  36 ,  36 ,  26 ,  26 ,  26 ,  26 ]
+physics.producers.CrvCoincidence.PEthresholds                 : [  8  ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,  8  ,   8 ,   8 ,   8 ,   8 ]
+
+#                       old(v8)  useFourLayers                : [false,false,false,false,false,false,false, true, true,false,false, true, true, true,false,false,false,false,false,false,false,false] 
+physics.producers.CrvCoincidence.useFourLayers                : [false,false,false,false,false,false,false, true,false,false,false, true, true, true, true, true, true, true,false,false,false,false]
+
+#                       old(v8)  adjacentPulseTimeDifferences : [   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,  10 ,  10 ,   5 ,   5 ,  10 ,  10 ,  10 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ] //ns
+physics.producers.CrvCoincidence.adjacentPulseTimeDifferences : [  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ] //ns
 
 # for reco compression we don't have CRV reco path at the moment
-su2020.producers.SelectRecoMC.SkipCrv                 : true
-su2020.producers.compressRecoMCs.crvDigiMCTag         : ""
-su2020.producers.compressRecoMCs.crvDigiMCIndexMapTag : ""
-su2020.producers.compressRecoMCs.crvCoincClusterMCTag : ""
-
+su2020.producers.SelectRecoMC.SkipCrv                         : true
+su2020.producers.compressRecoMCs.crvDigiMCTag                 : ""
+su2020.producers.compressRecoMCs.crvDigiMCIndexMapTag         : ""
+su2020.producers.compressRecoMCs.crvCoincClusterMCTag         : ""
