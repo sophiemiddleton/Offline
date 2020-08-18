@@ -87,13 +87,17 @@ namespace mu2e {
 
     double generateEnergy();
 
-    TH1F* _hmomentum;
-    TH1F* _hElecMom {nullptr};
-    TH1F* _hPosiMom {nullptr};
-    TH1F* _hMee;
-    TH2F* _hMeeVsE;
-    TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
-    TH1F* _hy;                          // splitting function
+    struct Hist_t {
+      TH1F* momentum;
+      TH1F* eleMom {nullptr};
+      TH1F* posMom {nullptr};
+      TH1F* mee;
+      TH2F* meeVsE;
+      TH1F* meeOverE;                   // M(ee)/E(gamma)
+      TH1F* y;                          // splitting function
+      TH1F* ptime;                      // proton time
+      TH1F* vtime;                      // vertex time
+    } _hist ;
 
   public:
     explicit RPCGun(const fhicl::ParameterSet& pset);
@@ -150,18 +154,19 @@ namespace mu2e {
         art::ServiceHandle<art::TFileService> tfs;
         art::TFileDirectory tfdir = tfs->mkdir( "RPCGun" );
 
-        _hmomentum     = tfdir.make<TH1F>( "hmomentum", "Produced photon momentum", 100,  40.,  140.  );
+        _hist.momentum = tfdir.make<TH1F>( "hmomentum" , "photon momentum"    , 100,   40.,  140.);
+	_hist.ptime    = tfdir.make<TH1F>("ptime"      , "proton time"        , 250, -500., 2000.);
+	_hist.vtime    = tfdir.make<TH1F>("vtime"      , "vertex time"        , 200,    0., 2000.);
 
         if (genId_ == GenId::InternalRPC) {
-          _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 140,  0. , 140.);
-          _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 140,  0. , 140.);
-          _hMee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
-          _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
-          _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
-          _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+          _hist.eleMom   = tfdir.make<TH1F>("hElecMom" , "electron momentum"  , 140,  0. , 140.);
+          _hist.posMom   = tfdir.make<TH1F>("hPosiMom" , "positron momentum"  , 140,  0. , 140.);
+          _hist.mee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
+          _hist.meeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
+          _hist.meeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
+          _hist.y        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
         }
       }
-      
     }
 
   //================================================================
@@ -177,13 +182,16 @@ namespace mu2e {
 
     ConditionsHandle<AcceleratorParams> accPar("ignored");
     double _mbtime = accPar->deBuncherPeriod;
+    double vtime(0), ptime(0);
 
     IO::StoppedParticleTauNormF stop;
-    if (tmin_ > 0){
-      while (true){
+    if (tmin_ > 0) {
+      while (true) {
         const auto& tstop = stops_.fire();
-        timemap->SetTime(protonPulse_->fire());
-        if (tstop.t+timemap->time() < 0 || tstop.t+timemap->time() > tmin_){
+	ptime = protonPulse_->fire();
+        timemap->SetTime(ptime);
+	vtime = ptime+tstop.t;
+        if (vtime < 0 || vtime > tmin_) {
           if (applySurvivalProbability_){
             double weight = exp(-tstop.tauNormalized)*survivalProbScaling_;
             if (weight > 1)
@@ -199,8 +207,10 @@ namespace mu2e {
           }
         }
       }
-    }else{
-      timemap->SetTime(protonPulse_->fire());
+    }
+    else {
+      ptime = protonPulse_->fire();
+      timemap->SetTime(ptime);
       if (applySurvivalProbability_){
         while (true){
           const auto& tstop = stops_.fire();
@@ -211,13 +221,12 @@ namespace mu2e {
             break;
           }
         }
-      }else{
-        const auto& tstop = stops_.fire();
-        stop = tstop;
+      } 
+      else {
+        stop = stops_.fire();
       }
+      vtime = ptime+stop.t;
     }
-
-    //std::cout << "Found stop " << exp(-stop.tauNormalized) << " " << stop.t << std::endl;
 
     const CLHEP::Hep3Vector pos(stop.x, stop.y, stop.z);
 
@@ -249,18 +258,18 @@ namespace mu2e {
       event.put(std::move(timemap));
 
       if(doHistograms_){
-        _hElecMom ->Fill(mome.vect().mag());
-        _hPosiMom ->Fill(momp.vect().mag());
+        _hist.eleMom ->Fill(mome.vect().mag());
+        _hist.posMom ->Fill(momp.vect().mag());
 
         double mee = (mome+momp).m();
-        _hMee->Fill(mee);
-        _hMeeVsE->Fill(energy,mee);
-        _hMeeOverE->Fill(mee/energy);
+        _hist.mee->Fill(mee);
+        _hist.meeVsE->Fill(energy,mee);
+        _hist.meeOverE->Fill(mee/energy);
 
         CLHEP::Hep3Vector p = mome.vect()+momp.vect();
         double y = (mome.e()-momp.e())/p.mag();
 
-        _hy->Fill(y);
+        _hist.y->Fill(y);
       }
     }
 
@@ -271,7 +280,9 @@ namespace mu2e {
 
     if ( !doHistograms_ ) return;
 
-    _hmomentum->Fill(energy);
+    _hist.momentum->Fill(energy);
+    _hist.ptime->Fill(ptime);
+    _hist.vtime->Fill(vtime);
 
   }
 
