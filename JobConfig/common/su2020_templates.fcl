@@ -72,8 +72,7 @@ su2020 : {
 	genCounter: { module_type: GenEventCounter }
 
 	# dummy protonBunchIntensity objects for primary-only datasets
-	protonBunchIntensity : {
-	    module_type: ProtonBunchIntensityFlat
+	protonBunchIntensity : { module_type: ProtonBunchIntensityFlat
 	    mean: 0.0 # No PBI possible for pure signal! 
 	    halfWidth : 1.0
 	}
@@ -152,12 +151,18 @@ su2020 : {
     filters : {
 	@table::Trigger.filters
 
-	detectorFilter : { @table::FilterStepPointMomentum }
+	detectorFilter : { module_type: FilterG4Out
+	    mainHitInputs   : [ "g4run:tracker" ]
+	    mainSPPtrInputs : []
+	    extraHitInputs  : [ "g4run:virtualdetector", "g4run:protonabsorber" ]
+	    vetoDaughters   : []
+	}
+
+	stepPointMomentumFilter : { @table::FilterStepPointMomentum }
 
 	@table::CalPatRec.filters
 
-	StrawDigiMCFilter : {
-	    module_type           : StrawDigiMCFilter
+	StrawDigiMCFilter : { module_type : StrawDigiMCFilter
 	    StrawDigiMCCollection : "makeSD"
 	    MinNDigis             : 10
 	    particleTypes         : [ 11, -11, 13, -13 ]
@@ -165,14 +170,12 @@ su2020 : {
 	    MaxParticleMom        : 1e8
 	}
 
-	CaloShowerSimFilter : {
-	    module_type       :CaloShowerSimFilter
+	CaloShowerSimFilter : { module_type :CaloShowerSimFilter
 	    particleTypes     : [ 22, 11, -11, 13, -13, 2212, -2212  ] #save photons, electrons, muons, and protons
 	    MinParticleEnergy : 40.0
 	    MinTotalEnergy    : 10000.0 # disable
 	}
-	GammaFilter : { 
-	    module_type : GammaDaughterFilter
+	GammaFilter : { module_type : GammaDaughterFilter
 	    doFilter    : false 
 	}
     }
@@ -185,8 +188,7 @@ su2020 : {
 # outputs: by default, keep everything
 #------------------------------------------------------------------------------
     outputs: {
-	defaultOutput : {
-	    module_type   : RootOutput
+	defaultOutput : { module_type : RootOutput
 	    SelectEvents  : [ @sequence::TRIGGER_PATHS ]
 	    outputCommands: [ "keep *_*_*_*" 
 			      # (example)		      , "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_g4run_*_*"
@@ -416,17 +418,17 @@ services.ConditionsService : { @table::services.ConditionsService
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 2020-08-18 P.M. : changes to the CRV thresholds wrt CRVResponse/fcl/prolog_v8.fcl (by Ben/Yuri)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#                       old(v8)  PEthresholds                 : [  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  36 ,  22 ,  18 ,  20 ,  36 ,  36 ,  28 ,  36 ,  36 ,  36 ,  36 ,  26 ,  26 ,  26 ,  26 ]
-physics.producers.CrvCoincidence.PEthresholds                 : [  8  ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,  8  ,   8 ,   8 ,   8 ,   8 ]
+#                      old(v8)  PEthresholds                 : [  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  36 ,  22 ,  18 ,  20 ,  36 ,  36 ,  28 ,  36 ,  36 ,  36 ,  36 ,  26 ,  26 ,  26 ,  26 ]
+su2020.producers.CrvCoincidence.PEthresholds                 : [  8  ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,  8  ,   8 ,   8 ,   8 ,   8 ]
 
-#                       old(v8)  useFourLayers                : [false,false,false,false,false,false,false, true, true,false,false, true, true, true,false,false,false,false,false,false,false,false] 
-physics.producers.CrvCoincidence.useFourLayers                : [false,false,false,false,false,false,false, true,false,false,false, true, true, true, true, true, true, true,false,false,false,false]
+#                      old(v8)  useFourLayers                : [false,false,false,false,false,false,false, true, true,false,false, true, true, true,false,false,false,false,false,false,false,false] 
+su2020.producers.CrvCoincidence.useFourLayers                : [false,false,false,false,false,false,false, true,false,false,false, true, true, true, true, true, true, true,false,false,false,false]
 
-#                       old(v8)  adjacentPulseTimeDifferences : [   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,  10 ,  10 ,   5 ,   5 ,  10 ,  10 ,  10 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ] //ns
-physics.producers.CrvCoincidence.adjacentPulseTimeDifferences : [  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ] //ns
+#                      old(v8)  adjacentPulseTimeDifferences : [   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,  10 ,  10 ,   5 ,   5 ,  10 ,  10 ,  10 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ] //ns
+su2020.producers.CrvCoincidence.adjacentPulseTimeDifferences : [  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ] //ns
 
 # for reco compression we don't have CRV reco path at the moment
-su2020.producers.SelectRecoMC.SkipCrv                         : true
-su2020.producers.compressRecoMCs.crvDigiMCTag                 : ""
-su2020.producers.compressRecoMCs.crvDigiMCIndexMapTag         : ""
-su2020.producers.compressRecoMCs.crvCoincClusterMCTag         : ""
+su2020.producers.SelectRecoMC.SkipCrv                        : true
+su2020.producers.compressRecoMCs.crvDigiMCTag                : ""
+su2020.producers.compressRecoMCs.crvDigiMCIndexMapTag        : ""
+su2020.producers.compressRecoMCs.crvCoincClusterMCTag        : ""
