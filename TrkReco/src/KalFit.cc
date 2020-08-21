@@ -447,6 +447,7 @@ namespace mu2e
       if(_weedhits[iter]){
         kalData.nweediter = 0;
         changed |= weedHits(kalData,iter);
+	kalData.nweediter = 0;
 	changed |= unweedBestHit(kalData,_maxhitchi);
       }
       // updates
@@ -790,6 +791,12 @@ namespace mu2e
 
   bool
   KalFit::unweedBestHit(KalFitData& kalData, double maxchi) {
+    kalData.nweediter++;
+    if (kalData.nweediter > 50) {
+      printf(" ERROR in  KalFit::unweedBestHit: more than 50 levels of unweeding recursion, BAIL OUT. Talk to Dave Brown. --Pasha\n");
+      return false;
+    }
+				  
     // Loop over inactive HoTs and find the one with the smallest contribution to chi2.  If this value
     // is less than some cut value, reactivate that HoT and reFit
     KalRep*   krep = kalData.krep;
