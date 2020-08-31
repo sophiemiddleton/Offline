@@ -86,7 +86,7 @@ namespace mu2e {
     fhicl::ParameterSet protonPset_;
 
     double generateEnergy();
-
+    TH1F* _pionMom;
     TH1F* _hmomentum;
     TH1F* _hElecMom {nullptr};
     TH1F* _hPosiMom {nullptr};
@@ -94,7 +94,10 @@ namespace mu2e {
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
     TH1F* _hy;                          // splitting function
-
+    TTree*  _Ntup;
+    Float_t _TMome;
+    Float_t _TMomp;
+    Int_t   _nEv = 0;
   public:
     explicit RPCGun(const fhicl::ParameterSet& pset);
     virtual void beginRun(art::Run&   r) override;
@@ -128,7 +131,7 @@ namespace mu2e {
       produces<mu2e::GenParticleCollection>();
       produces<mu2e::EventWeight>();
       produces<mu2e::FixedTimeMap>();
-
+      std::cout<<"Point 1"<<std::endl;
       if(verbosityLevel_ > 0) {
         std::cout<<"RPCGun: using = "
                  <<stops_.numRecords()
@@ -138,12 +141,12 @@ namespace mu2e {
         std::cout<<"RPCGun: producing photon " << std::endl;
       }
 
-      if ( doHistograms_ ) {
+      if ( doHistograms_ ) {std::cout<<"Point 2"<<std::endl;
         art::ServiceHandle<art::TFileService> tfs;
         art::TFileDirectory tfdir = tfs->mkdir( "RPCGun" );
 
         _hmomentum     = tfdir.make<TH1F>( "hmomentum", "Produced photon momentum", 100,  40.,  140.  );
-
+        _pionMom    = tfdir.make<TH1F>( "hpion", "Pion Mom", 100,  0.,  140.  );
         if(generateInternalConversion_){
           _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 140,  0. , 140.);
           _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 140,  0. , 140.);
@@ -151,6 +154,10 @@ namespace mu2e {
           _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
           _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
           _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+          _Ntup  = tfs->make<TTree>("GenTree", "GenTree");
+          _Ntup->Branch("nEv", &_nEv , "_nEv/I");	    
+          _Ntup->Branch("TMome", &_TMome , "TMome/F");
+          _Ntup->Branch("TMomp", &_TMomp , "TMomp/F");
         }
       }
 
@@ -169,7 +176,7 @@ namespace mu2e {
 
     ConditionsHandle<AcceleratorParams> accPar("ignored");
     double _mbtime = accPar->deBuncherPeriod;
-
+std::cout<<"Point 3"<<std::endl;
     IO::StoppedParticleTauNormF stop;
     if (tmin_ > 0){
       while (true){
@@ -212,9 +219,10 @@ namespace mu2e {
     //std::cout << "Found stop " << exp(-stop.tauNormalized) << " " << stop.t << std::endl;
 
     const CLHEP::Hep3Vector pos(stop.x, stop.y, stop.z);
-
+    std::cout<<"Point 4"<<std::endl;
     const double energy = generateEnergy();
-
+    std::cout<<"Point 5"<<stop.pt<<std::endl;
+    _pionMom->Fill(stop.pt);
     if(!generateInternalConversion_){
       output->emplace_back( PDGCode::gamma,
                             GenId::ExternalRPC,
@@ -237,7 +245,8 @@ namespace mu2e {
       if(doHistograms_){
         _hElecMom ->Fill(mome.vect().mag());
         _hPosiMom ->Fill(momp.vect().mag());
-
+        _TMome = mome.vect().mag();
+        _TMomp = momp.vect().mag();
         double mee = (mome+momp).m();
         _hMee->Fill(mee);
         _hMeeVsE->Fill(energy,mee);
@@ -248,6 +257,8 @@ namespace mu2e {
 
         _hy->Fill(y);
       }
+      _Ntup->Fill();
+      _nEv++;
     }
 
     // Calculate survival probability

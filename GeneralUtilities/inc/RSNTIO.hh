@@ -15,7 +15,6 @@ namespace mu2e {
       float y;
       float z;
       float t;
-
       StoppedParticleF() : x(), y(), z(), t() {}
 
       static const char *branchDescription() {
@@ -30,16 +29,22 @@ namespace mu2e {
       float x;
       float y;
       float z;
+       float px;
+      float py;
+      float pz;
+      float pt;
       float t;
+       float code;
+      float id;
       float tauNormalized;
 
-      StoppedParticleTauNormF() : x(), y(), z(), t(), tauNormalized() {}
+      StoppedParticleTauNormF() : x(), y(), z(), px(), py(), pz(), pt(), t(), code(), id(), tauNormalized() {}
 
       static const char *branchDescription() {
-        return "x/F:y/F:z/F:time/F:tauNormalized/F";
+        return "x/F:y/F:z/F:px/F:py/F:pz/F:pt/F:time/F:code/F:id/F:tauNormalized/F";
       }
 
-      static unsigned numBranchLeaves() { return 5; }
+      static unsigned numBranchLeaves() { return 11; }
     };
 
     //================================================================

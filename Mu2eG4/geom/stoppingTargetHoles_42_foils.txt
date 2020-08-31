@@ -15,10 +15,11 @@ vector<double> stoppingTarget.radii  =
       75.00,  75.00,  75.00,  75.00,  75.00,
       75.00,  75.00,  75.00,  75.00,  75.00,
       75.00,  75.00,  75.00,  75.00,  75.00,
-      75.00,  75.00 }; // adding three extra disks since we now have a hole
+      75.00,  75.00,   75.00, 75.00,  75.00, 
+      75.00, 75.00 }; // adding three extra disks since we now have a hole
 
 double stoppingTarget.deltaZ         = 22.222222; // need to change the spacing too
-//double stoppingTarget.zLen = ?
+
 // This tells emacs to view this file in c++ mode.
 // Local Variables:
 // mode:c++

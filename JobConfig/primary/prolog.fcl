@@ -50,10 +50,19 @@ Primary: {
   analyzers: {
     genCountLogger: { module_type: GenEventCountReader makeHistograms: false }
     digiCompressionCheck : @local::DigiCompression.Check
+   // stoppedPionDumper: {
+  //       module_type: MotherMomAna
+ //        pionStops : {
+ //         inputFiles: ["pionStops/Stops.root"]
+ //          averageNumRecordsToUse : 500000
+ //           treeName : "stoppedPionDumper/StoppedPions"
+//            branchName : "StoppedPions"
+ //     }
+ //    }
   }
-  GenAndG4 :  [ generate, genCounter, g4run, g4status ]
+  GenAndG4 :  [ generate, genCounter, g4run, g4status]
 
- EndPath : [ genCountLogger, digiCompressionCheck, Output ]
+ EndPath : [ genCountLogger, digiCompressionCheck,  Output ]
   Output : {
      module_type : RootOutput
      SelectEvents : [ TriggerPath ]
@@ -66,7 +75,7 @@ Primary: {
 Primary.TriggerPath : [ @sequence::Primary.GenAndG4,
   @sequence::CommonMC.DigiSim,
   @sequence::TrackerMC.DigiSim,
-  DigiFilter,
+//  DigiFilter,
   @sequence::CaloDigiMC.DigiSim,
   @sequence::CrvDAQPackage.CrvResponseSequence,
   compressDigiMCs ]
