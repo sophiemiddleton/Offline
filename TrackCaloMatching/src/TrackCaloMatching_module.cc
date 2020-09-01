@@ -6,7 +6,7 @@
 // Original author G. Pezzullo
 //
 // 2014-06-03 P.Murat: will no longer work with the vanes-based geometry
-// 2015-09-17 P.Murat: use Bertran's extrapolator
+// 2015-09-17 P.Murat: use Bertrand's extrapolator
 ///////////////////////////////////////////////////////////////////////////////
 
 // Framework includes.
