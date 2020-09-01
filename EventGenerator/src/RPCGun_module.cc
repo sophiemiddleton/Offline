@@ -97,6 +97,7 @@ namespace mu2e {
       TH1F* y;                          // splitting function
       TH1F* ptime;                      // proton time
       TH1F* vtime;                      // vertex time
+      TH1F* vtime_w;                    // vertex time, survival prob-weighted
     } _hist ;
 
   public:
@@ -110,29 +111,30 @@ namespace mu2e {
     : art::EDProducer{pset}
     , psphys_(pset.get<fhicl::ParameterSet>("physics"))
     , spectrum_                  (BinnedSpectrum(psphys_))
-    , verbosityLevel_            (pset.get<int>   ("verbosityLevel", 0))
-    , genId_  (GenId::findByName (psphys_.get<std::string>("genId"              )))
+    , verbosityLevel_            (pset.get<int>   ("verbosityLevel"))
+    , genId_  (GenId::findByName (psphys_.get<std::string>("genId"          )))
     , applySurvivalProbability_  (psphys_.get<bool>("ApplySurvivalProb",false))
     , survivalProbScaling_       (psphys_.get<double>("SurvivalProbScaling",1))
-    , tmin_                      (pset.get<double>("tmin",-1))
-    , czmin_                     (pset.get<double>("czmin" , -1.0))
-    , czmax_                     (pset.get<double>("czmax" ,  1.0))
-    , phimin_                    (pset.get<double>("phimin",  0. ))
-    , phimax_                    (pset.get<double>("phimax", CLHEP::twopi ))
+    , tmin_                      (pset.get<double>("tmin"  ))
+    , czmin_                     (pset.get<double>("czmin" ))
+    , czmax_                     (pset.get<double>("czmax" ))
+    , phimin_                    (pset.get<double>("phimin"))
+    , phimax_                    (pset.get<double>("phimax"))
     , eng_(createEngine(art::ServiceHandle<SeedService>()->getSeed()))
     , randSpectrum_       (eng_, spectrum_.getPDF(), spectrum_.getNbins())
     , randomFlat_         (eng_)
     , randomUnitSphere_   (eng_, czmin_,czmax_,phimin_,phimax_)
     , pionCaptureSpectrum_(&randomFlat_,&randomUnitSphere_)
     //    , randomUnitSphere_(eng_)
-    , stops_(eng_,   pset.get<fhicl::ParameterSet>("pionStops"))
-    , doHistograms_( pset.get<bool>("doHistograms",true ) )
-    , protonPset_  ( pset.get<fhicl::ParameterSet>("randPDFparameters", fhicl::ParameterSet() ) )
+    , stops_              (eng_,   pset.get<fhicl::ParameterSet>("pionStops"))
+    , doHistograms_       (pset.get<bool>               ("doHistograms"))
+    , protonPset_         (pset.get<fhicl::ParameterSet>("randPDFparameters"))
     {
       produces<mu2e::GenParticleCollection>();
       produces<mu2e::EventWeight>();
       produces<mu2e::FixedTimeMap>();
 
+      if (phimax_ > CLHEP::twopi) phimax_ = CLHEP::twopi;
 //-----------------------------------------------------------------------------
 // make sure the requested genID makes sense
 //-----------------------------------------------------------------------------
@@ -154,17 +156,18 @@ namespace mu2e {
         art::ServiceHandle<art::TFileService> tfs;
         art::TFileDirectory tfdir = tfs->mkdir( "RPCGun" );
 
-        _hist.momentum = tfdir.make<TH1F>( "hmomentum" , "photon momentum"    , 100,   40.,  140.);
-	_hist.ptime    = tfdir.make<TH1F>("ptime"      , "proton time"        , 250, -500., 2000.);
-	_hist.vtime    = tfdir.make<TH1F>("vtime"      , "vertex time"        , 200,    0., 2000.);
+        _hist.momentum = tfdir.make<TH1F>("hmomentum"  , "photon momentum"      , 100,   40.,  140.);
+	_hist.ptime    = tfdir.make<TH1F>("ptime"      , "proton time"          , 250, -500., 2000.);
+	_hist.vtime    = tfdir.make<TH1F>("vtime"      , "vertex time"          , 200,    0., 2000.);
+	_hist.vtime_w  = tfdir.make<TH1F>("vtime_w"    , "vertex time, weighted", 200,    0., 2000.);
 
         if (genId_ == GenId::InternalRPC) {
-          _hist.eleMom   = tfdir.make<TH1F>("hElecMom" , "electron momentum"  , 140,  0. , 140.);
-          _hist.posMom   = tfdir.make<TH1F>("hPosiMom" , "positron momentum"  , 140,  0. , 140.);
-          _hist.mee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
-          _hist.meeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
-          _hist.meeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
-          _hist.y        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+          _hist.eleMom   = tfdir.make<TH1F>("hElecMom" , "electron momentum"    , 140,  0. , 140.);
+          _hist.posMom   = tfdir.make<TH1F>("hPosiMom" , "positron momentum"    , 140,  0. , 140.);
+          _hist.mee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "             , 200,0.,200.);
+          _hist.meeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"         , 200,0.,200.,200,0,200);
+          _hist.meeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "           , 200, 0.,1);
+          _hist.y        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|"  , 200,-1.,1.);
         }
       }
     }
@@ -283,6 +286,7 @@ namespace mu2e {
     _hist.momentum->Fill(energy);
     _hist.ptime->Fill(ptime);
     _hist.vtime->Fill(vtime);
+    _hist.vtime_w->Fill(vtime,weight);
 
   }
 

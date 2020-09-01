@@ -356,9 +356,15 @@ EventGenerator : { @table::EventGenerator
 	}
 
 	RPCGun : { 
-	    module_type    : RPCGun
-	    verbosityLevel : 0
-	    doHistograms   : false
+	    module_type       : RPCGun
+	    verbosityLevel    : 0
+	    doHistograms      : false
+	    tmin              : -1.
+	    czmin             : -1.
+	    czmax             :  1.
+	    phimin            :  0.
+	    phimax            : 10.
+	    randPDFparameters : {}
 	    physics : {
 		genId                 : @local::GEN_ID  # InternalRPC or ExternalRPC, defines the generated process
 		generateIntConversion : 0               # 0:photons 1: e+e- internal conversion pairs 
