@@ -36,6 +36,7 @@ namespace mu2e {
       processorStrategy_   (pset.get<std::string>("processorStrategy")),
       digiSampling_        (pset.get<double>     ("digiSampling")),
       maxChi2Cut_          (pset.get<double>     ("maxChi2Cut")),
+      timeOffset_          (pset.get<double>     ("timeOffset")),
       diagLevel_           (pset.get<int>        ("diagLevel",0)),
       nplot_(0)
     {
@@ -85,6 +86,7 @@ namespace mu2e {
     std::string const processorStrategy_;
     double const digiSampling_;
     double       maxChi2Cut_;
+    double       timeOffset_;
     int          diagLevel_;
     int          nplot_;
 
@@ -172,7 +174,7 @@ namespace mu2e {
           {
             double eDep      = waveformProcessor_->amplitude(i)*adc2MeV;
             double eDepErr   = waveformProcessor_->amplitudeErr(i)*adc2MeV;
-            double time      = waveformProcessor_->time(i);
+            double time      = waveformProcessor_->time(i) + timeOffset_;
             double timeErr   = waveformProcessor_->timeErr(i);
             bool   isPileUp  = waveformProcessor_->isPileUp(i);
             double chi2      = waveformProcessor_->chi2();

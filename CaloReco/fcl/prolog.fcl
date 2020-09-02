@@ -15,6 +15,7 @@ CaloRecoDigiFromDigi :
     processorStrategy     : "FixedFast"     
     digiSampling          : @local::HitMakerDigiSampling
     maxChi2Cut            : 10
+    timeOffset            : 0.   # internal calibration of the timing offsets
     diagLevel             : 0
 
     FixedFastProcessor : 
