@@ -185,7 +185,10 @@ namespace mu2e{
                      else denom += pt.second.at(0);
                    } );
 
-    return num/denom;
+    double extinction = 0;
+    if (denom > 0.) extinction = num/denom;
+
+    return extinction;
   }
 
 }
