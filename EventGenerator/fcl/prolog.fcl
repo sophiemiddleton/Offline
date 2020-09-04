@@ -106,6 +106,8 @@ CeEndpointGun: {
       spectrumVariable : totalEnergy
     }
     muonStops      : @local::mu2e.tgtMuonStops
+    doHistograms   : false
+    fixedTime      : -1.e6   # if positive, vertices are generated at a given fixedTime
 }
 
 CeplusEndpointGun : {
