@@ -62,6 +62,7 @@ namespace mu2e {
     RandomUnitSphere   randomUnitSphere_;
 
     RootTreeSampler<IO::StoppedParticleF> stops_;
+    double                                fixedTime_;
 //-----------------------------------------------------------------------------
 // histogramming
 //-----------------------------------------------------------------------------
@@ -96,7 +97,8 @@ namespace mu2e {
     , randSpectrum_(eng_, spectrum_.getPDF(), spectrum_.getNbins())
     , randomUnitSphere_(eng_)
     , stops_(eng_, pset.get<fhicl::ParameterSet>("muonStops"))
-    , doHistograms_       (pset.get<bool>("doHistograms",true ) )
+    , fixedTime_          (pset.get<double>("fixedTime"   ))
+    , doHistograms_       (pset.get<bool>  ("doHistograms"))
   {
     produces<mu2e::GenParticleCollection>();
 
@@ -162,13 +164,17 @@ namespace mu2e {
     const double energy = generateEnergy();
     const double p = energy * sqrt(1 - std::pow(mass_/energy,2));
 
+    double time = stop.t;
+
+    if (fixedTime_) time = fixedTime_;
+
     CLHEP::Hep3Vector p3 = randomUnitSphere_.fire(p);
     CLHEP::HepLorentzVector fourmom(p3, energy);
     output->emplace_back(pdgId_,
                          genId_,
                          pos,
                          fourmom,
-                         stop.t);
+                         time);
 
     event.put(std::move(output));
 //-----------------------------------------------------------------------------
