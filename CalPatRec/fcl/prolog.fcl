@@ -89,55 +89,6 @@ CalPatRec : { @table::CalPatRec
 	minArea                                 : 5000.
     }
 #------------------------------------------------------------------------------
-# KalFitHack configuration for the KFF fits 
-# I don't think it is used, CalTrkFit is using CPRKFFinal
-# first comment out, one month later - remove
-#------------------------------------------------------------------------------
-#     KalFitHack : {
-# 	debugLevel                              : 0
-# 	materialCorrection                      : true
-# 	mingap					: 1.0
-# 	ambiguityStrategy    			: [ 4    , 4    , 4    , 4   , 4    , 4    , 4    , 4   , 4    ]
-# 	hiterr 					: [ 80.  , 24.  , 8.   , 4.  , 2.   , 0.8  , 0.0  , 0.0 , 0.0  ]
-# 	t0Tolerance				: [ 2.0  , 1.0  , 1.0  , 1.0 , 0.5  , 0.5  , 0.2  , 0.2 , 0.1  ]
-# 	weedhits                                : [ true , true , true , true, true , true , true , true, true ]
-# 	# did Dave mean that? 
-# 	AddMaterial		                : [ false, false, false, true, false, false, false, true, true ]
-# 	initT0					: true
-# 	updateT0				: [ false, true, true, true, true, true, true, true, true ]
-# 	T0UpdateMode                            : 1
-# 	HitAmbigPenalty 			: false
-# 	HitMinDrift				: 0.2
-# 	DivergeFlt                              : 1000.
-# 	RdriftMinusDocaTol                      : 1.
-# 	ZeroDriftPenalty 			: 0.05
-# 	Neutralize 				: true
-# #------------------------------------------------------------------------------
-# #  KalContext parameters  (there are more to define ! )
-# #------------------------------------------------------------------------------
-# 	MinNDOF                                 : 10 # this means 15 hits min
-# #------------------------------------------------------------------------------
-# # ambiguity resolver parameters
-# #------------------------------------------------------------------------------
-# 	FixedAmbigResolver                      : {}
-# 	HitAmbigResolver                        : {}
-# 	PocaAmbigResolver                       : {}
-# 	PanelAmbigResolver                      : {}
-# #------------------------------------------------------------------------------
-# # doublet-based ambiguity resolver parameters
-# #------------------------------------------------------------------------------
-# 	DoubletAmbigResolver                    : { @table::TrkReco.DoubletAmbigResolver }
-# 	fieldCorrection				: true
-# 	maxhitchi                               : 3.5
-# 	dtOffset                                : @local::TrackCaloMatching.DtOffset
-# 	scaleErrDoublet                         : 5.
-# 	#	iLoopUseDoublets                        : 9
-# 	minDriftDoublet                         : 0.3
-# 	deltaDriftDoublet                       : 0.3
-# 	sigmaSlope                              : 0.025
-# 	makeStrawHitModuleLabel                 : makeSH
-#     }
-#------------------------------------------------------------------------------
 # SeedFitter(SeedFitHackNew) configuration for the final track fit
 # referenced by CalSeedFitter configurations below
 #------------------------------------------------------------------------------
