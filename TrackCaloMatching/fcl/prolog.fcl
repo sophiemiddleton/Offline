@@ -42,11 +42,14 @@ TrackCaloMatching : { @table::TrackCaloMatching
 # not a guess any more, but the number by Alex
 # 2017-01-05: change to 53 mm for CsI (electrons), the corresponding muon number is 19 mm
 #------------------------------------------------------------------------------
-	    meanInteractionDepth         : 53.             # mm (electrons, see mu2e-8439
+	    meanInteractionDepth         : 53.             # mm (electrons, see mu2e-8439)
 #------------------------------------------------------------------------------
-# 2015-02-07: TrackCaloMatching.DtOffset set in fcl/standardProducers.fcl
+# 2015-02-07 P.M.: TrackCaloMatching.DtOffset set in fcl/standardProducers.fcl
+# 2020-09-05 P.M.: zero the used value of teh time offset, as clusters are used in the track fit, 
+#                  the time offset is accounted for (so far, on su2020 branch only) 
+#                  in CaloReco/src/CaloRecoDigiFromDigi_module.cc
 #------------------------------------------------------------------------------	    
-	    dtOffset                     : @local::TrackCaloMatching.DtOffset             # ns
+	    dtOffset                     : 0.  # @local::TrackCaloMatching.DtOffset             # ns
 	
 	    trkToCaloExtrapolModuleLabel : TrackCaloIntersection
 	    caloClusterModuleLabel       : CaloClusterFromProtoCluster
