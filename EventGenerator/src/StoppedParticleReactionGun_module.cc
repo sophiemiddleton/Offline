@@ -166,7 +166,7 @@ namespace mu2e {
 
     double time = stop.t;
 
-    if (fixedTime_) time = fixedTime_;
+    if (fixedTime_ >= 0) time = fixedTime_;
 
     CLHEP::Hep3Vector p3 = randomUnitSphere_.fire(p);
     CLHEP::HepLorentzVector fourmom(p3, energy);
