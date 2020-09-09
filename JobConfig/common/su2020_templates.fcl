@@ -158,7 +158,11 @@ su2020 : {
 	    vetoDaughters   : []
 	}
 
-	stepPointMomentumFilter : { @table::FilterStepPointMomentum }
+	filterStepPointMomentum : { @table::FilterStepPointMomentum
+	    inputs         : ["g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO" ]
+	    cutMomentumMin : -1
+	    cutMomentumMax : 1.e6
+	}
 
 	@table::CalPatRec.filters
 
@@ -200,6 +204,18 @@ su2020 : {
 #------------------------------------------------------------------------------
 # output event formats
 #------------------------------------------------------------------------------
+su2020.gen_sim_output       : [ "drop    *_*_*_*",
+#				"keep    *_compressDigiMCs_*_*",
+				"keep    *_generate_*_*",
+				"keep    mu2e::GenEventCount_*_*_*",
+				"keep    mu2e::*_g4run_*_*",
+				"keep    mu2e::EventWeight_*_*_*",
+				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
+				"keep    mu2e::FixedTimeMap_*_*_*",
+				"keep    mu2e::ProtonBunchIntensity_*_*_*",
+				"keep    art::TriggerResults_TriggerResults_*_*"
+			       ]
+
 su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 				"keep    *_compressDigiMCs_*_*",
 				"keep    mu2e::GenEventCount_*_*_*",
@@ -218,7 +234,7 @@ su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 #------------------------------------------------------------------------------
 su2020.gen_g4              : [ generate, genCounter, g4run, protonBunchIntensity ]
 
-su2020.gen_g4_detFilter    : [ generate, genCounter, g4run, protonBunchIntensity, detectorFilter ]
+su2020.gen_g4_detFilter    : [ generate, genCounter, g4run, protonBunchIntensity, filterStepPointMomentum ]
 
 su2020.gen_g4_time_map     : [ @sequence::su2020.gen_g4, @sequence::CommonMC.DigiSim ]
 
@@ -323,7 +339,8 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 #------------------------------------------------------------------------------
 	gcl        : [ genCountLogger ]
 #------------------------------------------------------------------------------
-# p1: MC generation, G4, digitization
+# p1  : MC generation, G4, digitization
+# p12 : MC generation, G4, filter events with at least one step point in the tracker of the calorimeter
 #------------------------------------------------------------------------------
 	su2020_p1 : [ @sequence::su2020.gen_g4,               # includes protonBunchIntensity
 		      GammaFilter,                            # does nothing by default
@@ -338,17 +355,30 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 			  @sequence::su2020.digisCaloFilter           
 			 ]
 
-	su2020_p10 : [ @sequence::su2020.gen_g4_detFilter,    # includes ProtonBunchIntensity
-		      GammaFilter,                            # does nothing by default
-		      @sequence::CommonMC.DigiSim      ,      # adds TimeMaps, EWMProducer (name - confusing)
-		      @sequence::su2020.digis_no_filter       # no StrawDigiMCFilter, for mixing
-		     ]
+	su2020_p10 : [ @sequence::su2020.gen_g4,              # includes ProtonBunchIntensity
+		       filterStepPointMomentum ,
+		       GammaFilter,                           # does nothing by default
+		       @sequence::CommonMC.DigiSim       ,    # adds TimeMaps, EWMProducer (name - confusing)
+		       @sequence::su2020.digis_no_filter      # no StrawDigiMCFilter, for mixing
+		      ]
 
-	su2020_p11 : [ g4run, protonBunchIntensity,            # what's left of @sequence::su2020.gen_g4_time_map,
+	su2020_p11 : [ g4run, protonBunchIntensity,           # what's left of @sequence::su2020.gen_g4_time_map,
 		       @sequence::CommonMC.DigiSim, 
-		       GammaFilter,                            # does nothing by default
+		       GammaFilter,                           # does nothing by default
 		       @sequence::su2020.digis          
 		     ]
+
+	su2020_p12 : [ @sequence::su2020.gen_g4,              # includes ProtonBunchIntensity
+		       filterStepPointMomentum,               # 
+		       @sequence::CommonMC.DigiSim            # adds TimeMaps, EWMProducer (name - confusing)
+		      ]
+
+
+	su2020_p13 : [ g4run , 
+		       filterStepPointMomentum,               # 
+		       @sequence::CommonMC.DigiSim            # adds TimeMaps, EWMProducer (name - confusing)
+		      ]
+
 #------------------------------------------------------------------------------
 # p2: read digis, do reconstruction: run downstream electron and muon reco paths
 #------------------------------------------------------------------------------
