@@ -97,8 +97,7 @@ dummyGenerator : {
   module_type : EventGenerator
 }
 
-CeEndpointGun: {
-    module_type    : StoppedParticleReactionGun
+CeEndpointGun: { module_type : StoppedParticleReactionGun
     physics: {
       genId            : @local::GEN_ID 
       pdgId            : 11
@@ -110,8 +109,7 @@ CeEndpointGun: {
     fixedTime      : -1.e6   # if positive, vertices are generated at a given fixedTime
 }
 
-CeplusEndpointGun : {
-    module_type    : StoppedParticleReactionGun
+CeplusEndpointGun : { module_type    : StoppedParticleReactionGun
     physics: {
 	genId           : @local::GEN_ID
 	pdgId           : -11
@@ -124,8 +122,7 @@ CeplusEndpointGun : {
     muonStops      : @local::mu2e.tgtMuonStops
 }
 
-PrimaryProtonGun: {
-    module_type : PrimaryProtonGun
+PrimaryProtonGun: { module_type : PrimaryProtonGun
     beamDisplacementOnTarget : [0.,0.,0.]
     beamRotationTheta : 0.
     beamRotationPhi   : 0.
@@ -142,21 +139,19 @@ PrimaryProtonGun: {
 
 }
 
-StoppedParticleReactionGun: {
-    @table::CeEndpointGun
+StoppedParticleReactionGun: { @table::CeEndpointGun
     physics:  { @table::CeEndpointGun.physics
 	genId : StoppedParticleReactionGun
     }
 }
 
-StoppedParticleG4Gun        : { module_type: StoppedParticleG4Gun
+StoppedParticleG4Gun : { module_type: StoppedParticleG4Gun
     pdgId          : 13
     muonStops      : nil
     verbosityLevel : 0
 }
 
-StoppedMuonXRayGammaRayGun: {
-    module_type    : StoppedMuonXRayGammaRayGun
+StoppedMuonXRayGammaRayGun: { module_type : StoppedMuonXRayGammaRayGun
     muonStops      : @local::mu2e.tgtMuonStops
     verbosityLevel : 0
     physics        : { }
@@ -165,9 +160,7 @@ StoppedMuonXRayGammaRayGun: {
 # Save state of random numbers at the start of each event
 # the module is defined in art/Framework/Modules
 
-randomsaver: {
-    module_type          : RandomNumberSaver
-}
+randomsaver: { module_type : RandomNumberSaver }
 #------------------------------------------------------------------------------
 # transitioning ... EventGenerator producers table
 #------------------------------------------------------------------------------
@@ -209,7 +202,7 @@ EventGenerator : { @table::EventGenerator
 # new implementation from Eleonora, doesn't require tabulations of LL spectra
 # conversion e- and e+ on Al27 
 #------------------------------------------------------------------------------
-	CeMEndpoint              : {   module_type: StoppedParticleReactionGun
+	CeMEndpoint              : { @table::StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeEndpoint 
 		pdgId                 : 11
@@ -221,7 +214,7 @@ EventGenerator : { @table::EventGenerator
 	    doHistograms              : true
 	}
 
-	CePEndpoint              : {   module_type: StoppedParticleReactionGun
+	CePEndpoint              : { @table::StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeEndpoint 
 		pdgId                 : -11
@@ -233,7 +226,7 @@ EventGenerator : { @table::EventGenerator
 	    doHistograms              : true
 	}
 
-	CeMLeadingLog              : {   module_type: StoppedParticleReactionGun
+	CeMLeadingLog              : { @table::StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeLeadingLog 
 		pdgId                 : 11
@@ -247,7 +240,7 @@ EventGenerator : { @table::EventGenerator
 	    doHistograms              : true
 	}
 
-	CePLeadingLog              : {   module_type: StoppedParticleReactionGun
+	CePLeadingLog              : { @table::StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeLeadingLog 
 		pdgId                 : -11
@@ -257,7 +250,7 @@ EventGenerator : { @table::EventGenerator
 		ehi                   : 92.32
 		elow                  : 0.
 	    }
-	    muonStops                 : {  @table::EventGenerator.muonStops }
+	    muonStops                 : { @table::EventGenerator.muonStops }
 	    doHistograms              : true
 	}
 #------------------------------------------------------------------------------
@@ -384,8 +377,7 @@ EventGenerator : { @table::EventGenerator
 	    muonStops            : {  @table::EventGenerator.muonStops }
 	}
 
-  	antiprotonGun : { 
-	    module_type : StoppedPbarGun
+  	antiprotonGun : { module_type : StoppedPbarGun
 	    physics : {
 		genId            : @local::GEN_ID
 		pdgId            : -2212
@@ -397,8 +389,7 @@ EventGenerator : { @table::EventGenerator
 	    pbarStops            : {  @table::EventGenerator.pbarStops}
 	}
 
-	RPCGun : { 
-	    module_type       : RPCGun
+	RPCGun : { module_type       : RPCGun
 	    verbosityLevel    : 0
 	    doHistograms      : false
 	    tmin              : -1.
@@ -418,8 +409,7 @@ EventGenerator : { @table::EventGenerator
 	    pionStops                 : { @table::EventGenerator.pionStops }
 	}
         
-        RMCGun : {
-	    module_type    : RMCGun
+        RMCGun : { module_type    : RMCGun
 	    verbosityLevel : 0
 	    doHistograms   : false
 	    physics : {
@@ -432,8 +422,7 @@ EventGenerator : { @table::EventGenerator
 	    muonStops      : { @table::EventGenerator.muonStops }
 	}
 
-	StoppedParticleRMCGun : { 
-	    module_type    : StoppedMuonRMCGun
+	StoppedParticleRMCGun : { module_type    : StoppedMuonRMCGun
 	    verbosityLevel : 0
 	    doHistograms   : false
 	    physics : {
@@ -448,8 +437,7 @@ EventGenerator : { @table::EventGenerator
 
 	}
 
-	GammaConversionGun : {
-	    module_type: GammaConversionGun
+	GammaConversionGun : { module_type: GammaConversionGun
 	    verbosityLevel : 0	  
 	    doHistograms   : true
 	    gammaStops: @local::mu2e.gammaStops
