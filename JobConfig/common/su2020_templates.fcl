@@ -128,22 +128,11 @@ su2020 : {
 #------------------------------------------------------------------------------
 	KSFUeMH     : { @table::KSFUeM                            SeedCollection : MHFinderUe  CheckHelicity:false }
 	KFFUeMHPar  : { @table::KFFUeM                            SeedCollection : KSFUeMH  }
-# 	KFFUeMHDar  : { @table::CalPatRec.producers.CalTrkFitUem  
-# 	    SeedCollection : KSFUeMH  
-# 	    fitparticle    : @local::Particle.eplus               # it is only the mass which matters
-# 	    fitdirection   : @local::FitDir.upstream
-# 	}
-
-	#------------------------------------------------------------------------------
-	# track fit, upstream muon hypothesis
-	#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# track fit, upstream muon hypothesis
+#------------------------------------------------------------------------------
 	KSFUmuMH    : { @table::KSFUmuM                           SeedCollection : MHFinderUmu CheckHelicity:false}
 	KFFUmuMHPar : { @table::KFFUmuM                           SeedCollection : KSFUmuMH }
-# 	KFFUmuMHDar : { @table::CalPatRec.producers.CalTrkFitDmm  
-# 	    SeedCollection : KSFUmuMH 
-# 	    fitparticle    : @local::Particle.muplus              # it is only the mass which matters
-# 	    fitdirection   : @local::FitDir.upstream
-# 	}
     }
 #------------------------------------------------------------------------------
 #  filters
@@ -203,19 +192,19 @@ su2020 : {
 
 #------------------------------------------------------------------------------
 # output event formats
+# 1. output format for mixing (keep protonTimeMap, if it is there - for flash)
 #------------------------------------------------------------------------------
 su2020.gen_sim_output       : [ "drop    *_*_*_*",
-#				"keep    *_compressDigiMCs_*_*",
-				"keep    *_generate_*_*",
-				"keep    mu2e::GenEventCount_*_*_*",
-				"keep    mu2e::*_g4run_*_*",
-				"keep    mu2e::EventWeight_*_*_*",
-				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
-				"keep    mu2e::FixedTimeMap_*_*_*",
-				"keep    mu2e::ProtonBunchIntensity_*_*_*",
-				"keep    art::TriggerResults_TriggerResults_*_*"
+				"keep    *_g4run_*_*",
+				"drop    mu2e::StepPointMCs_g4run_calorimeter_*",
+				"drop    mu2e::StepPointMCs_g4run_calorimeterRO_*",
+				"keep    mu2e::CaloShowerSteps_*_*_*",
+				"keep    mu2e::GenParticles_*_*_*",
+				"keep    *_protonTimeMap_*_*"
 			       ]
-
+#------------------------------------------------------------------------------
+# 2. output format for digi files
+#------------------------------------------------------------------------------
 su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 				"keep    *_compressDigiMCs_*_*",
 				"keep    mu2e::GenEventCount_*_*_*",
@@ -341,6 +330,7 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 #------------------------------------------------------------------------------
 # p1  : MC generation, G4, digitization
 # p12 : MC generation, G4, filter events with at least one step point in the tracker of the calorimeter
+# p14 : prepare inputs for mixing
 #------------------------------------------------------------------------------
 	su2020_p1 : [ @sequence::su2020.gen_g4,               # includes protonBunchIntensity
 		      GammaFilter,                            # does nothing by default
@@ -379,6 +369,14 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 		       @sequence::CommonMC.DigiSim            # adds TimeMaps, EWMProducer (name - confusing)
 		      ]
 
+	su2020_p14 : [ generate, genCounter, g4run, filterStepPointMomentum, 
+		       CaloShowerStepFromStepPt
+		      ]  # data file for mixing
+
+	su2020_p14_flash : [ g4run, filterStepPointMomentum, 
+			     protonTimeMap, 
+			     CaloShowerStepFromStepPt
+			    ]  # data file for mixing
 #------------------------------------------------------------------------------
 # p2: read digis, do reconstruction: run downstream electron and muon reco paths
 #------------------------------------------------------------------------------

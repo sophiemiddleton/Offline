@@ -34,9 +34,11 @@ END_PROLOG
 #include "TrkFilters/fcl/prolog_trigger.fcl"
 #include "CaloFilters/fcl/prolog_trigger.fcl"
 
+#include "JobConfig/common/su2020_mixing_prolog.fcl"
+
 #include "JobConfig/common/su2020_templates.fcl"
 
-process_name : @local::PROCESS_NAME
+# process_name : @local::PROCESS_NAME
 outputs      : { @table::su2020.outputs   }
 
 su2020.physics : {
