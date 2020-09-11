@@ -34,7 +34,9 @@ END_PROLOG
 #include "TrkFilters/fcl/prolog_trigger.fcl"
 #include "CaloFilters/fcl/prolog_trigger.fcl"
 
-#include "JobConfig/common/su2020_mixing_prolog.fcl"
+#include "JobConfig/mixing/prolog1.fcl"
+
+# #onclude "JobConfig/common/su2020_mixing_prolog.fcl"
 
 #include "JobConfig/common/su2020_templates.fcl"
 
