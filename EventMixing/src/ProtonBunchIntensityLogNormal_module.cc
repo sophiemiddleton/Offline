@@ -102,8 +102,8 @@ namespace mu2e {
 
     // convert to nearest ingeger and write out
 
-    res = 1;
-    printf("ProtonBunchIntensityLogNormal::produce : N(protons:): %10.3e\n",res);
+    // res = 1;
+    // printf("ProtonBunchIntensityLogNormal::produce : N(protons:): %10.3e\n",res);
     event.put(std::make_unique<ProtonBunchIntensity>(unsigned(rint(res))));
   }
 
