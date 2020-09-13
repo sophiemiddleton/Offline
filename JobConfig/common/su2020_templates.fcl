@@ -192,15 +192,15 @@ su2020 : {
 
 #------------------------------------------------------------------------------
 # output event formats
-# 1. output format for mixing (keep protonTimeMap, if it is there - for flash)
+# 1. event format for mixing input
 #------------------------------------------------------------------------------
 su2020.gen_sim_output       : [ "drop    *_*_*_*",
+				"keep    mu2e::GenEventCount_*_*_*",
 				"keep    *_g4run_*_*",
 				"drop    mu2e::StepPointMCs_g4run_calorimeter_*",
 				"drop    mu2e::StepPointMCs_g4run_calorimeterRO_*",
 				"keep    mu2e::CaloShowerSteps_*_*_*",
-				"keep    mu2e::GenParticles_*_*_*",
-				"keep    *_protonTimeMap_*_*"
+				"keep    mu2e::GenParticles_*_*_*"
 			       ]
 #------------------------------------------------------------------------------
 # 2. output format for digi files
@@ -370,12 +370,12 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 		      ]
 
 	su2020_p14_mustop : [ generate, genCounter, g4run, filterStepPointMomentum, 
-			      protonTimeMap, muonTimeMap, 
+			      # protonTimeMap, muonTimeMap, 
 			      CaloShowerStepFromStepPt
 			     ]                                # path for producing mixing inputs from muon captures
 
 	su2020_p14_flash : [ g4run, filterStepPointMomentum, 
-			     protonTimeMap, 
+			     # protonTimeMap, 
 			     CaloShowerStepFromStepPt
 			    ]                                 # path for producing the mixing input from beam flash 
 #------------------------------------------------------------------------------

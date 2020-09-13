@@ -18,7 +18,12 @@ CompressPhysicalVolumes : {
 FilterStepPointMomentum : {
     module_type    : FilterStepPointMomentum
     inputs         : [ "g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO"]
-    cutMomentumMin : 10. # MeV/c
+    TimeOffsets    : [ @sequence::TIME_MAPS ]
+    cutMomentumMin : 10.        # MeV/c
+    cutMomentumMax :  1.e10     # MeV/c
+    tMin           : -1.e10
+    tMax           :  1.e10
+    volumeId       :  0         # if positive, defined the volume id to look at
 }
 
 # throw when hits are outside their sensitive volumes
