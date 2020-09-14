@@ -148,9 +148,7 @@ su2020 : {
 	}
 
 	filterStepPointMomentum : { @table::FilterStepPointMomentum
-	    inputs         : ["g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO" ]
 	    cutMomentumMin : -1
-	    cutMomentumMax : 1.e6
 	}
 
 	@table::CalPatRec.filters
@@ -374,8 +372,13 @@ su2020.reco_compression : [ protonBunchIntensity, # for signal-only
 			      CaloShowerStepFromStepPt
 			     ]                                # path for producing mixing inputs from muon captures
 
-	su2020_p14_flash : [ g4run, filterStepPointMomentum, 
+	su2020_p14_flash : [ g4run, filterStepPointMomentum
 			     # protonTimeMap, 
+			     # CaloShowerStepFromStepPt
+			    ]                                 # path for producing the mixing input from beam flash 
+
+	su2020_p15_flash : [ protonTimeMap           , 
+			     filterStepPointMomentum ,        # filter again, now - on time, need step points...
 			     CaloShowerStepFromStepPt
 			    ]                                 # path for producing the mixing input from beam flash 
 #------------------------------------------------------------------------------
