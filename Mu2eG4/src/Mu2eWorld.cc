@@ -361,10 +361,10 @@ namespace mu2e {
     // The target is built inside this volume.
     VolumeInfo const & detSolUpstreamVacInfo   = ( _config.getBool("isDumbbell",false) ) ? _helper->locateVolInfo("DS3Vacuum") : _helper->locateVolInfo("DS2Vacuum");//DS3Vacuum to move the targets
 
-    if ( _verbosityLevel > 0) {
+    //if ( _verbosityLevel > 0) {
       G4cout << __func__ << "detSolUpstreamVacInfo.centerInWorld.z()=" << detSolUpstreamVacInfo.centerInWorld.z() << G4endl;
       G4cout << __func__ << "detSolUpstreamVacInfo.centerInMu2e().z() =" << detSolUpstreamVacInfo.centerInMu2e().z() << G4endl;
-    }
+   // }
 
     // Buid the stopping target
     VolumeInfo targetInfo = ( _config.getBool("hasTarget",false) ) ?

@@ -34,7 +34,7 @@ vector<double> stoppingTarget.radii  =
 
 // last material given will be repeated up to number radii.size()
 //  vector<string> stoppingTarget.materials = 
-//      { "G4_Al"};
+//      { "G4_Ti"};
 
 // Variation of locations of foil centers
 // z: variations from equal spacings according to z0 and deltaZ
@@ -77,39 +77,6 @@ double stoppingTarget.foilTarget_supportStructure_angleOffset = 0; // angle of f
 double stoppingTarget.foilTarget_supportStructure_radius = 0.0381; // radius of the support wires, 38.1micrometer radius corresponds to 3mil diameter
 string stoppingTarget.foilTarget_supportStructure_fillMaterial = "G4_W";
 
-
-// ----------------------------------------------------------------------------------------------------
-// ---------------------       Customer Defined Configs      ------------------------------------------
-// ----------------------------------------------------------------------------------------------------
-// more parameters added by Yunxuan Li to merge alternative stoppingTarget designs.
-// Parameters can be left with blank if unnecessary.
-
-// Example 4: cylinder default design
-string stoppingTarget.designName = "hexagon";
-
-double stoppingTarget.string_radius = 0.02665;
-double stoppingTarget.string_target_opening_size = 0.07366;
-double stoppingTarget.hexagon_length = 680.0;
-double stoppingTarget.outer_radius = 21.0;
-double stoppingTarget.target_length = 800.;
-vector<double> stoppingTarget.radius_list = { 21., 21., 21., 21., 21.,
-                                              21., 21., 21., 21., 21.,
-                                              21., 21., 21., 21., 21.,
-                                              21., 21., 21., 21. };
-vector<double> stoppingTarget.x_list = { 0., 2., -2., 4., -4.,
-                                         1., -1., 1., -1., 2., 
-                                        -2., 2., -2., 0., 0., 
-                                         3., -3., 3., -3. };
-vector<double> stoppingTarget.y_list = { 0., 0., 0., 0., 0., 
-                                         1.73205, 1.73205, -1.73205, -1.73205, 3.46410, 
-                                         3.46410, -3.46410, -3.46410, 3.46410, -3.46410, 
-                                         1.73205, 1.73205, -1.73205, -1.73205 };
-
-
-
-
-
-//
 
 //
 //

@@ -93,7 +93,11 @@ namespace mu2e {
     AntiLeakRegistry & reg = _helper.antiLeakRegistry();
 
     TubsParams targetMotherParams(0., target->cylinderRadius(), target->cylinderLength()/2.);
-
+    //if ( verbosity > 1 ) {
+      std::cout<<"Foil ST with length "<<target->cylinderLength()<<" radius "<<target->cylinderRadius()<<std::endl;
+      std::cout<<"Target Center is "<<target->centerInMu2e()<<std::endl;
+    
+    //}
     VolumeInfo targetInfo = nestTubs("StoppingTargetMother",
                                      targetMotherParams,
                                      findMaterialOrThrow(target->fillMaterial()),
@@ -163,6 +167,21 @@ namespace mu2e {
 
         doSurfaceCheck && checkForOverlaps( pv, config, verbosity>0);
 
+
+double totMass  = 0.0;
+    double foil_rIn = config.getDouble("stoppingTarget.inner_radius", 0);
+    
+    for (int itf=0; itf<target->nFoils(); ++itf)
+    {
+
+        TargetFoil foil=target->foil(itf);
+
+
+        totMass += M_PI * (foil.rOut()*foil.rOut() - foil_rIn*foil_rIn) * 2 * foil.halfThickness();
+        
+     }
+      totMass *= 2.7 * 0.001;
+      std::cout<<"Mass of target = "<<totMass<<std::endl;
         if (!stoppingTargetIsVisible) {
           foilInfo.logical->SetVisAttributes(G4VisAttributes::Invisible);
         } else {
@@ -315,7 +334,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     AntiLeakRegistry & reg = _helper.antiLeakRegistry();
 
     //    TubsParams targetMotherParams(0., target->cylinderRadius(), target->cylinderLength()/2.); //MR20150616 replace by hardcoded tube for primary volume
-    TubsParams targetMotherParams(0., 100., 500.); //MR20150616 hardcoded tube for primary volume
+    TubsParams targetMotherParams(0., 300., 1000.);//MR20150616 hardcoded tube for primary volume
 
     VolumeInfo targetInfo = nestTubs("StoppingTargetMother",
                                      targetMotherParams,
@@ -566,7 +585,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     const bool doSurfaceCheck       = config.getBool("g4.doSurfaceCheck",false);
     const bool placePV              = true;
 
-    int verbosity(config.getInt("target.verbosity",0));
+    int verbosity(config.getInt("target.verbosity",10));
 
     if ( verbosity > 1 ) std::cout<<"In constructStoppingTarget"<<std::endl;
     // Master geometry for the Target assembly
@@ -580,8 +599,12 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
 
     //TubsParams targetMotherParams(0., target->cylinderRadius(), target->cylinderLength()/2.); //SM2020 added back in//MR20150616 replace by hardcoded tube for primary volume
    //CBE Lost, no hardcoded numbers allowed! in the whole function!
-   TubsParams targetMotherParams(0., 100., 500.); //MR20150616 hardcoded tube for primary volume
-
+   TubsParams targetMotherParams(0., 300., 1000.); //MR20150616 hardcoded tube for primary volume
+   if ( verbosity > 1 ) {
+      std::cout<<"Cylinder ST with length "<<target->cylinderLength()<<" radius "<<target->cylinderRadius()<<std::endl;
+      std::cout<<"Target Center is "<<target->centerInMu2e()<<std::endl;
+    
+    }
     VolumeInfo targetInfo = nestTubs("StoppingTargetMother",
                                      targetMotherParams,
                                      findMaterialOrThrow(target->fillMaterial()),
@@ -617,6 +640,9 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     cout << "wire diameter : " <<wire_diameter <<endl;
     cout << "target start : "<< stoppingTarget_z0InMu2e <<endl;
     cout << "target center : "<<target_length/2 + stoppingTarget_z0InMu2e<<endl;
+      cout << "target length : "<< target_length<< endl;
+      cout << "target center : "<<target->centerInMu2e() << endl;
+      cout<< "parent center : " << parent.centerInMu2e() << endl;
     //double dummyStoppingTarget_z0 = 5471.;
 
     /* Disk parameters */
@@ -804,7 +830,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     AntiLeakRegistry & reg = _helper.antiLeakRegistry();
 
     //    TubsParams targetMotherParams(0., target->cylinderRadius(), target->cylinderLength()/2.); //MR20150616 replace by hardcoded tube for primary volume
-    TubsParams targetMotherParams(0., 150., 500.); //MR20150616 hardcoded tube for primary volume
+    TubsParams targetMotherParams(0., 300., 1000.);//MR20150616 hardcoded tube for primary volume
 
     VolumeInfo targetInfo = nestTubs("StoppingTargetMother",
                                      targetMotherParams,

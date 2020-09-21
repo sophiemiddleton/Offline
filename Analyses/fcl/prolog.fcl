@@ -27,6 +27,17 @@ TrackSummaryMaker: {
     trackInput : "TrkPatRec:DeM"
 }
 
+
+TrkCombine: {
+	module_type : TrkCombine
+  KalRepPtrCollection :  ["KFFDeM","KFFDeP"]
+}
+
+RecoAna : {
+  analyzers : {
+    TrkCombine : @local::TrkCombine
+  }
+}
 CaloClusterCompareNew : {
 	module_type : CaloClusterCompare
         CaloClusterCollection : NewCaloClusterFast

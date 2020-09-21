@@ -89,12 +89,10 @@ string stoppingTarget.designName = "screen";
 
 double stoppingTarget.outer_radius = 75.00;
 double stoppingTarget.inner_radius = 21.0;
-int stoppingTarget.number_screenlayers = 7; //57;
-double stoppingTarget.string_radius = 0.2; //0.1143;
-double stoppingTarget.string_target_opening_size = 1.0; //1.0414;
+int stoppingTarget.number_screenlayers = 57;
+double stoppingTarget.string_radius = 0.1143;
+double stoppingTarget.string_target_opening_size = 1.0414;
 double stoppingTarget.target_length = 800.;
-
-//
 
 //
 //
