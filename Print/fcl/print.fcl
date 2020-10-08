@@ -40,6 +40,9 @@ physics :{
       caloShowerStepPrinter : {
         verbose: 0
       }
+      caloShowerStepROPrinter : {
+        verbose: 0
+      }
       caloHitPrinter : {
         verbose: 0
       }

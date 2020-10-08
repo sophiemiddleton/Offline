@@ -18,6 +18,7 @@
 #include "Print/inc/StepPointMCPrinter.hh"
 #include "Print/inc/MCTrajectoryPrinter.hh"
 #include "Print/inc/CaloShowerStepPrinter.hh"
+#include "Print/inc/CaloShowerStepROPrinter.hh"
 #include "Print/inc/CaloHitPrinter.hh"
 #include "Print/inc/CaloDigiPrinter.hh"
 #include "Print/inc/CaloRecoDigiPrinter.hh"
@@ -67,6 +68,8 @@ namespace mu2e {
 	fhicl::Name("mcTrajectoryPrinter") }; 
       fhicl::Table<ProductPrinter::ConfigE> caloShowerStepPrinter { 
 	fhicl::Name("caloShowerStepPrinter") }; 
+      fhicl::Table<ProductPrinter::ConfigE> caloShowerStepROPrinter { 
+	fhicl::Name("caloShowerStepROPrinter") }; 
       fhicl::Table<ProductPrinter::ConfigE> caloHitPrinter { 
 	fhicl::Name("caloHitPrinter") }; 
       fhicl::Table<ProductPrinter::Config> caloDigiPrinter { 
@@ -151,6 +154,7 @@ mu2e::PrintModule::PrintModule(const Parameters& conf):
   _printers.push_back( make_unique<StepPointMCPrinter>( conf().stepPointMCPrinter() ) );
   _printers.push_back( make_unique<MCTrajectoryPrinter>( conf().mcTrajectoryPrinter() ) );
   _printers.push_back( make_unique<CaloShowerStepPrinter>( conf().caloShowerStepPrinter() ) );
+  _printers.push_back( make_unique<CaloShowerStepROPrinter>( conf().caloShowerStepROPrinter() ) );
   _printers.push_back( make_unique<CaloHitPrinter>( conf().caloHitPrinter() ) );
   _printers.push_back( make_unique<CaloDigiPrinter>( conf().caloDigiPrinter() ) );
   _printers.push_back( make_unique<CaloRecoDigiPrinter>( conf().caloRecoDigiPrinter() ) );
