@@ -196,6 +196,12 @@ namespace mu2e {
 
     for (const auto& caloShowerStepRO : caloShowerStepROs)
       {
+	if (caloShowerStepRO.ROID() >= 2*calorimeter_->nCrystal()) {
+	  // 2020-10-08 P.M. a patch to bypass the uncompression problem. It is not a solution. TO BE FIXED
+	  // effectively, this ignores energy deposition in SiPMs in compressed datasets...
+	  printf(" ERROR in CaloDigiFromShower::fillWaveforms: ROID = %10i. IGNORE\n",caloShowerStepRO.ROID());
+	  continue;
+	}
         readoutResponse(caloShowerStepRO.ROID(),caloShowerStepRO.energy(),caloShowerStepRO.time());
         if (diagLevel_ > 0) totalEdep +=  caloShowerStepRO.energy();
       }
