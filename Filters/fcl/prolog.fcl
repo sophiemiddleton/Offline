@@ -23,7 +23,8 @@ FilterStepPointMomentum : {
     cutMomentumMax :  1.e10     # MeV/c
     tMin           : -1.e10
     tMax           :  1.e10
-    volumeId       :  0         # if positive, defined the volume id to look at
+    volumeId       :  0         # if positive, defines the volume id to look at
+    fillHistograms : false
 }
 
 # throw when hits are outside their sensitive volumes

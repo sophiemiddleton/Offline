@@ -10,7 +10,9 @@ TIME_MAPS : [ protonTimeMap, muonTimeMap, cosmicTimeMap ]
 CommonMC: {
   producers: {
 # time maps
-    protonTimeMap: { module_type : GenerateProtonTimes }
+    protonTimeMap: { module_type : GenerateProtonTimes 
+	ignoredGenIds : [ "cosmicToy", "cosmicDYB", "cosmic", "cosmicCRY", "CosmicCORSIKA" ]
+    }
     muonTimeMap:   { module_type : GenerateMuonLife }
     cosmicTimeMap: 
     { 

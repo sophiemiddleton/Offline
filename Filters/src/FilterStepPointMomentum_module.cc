@@ -13,6 +13,9 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Core/ModuleMacros.h"
+#include "art_root_io/TFileService.h"
+
+#include "TH1.h"
 
 #include "ConditionsService/inc/ConditionsHandle.hh"
 #include "ConditionsService/inc/AcceleratorParams.hh"
@@ -27,18 +30,26 @@ namespace mu2e {
   //================================================================
   class FilterStepPointMomentum : public art::EDFilter {
     typedef std::vector<art::InputTag> InputTags;
-    InputTags inputs_;
-    double cutMomentumMin_;
-    double cutMomentumMax_;
+    InputTags             inputTags_      ;
+    double                cutMomentumMin_ ;
+    double                cutMomentumMax_ ;
 
-    SimParticleTimeOffset timeOffsets_ ; // time offsets
-    double                tMin_;	 // if non-negative: hit timing cut-off
-    double                tMax_;	 // 
-    double                mbtime_      ; // microbunch length, ns
-    uint                  volumeId_    ; // default : -1
+    SimParticleTimeOffset timeOffsets_    ; // time offsets
+    double                tMin_           ; // if non-negative: hit timing cut-off
+    double                tMax_           ; // 
+    double                mbtime_         ; // microbunch length, ns
+    uint                  volumeId_       ; // default : -1
+    bool                  fillHistograms_ ; // 
     // statistics counters
-    unsigned numInputEvents_;
-    unsigned numPassedEvents_;
+    unsigned              numInputEvents_ ;
+    unsigned              numPassedEvents_;
+
+    struct Hist_t {
+      TH1F*   time;                   // step point MC time
+      TH1F*   tmax;                   // max time in the event
+    } hist_ ;
+
+    Hist_t fHist;
   public:
 
     struct Config {
@@ -81,12 +92,20 @@ namespace mu2e {
           Comment("if positive, defines the volume ID to look at, default: -1\n") 
 	  };
 
+      fhicl::Atom<bool> fillHistograms {
+        Name("fillHistograms"),
+          Comment("if true, fill histograms, default: false\n") 
+	  };
+
     };
 
     using Parameters = art::EDFilter::Table<Config>;
     explicit FilterStepPointMomentum(const Parameters& conf);
 
+    void         fillHistograms(art::Event& event);
+
     virtual bool beginRun(art::Run&   run );
+    virtual void beginJob() override;
     virtual bool filter  (art::Event& event) override;
     virtual void endJob  () override;
   };
@@ -100,13 +119,24 @@ namespace mu2e {
     , tMin_          (conf().tMin()          )
     , tMax_          (conf().tMax()          )
     , volumeId_      (conf().volumeId()      )
-    , numInputEvents_(0)
+    , fillHistograms_(conf().fillHistograms())
+    , numInputEvents_ (0)
     , numPassedEvents_(0)
   {
     for(const auto& i : conf().inputs()) {
-      inputs_.emplace_back(i);
+      inputTags_.emplace_back(i);
     }
 
+  }
+
+//-----------------------------------------------------------------------------
+  void FilterStepPointMomentum::beginJob(){
+    if (fillHistograms_) {
+      art::ServiceHandle<art::TFileService> tfs;
+
+      hist_.time  = tfs->make<TH1F>("time","step time"    ,200,-200,1800);
+      hist_.tmax  = tfs->make<TH1F>("tmax","Max step time",200,-200,1800);
+    }
   }
 
 //-----------------------------------------------------------------------------
@@ -116,13 +146,30 @@ namespace mu2e {
     return true;
   }
 
+//-----------------------------------------------------------------------------
+  void FilterStepPointMomentum::fillHistograms(art::Event& event) {
+    float tmax (-1e6);
+
+    for(const auto& cn : inputTags_) {
+      auto ih = event.getValidHandle<StepPointMCCollection>(cn);
+      for (const auto& hit : *ih) {
+	float t = hit.time()+timeOffsets_.totalTimeOffset(hit.simParticle());
+	t  = fmod(t,mbtime_);
+	if (t > tmax) tmax = t;
+
+	hist_.time->Fill(t);
+      }
+    }
+    hist_.tmax->Fill(tmax);
+  }
+
   //================================================================
   bool FilterStepPointMomentum::filter(art::Event& event) {
     bool passed = false;
-    
+
     if (tMin_ > 0) timeOffsets_.updateMap(event);
 
-    for(const auto& cn : inputs_) {
+    for(const auto& cn : inputTags_) {
       auto ih = event.getValidHandle<StepPointMCCollection>(cn);
       for(const auto& hit : *ih) {
 	if ((volumeId_ == 0) || (hit.volumeId() == volumeId_)) {
@@ -144,8 +191,10 @@ namespace mu2e {
       }
     }
 
+    if (fillHistograms_) fillHistograms(event);
+
     ++numInputEvents_;
-    if(passed) { ++numPassedEvents_; }
+    if (passed) { ++numPassedEvents_; }
     return passed;
   }
 
