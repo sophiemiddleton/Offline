@@ -53,6 +53,7 @@ namespace mu2e {
                  <<tmpPDGId[i]<<std::endl;
       }
       freeLifetime_[PDGCode::type(-tmpPDGId[i])] = tmpLifetime[i];
+       std::cout<<tmpPDGId[i]<<" "<<tmpLifetime[i]<<std::endl;
     }
 
     // Specify chosen stopping target; default is "Al"
@@ -111,10 +112,11 @@ namespace mu2e {
   //================================================================
   double PhysicsParams::getParticleLifetime(PDGCode::type pdgId) const {
     FreeLifeMap::const_iterator i = freeLifetime_.find(pdgId);
-    if(i == freeLifetime_.end()) {
-      throw cet::exception("BADINPUTS")
-        <<"PhysicsParams::getParticleLifetime(): no information for pdgId = "<<pdgId<<"\n";
-    }
+   
+    //if(i == freeLifetime_.end()) {
+    //  throw cet::exception("BADINPUTS")
+   //     <<"PhysicsParams::getParticleLifetime(): no information for pdgId = "<<pdgId<<"\n";
+    //}
     return i->second;
   }
 

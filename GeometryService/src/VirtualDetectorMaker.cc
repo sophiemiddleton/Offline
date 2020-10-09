@@ -53,7 +53,8 @@ namespace mu2e {
 
       const double vdHL = c.getDouble("vd.halfLength",0.01*mm);
       vd->_halfLength = vdHL;
-
+      const double pionAnalysisMove = 50*mm; //(mm) S. Middleton - added in the shift to move VD91 away from the pbar window for pion anlaysis.
+      
       // Add configurable control for verbosity.
       const int verbosityLevel = c.getInt("vd.verbosityLevel",0);
 
@@ -790,10 +791,10 @@ namespace mu2e {
 	   windowLocIn = windowLocIn - psVacuumOriginInMu2e;
          }
          CLHEP::Hep3Vector posPSPbarIn = pbarTS1InPos;
-	 posPSPbarIn.setZ( pbarTS1InPos.z() - pbarTS1InHalfLength - vdHL );
-	 if (verbosityLevel > 0){
+	 posPSPbarIn.setZ( pbarTS1InPos.z() - pbarTS1InHalfLength - vdHL - pionAnalysisMove); //TODO - here is z definition  = TS1 pos - pbar.coll1In.halfLength - "vd.halfLength",0.01*mm
+	 //if (verbosityLevel > 0){
 	   cout << "posPSPbarIn, windowLocIn, and parent Center is psVacuumOrigin " << posPSPbarIn << " " << windowLocIn << " " << parentCenterInMu2e << endl;
-	 }
+	 //}
          vd->addVirtualDetector(VirtualDetectorId::PSPbarIn, parentCenterInMu2e, 0, windowLocIn);
 
 

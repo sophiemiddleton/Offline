@@ -1,0 +1,10 @@
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00000/sim.sophie.pions-g4s1.v0.000001_00000000.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00001/sim.sophie.pions-g4s1.v0.000001_00000001.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00002/sim.sophie.pions-g4s1.v0.000001_00000002.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00003/sim.sophie.pions-g4s1.v0.000001_00000003.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00004/sim.sophie.pions-g4s1.v0.000001_00000004.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00005/sim.sophie.pions-g4s1.v0.000001_00000005.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00006/sim.sophie.pions-g4s1.v0.000001_00000006.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00007/sim.sophie.pions-g4s1.v0.000001_00000007.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00008/sim.sophie.pions-g4s1.v0.000001_00000008.art
+/pnfs/mu2e/scratch/users/sophie/workflow/default/outstage/37383595/00/00009/sim.sophie.pions-g4s1.v0.000001_00000009.art
