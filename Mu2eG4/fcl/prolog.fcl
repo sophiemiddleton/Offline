@@ -19,7 +19,7 @@ mu2eg4DefaultPhysics: {
     // minRangeRegionCuts: { CalorimeterMother : 0.1 TrackerMother : 0.001 } // {RegionName : mm }
 
     protonProductionCut: 0.0 // mm
-    physicsListName:  "QGSP_INCLXX_HP" //TODO - change this for other lists
+    physicsListName:  "QGSP_BIC_AllHP" //TODO - change this for other lists
     turnOffRadioactiveDecay:  false
     turnOnRadioactiveDecay:  false
 
