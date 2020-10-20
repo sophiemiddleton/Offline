@@ -52,12 +52,10 @@ namespace mu2e {
     _integral = evalIntegral(de); 
   }
     
-  double MueXSpectrum::f(double E, void *p) { //For E>100MeV Only 
-    //double eMax  = ((MueXSpectrum::Params_t*) p)->eMax;
+  double MueXSpectrum::f_mu2eX_gen(double E, void *p) { //For E>100MeV Only 
     double mmu   = ((MueXSpectrum::Params_t*) p)->mmu;
     double Emu   = ((MueXSpectrum::Params_t*) p)->Emu;
     double BR    = ((MueXSpectrum::Params_t*) p)->BR;
-    //double Gamma    = ((MueXSpectrum::Params_t*) p)->Gamma;
     double mN    = ((MueXSpectrum::Params_t*) p)->mN;
     double a0    = ((MueXSpectrum::Params_t*) p)->a0;
     double a1    = ((MueXSpectrum::Params_t*) p)->a1; 
@@ -73,7 +71,7 @@ namespace mu2e {
   }
 
   double MueXSpectrum::getCorrectedMueXSpectrum(double e) const {
-    return MueXSpectrum::f(e,(void*) &_par);
+    return MueXSpectrum::f_mu2eX_gen(e,(void*) &_par);
   }
 
   /* For compatibility - perhaps we dont need this? */
@@ -91,21 +89,21 @@ namespace mu2e {
     return weight;
   }
 
-//TODO  
+
   double MueXSpectrum::evalIntegral(double de){
-       gsl_function F;
-    F.function = &f;
+    gsl_function F;
+    F.function = &f_mu2eX_gen;
     F.params   = &_par;
 
     size_t limit  = 1000;
     double epsabs = 0.001;
     double epsrel = 0.001;
-  
+
     gsl_integration_workspace * ws = gsl_integration_workspace_alloc(10000);
 
     double result, abserr;
 
-    double emin = 0.72;
+    double emin = 100; //eqn only valid for > 100 MeV
     double emax = _par.eMax-de;
 
     gsl_integration_qags(&F,
@@ -118,7 +116,6 @@ namespace mu2e {
 			 &abserr);
 
     gsl_integration_workspace_free(ws);
-    //    std::cout<<"il valore dell'integrale fino al penultimo bin e' "<< result<<std::endl;
     return result;
   }
 }

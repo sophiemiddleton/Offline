@@ -18,10 +18,8 @@
 #include "Mu2eUtilities/inc/EjectedProtonSpectrum.hh"
 #include "Mu2eUtilities/inc/MuonCaptureSpectrum.hh"
 #include "Mu2eUtilities/inc/PionCaptureSpectrum.hh"
-
 #include "DataProducts/inc/PDGCode.hh"
 #include "Mu2eUtilities/inc/MueXSpectrum.hh"
-
 #include "Mu2eUtilities/inc/SimpleSpectrum.hh"
 
 namespace mu2e {
