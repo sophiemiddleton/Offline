@@ -23,7 +23,7 @@
 #include "GeometryService/inc/GeomHandle.hh"
 #include "TrackerGeom/inc/Tracker.hh"
 #include "TrackerConditions/inc/StrawResponse.hh"
-#include "TrackerConditions/inc/DeadStraw.hh"
+#include "TrackerConditions/inc/TrackerStatus.hh"
 
 #include "TrkHitReco/inc/PeakFit.hh"
 #include "TrkHitReco/inc/PeakFitRoot.hh"
@@ -78,6 +78,7 @@ namespace mu2e {
        unsigned _npre; //cache
 
        art::ProductToken<StrawDigiCollection> const _sdtoken;
+       art::ProductToken<StrawDigiADCWaveformCollection> const _sdadctoken;
        art::ProductToken<CaloClusterCollection> const _cctoken;
        art::InputTag _ewMarkerTag; // name of the module that makes eventwindowmarkers
        fhicl::ParameterSet _peakfit;  // peak fit (charge reconstruction) parameters
@@ -87,8 +88,9 @@ namespace mu2e {
        // helper function
        float peakMinusPedAvg(TrkTypes::ADCWaveform const& adcData) const;
        float peakMinusPed(StrawId id, TrkTypes::ADCWaveform const& adcData) const;
+       float peakMinusPedFirmware(StrawId id, TrkTypes::ADCValue const& pmp) const;
     ProditionsHandle<StrawResponse> _strawResponse_h;
-    ProditionsHandle<DeadStraw> _deadStraw_h;
+    ProditionsHandle<TrackerStatus> _trackerStatus_h;
     ProditionsHandle<Tracker> _alignedTracker_h;
 
 
@@ -111,8 +113,10 @@ namespace mu2e {
       _flagXT(pset.get<bool>(      "FlagCrossTalk",false)),
       _printLevel(pset.get<int>(     "printLevel",0)),
       _diagLevel(pset.get<int>(      "diagLevel",0)),
+      _mask("uniquestraw"),      // each hit is a unique straw
       _end{StrawEnd::cal,StrawEnd::hv}, // this should be in a general place, FIXME!
       _sdtoken{consumes<StrawDigiCollection>(pset.get<art::InputTag>("StrawDigiCollection","makeSD"))},
+      _sdadctoken{mayConsume<StrawDigiADCWaveformCollection>(pset.get<art::InputTag>("StrawDigiADCWaveformCollection","makeSD"))},
       _cctoken{mayConsume<CaloClusterCollection>(pset.get<art::InputTag>("caloClusterModuleLabel","CaloClusterFast"))},
       _ewMarkerTag(pset.get<art::InputTag>("EventWindowMarkerLabel")),
       _peakfit(pset.get<fhicl::ParameterSet>("PeakFitter", {}))
@@ -120,10 +124,6 @@ namespace mu2e {
       consumes<EventWindowMarker>(_ewMarkerTag);
       produces<ComboHitCollection>();
       if(_writesh)produces<StrawHitCollection>();
-      // each hit is a unique straw
-      std::vector<StrawIdMask::field> fields{StrawIdMask::plane,StrawIdMask::panel,StrawIdMask::straw};
-      _mask = StrawIdMask(fields);
-
       if (_printLevel > 0) std::cout << "In StrawHitReco constructor " << std::endl;
   }
 
@@ -169,6 +169,12 @@ namespace mu2e {
       auto sdH = event.getValidHandle(_sdtoken);
       const StrawDigiCollection& sdcol(*sdH);
 
+      const StrawDigiADCWaveformCollection *sdadccol(0);
+      if (_fittype != TrkHitReco::FitType::firmwarepmp) {
+        auto sdawH = event.getValidHandle(_sdadctoken);
+        sdadccol = sdawH.product();
+      }
+
       const CaloClusterCollection* caloClusters(0);
       if(_usecc){
         auto ccH = event.getValidHandle(_cctoken);
@@ -195,13 +201,13 @@ namespace mu2e {
       largeHits.reserve(sdcol.size());
       largeHitPanels.reserve(sdcol.size());
 
-      DeadStraw const& deadStraw = _deadStraw_h.get(event.id());
+      TrackerStatus const& trackerStatus = _trackerStatus_h.get(event.id());
 
       for (size_t isd=0;isd<sdcol.size();++isd) {
 	const StrawDigi& digi = sdcol[isd];
-
+	// flag digis that shouldn't be here or we don't want
 	StrawHitFlag flag;
-	if (deadStraw.isDead(digi.strawId())) {
+	if (trackerStatus.noSignal(digi.strawId()) || trackerStatus.suppress(digi.strawId())) {
 	  flag.merge(StrawHitFlag::dead);
 	}
 
@@ -233,14 +239,20 @@ namespace mu2e {
 	//extract energy from waveform
 	float energy(0.0);
 	if (_fittype == TrkHitReco::FitType::peakminuspedavg){
-	  float charge = peakMinusPedAvg(digi.adcWaveform());
+          auto adcwaveform = sdadccol->at(isd);
+	  float charge = peakMinusPedAvg(adcwaveform.samples());
 	  energy = srep.ionizationEnergy(charge);
 	} else if (_fittype == TrkHitReco::FitType::peakminusped){
-	  float charge = peakMinusPed(digi.strawId(),digi.adcWaveform());
+          auto adcwaveform = sdadccol->at(isd);
+	  float charge = peakMinusPed(digi.strawId(),adcwaveform.samples());
 	  energy = srep.ionizationEnergy(charge);
-	} else {
+	} else if (_fittype == TrkHitReco::FitType::firmwarepmp){
+          float charge = peakMinusPedFirmware(digi.strawId(), digi.PMP());
+          energy = srep.ionizationEnergy(charge);
+        } else {
+          auto adcwaveform = sdadccol->at(isd);
 	  TrkHitReco::PeakFitParams params;
-	  _pfit->process(digi.adcWaveform(),params);
+	  _pfit->process(adcwaveform.samples(),params);
 	  energy = srep.ionizationEnergy(params._charge/srep.strawGain());
 	  if (_printLevel > 1) std::cout << "Fit status = " << params._status << " NDF = " << params._ndf << " chisquared " << params._chi2
 	    << " Fit charge = " << params._charge << " Fit time = " << params._time << std::endl;
@@ -352,6 +364,10 @@ namespace mu2e {
     float peak = *maxIter;
     if(_diagLevel > 0)_maxiter->Fill(std::distance(wfstart,maxIter));
     return (peak-pedestal)*_invgain[id.getStraw()];
+  }
+
+  float StrawHitReco::peakMinusPedFirmware(StrawId id, TrkTypes::ADCValue const& pmp) const {
+    return pmp*_invgain[id.getStraw()];
   }
 
 
