@@ -66,6 +66,7 @@ mu2e::SimParticleTimeMapPrinter::Print(const SimParticleTimeMap& coll, std::ostr
       << " " 
       << " " << std::setw(6) << std::setprecision(1) << obj.second
       << std::endl;
+    i++;
   }
 
 }
@@ -81,7 +82,7 @@ mu2e::SimParticleTimeMapPrinter::PrintHeader(const std::string& tag, std::ostrea
 void 
 mu2e::SimParticleTimeMapPrinter::PrintListHeader(std::ostream& os) {
   if(verbose()<1) return;
-  os << "  ind      id     time\n";
+  os << "   ind      id    time\n";
 
 }
 

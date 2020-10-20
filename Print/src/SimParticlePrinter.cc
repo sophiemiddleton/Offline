@@ -83,9 +83,9 @@ mu2e::SimParticlePrinter::Print(const mu2e::SimParticle& obj,
 
   if(verbose()==1) {
     os 
-      << " " << std::setw(7) << key
-      << " " << std::setw(7) << pkey
-      << " " << std::setw(8) << obj.pdgId()
+      << " " << std::setw(7)  << key
+      << " " << std::setw(7)  << pkey
+      << " " << std::setw(11) << obj.pdgId()
       << " " << std::setw(8)  << std::setprecision(1) << obj.startPosition().x()
       << " " << std::setw(8)  << std::setprecision(1) << obj.startPosition().y()
       << " " << std::setw(8)  << std::setprecision(1) << obj.startPosition().z()
@@ -106,7 +106,7 @@ mu2e::SimParticlePrinter::Print(const mu2e::SimParticle& obj,
 
      os 
       << "  id: " << std::setw(8) << key 
-      << " pdgId: " << std::setw(4) << obj.pdgId()
+      << " pdgId: " << std::setw(11) << obj.pdgId()
       << " parentKey: " << std::setw(8) << pkey
       << " genId: " << std::setiosflags(std::ios::left) << gid << "\n";
      os
@@ -162,7 +162,7 @@ mu2e::SimParticlePrinter::PrintHeader(const std::string& tag, std::ostream& os) 
 void 
 mu2e::SimParticlePrinter::PrintListHeader(std::ostream& os) {
   if(verbose()<1) return;
-  os << "ind      key    parent  pdgId       Start  Position            P       Time         End Position               P        Time   vol   process\n";
+  os << "ind      key    parent    pdgId        Start  Position            P       Time         End Position               P        Time   vol   process\n";
 }
 
 

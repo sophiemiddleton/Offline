@@ -66,7 +66,12 @@ mu2e::StepPointMCPrinter::Print(const mu2e::StepPointMC& obj, int ind, std::ostr
   if( obj.momentum().mag() < _pCut ) return;
 
   int pkey = -1;
-  if(obj.simParticle()) pkey = int(obj.simParticle().key());
+  int pdg_id = 0;
+
+  if(obj.simParticle()) {
+    pkey = int(obj.simParticle().key());
+    pdg_id = int(obj.simParticle()->pdgId());
+  }
 
   os << std::setiosflags(std::ios::fixed | std::ios::right);
   if(ind>=0) os << std::setw(4) << ind;
@@ -75,6 +80,7 @@ mu2e::StepPointMCPrinter::Print(const mu2e::StepPointMC& obj, int ind, std::ostr
 
     os 
       << " " << std::setw(8) << pkey
+      << " " << std::setw(11) << pdg_id
       << " " << std::setw(7) << obj.volumeId()
       << " " << std::setw(10) << std::setprecision(5) << obj.totalEDep()
       << " " << std::setw(10) << std::setprecision(5) << obj.nonIonizingEDep()
@@ -124,7 +130,7 @@ mu2e::StepPointMCPrinter::PrintHeader(const std::string& tag, std::ostream& os) 
 void 
 mu2e::StepPointMCPrinter::PrintListHeader(std::ostream& os) {
   if(verbose()<1) return;
-  os << "ind     parent     vol     eDep     noIonEDep         Position                       P      time    endProc" << std::endl;
+  os << "ind     parent     pdg_id     vol     eDep     noIonEDep         Position                       P      time    endProc" << std::endl;
 }
 
 

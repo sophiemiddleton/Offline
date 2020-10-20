@@ -67,7 +67,7 @@ mu2e::GenParticlePrinter::Print(const mu2e::GenParticle& obj, int ind, std::ostr
   if(ind>=0) os << std::setw(4) << ind;
 
   os 
-    << " " << std::setw(5) << obj.pdgId()
+    << " " << std::setw(11) << obj.pdgId()
     << "  "
     << " " << std::setw(8) << std::setprecision(1) << obj.position().x()
     << " " << std::setw(8) << std::setprecision(1) << obj.position().y()
@@ -93,7 +93,7 @@ mu2e::GenParticlePrinter::PrintHeader(const std::string& tag, std::ostream& os) 
 void 
 mu2e::GenParticlePrinter::PrintListHeader(std::ostream& os) {
   if(verbose()<1) return;
-  os << "ind   pdgId            Position                     Momentum            time   ptime            name\n";
+  os << "ind      pdgId               Position                     Momentum            time   ptime            name\n";
 
 }
 
