@@ -75,15 +75,18 @@ namespace mu2e
     bool retval(false), retvalSD(false), retvalCD(false); // preset to fail
     // find the collection
 
-    const StrawDigiCollection* sdcol(0);
-    const CaloDigiCollection*  cdcol(0);
+    const StrawDigiCollection* sdcol(nullptr);
+    const CaloDigiCollection*  cdcol(nullptr);
 
     int         nsd(0), ncd(0);
 
     if (_useSD){
-      auto sdH = event.getValidHandle<StrawDigiCollection>(_sdTag);
-      sdcol = sdH.product();
-      nsd   = (int)sdcol->size();
+      art::Handle<StrawDigiCollection> sdH;
+      bool ok = event.getByLabel(_sdTag,sdH);
+      if (ok) {
+	sdcol = sdH.product();
+	nsd   = (int)sdcol->size();
+      }
     }
     
     if (_useCD){
