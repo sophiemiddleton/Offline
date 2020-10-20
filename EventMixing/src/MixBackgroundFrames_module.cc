@@ -36,7 +36,8 @@ namespace mu2e {
   //----------------------------------------------------------------
   // Our "detail" class for art/Framework/Modules/MixFilter.h
   class MixBackgroundFramesDetail {
-    Mu2eProductMixer spm_;
+    Mu2eProductMixer spm_;		       
+    std::string      label_;
     art::InputTag pbiTag_;
     const double meanEventsPerProton_;
     const int debugLevel_;
@@ -67,6 +68,8 @@ namespace mu2e {
                   "the outputs will be named \"tracker\" and \"virtualdetector\"\n"
                   )
           };
+
+      fhicl::Atom<std::string> label { Name("label"), Comment("module label") };
 
       fhicl::Atom<art::InputTag> protonBunchIntensityTag { Name("protonBunchIntensityTag"),
           Comment("InputTag of a ProtonBunchIntensity product representing beam fluctuations.")
@@ -120,6 +123,7 @@ namespace mu2e {
   //================================================================
   MixBackgroundFramesDetail::MixBackgroundFramesDetail(const Parameters& pars, art::MixHelper& helper)
     : spm_{ pars().mu2e().products(), helper }
+    , label_{ pars().mu2e().label() }
     , pbiTag_{ pars().mu2e().protonBunchIntensityTag() }
     , meanEventsPerProton_{ pars().mu2e().meanEventsPerProton() }
     , debugLevel_{ pars().mu2e().debugLevel() }
@@ -137,25 +141,38 @@ namespace mu2e {
   //================================================================
   void MixBackgroundFramesDetail::startEvent(const art::Event& event) {
     pbi_ = *event.getValidHandle<ProtonBunchIntensity>(pbiTag_);
-    if(debugLevel_ > 0)std::cout << " Starting event mixing, Intensity = " << pbi_.intensity() << std::endl;
+    if(debugLevel_ > 0) std::cout << label_+"::startEvent: Starting event mixing, Intensity = " << pbi_.intensity() << std::endl;
   }
 
   //================================================================
   size_t MixBackgroundFramesDetail::nSecondaries() {
-    double mean = meanEventsPerProton_ * pbi_.intensity();
-    std::poisson_distribution<size_t> poisson(mean);
-    auto res = poisson(urbg_);
-    if(debugLevel_ > 0)std::cout << " Mixing " << res  << " Secondaries " << std::endl;
+    
+    size_t res(1);
+
+    if (meanEventsPerProton_ > 0) {
+      double mean = meanEventsPerProton_ * pbi_.intensity();
+      std::poisson_distribution<size_t> poisson(mean);
+      res = poisson(urbg_);
+    }
+    else {
+					// mix in fixed number of events (debugging)
+      res = -meanEventsPerProton_;
+    }
+    if(debugLevel_ > 0)std::cout << label_+"::nSecondaries:" << " Mixing " << res  << " Secondaries " << std::endl;
     return res;
   }
 
   //================================================================
   size_t MixBackgroundFramesDetail::eventsToSkip() {
     //FIXME: Ideally, we would know the number of events in the secondary input file
-    std::uniform_int_distribution<size_t> uniform(0, skipFactor_*meanEventsPerProton_*pbi_.intensity());
-    size_t result = uniform(urbg_);
-    if(debugLevel_ > 0) {
-      std::cout << " Skipping " << result << " Secondaries " << std::endl;
+    size_t result(0);
+
+    if (meanEventsPerProton_ > 0) {
+      std::uniform_int_distribution<size_t> uniform(0, skipFactor_*meanEventsPerProton_*pbi_.intensity());
+      result = uniform(urbg_);
+      if(debugLevel_ > 0) {
+	std::cout << label_+"::eventsToSkip: Skipping " << result << " Secondaries " << std::endl;
+      }
     }
     return result;
   }
@@ -167,7 +184,7 @@ namespace mu2e {
     }
 
     if (debugLevel_ > 4) {
-      std::cout << "The following bkg events were mixed in (START)" << std::endl;
+      std::cout << label_+"::processEventIDs: The following bkg events were mixed in (START)" << std::endl;
       int counter = 0;
       for (const auto& i_eid : seq) {
         std::cout << "Run: " << i_eid.run() << " SubRun: " << i_eid.subRun() << " Event: " << i_eid.event() << std::endl;
@@ -181,6 +198,49 @@ namespace mu2e {
 
   //================================================================
   void MixBackgroundFramesDetail::finalizeEvent(art::Event& e) {
+
+    
+    if (debugLevel_ > 0) {
+
+      std::cout << label_+"::finalizeEvent:" << std::endl;
+
+      printf("existing CaloShowerStepCollection\'s\n");
+
+      std::vector<art::Handle<mu2e::CaloShowerStepCollection>> l1;
+      e.getManyByType(l1);
+
+      for (auto it = l1.begin(); it != l1.end(); it++) {
+	if (it->isValid()) {
+	  const art::Provenance* prov = it->provenance();
+	  
+	  printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
+		 prov->moduleLabel().data(),
+		 prov->productInstanceName().data(),
+		 prov->processName().data(),
+		 it->product()->size()
+		 );
+	}
+      }
+
+      printf("existing StepPointMCCollection\'s\n");
+
+      std::vector<art::Handle<mu2e::StepPointMCCollection>> l2;
+      e.getManyByType(l2);
+
+      for (auto it = l2.begin(); it != l2.end(); it++) {
+	if (it->isValid()) {
+	  const art::Provenance* prov = it->provenance();
+	  
+	  printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
+		 prov->moduleLabel().data(),
+		 prov->productInstanceName().data(),
+		 prov->processName().data(),
+		 it->product()->size()
+		 );
+	}
+      }
+    }
+
     if(writeEventIDs_) {
       auto o = std::make_unique<art::EventIDSequence>();
       o->swap(idseq_);
