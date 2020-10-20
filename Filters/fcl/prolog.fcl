@@ -18,7 +18,7 @@ CompressPhysicalVolumes : {
 FilterStepPointMomentum : {
     module_type    : FilterStepPointMomentum
     inputs         : [ "g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO"]
-    TimeOffsets    : [ @sequence::TIME_MAPS ]
+    TimeOffsets    : [ @sequence::CommonMC.TimeMaps ]
     cutMomentumMin : 10.        # MeV/c
     cutMomentumMax :  1.e10     # MeV/c
     tMin           : -1.e10
