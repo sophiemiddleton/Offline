@@ -206,37 +206,39 @@ namespace mu2e {
 
       printf("existing CaloShowerStepCollection\'s\n");
 
-      std::vector<art::Handle<mu2e::CaloShowerStepCollection>> l1;
-      e.getManyByType(l1);
+      if (debugLevel_ > 1) {
+	std::vector<art::Handle<mu2e::CaloShowerStepCollection>> l1;
+	e.getManyByType(l1);
 
-      for (auto it = l1.begin(); it != l1.end(); it++) {
-	if (it->isValid()) {
-	  const art::Provenance* prov = it->provenance();
+	for (auto it = l1.begin(); it != l1.end(); it++) {
+	  if (it->isValid()) {
+	    const art::Provenance* prov = it->provenance();
 	  
-	  printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
-		 prov->moduleLabel().data(),
-		 prov->productInstanceName().data(),
-		 prov->processName().data(),
-		 it->product()->size()
-		 );
+	    printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
+		   prov->moduleLabel().data(),
+		   prov->productInstanceName().data(),
+		   prov->processName().data(),
+		   it->product()->size()
+		   );
+	  }
 	}
-      }
 
-      printf("existing StepPointMCCollection\'s\n");
+	printf("existing StepPointMCCollection\'s\n");
 
-      std::vector<art::Handle<mu2e::StepPointMCCollection>> l2;
-      e.getManyByType(l2);
+	std::vector<art::Handle<mu2e::StepPointMCCollection>> l2;
+	e.getManyByType(l2);
 
-      for (auto it = l2.begin(); it != l2.end(); it++) {
-	if (it->isValid()) {
-	  const art::Provenance* prov = it->provenance();
+	for (auto it = l2.begin(); it != l2.end(); it++) {
+	  if (it->isValid()) {
+	    const art::Provenance* prov = it->provenance();
 	  
-	  printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
-		 prov->moduleLabel().data(),
-		 prov->productInstanceName().data(),
-		 prov->processName().data(),
-		 it->product()->size()
-		 );
+	    printf("moduleLabel: %-20s, productInstanceName: %-20s, processName: %-30s collectionSize: %3li\n" ,
+		   prov->moduleLabel().data(),
+		   prov->productInstanceName().data(),
+		   prov->processName().data(),
+		   it->product()->size()
+		   );
+	  }
 	}
       }
     }

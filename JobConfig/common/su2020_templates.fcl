@@ -217,6 +217,16 @@ su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 				"keep    art::TriggerResults_TriggerResults_*_*"
 			       ]
 #------------------------------------------------------------------------------
+# 2. output format for digi files after mixing
+#------------------------------------------------------------------------------
+su2020.mixing_output : [ "drop *_*_*_*"                         ,
+			 "keep *_compressDigiMCs_*_*"           ,
+			 "keep mu2e::ProtonBunchIntensity_*_*_*",
+			 "keep mu2e::StrawDigis_*_*_*"          ,
+			 "keep mu2e::CaloDigis_*_*_*"           ,
+			 "keep mu2e::CrvDigis_*_*_*"
+			]
+#------------------------------------------------------------------------------
 # module sequences - by functionality
 #------------------------------------------------------------------------------
 su2020.gen_g4              : [ generate, genCounter, g4run, protonBunchIntensity ]
