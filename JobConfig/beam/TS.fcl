@@ -143,7 +143,8 @@ outputs: {
 			    "keep mu2e::GenEventCount_*_*_*",
 			    "keep mu2e::StatusG4_*_*_*",
 			    "keep *_muonBeamFilter_*_*",
-			    "keep *_compressPVmuonBeam_*_*"
+			    "keep *_compressPVmuonBeam_*_*",
+			    "drop mu2e::StepPointMCs_muonBeamFilter_mubeam_*"   # output plane of Stage 1
 			   ]
 	fileName    : "sim.owner.TS-mubeam.version.sequencer.art"
     }
