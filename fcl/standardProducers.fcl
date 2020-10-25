@@ -5,10 +5,15 @@ BEGIN_PROLOG
 # unfortunately, in the present scheme can't do it differently : 
 # CalPatRec needs DtOffset as well and the DtOffset declaration 
 # has to go before the CalPatRec prolog
+# the following constants remove relative offset between the standalone tracker 
+# and calorimeter reconstruction, both at about -1 ns wrt the MC truth time
 #------------------------------------------------------------------------------
+CALO_RECODIGI_FROM_DIGI_DT_OFFSET : -1.86  # reconstructed cluster times are shifted by this amount
+TRACK_CALO_DT_OFFSET              : 0.     # no more need in non-trivial value, 0.2 from TrkCaloHit matching
+
 TrackCaloMatching : { 
 #    DtOffset : -0.4 # v6_3: was 2.9  # track-cluster offset, ns v5_7_6 # 1.2  # 1.4   
-    DtOffset : 0.2 # from TrkCaloHit matching
+    DtOffset : @local::TRACK_CALO_DT_OFFSET 
 }
 END_PROLOG
 

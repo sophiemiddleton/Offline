@@ -6,25 +6,27 @@
 
 BEGIN_PROLOG
 
+MIXER_READ_MODE        : sequential   # randomReplace / sequential
+MIXER_MU2E_SKIP_FACTOR : 1.           # Andy says "temporary"
 #----------------------------------------------------------------
 mixerTemplateCommon: {
     module_type         : MixBackgroundFrames
     fileNames           : @nil
-    #     sequential -- read the secondary events in order
-    #     randomReplace -- random with replacement
+    #     sequential       -- read the secondary events in order
+    #     randomReplace    -- random with replacement
     #     randomLimReplace -- events unique within a primary event
-    #     randomNoReplace -- events guaranteed to be used once only.
-    readMode            : sequential      # randomReplace / sequential
+    #     randomNoReplace  -- events guaranteed to be used once only.
+    readMode            : @local::MIXER_READ_MODE
     wrapFiles           : true
 
-   mu2e: {
-       label                   : @nil
-       protonBunchIntensityTag : "protonBunchIntensity"
-       meanEventsPerProton     : @nil
-       products                : @nil
-       skipFactor              : 1         # temporary
-       debugLevel              : 0
-   }
+    mu2e: {
+	label                   : @nil
+	protonBunchIntensityTag : "protonBunchIntensity"
+	meanEventsPerProton     : @nil
+	products                : @nil
+	skipFactor              : @local::MIXER_MU2E_SKIP_FACTOR  
+	debugLevel              : 0
+    }
 }
 
 #----------------------------------------------------------------
@@ -76,7 +78,7 @@ Mixing : {
 # 2-batch mode: I0 = 3.9e7   
 #------------------------------------------------------------------------------
 	protonBunchIntensity: { module_type: ProtonBunchIntensityLogNormal
-	    sigma        : 0.71     #  0.3814
+	    sigma        :  0.7147    #  0.3814
 	    extendedMean :  1.6e7     #  3.9e7     # mean of the uncut distribution
 	    cutMax       : 12.0e7     # 11.7e7     # cut the tail far enough
 	}
@@ -114,14 +116,12 @@ Mixing : {
 	photonMixerCRV      : { @table::mixerTemplateCRV    mu2e: { @table::mixerTemplateCRV.mu2e    label:photonMixerCRV  }}
 
 	# digi filtering for Primary selection.
-	DigiFilter : { 
-	    module_type : StrawDigiMCFilter
+	DigiFilter : { module_type : StrawDigiMCFilter
 	    StrawDigiMCCollection : "makeSDPrimary"
 	}
     }
-    analyzers : {
-	@table::Primary.analyzers
-    }
+    analyzers : { @table::Primary.analyzers }
+
     # input time maps from cut mix inputs.  All are needed
     protonTimeMaps : [ "flashMixerTrkCal:protonTimeMap" ] # [, "PSMixerCRV:protonTimeMap", "DSMixerCRV:protonTimeMap"]
 
