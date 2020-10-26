@@ -36,7 +36,7 @@ END_PROLOG
 
 #include "JobConfig/mixing/prolog1.fcl"
 
-# onclude "JobConfig/common/su2020_mixing_prolog.fcl"
+#include "JobConfig/common/trigger_templates.fcl"
 
 #include "JobConfig/common/su2020_templates.fcl"
 

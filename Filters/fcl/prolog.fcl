@@ -15,6 +15,10 @@ CompressPhysicalVolumes : {
     particleInputs : [ "g4run" ]
 }
 
+g4status: { module_type: FilterStatusG4
+    input: "g4run"
+}
+
 FilterStepPointMomentum : {
     module_type    : FilterStepPointMomentum
     inputs         : [ "g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO"]
@@ -25,6 +29,14 @@ FilterStepPointMomentum : {
     tMax           :  1.e10
     volumeId       :  0         # if positive, defines the volume id to look at
     fillHistograms : false
+}
+
+StrawDigiMCFilter : { module_type : StrawDigiMCFilter
+    StrawDigiMCCollection : "makeSD"
+    MinNDigis             : 10
+    particleTypes         : [ 11, -11, 13, -13 ]
+    MinParticleMom        : 40.0
+    MaxParticleMom        : 1e8
 }
 
 # throw when hits are outside their sensitive volumes

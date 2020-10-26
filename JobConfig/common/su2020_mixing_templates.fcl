@@ -1,21 +1,9 @@
 # -*- mode:tcl -*-
-# common parts used in all mixing jobs
-
-#  onclude "JobConfig/beam/prolog.fcl"
-#  onclude "JobConfig/primary/prolog.fcl"
 #------------------------------------------------------------------------------
+# common parts used in all mixing jobs
 # the following is what JobConfig/primary/prolog.fcl" is 
 # Prolog specific to creating primary (signal, signal-like or calibration) particles
 #------------------------------------------------------------------------------
-# onclude "JobConfig/beam/prolog.fcl"
-
-BEGIN_PROLOG
-
-# mu2e.services.simServices: { @table::Services.Sim }
-
-# services.TFileService.fileName     : @nil
-# services.GeometryService.inputFile : "JobConfig/common/geom_baseline.txt"
-
 #================================================================
 mu2e.physics.producers.g4run.commonBase: { module_type: Mu2eG4
     physics             : @local::mu2eg4DefaultPhysics
@@ -141,12 +129,14 @@ mu2e.physics.g4s4CommonBase: {
     }
     
     filters: {
+	g4status: { @table::g4status } # defined in Filters/fcl/prolog.fcl
+
 	detectorFilter: {
-	    module_type: FilterG4Out
-	    mainHitInputs: [ "g4run:tracker" ]
-	    mainSPPtrInputs: [ "CaloShowerStepFromStepPt" ]
-	    extraHitInputs: [ "g4run:virtualdetector", "g4run:protonabsorber" ]
-	    vetoDaughters: []
+	    module_type     : FilterG4Out
+	    mainHitInputs   : [ "g4run:tracker" ]
+	    mainSPPtrInputs : [ "CaloShowerStepFromStepPt" ]
+	    extraHitInputs  : [ "g4run:virtualdetector", "g4run:protonabsorber" ]
+	    vetoDaughters   : []
 	}
 	
 	crvFilter: {
@@ -164,11 +154,6 @@ mu2e.physics.g4s4CommonBase: {
 	    PDGCodes : [11,-11, 13, -13] 
 	    generatorModuleLabel : "generate"
 	    g4ModuleLabel : "g4run"
-	}
-
-	g4status: {
-	    module_type: FilterStatusG4
-	    input: "g4run"
 	}
 
 	g4consistent: {
@@ -208,12 +193,12 @@ mu2e.physics.g4s4Flash.g4StatusPath    : [ @sequence::g4StatusPathCommon ]
 mu2e.physics.g4s4Muons                : @local::mu2e.physics.g4s4CommonBase
 mu2e.physics.g4s4Muons.producers.g4run: @local::mu2e.physics.producers.g4run.muons
 
-mu2e.physics.g4s4Muons.producers.generate: {
-    module_type: StoppedParticleReactionGun
-    verbosityLevel : 1
-    physics: @nil
-    muonStops : @local::mu2e.tgtMuonStops
-}
+# mu2e.physics.g4s4Muons.producers.generate: {
+#     module_type: StoppedParticleReactionGun
+#     verbosityLevel : 1
+#     physics: @nil
+#     muonStops : @local::mu2e.tgtMuonStops
+# }
 
 mu2e.physics.g4s4Muons.producers.genCounter: { module_type: GenEventCounter }
 
@@ -246,16 +231,14 @@ Primary: {
     }
 
     filters : {
-
-	# generator truncation filter; only needed for cosmic rays in principle
-	g4status: { module_type: FilterStatusG4
-	    input: "g4run"
-	}
+	g4status: { @table::g4status } 
 
 	# digi filtering for Primary selection.
-	DigiFilter : { module_type : StrawDigiMCFilter
-	    StrawDigiMCCollection : "makeSD"
-	}
+	StrawDigiMCFilter : { @table::StrawDigiMCFilter }              # Filters/fcl/prolog.fcl
+
+#	DigiFilter : { module_type : StrawDigiMCFilter
+#	    StrawDigiMCCollection : "makeSD"
+#	}
 
 	# shower filter for calorimeter selection
 	CaloFilter : { module_type : CaloShowerSimFilter }
@@ -263,7 +246,7 @@ Primary: {
 
     analyzers: {
 	genCountLogger       : { module_type: GenEventCountReader makeHistograms: false }
-	digiCompressionCheck : @local::DigiCompression.Check
+	digiCompressionCheck : { @table::DigiCompression.Check }
     }
 
     GenAndG4 : [ generate, genCounter, g4run, g4status ]
@@ -283,7 +266,7 @@ Primary: {
 Primary.TriggerPath : [ @sequence::Primary.GenAndG4,
 			@sequence::CommonMC.DigiSim,
 			@sequence::TrackerMC.DigiSim,
-			DigiFilter,
+			StrawDigiMCFilter,
 			@sequence::CaloDigiMC.DigiSim,
 			@sequence::CrvDAQPackage.CrvResponseSequence,
 			compressDigiMCs ]
@@ -390,9 +373,8 @@ Mixing : {
     
     CreatePrimarySequence : [ @sequence::Primary.GenAndG4,
 			      @sequence::CommonMC.PrimaryDigiSim,
-			      makeSGSPrimary, makeSDPrimary, DigiFilter 
+			      makeSGSPrimary, makeSDPrimary, StrawDigiMCFilter 
 			     ]
-
 }
 
 Mixing : { @table::Mixing
@@ -406,8 +388,8 @@ Mixing : { @table::Mixing
 # 2-batch mode: I0 = 3.9e7   
 #------------------------------------------------------------------------------
 	protonBunchIntensity: { module_type: ProtonBunchIntensityLogNormal
-	    sigma        :  0.7147    #  0.3814
 	    extendedMean :  1.6e7     #  3.9e7     # mean of the uncut distribution
+	    sigma        :  0.7147    #  0.3814
 	    cutMax       : 12.0e7     # 11.7e7     # cut the tail far enough
 	}
 
@@ -447,7 +429,7 @@ Mixing : { @table::Mixing
 	photonMixerCRV      : { @table::mixerTemplateCRV    mu2e: { @table::mixerTemplateCRV.mu2e    label:photonMixerCRV  }}
 
 	# digi filtering for Primary selection.
-	DigiFilter : { module_type : StrawDigiMCFilter
+	StrawDigiMCFilter   : { @table::StrawDigiMCFilter 
 	    StrawDigiMCCollection : "makeSDPrimary"
 	}
     }
@@ -517,4 +499,31 @@ Mixing.minbias_nocrv        : [ @sequence::Mixing.pbi_mix_digi_nocrv  ,
 				compressDigiMCs 
 			       ]
 
-END_PROLOG
+#------------------------------------------------------------------------------
+# TrkCal mixing fractions : N(mixed events)/POT
+#------------------------------------------------------------------------------
+# physics.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    : 9.777e-4 # for uncut flash
+# for QGSP_BERT T>200 ns, scale flash multiplicity by 1.2 : 3.918*1.2 = 4.702
+#------------------------------------------------------------+-------------+------------+--------------+
+#                                                            |    SU2020   |  MDC2018   | debug        |
+#------------------------------------------------------------+-------------+------------+--------------+
+# Mixing.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    :   3.918e-5  # 1.482e-5   # -155 # -2 # -1 
+Mixing.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    :   4.702e-5  # 1.482e-5   # -155 # -2 # -1 
+Mixing.filters.ootMixerTrkCal.mu2e.meanEventsPerProton      :   1.789e-5  # 2.4185E-05 # -687 # -3 # -1 
+Mixing.filters.neutronMixerTrkCal.mu2e.meanEventsPerProton  :   1.699e-5  # 1.8790E-05 # -678 # -4 # -1 
+Mixing.filters.dioMixerTrkCal.mu2e.meanEventsPerProton      :   4.178e-6  # 3.8434E-06 # -155 # -5 # -1 
+Mixing.filters.photonMixerTrkCal.mu2e.meanEventsPerProton   :   8.231e-6  # 8.6966E-06 # -289 # -6 # -1 
+Mixing.filters.protonMixerTrkCal.mu2e.meanEventsPerProton   :   6.594e-7  # 7.4322E-07 #  -24 # -7 # -1 
+Mixing.filters.deuteronMixerTrkCal.mu2e.meanEventsPerProton :   2.547e-7  # 1.6261E-07 #  -10 # -8 # -1 
+#------------------------------------------------------------------------------
+# CRV mixing - not validated for SU2020, not used
+#------------------------------------------------------------------------------
+# Mixing.filters.ootMixerCRV.mu2e.meanEventsPerProton	    : 4.5379E-06
+# Mixing.filters.neutronMixerCRV.mu2e.meanEventsPerProton  : 3.6173E-06
+# Mixing.filters.dioMixerCRV.mu2e.meanEventsPerProton      : 3.2816E-07
+# Mixing.filters.photonMixerCRV.mu2e.meanEventsPerProton   : 1.3449E-07
+#  Mixing.filters.PSMixerCRV.mu2e.meanEventsPerProton        : 9.5035E-05     # uncut
+# Mixing.filters.PSMixerCRV.mu2e.meanEventsPerProton	    : 4.2425E-05     # cut 
+# Mixing.filters.TSMixerCRV.mu2e.meanEventsPerProton	    : 2.4368E-06
+#  Mixing.filters.DSMixerCRV.mu2e.meanEventsPerProton        : 2.8126E-04     # uncut
+# physics.filters.DSMixerCRV.mu2e.meanEventsPerProton	    : 1.4588E-06     # cut
