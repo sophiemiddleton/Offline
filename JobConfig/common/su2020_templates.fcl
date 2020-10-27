@@ -145,6 +145,8 @@ su2020 : {
     filters : {
 	@table::Trigger.filters
 
+	g4status       : { @table::g4status }   # in Filters/fcl/prolog.fcl
+
 	detectorFilter : { module_type: FilterG4Out
 	    mainHitInputs   : [ "g4run:tracker" ]
 	    mainSPPtrInputs : []
