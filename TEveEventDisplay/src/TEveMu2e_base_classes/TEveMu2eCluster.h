@@ -20,7 +20,11 @@ namespace mu2e {
       void DrawCluster(const std::string &pstr, CLHEP::Hep3Vector COG, int energylevel, TEveElementList *list); 
       const  CLHEP::Hep3Vector GetPositon() { return fCaloCluster.cog3Vector() ;}
       double GetEnergy() { return fCaloCluster.energyDep();}
-      std::string DataTitle(const std::string &pstr, double edep);
+      inline std::string DataTitle(const std::string &pstr, double edep){
+        std::string dstr= "\nLayer: ";
+        std::string strlst=pstr+dstr+std::to_string(edep);
+        return(strlst);
+      }
       ClassDef(TEveMu2eCluster, 0);
   };
 }

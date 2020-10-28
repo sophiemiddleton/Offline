@@ -32,4 +32,3 @@ namespace mu2e{
     HitList->AddElement(this);
   }
 }
-

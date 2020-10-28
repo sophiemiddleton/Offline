@@ -41,7 +41,7 @@ TEveEventDisplayCosmics : {
     module_type : TEveEventDisplay
     showCRV : false
     showDSOnly : true
-    show2D : false
+    show2D : true
     accumulate : false
     filler : {
       ComboHitCollection 		      : "makePH"
@@ -57,7 +57,7 @@ TEveEventDisplayCosmics : {
       addTracks 			            : false
       addCrvHits			            : false
       addCosmicSeedFit	          : false
-      addMCTraj				            : false
+      addMCTraj				            : true
    }
   }   
 
