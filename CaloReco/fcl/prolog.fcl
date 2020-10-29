@@ -5,8 +5,6 @@
 
 BEGIN_PROLOG
 
-
-
 CaloRecoDigiFromDigi :
 { 
 
@@ -15,7 +13,8 @@ CaloRecoDigiFromDigi :
     processorStrategy     : "FixedFast"     
     digiSampling          : @local::HitMakerDigiSampling
     maxChi2Cut            : 10
-    timeOffset            : 0.   # internal calibration of the timing offsets
+                                                                        # internal calibration of the timing offsets
+    timeOffset            : @local::CALO_RECODIGI_FROM_DIGI_DT_OFFSET   # defined in fcl/standardProducers.fcl
     diagLevel             : 0
 
     FixedFastProcessor : 
