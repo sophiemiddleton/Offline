@@ -222,23 +222,25 @@ namespace mu2e {
 
     const CLHEP::HepLorentzVector *prot(nullptr),  *pbar(nullptr);
 
-    auto ih = event.getValidHandle<SimParticleCollection>(input_);
+    if (dumpSimParticleLeaves_) {
+      auto ih = event.getValidHandle<SimParticleCollection>(input_);
 
-    for (const auto& iSim: *ih) {
-				// parent of the simParticle
-      art::Ptr<SimParticle> const& pptr = iSim.second.parent();
-      int pkey = -1;
-      if (pptr) pkey = int(pptr.key());
+      for (const auto& iSim: *ih) {
+	// parent of the simParticle
+	art::Ptr<SimParticle> const& pptr = iSim.second.parent();
+	int pkey = -1;
+	if (pptr) pkey = int(pptr.key());
 
-      if      (pkey == -1) prot = &iSim.second.endMomentum();
-      else if (pkey ==  1) {
-	pbar = &iSim.second.startMomentum();
-	break ;
+	if      (pkey == -1) prot = &iSim.second.endMomentum();
+	else if (pkey ==  1) {
+	  pbar = &iSim.second.startMomentum();
+	  break ;
+	}
       }
-    }
 
-    mom    = pbar->vect().mag();
-    costh  = pbar->vect().cosTheta(prot->vect());
+      mom    = pbar->vect().mag();
+      costh  = pbar->vect().cosTheta(prot->vect());
+    }
 
     data_ = StopInfo(p, spMCColls, tau, mom, costh);
     nt_->Fill();
