@@ -205,11 +205,11 @@ outputs: {
       module_type : RootOutput
       SelectEvents: [motherFilter]
       outputCommands:   [ "drop *_*_*_*",
-			  "keep mu2e::GenParticles_*_*_*",
+			  "keep mu2e::GenParticles_*_*_*" ,
 			  "keep mu2e::GenEventCount_*_*_*",
-			  "keep mu2e::StatusG4_*_*_*",
-			  "keep *_mothersFilter_*_*"                   #              ,
-			  #         "keep *_compressPVMothers_*_*"
+			  "keep mu2e::StatusG4_*_*_*"     ,
+			  "keep *_mothersFilter_*_*"      ,
+			  "keep *_compressPVMothers_*_*"
 			 ]
       fileName    : "sim.owner.DS-beam.version.sequencer.art"
    }
@@ -221,8 +221,8 @@ outputs: {
          "keep mu2e::GenParticles_*_*_*",
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
-         "keep *_crvFilter_*_*"              # ,
-#          "keep *_compressPVCRV_*_*"
+         "keep *_crvFilter_*_*"              ,
+         "keep *_compressPVCRV_*_*"
       ]
       fileName    : "sim.owner.DS-crv.version.sequencer.art"
    }
@@ -234,8 +234,8 @@ outputs: {
          "keep mu2e::GenParticles_*_*_*",
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
-         "keep *_tgtStopFilter_*_*"           # ,
-#          "keep *_compressPVTGTStops_*_*"
+         "keep *_tgtStopFilter_*_*"           ,
+         "keep *_compressPVTGTStops_*_*"
       ]
       fileName    : "sim.owner.DS-TGTstops.version.sequencer.art"
    }
@@ -247,8 +247,8 @@ outputs: {
          "keep mu2e::GenParticles_*_*_*",
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
-         "keep *_ootStopFilter_*_*"           # ,
-#         "keep *_compressPVOOTStops_*_*"
+         "keep *_ootStopFilter_*_*"           ,
+         "keep *_compressPVOOTStops_*_*"
       ]
       fileName    : "sim.owner.DS-OOTstops.version.sequencer.art"
    }
@@ -261,8 +261,8 @@ outputs: {
          "keep mu2e::GenEventCount_*_*_*",
          "keep mu2e::StatusG4_*_*_*",
          "keep *_g4run_*_*",
-         "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_*_*_*"  # 
-#         "keep *_compressPVFull_*_*"
+         "drop uintmu2e::PhysicalVolumeInfomvstd::pairs_*_*_*" ,
+         "keep *_compressPVFull_*_*"
       ]
       fileName    : "sim.owner.DS-truncated.version.sequencer.art"
    }
