@@ -171,8 +171,8 @@ mu2e.physics.g4s4CommonBase: {
     trigger_paths: [ detPath, crvPath, g4StatusPath ]
     
     out          : [ detectorOutput, crvOutput, truncatedEvtsOutput ]
-    gcl          : [genCountLogger]
-    end_paths    : [out, gcl]
+    gcl          : [ genCountLogger ]
+    end_paths    : [ out, gcl ]
 }
 
 crvPathCommon     : [ g4run, g4consistent, crvFilter, compressPVCRV ]
@@ -193,13 +193,6 @@ mu2e.physics.g4s4Flash.g4StatusPath    : [ @sequence::g4StatusPathCommon ]
 mu2e.physics.g4s4Muons                : @local::mu2e.physics.g4s4CommonBase
 mu2e.physics.g4s4Muons.producers.g4run: @local::mu2e.physics.producers.g4run.muons
 
-# mu2e.physics.g4s4Muons.producers.generate: {
-#     module_type: StoppedParticleReactionGun
-#     verbosityLevel : 1
-#     physics: @nil
-#     muonStops : @local::mu2e.tgtMuonStops
-# }
-
 mu2e.physics.g4s4Muons.producers.genCounter: { module_type: GenEventCounter }
 
 mu2e.physics.g4s4Muons.crvPath:       [ generate, genCounter,  @sequence::crvPathCommon ]
@@ -207,9 +200,6 @@ mu2e.physics.g4s4Muons.g4StatusPath:  [ generate, genCounter, @sequence::g4Statu
 
 mu2e.physics.g4s4Muons.detPath:       [ generate, genCounter,  @sequence::detPathCommon ]
 
-mu2e.physics.Signal.detPath :         [ generate, genCounter,  g4run, g4consistent, CaloShowerStepFromStepPt,
-					TrkStepFilter, detectorFilter, CaloShowerCrystalSteps, CaloShowerROSteps,
-					compressPVDetector ]
 Primary: {
     producers : {
 	g4run      : @local::mu2e.physics.producers.g4run.muons
@@ -226,7 +216,7 @@ Primary: {
 	makeSGS         : { module_type : MakeStrawGasSteps
 	    KeepDeltasModule : "g4run"                         # don'e compress deltas on primary particles
 	}
-	makeSD          :{ @table::makeSD }
+	makeSD          : { @table::makeSD }
 	compressDigiMCs : @local::DigiCompression.Primary
     }
 
@@ -235,10 +225,6 @@ Primary: {
 
 	# digi filtering for Primary selection.
 	StrawDigiMCFilter : { @table::StrawDigiMCFilter }              # Filters/fcl/prolog.fcl
-
-#	DigiFilter : { module_type : StrawDigiMCFilter
-#	    StrawDigiMCCollection : "makeSD"
-#	}
 
 	# shower filter for calorimeter selection
 	CaloFilter : { module_type : CaloShowerSimFilter }
@@ -254,9 +240,9 @@ Primary: {
     EndPath  : [ genCountLogger, digiCompressionCheck, Output ]
 
     Output   : {
-	module_type : RootOutput
-	SelectEvents : [ TriggerPath ]
-	fileName    : @nil
+	module_type    : RootOutput
+	SelectEvents   : [ @sequence::TRIGGER_PATHS ]
+	fileName       : @nil
 	# drop StepPoints from calorimeter
 	outputCommands : @local::DigiCompression.OutputCommands
     }
@@ -370,11 +356,6 @@ Mixing : {
     CRVMixSequence        : [ PSMixerCRV, TSMixerCRV, DSMixerCRV,
 			      ootMixerCRV, neutronMixerCRV, dioMixerCRV, photonMixerCRV 
 			     ]
-    
-    CreatePrimarySequence : [ @sequence::Primary.GenAndG4,
-			      @sequence::CommonMC.PrimaryDigiSim,
-			      makeSGSPrimary, makeSDPrimary, StrawDigiMCFilter 
-			     ]
 }
 
 Mixing : { @table::Mixing
@@ -393,15 +374,15 @@ Mixing : { @table::Mixing
 	    cutMax       : 12.0e7     # 11.7e7     # cut the tail far enough
 	}
 	                                                # tracker digis for primary selection
-	makeSGSPrimary : { @table::makeSGS }
-
-	makeSDPrimary  : { @table::makeSD
+	makeSGSPrimary   : { @table::makeSGS }
+	                                                # in mixing mode, still filter on primary
+	makeSDPrimary    : { @table::makeSD
 	    StrawGasStepModule : makeSGSPrimary
-	    TimeOffsets        :  [ @sequence::CommonMC.TimeMapsPrimary ] 
+	    TimeOffsets        : [ @sequence::CommonMC.TimeMapsPrimary ]
 	}
 
-	# digi compression
-	compressDigiMCs : { @table::DigiCompression.Mixing
+	# digi compression - this seems to inpude primary
+	compressDigiMCs  : { @table::DigiCompression.Mixing
 	    simParticleTags    : [ "g4run", @sequence::Mixing.TrkCalMixSequence ] # , @sequence::Mixing.CRVMixSequence ]
 	    caloShowerStepTags : [ "CaloShowerStepFromStepPt:calorimeter" , @sequence::Mixing.caloMixerTags     ]
 	}
@@ -439,9 +420,8 @@ Mixing : { @table::Mixing
     # paths and output
     EndPath : [ @sequence::Primary.EndPath ] 
 
-    Output  : {
-	module_type    : RootOutput
-	SelectEvents   : [ TriggerPath ]
+    Output  : { module_type : RootOutput
+	SelectEvents   : [ @sequence::TRIGGER_PATHS ]
 	fileName       : @nil
 	outputCommands : @local::DigiCompression.OutputCommands
     }
@@ -457,7 +437,13 @@ Mixing : { @table::Mixing
 }
 
 #------------------------------------------------------------------------------
-# 
+Mixing.CreatePrimarySequence : [ @sequence::Primary.GenAndG4        ,
+				 EWMProducer                        ,        # @sequence::CommonMC.PrimaryDigiSim
+				 @sequence::CommonMC.TimeMapsPrimary,        # 
+				 makeSGSPrimary, makeSDPrimary      , 
+				 StrawDigiMCFilter                           # for sig+mbs, filter on makeSDPrimary
+				]
+
 Mixing.pbi_mix             : [ protonBunchIntensity               , 
 			       EWMProducer                        , 
 			       @sequence::Mixing.TrkCalMixSequence 
@@ -467,6 +453,14 @@ Mixing.pbi_mix_digi_nocrv  : [ protonBunchIntensity               ,
 			       EWMProducer                        , 
 			       @sequence::Mixing.TrkCalMixSequence,
 			       @sequence::CommonMC.DigiSim        ,
+			       @sequence::TrackerMC.DigiSim       ,
+			       @sequence::CaloDigiMC.DigiSim
+			      ]			
+
+Mixing.pbi_digi_nocrv      : [ protonBunchIntensity               ,
+			       EWMProducer                        , 
+			       # @sequence::CommonMC.DigiSim        ,  # [ @sequence::CommonMC.TimeMaps, EWMProducer ]
+			       @sequence::CommonMC.TimeMaps       ,
 			       @sequence::TrackerMC.DigiSim       ,
 			       @sequence::CaloDigiMC.DigiSim
 			      ]			
@@ -490,6 +484,25 @@ Mixing.signal_minbias       : [ @sequence::Mixing.CreatePrimarySequence,
 				compressDigiMCs 
 			       ]
 
+Mixing.signal_nocrv         : [ # -- @sequence::Mixing.CreatePrimarySequence,
+			        @sequence::Primary.GenAndG4        ,
+				EWMProducer                        ,        # @sequence::CommonMC.PrimaryDigiSim
+				@sequence::CommonMC.TimeMapsPrimary,        # 
+				makeSGSPrimary, makeSDPrimary      ,        # this is @sequence::TrackerMC.DigiSimPrimary
+				StrawDigiMCFilter                  ,        # for sig+mbs, filter on makeSDPrimary
+			        # -- 
+				# --- @sequence::Mixing.pbi_digi_nocrv       ,
+				protonBunchIntensity               ,
+				# -- @sequence::CommonMC.DigiSim        ,   # [ @sequence::CommonMC.TimeMaps, EWMProducer ]
+				EWMProducer                        , 
+				@sequence::CommonMC.TimeMaps       ,
+				# --
+				makeSGS, makeSD ,                           # this is @sequence::TrackerMC.DigiSim       ,
+				@sequence::CaloDigiMC.DigiSim      ,
+				# ---
+				compressDigiMCs
+			       ]
+
 Mixing.signal_minbias_nocrv : [ @sequence::Mixing.CreatePrimarySequence,
 				@sequence::Mixing.pbi_mix_digi_nocrv  ,
 				compressDigiMCs 
@@ -498,17 +511,15 @@ Mixing.signal_minbias_nocrv : [ @sequence::Mixing.CreatePrimarySequence,
 Mixing.minbias_nocrv        : [ @sequence::Mixing.pbi_mix_digi_nocrv  ,
 				compressDigiMCs 
 			       ]
-
-#------------------------------------------------------------------------------
-# TrkCal mixing fractions : N(mixed events)/POT
-#------------------------------------------------------------------------------
-# physics.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    : 9.777e-4 # for uncut flash
-# for QGSP_BERT T>200 ns, scale flash multiplicity by 1.2 : 3.918*1.2 = 4.702
-#------------------------------------------------------------+-------------+------------+--------------+
-#                                                            |    SU2020   |  MDC2018   | debug        |
-#------------------------------------------------------------+-------------+------------+--------------+
-# Mixing.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    :   3.918e-5  # 1.482e-5   # -155 # -2 # -1 
-Mixing.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    :   4.702e-5  # 1.482e-5   # -155 # -2 # -1 
+#------------------------------------------------------------------------------------------------------
+# TrkCal mixing fractions : N(mix-in events)/POT for different processes
+# - physics.filters.flashMixerTrkCal.mu2e.meanEventsPerProton : 9.777e-4 # for uncut flash
+# - for QGSP_BERT T>200 ns, scale flash multiplicity by 1.3   : 3.918e-5*1.3 = 5.093e-5
+# - see mu2e-35969
+#-----------------------------------------------------------+-------------+------------+--------------+
+#                                                           |    SU2020   |  MDC2018   | debug        |
+#-----------------------------------------------------------+-------------+------------+--------------+
+Mixing.filters.flashMixerTrkCal.mu2e.meanEventsPerProton    :   5.093e-5  # 1.482e-5   # -155 # -2 # -1 
 Mixing.filters.ootMixerTrkCal.mu2e.meanEventsPerProton      :   1.789e-5  # 2.4185E-05 # -687 # -3 # -1 
 Mixing.filters.neutronMixerTrkCal.mu2e.meanEventsPerProton  :   1.699e-5  # 1.8790E-05 # -678 # -4 # -1 
 Mixing.filters.dioMixerTrkCal.mu2e.meanEventsPerProton      :   4.178e-6  # 3.8434E-06 # -155 # -5 # -1 
