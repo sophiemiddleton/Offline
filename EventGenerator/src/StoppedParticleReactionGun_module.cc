@@ -56,6 +56,7 @@ namespace mu2e {
     BinnedSpectrum    spectrum_;
     GenId             genId_;
     int               verbosityLevel_;
+    long int          seed_;
 
     art::RandomNumberGenerator::base_engine_t& eng_;
     CLHEP::RandGeneral randSpectrum_;
@@ -93,7 +94,8 @@ namespace mu2e {
     , spectrum_(BinnedSpectrum(psphys_))
     , genId_(GenId::findByName(psphys_.get<std::string>("genId")))
     , verbosityLevel_(pset.get<int>("verbosityLevel", 0))
-    , eng_(createEngine(art::ServiceHandle<SeedService>()->getSeed()))
+    , seed_(pset.get<long int>("seed",art::ServiceHandle<SeedService>()->getSeed()))
+    , eng_(createEngine(seed_))
     , randSpectrum_(eng_, spectrum_.getPDF(), spectrum_.getNbins())
     , randomUnitSphere_(eng_)
     , stops_(eng_, pset.get<fhicl::ParameterSet>("muonStops"))
@@ -114,6 +116,7 @@ namespace mu2e {
                <<" stopped particles"
                <<std::endl;
 
+      std::cout<<"StoppedParticleReactionGun: using seed  = " << seed_  << std::endl;
       std::cout<<"StoppedParticleReactionGun: using GenId = " << genId_ << std::endl;
 
       std::cout<<"StoppedParticleReactionGun: producing particle "<< pdgId_ << ", mass = "<< mass_ << std::endl;
