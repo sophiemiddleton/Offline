@@ -34,7 +34,7 @@ vector<double> stoppingTarget.radii  =
 
 // last material given will be repeated up to number radii.size()
 //  vector<string> stoppingTarget.materials = 
-//      { "G4_Ti"};
+ //     { "G4_Ti"};
 
 // Variation of locations of foil centers
 // z: variations from equal spacings according to z0 and deltaZ

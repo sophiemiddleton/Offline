@@ -57,7 +57,15 @@ double mu2e.detectorSystemZ0 = 10171.;   // mm  G4BL: (17730-7292=9801 mm)
 //#include "Mu2eG4/geom/stoppingTarget_TDR.txt" // 17 foil tapered muon stopping target used for the TDR simulations
 //#include "Mu2eG4/geom/stoppingTarget_CD3C_34foils.txt" // 34 foil muon stopping target to be used for the CDC3 simulations
 //#include "Mu2eG4/geom/stoppingTargetHoles_DOE_review_2017.txt" // 37 foil muon stopping target with holes
-//#include "Mu2eG4/geom/stoppingTarget_Ti.txt" // 37 foil muon stopping target with holes
+
+//#include "Mu2eG4/geom/stoppingTarget_Ti_25.txt" // 37 foil muon stopping target with holes
+
+//#include "Mu2eG4/geom/stoppingTarget_Ti_34foils.txt"
+#include "Mu2eG4/geom/stoppingTarget_Ti_30foils.txt"
+
+///Thin strings
+//#include "Mu2eG4/geom/stoppingTarget_screenTest.txt"
+
 //Foils:
 //#include "Mu2eG4/geom/stoppingTargetHoles_42_foils.txt" // 42 foil muon stopping target with holes - first test of non-standard
 
@@ -77,7 +85,7 @@ double mu2e.detectorSystemZ0 = 10171.;   // mm  G4BL: (17730-7292=9801 mm)
 //#include "Mu2eG4/geom/stoppingTarget_hexagondefault.txt"
 
 //ScreenDefault
-#include "Mu2eG4/geom/stoppingTarget_screendefault.txt"
+//#include "Mu2eG4/geom/stoppingTarget_screendefault.txt"
 
 //ScreenHoleMesh:
 //#include "Mu2eG4/geom/stoppingTarget_screenholemesh.txt"

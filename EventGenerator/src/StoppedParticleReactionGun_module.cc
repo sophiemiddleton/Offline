@@ -73,6 +73,9 @@ namespace mu2e {
     TH1F*   _hZ;
     TTree*  _Ntup;
     Float_t _TMom;
+    Float_t _Tx;
+    Float_t _Ty;
+    Float_t _Tz;
     Int_t   _nEv = 0;
   private:
     static SpectrumVar    parseSpectrumVar(const std::string& name);
@@ -141,6 +144,9 @@ namespace mu2e {
 	    _Ntup  = tfs->make<TTree>("GenTree", "GenTree");
 	    _Ntup->Branch("nEv", &_nEv , "_nEv/I");	    
 	    _Ntup->Branch("TMom", &_TMom , "TMom/F");
+	    _Ntup->Branch("Tx", &_Tx, "Tx/F");
+	    _Ntup->Branch("Ty", &_Ty, "Ty/F");
+	    _Ntup->Branch("Tz", &_Tz, "Tz/F");
     }
   }
 
@@ -185,6 +191,9 @@ namespace mu2e {
       _hTime->Fill(stop.t);
       _hZ->Fill(pos.z());
       _TMom = p;
+      _Tx = pos.x();
+      _Ty = pos.y();
+      _Tz = pos.z();
     }
     _Ntup->Fill();
 	  _nEv++;

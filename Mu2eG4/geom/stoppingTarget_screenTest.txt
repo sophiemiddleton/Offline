@@ -15,7 +15,7 @@ string dummyStoppingTarget.material   = "WAGVacuum";
 string         stoppingTarget.fillMaterial    = "DSVacuum";
 
 // All dimensions in mm
-double stoppingTarget.z0InMu2e       = 5456;    // 12000 - 6129
+double stoppingTarget.z0InMu2e       = 5871;    // 12000 - 6129
 double stoppingTarget.deltaZ         = 24.242424;
 bool   stoppingTarget.visible        = true;
 bool   stoppingTarget.solid          = false;
@@ -84,19 +84,16 @@ string stoppingTarget.foilTarget_supportStructure_fillMaterial = "G4_W";
 // more parameters added by Yunxuan Li to merge alternative stoppingTarget designs.
 // Parameters can be left with blank if unnecessary.
 
-// Example 4: cylinder default design
-string stoppingTarget.designName = "cylinder";
+// Example 3: screenhole design: default
+string stoppingTarget.designName = "screen";
 
-double stoppingTarget.string_radius = 0.1143;//0.2; 
-double stoppingTarget.string_target_opening_size = 1.0414;//1.0; 
-double stoppingTarget.target_length = 785;//10;//785//392.5
-vector<double> stoppingTarget.radius_list = {75, 57, 39, 21};
-
-//double stoppingTarget.string_radius = 0.02665;
-//double stoppingTarget.string_target_opening_size = 0.07366;
-//double stoppingTarget.target_length = 830.7;
-//vector<double> stoppingTarget.radius_list = {75, 66, 57, 48, 39, 30, 21};
-
+double stoppingTarget.outer_radius = 75.00;
+double stoppingTarget.inner_radius = 0.00;
+int stoppingTarget.number_screenlayers = 150;
+double stoppingTarget.string_radius = 0.02;
+double stoppingTarget.string_target_opening_size = 0.07366;
+double stoppingTarget.target_length = 800.;
+//
 
 //
 //

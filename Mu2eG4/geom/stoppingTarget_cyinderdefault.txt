@@ -15,7 +15,7 @@ string dummyStoppingTarget.material   = "WAGVacuum";
 string         stoppingTarget.fillMaterial    = "DSVacuum";
 
 // All dimensions in mm
-double stoppingTarget.z0InMu2e       = 5871;    // 12000 - 6129
+double stoppingTarget.z0InMu2e       = 5456;    // 12000 - 6129
 double stoppingTarget.deltaZ         = 24.242424;
 bool   stoppingTarget.visible        = true;
 bool   stoppingTarget.solid          = false;
@@ -87,13 +87,16 @@ string stoppingTarget.foilTarget_supportStructure_fillMaterial = "G4_W";
 // Example 4: cylinder default design
 string stoppingTarget.designName = "cylinder";
 
-double stoppingTarget.string_radius = 0.02665;//0.2; //0.02665;
-double stoppingTarget.string_target_opening_size = 0.07366;//1.0; //0.07366;
-double stoppingTarget.target_length = 830.7;//30; //830.7;
+//double stoppingTarget.string_radius = 0.1143;//0.2; 
+//double stoppingTarget.string_target_opening_size = 1.0414;//1.0; 
+//double stoppingTarget.target_length = 785;//10;//785//392.5
+//vector<double> stoppingTarget.radius_list = {75, 57, 39, 21};
+
+double stoppingTarget.string_radius = 0.02665;
+double stoppingTarget.string_target_opening_size = 0.07366;
+double stoppingTarget.target_length = 830.7;
 vector<double> stoppingTarget.radius_list = {75, 66, 57, 48, 39, 30, 21};
 
-
-//
 
 //
 //

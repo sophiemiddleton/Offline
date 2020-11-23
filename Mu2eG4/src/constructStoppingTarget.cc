@@ -180,7 +180,7 @@ double totMass  = 0.0;
         totMass += M_PI * (foil.rOut()*foil.rOut() - foil_rIn*foil_rIn) * 2 * foil.halfThickness();
         
      }
-      totMass *= 2.7 * 0.001;
+      totMass *= 4.5 * 0.001;
       std::cout<<"Mass of target = "<<totMass<<std::endl;
         if (!stoppingTargetIsVisible) {
           foilInfo.logical->SetVisAttributes(G4VisAttributes::Invisible);
@@ -548,8 +548,8 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
                     false);
             doSurfaceCheck && checkForOverlaps( pv, config, verbosity>0);
 
-            // compute mass of this screenlayer. The density of aluminum is 2.7 g/cm^3
-            screenlayer_mass += (4 * M_PI * string_radius * string_radius * 2 * string_halfLength) * (2.7 / 1000.) ; // four strings places in this screen layer
+            // compute mass of this screenlayer. The density of aluminum is 4.5 g/cm^3
+            screenlayer_mass += (4 * M_PI * string_radius * string_radius * 2 * string_halfLength) * (4.5 / 1000.) ; // four strings places in this screen layer
 
 
             if (!config.getBool("target.visible",true)) {
@@ -672,7 +672,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
       double disk_rIn = disk_rOut - disk_diff_rOut_rIn;
       double single_disk_mass = M_PI * (disk_rOut*disk_rOut - disk_rIn*disk_rIn) * (2 * disk_halfHeight);
       disk_totMass += single_disk_mass;
-      cout << "Disk Mass is : " << single_disk_mass * number_disks * 0.001 * 2.7 << endl; 
+      cout << "Disk Mass is : " << single_disk_mass * number_disks * 0.001 * 4.5 << endl; 
     }
     disk_totMass *= number_disks;
     // string mass
@@ -681,10 +681,10 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     for (const auto& disk_rOut : disk_rOut_list) {
         int number_strings = 2 * M_PI * disk_rOut * mesh_per_mm;
         string_totMass += string_singleMass * number_strings;
-        cout << "String Mass is : " << string_singleMass * number_strings * 0.001 * 2.7 << endl;
+        cout << "String Mass is : " << string_singleMass * number_strings * 0.001 * 4.5 << endl;
     }
-    // total mass, density of Aluminum is 2.7 (g/cm3)
-    totMass = (string_totMass + disk_totMass) * 0.001 * 2.7;
+    // total mass, density of Aluminum is 4.5 (g/cm3)
+    totMass = (string_totMass + disk_totMass) * 0.001 * 4.5;
     cout << "Total Mass(gram) of design is : " << totMass << endl;
 
 
@@ -907,7 +907,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
       double disk_rIn = disk_rOut - disk_diff_rOut_rIn;
       double single_disk_mass = M_PI * (disk_rOut*disk_rOut - disk_rIn*disk_rIn) * (2 * disk_halfHeight);
       disk_totMass += single_disk_mass;
-      cout << "Disk Mass is : " << single_disk_mass * number_disks * 0.001 * 2.7 << endl; 
+      cout << "Disk Mass is : " << single_disk_mass * number_disks * 0.001 * 4.5 << endl; 
     }
     disk_totMass *= number_disks;
     // string mass
@@ -916,7 +916,7 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     for (const auto& disk_rOut : disk_rOut_list) {
         int number_strings = 2 * M_PI * disk_rOut * mesh_per_mm;
         string_totMass += string_singleMass * number_strings;
-        cout << "String Mass is : " << string_singleMass * number_strings * 0.001 * 2.7 << endl;
+        cout << "String Mass is : " << string_singleMass * number_strings * 0.001 * 4.5 << endl;
     }
 //CBE I would make a comment about magic numbers, but I guess you already know!
     // screen mass
@@ -929,8 +929,8 @@ VolumeInfo constructStoppingTarget_screen( VolumeInfo   const& parent,
     }
     //screen_totMass *= 20;
     screen_totMass *= 18; // There are 19 cylinders totally, but the centered one does not have screen, thus 18 screens for cylinders together.
-    // total mass, density of Aluminum is 2.7 (g/cm3)
-    totMass = (string_totMass + disk_totMass + screen_totMass) * 0.001 * 2.7;
+    // total mass, density of Aluminum is 4.5 (g/cm3)
+    totMass = (string_totMass + disk_totMass + screen_totMass) * 0.001 * 4.5;
     cout << "Total Mass(gram) of design is : " << totMass << endl;
 
 

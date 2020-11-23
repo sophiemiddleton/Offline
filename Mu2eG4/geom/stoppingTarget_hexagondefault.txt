@@ -15,7 +15,7 @@ string dummyStoppingTarget.material   = "WAGVacuum";
 string         stoppingTarget.fillMaterial    = "DSVacuum";
 
 // All dimensions in mm
-double stoppingTarget.z0InMu2e       = 5871;    // 12000 - 6129
+double stoppingTarget.z0InMu2e       = 5471;    // 12000 - 6129
 double stoppingTarget.deltaZ         = 24.242424;
 bool   stoppingTarget.visible        = true;
 bool   stoppingTarget.solid          = false;

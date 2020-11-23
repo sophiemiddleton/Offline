@@ -42,6 +42,11 @@ namespace mu2e {
       double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
       this->initialize(endpoint);
     }
+     else if (spectrumShape == "CeMEndpointTitanium") {
+      // think this is total energy
+      double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
+      this->initialize(endpoint);
+    }
     else if (spectrumShape == "ceLeadingLog") {
 //-----------------------------------------------------------------------------
 // ehi determines the conversion electron energy (tabulated in the .FCL file)

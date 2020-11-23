@@ -131,7 +131,7 @@ namespace mu2e {
       produces<mu2e::GenParticleCollection>();
       produces<mu2e::EventWeight>();
       produces<mu2e::FixedTimeMap>();
-      std::cout<<"Point 1"<<std::endl;
+    
       if(verbosityLevel_ > 0) {
         std::cout<<"RPCGun: using = "
                  <<stops_.numRecords()
@@ -141,7 +141,7 @@ namespace mu2e {
         std::cout<<"RPCGun: producing photon " << std::endl;
       }
 
-      if ( doHistograms_ ) {std::cout<<"Point 2"<<std::endl;
+      if ( doHistograms_ ) {
         art::ServiceHandle<art::TFileService> tfs;
         art::TFileDirectory tfdir = tfs->mkdir( "RPCGun" );
 
@@ -176,7 +176,7 @@ namespace mu2e {
 
     ConditionsHandle<AcceleratorParams> accPar("ignored");
     double _mbtime = accPar->deBuncherPeriod;
-std::cout<<"Point 3"<<std::endl;
+
     IO::StoppedParticleTauNormF stop;
     if (tmin_ > 0){
       while (true){
@@ -219,10 +219,10 @@ std::cout<<"Point 3"<<std::endl;
     //std::cout << "Found stop " << exp(-stop.tauNormalized) << " " << stop.t << std::endl;
 
     const CLHEP::Hep3Vector pos(stop.x, stop.y, stop.z);
-    std::cout<<"Point 4"<<std::endl;
+   
     const double energy = generateEnergy();
-    std::cout<<"Point 5"<<stop.pt<<std::endl;
-    _pionMom->Fill(stop.pt);
+    //std::cout<<"Point 5"<<stop.pt<<std::endl;
+    //_pionMom->Fill(stop.pt);
     if(!generateInternalConversion_){
       output->emplace_back( PDGCode::gamma,
                             GenId::ExternalRPC,

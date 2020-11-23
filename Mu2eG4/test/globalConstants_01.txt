@@ -24,7 +24,7 @@ vector<double> physicsParams.freeLifetime =  { 26.033, 12.38 };
 
 // Available stopping target materials
 vector<string> physicsParams.stoppingTargets = {"Al","Ti","Cu","Se","Sb","Au"};
-
+string physicsParams.chosenStoppingTargetMaterial = "Ti";
 // Atomic information
 // - Times in ns - Phys. Rev. C 35, 2212 (1987)
 //   ... The measurements with the smallest errors were used
