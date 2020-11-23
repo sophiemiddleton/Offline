@@ -165,5 +165,10 @@ export ROOT_INCLUDE_PATH=`dropit -p $ROOT_INCLUDE_PATH -sf $MU2E_BASE_RELEASE`
 # Environment variables used by the test build system.
 export PACKAGE_SOURCE=${MU2E_BASE_RELEASE}
 export BUILD_BASE=${MU2E_BASE_RELEASE}
-
+#------------------------------------------------------------------------------
+# trying a kludge
+#------------------------------------------------------------------------------
+setup mu2ebintools v1_01_21 -q debug:e19; 
+# setup mu2etools; 
+export FHICL_FILE_PATH=$MU2E_BASE_RELEASE; 
 #
