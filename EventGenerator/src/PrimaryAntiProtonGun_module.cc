@@ -65,9 +65,11 @@
 
 
 // ROOT includes
+#include "TNtuple.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TH1D.h"
 
 // C++ includes
@@ -150,6 +152,11 @@ namespace mu2e {
 
     bool _doHistograms;
     string _inputModuleLabel;
+    unsigned int run;
+    unsigned int evt;
+    float xv,yv,zv;
+    TTree* _ntInelasticVertices;
+
 
     TH1F* _hPbarMomentum;
     TH1F* _hPbarCosTheta;
@@ -160,6 +167,7 @@ namespace mu2e {
     TH1F* _hxLocationOfInelastic;
     TH1F* _hyLocationOfInelastic;
     TH1F* _hzLocationOfInelastic;
+    TH2F* _h2xyLocationOfInelastic;
     TH1F* _hFoundInteractingProton;
 
     int numberOfProtonInelastics{0};
@@ -211,10 +219,16 @@ namespace mu2e {
 
     // set up histos
     if (_doHistograms)
-      {
+      {  
         art::ServiceHandle<art::TFileService> tfs;
         art::TFileDirectory tfdir = tfs->mkdir( "PrimaryAntiProtonGun" );
 
+	_ntInelasticVertices = tfs->make<TTree>( "ntvert", "Inelastic vertices ntuple");
+	_ntInelasticVertices->Branch("run",&run,"run/i");
+	_ntInelasticVertices->Branch("evt",&evt,"evt/i");
+	_ntInelasticVertices->Branch("xv",&xv,"xv/F");
+	_ntInelasticVertices->Branch("yv",&yv,"yv/F");
+	_ntInelasticVertices->Branch("zv",&zv,"zv/F");
         _hPbarMomentum = tfdir.make<TH1F>("_hpBarMomentum","generated pbar momentum",100,0.,10000.);
         _hPbarCosTheta = tfdir.make<TH1F>("_hPbarCosTheta","antiproton cos theta in Lab Frame",100,-1.,1.);
         _hPbarPhi = tfdir.make<TH1F>("_hPbarPhi","antiproton phi in Lab Frame",100,-M_PI,+M_PI);
@@ -223,7 +237,10 @@ namespace mu2e {
         _hxLocationOfInelastic = tfdir.make<TH1F>("_hxLocationOfInelastic","x location of inelastic", 100,-100.,100.);
         _hyLocationOfInelastic = tfdir.make<TH1F>("_hyLocationOfInelastic","y location of inelastic", 100,-100.,100.);
         _hzLocationOfInelastic = tfdir.make<TH1F>("_hzLocationOfInelastic","z location of inelastic", 400,-6300,-5900.);//nominal is -6164.5+-80
+        _h2xyLocationOfInelastic = tfdir.make<TH2F>("_h2xyLocationOfInelastic","y vs x location of inelastic", 100,-100.,100., 100,-100.,100.);
         _hFoundInteractingProton = tfdir.make<TH1F>("_hFoundInteractingProton"," zero if wrote collection, one if did",2,0.,2.);
+       
+
       }
 
   }
@@ -442,12 +459,21 @@ namespace mu2e {
     // Convert position and momentum to Mu2e coordinates
     if (_doHistograms)
       {
+	run  = event.id().run();
+	evt  = event.id().event();
+	xv  = xInelastic-3904.;
+	yv  = yInelastic;
+	zv  = zInelastic;	   
+	_ntInelasticVertices->Fill();
+
+
         _hPbarMomentum->Fill(momPbar.vect().mag());
         _hPbarCosTheta->Fill(momPbar.cosTheta());
         _hPbarPhi->Fill(momPbar.phi());
         _hxLocationOfInelastic->Fill(xInelastic-3904.);
         _hyLocationOfInelastic->Fill(yInelastic);
         _hzLocationOfInelastic->Fill(zInelastic);
+        _h2xyLocationOfInelastic->Fill(xInelastic-3904.,yInelastic);
         if (_verbosityLevel > 0)
           {
             std::cout << " momentum, cos Theta, phi = " << momPbar.vect().mag()
