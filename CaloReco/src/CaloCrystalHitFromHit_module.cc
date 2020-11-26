@@ -42,10 +42,10 @@ namespace mu2e {
     explicit CaloCrystalHitFromHit(fhicl::ParameterSet const& pset) :
       art::EDProducer{pset},
       caloDigisToken_{consumes<CaloRecoDigiCollection>(pset.get<std::string>("caloDigisModuleLabel"))},
-      time4Merge_          (pset.get<double>     ("time4Merge")),
-      aCorr_               (pset.get<double>     ("aCorr",0.)),
-      bCorr_               (pset.get<double>     ("bCorr",0.)),
-      diagLevel_           (pset.get<int>        ("diagLevel",0)),
+      time4Merge_        (pset.get<double>     ("time4Merge")),
+      aCorr_             (pset.get<double>     ("aCorr")),
+      bCorr_             (pset.get<double>     ("bCorr")),
+      diagLevel_         (pset.get<int>        ("diagLevel")),
       engine_            (createEngine(art::ServiceHandle<SeedService>()->getSeed())),
       randGauss_         (engine_)
     {
