@@ -168,7 +168,7 @@ export BUILD_BASE=${MU2E_BASE_RELEASE}
 #------------------------------------------------------------------------------
 # trying a kludge
 #------------------------------------------------------------------------------
-setup mu2ebintools v1_01_21 -q debug:e19; 
+# setup mu2ebintools v1_01_21 -q debug:e19; 
 # setup mu2etools; 
-export FHICL_FILE_PATH=$MU2E_BASE_RELEASE; 
+# export FHICL_FILE_PATH=$MU2E_BASE_RELEASE; 
 #
