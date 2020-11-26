@@ -40,6 +40,7 @@
 #include "GeneralUtilities/inc/RSNTIO.hh"
 
 #include "TH1.h"
+#include "TH2.h"
 
 namespace mu2e {
 
@@ -68,11 +69,13 @@ namespace mu2e {
 // histogramming
 //-----------------------------------------------------------------------------
     bool    doHistograms_;
-    TH1F*   _hEnergy;
+    TH1F*   _hEnergy[2];
+    TH1F*   _hMom;
     TH1F*   _hPdgId;
     TH1F*   _hGenId;
     TH1F*   _hTime;
-    TH1F*   _hZ;
+    TH1F*   _hZ[2];
+    TH2F*   _hRVsZ;
   
   private:
     static SpectrumVar    parseSpectrumVar(const std::string& name);
@@ -136,11 +139,15 @@ namespace mu2e {
     if ( doHistograms_ ) {
       art::ServiceHandle<art::TFileService> tfs;
       //      art::TFileDirectory tfdir = tfs->mkdir( "StoppedParticleReactionGun");
-      _hEnergy = tfs->make<TH1F>("hEnergy", "Energy"      , 2400,   0.0,  120);
-      _hGenId  = tfs->make<TH1F>("hGenId" , "Generator ID",  100,   0.0,  100);
-      _hPdgId  = tfs->make<TH1F>("hPdgId" , "PDG ID"      ,  500,  -250, 250);
-      _hTime   = tfs->make<TH1F>("hTime"  , "Time"        ,  400,   0.0, 2000.);
-      _hZ      = tfs->make<TH1F>("hZ"     , "Z"           ,  500,  5400, 6400);
+      _hEnergy[0] = tfs->make<TH1F>("hEnergy" , "Energy[0]"   , 2400,   0.0,   120);
+      _hEnergy[1] = tfs->make<TH1F>("hEnergy2", "Energy[1]"   , 2400,   0.0,  1200);
+      _hMom       = tfs->make<TH1F>("hMom"    , "Momentum"    ,  500,   0.0,  1000);
+      _hGenId     = tfs->make<TH1F>("hGenId"  , "Generator ID",  100,   0.0,   100);
+      _hPdgId     = tfs->make<TH1F>("hPdgId"  , "PDG ID"      ,  500,  -250,   250);
+      _hTime      = tfs->make<TH1F>("hTime"   , "Time"        ,  400,   0.0,  2000);
+      _hZ[0]      = tfs->make<TH1F>("hZ"      , "Z"           ,  500,  5400,  6400);
+      _hZ[1]      = tfs->make<TH1F>("hZ2"     , "Z[1]"        , 2500,     0, 25000);
+      _hRVsZ      = tfs->make<TH2F>("hRvsZ"   , "R vs Z]"     , 2500,     0, 25000, 100,0,1000);
 
     }
   }
@@ -165,7 +172,7 @@ namespace mu2e {
     const CLHEP::Hep3Vector pos(stop.x, stop.y, stop.z);
 
     const double energy = generateEnergy();
-    const double p = energy * sqrt(1 - std::pow(mass_/energy,2));
+    const double p      = sqrt(energy*energy-mass_*mass_);
 
     double time = stop.t;
 
@@ -186,9 +193,17 @@ namespace mu2e {
     if (doHistograms_) {
       _hGenId->Fill(genId_.id());
       _hPdgId->Fill(pdgId_);
-      _hEnergy->Fill(energy);
+      _hEnergy[0]->Fill(energy);
+      _hEnergy[1]->Fill(energy);
+      _hMom->Fill(p);
       _hTime->Fill(stop.t);
-      _hZ->Fill(pos.z());
+      _hZ[0]->Fill(pos.z());
+      _hZ[1]->Fill(pos.z());
+
+      float dx = stop.x+3904;
+      float r  = sqrt(dx*dx+stop.y*stop.y);
+
+      _hRVsZ->Fill(pos.z(),r);
     }
   }
 
