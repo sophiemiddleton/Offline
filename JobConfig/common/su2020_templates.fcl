@@ -326,9 +326,8 @@ su2020.trk_reco_sep  : [ @sequence::Reconstruction.DeSequence,
 			 @sequence::Reconstruction.UmuSequence
 		       ]
 
-# MC compression at the end of reco
-su2020.reco_compression : [ protonBunchIntensity, # for signal-only
-			    FindMCPrimary,        # find the primary particle
+# MC compression at the end of reco, assume the pulse punch intensity to be present
+su2020.reco_compression : [ FindMCPrimary,        # find the primary particle
 			    SelectRecoMC,         # identify the MC information we want to keep
 			    compressRecoMCs       # compress
 			  ]
