@@ -387,6 +387,20 @@ Mixing : { @table::Mixing
 	    simParticleTags    : [ "g4run", @sequence::Mixing.TrkCalMixSequence ] # , @sequence::Mixing.CRVMixSequence ]
 	    caloShowerStepTags : [ "CaloShowerStepFromStepPt:calorimeter" , @sequence::Mixing.caloMixerTags     ]
 	}
+
+	CaloShowerStepFromStepPtPrimary: { @table::CaloShowerStepFromStepPt }
+
+	CaloShowerStepROFromShowerStepPrimary: { @table::CaloShowerStepROFromShowerStep
+	    caloCrystalShowerInputs : [ "CaloShowerStepFromStepPtPrimary:calorimeter" ]
+	    TimeOffsets             : {
+		inputs : [ @sequence::CommonMC.TimeMapsPrimary ]
+	    }
+	}
+
+	# CaloDigiFromShowerPrimary: { @table::CaloDigiFromShower
+	#     caloShowerModuleLabel : CaloShowerStepROFromShowerStepPrimary
+	# }
+
     }
 
     filters : {
@@ -413,6 +427,14 @@ Mixing : { @table::Mixing
 	# digi filtering for Primary selection.
 	StrawDigiMCFilter   : { @table::StrawDigiMCFilter 
 	    StrawDigiMCCollection : "makeSDPrimary"
+	}
+
+	CaloShowerSimFilter : { module_type :CaloShowerSimFilter
+	    particleTypes     : [ 22, 11, -11, 13, -13, 2212, -2212  ] # save photons, electrons, muons, and protons
+	    MinParticleEnergy       : 40.0 # MeV
+	    MinTotalEnergy          : 100000.0 # disable, is an OR with MinParticleEnergy
+	    CaloShowerSimCollection : "CaloShowerStepROFromShowerStepPrimary"
+	    # debugLevel              : 1
 	}
     }
 
@@ -444,6 +466,12 @@ Mixing.CreatePrimarySequence : [ @sequence::Primary.GenAndG4        ,
 				 makeSGSPrimary, makeSDPrimary      , 
 				 StrawDigiMCFilter                           # for sig+mbs, filter on makeSDPrimary
 				]
+Mixing.CreatePrimarySequence_calo : [ @sequence::Primary.GenAndG4,
+				      @sequence::CommonMC.PrimaryDigiSim,
+				      makeSGSPrimary, makeSDPrimary, 
+				      CaloShowerStepFromStepPtPrimary, CaloShowerStepROFromShowerStepPrimary,
+				      CaloShowerSimFilter
+				     ]
 
 Mixing.pbi_mix             : [ protonBunchIntensity               , 
 			       EWMProducer                        , 
@@ -508,6 +536,10 @@ Mixing.signal_minbias_nocrv : [ @sequence::Mixing.CreatePrimarySequence,
 				@sequence::Mixing.pbi_mix_digi_nocrv  ,
 				compressDigiMCs 
 			       ]
+Mixing.signal_minbias_nocrv_calo : [ @sequence::Mixing.CreatePrimarySequence_calo,
+				     @sequence::Mixing.pbi_mix_digi_nocrv  ,
+				     compressDigiMCs 
+				    ]
 
 Mixing.minbias_nocrv        : [ @sequence::Mixing.pbi_mix_digi_nocrv  ,
 				compressDigiMCs 

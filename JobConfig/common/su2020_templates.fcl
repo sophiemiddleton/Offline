@@ -207,6 +207,7 @@ su2020.gen_sim_output       : [ "drop    *_*_*_*",
 su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 				"keep    *_compressDigiMCs_*_*",
 				"keep    mu2e::GenEventCount_*_*_*",
+				"keep mu2e::GenParticles_generate_photon_*",
 				"keep    mu2e::StatusG4_g4run_*_*",
 				"keep    mu2e::EventWeight_*_*_*",
 				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
@@ -220,12 +221,14 @@ su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 #------------------------------------------------------------------------------
 # 2. output format for digi files after mixing
 #------------------------------------------------------------------------------
-su2020.mixing_output : [ "drop *_*_*_*"                         ,
-			 "keep *_compressDigiMCs_*_*"           ,
-			 "keep mu2e::EventWindowMarker_*_*_*"   ,
-			 "keep mu2e::ProtonBunchIntensity_*_*_*",
-			 "keep mu2e::StrawDigis_*_*_*"          ,
-			 "keep mu2e::CaloDigis_*_*_*"           ,
+su2020.mixing_output : [ "drop *_*_*_*"                             ,
+			 "keep mu2e::GenEventCount_*_*_*"           ,
+			 "keep mu2e::GenParticles_generate_photon_*",
+			 "keep *_compressDigiMCs_*_*"               ,
+			 "keep mu2e::EventWindowMarker_*_*_*"       ,
+			 "keep mu2e::ProtonBunchIntensity_*_*_*"    ,
+			 "keep mu2e::StrawDigis_*_*_*"              ,
+			 "keep mu2e::CaloDigis_*_*_*"               ,
 			 "keep mu2e::CrvDigis_*_*_*"
 			]
 #------------------------------------------------------------------------------
