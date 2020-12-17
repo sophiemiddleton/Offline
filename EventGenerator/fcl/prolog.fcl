@@ -269,7 +269,7 @@ EventGenerator : { @table::EventGenerator
 #------------------------------------------------------------------------------
 # generic electron and muon guns, default momentum is that of the CE on Al
 #------------------------------------------------------------------------------
-  	egun : { @table::CeEndpointGun 
+  	egun : { @table::StoppedParticleReactionGun
 	    physics : { @table::StoppedParticleReactionGun.physics
 		pdgId            : 11
 		elow             : 104.97175
@@ -282,8 +282,9 @@ EventGenerator : { @table::EventGenerator
 #------------------------------------------------------------------------------
 # hypothetic generator option - muons coming out of the stopping target
 #------------------------------------------------------------------------------
-  	mgun : { @table::CeEndpointGun 
+  	mgun : { @table::StoppedParticleReactionGun
 	    physics : { @table::StoppedParticleReactionGun.physics
+		genId            : StoppedParticleReactionGun
 		pdgId            : 13
 		elow             : 104.97175
 		ehi              : 104.97176
