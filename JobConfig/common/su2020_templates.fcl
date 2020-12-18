@@ -190,29 +190,32 @@ su2020 : {
 # output event formats
 # 1. event format for mixing input
 #------------------------------------------------------------------------------
-su2020.gen_sim_output       : [ "drop    *_*_*_*",
-				"keep    mu2e::GenEventCount_*_*_*",
-				"keep    *_g4run_*_*",
-				"drop    mu2e::StepPointMCs_g4run_calorimeter_*",
+su2020.gen_sim_output       : [ "drop    *_*_*_*"                                 ,
+				"keep    mu2e::EventWeight_*_*_*"                 ,
+				"keep    mu2e::EventWindowMarker_EWMProducer_*_*" ,
+				"keep    mu2e::FixedTimeMap_*_*_*"                ,
+				"keep    mu2e::GenEventCount_*_*_*"               ,
+				"keep    mu2e::GenParticles_*_*_*"                ,
+				"keep    *_g4run_*_*"                             ,
+				"drop    mu2e::StepPointMCs_g4run_calorimeter_*"  ,
 				"drop    mu2e::StepPointMCs_g4run_calorimeterRO_*",
-				"keep    mu2e::CaloShowerSteps_*_*_*",
-				"keep    mu2e::GenParticles_*_*_*"
+				"keep    mu2e::CaloShowerSteps_*_*_*"
 			       ]
 #------------------------------------------------------------------------------
 # 2. output format for digi files
 #------------------------------------------------------------------------------
-su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
-				"keep    *_compressDigiMCs_*_*",
-				"keep    mu2e::GenEventCount_*_*_*",
-				"keep    mu2e::GenParticles_generate_photon_*",
-				"keep    mu2e::StatusG4_g4run_*_*",
-				"keep    mu2e::EventWeight_*_*_*",
+su2020.gen_sim_digi_output  : [ "drop    *_*_*_*"                                ,
+				"keep    *_compressDigiMCs_*_*"                  ,
+				"keep    mu2e::GenEventCount_*_*_*"              ,
+				"keep    mu2e::GenParticles_generate_photon_*"   ,
+				"keep    mu2e::StatusG4_g4run_*_*"               ,
+				"keep    mu2e::EventWeight_*_*_*"                ,
 				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
-				"keep    mu2e::FixedTimeMap_*_*_*",
-				"keep    mu2e::CaloDigis_CaloDigiFromShower_*_*",
-				"keep    mu2e::CrvDigis_CrvDigi_*_*",
-				"keep    mu2e::ProtonBunchIntensity_*_*_*",
-				"keep    mu2e::StrawDigis_makeSD_*_*",
+				"keep    mu2e::FixedTimeMap_*_*_*"               ,
+				"keep    mu2e::CaloDigis_CaloDigiFromShower_*_*" ,
+				"keep    mu2e::CrvDigis_CrvDigi_*_*"             ,
+				"keep    mu2e::ProtonBunchIntensity_*_*_*"       ,
+				"keep    mu2e::StrawDigis_makeSD_*_*"            ,
 				"keep    art::TriggerResults_TriggerResults_*_*"
 			       ]
 #------------------------------------------------------------------------------
@@ -220,7 +223,9 @@ su2020.gen_sim_digi_output  : [ "drop    *_*_*_*",
 #------------------------------------------------------------------------------
 su2020.mixing_output : [ "drop *_*_*_*"                               ,
 			 "keep *_compressDigiMCs_*_*"                 ,
-			 "keep mu2e::EventWeight_*_*_*",
+			 "keep mu2e::GenEventCount_*_*_*"             ,
+			 "keep mu2e::GenParticles_generate_photon_*"  ,
+			 "keep mu2e::EventWeight_*_*_*"               ,
 			 "keep mu2e::EventWindowMarker_*_*_*"         ,
 			 "keep mu2e::ProtonBunchIntensity_*_*_*"      ,
 			 "keep mu2e::StrawDigis_*_*_*"                ,
