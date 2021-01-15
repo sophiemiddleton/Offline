@@ -283,12 +283,12 @@ BEGIN_PROLOG
 		    supplements : [ @local::UeP, @local::DmuP ]
 		  }
 
-      genCountLogger : @local::genCountLogger
+      #genCountLogger : @local::genCountLogger
    }
 
    TrigSequence : [ PBIWeight, TrkQualDeM, TrkQualUeM, TrkQualDmuM, TrkQualDeP, TrkQualUeP, TrkQualDmuP, TrkQualUmuM, TrkQualUmuP, TrkPIDDeM, TrkPIDDeP ]
    EndSequenceNoMC : [ TrkAnaNeg, TrkAnaPos ]
-   EndSequence : [ TrkAnaNeg, TrkAnaPos, genCountLogger ]
+   EndSequence : [ TrkAnaNeg, TrkAnaPos]#, genCountLogger ]
 }
 
 END_PROLOG

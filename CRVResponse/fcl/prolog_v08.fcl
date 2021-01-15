@@ -101,6 +101,11 @@ BEGIN_PROLOG
       minPEs                    : 6        //6 PEs
       darkNoise                 : false    //reduced initial pulse width for the reco pulse fit for dark noise (12.6ns instead of 19.0ns)
     }
+    MakeDigis:
+    {
+      module_type               : DigiMaker
+      crvDigiModuleLabel        : "CrvDigi"
+    }
     CrvCoincidence:
     {
       module_type                   : CrvCoincidenceCheck
@@ -162,8 +167,9 @@ CrvRecoPackage :
      CrvRecoPulses               : @local::CrvRecoPulses
      CrvCoincidence              : @local::CrvCoincidence
      CrvCoincidenceClusterFinder : @local::CrvCoincidenceClusterFinder
+     MakeDigis                   : @local::MakeDigis
    }
-   CrvRecoSequence : [ CrvRecoPulses, CrvCoincidence, CrvCoincidenceClusterFinder]
+   CrvRecoSequence : [  CrvRecoPulses, CrvCoincidence, CrvCoincidenceClusterFinder]//MakeDigis,
 }
 
 CrvRecoMCPackage :

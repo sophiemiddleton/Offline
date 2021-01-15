@@ -100,7 +100,7 @@ namespace mu2e
   void CrvRecoPulsesFinder::produce(art::Event& event) 
   {
     std::unique_ptr<CrvRecoPulseCollection> crvRecoPulseCollection(new CrvRecoPulseCollection);
-
+    std::unique_ptr<CrvDigiCollection> crvDigiCollection2(new CrvDigiCollection);
     art::Handle<CrvDigiCollection> crvDigiCollection;
     event.getByLabel(_crvDigiModuleLabel,"",crvDigiCollection);
 

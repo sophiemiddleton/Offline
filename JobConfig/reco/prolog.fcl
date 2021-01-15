@@ -7,7 +7,7 @@
 #include "CalPatRec/fcl/prolog.fcl"
 #include "CommonMC/fcl/prolog.fcl"
 #include "Filters/fcl/prolog.fcl"
-#
+
 BEGIN_PROLOG
 Reconstruction : {
   producers : {
@@ -94,6 +94,7 @@ Reconstruction : {
     SelectRecoMC : { 
       @table::CommonMC.SelectRecoMC 
        CSSCollection : "compressDigiMCs"
+       SkipCrv : true
        CaloClusterMCDTime : 2.0
        CaloMinE : 1.0
        SaveEnergySteps : false
@@ -127,15 +128,15 @@ Reconstruction : {
     # Compresion
     compressRecoMCs : { @table::DigiCompression.Reco
       strawDigiMCTag : "compressDigiMCs"
-      crvDigiMCTag : "compressDigiMCs"
+      crvDigiMCTag : ""
       simParticleTags : [ "compressDigiMCs" ]
       extraStepPointMCTags : [ "compressDigiMCs:virtualdetector", "compressDigiMCs:protonabsorber" ]
       timeMapTags : [ @sequence::DigiCompression.TimeMaps ]
       caloClusterMCTag : "SelectRecoMC"
       strawDigiMCIndexMapTag : "SelectRecoMC:StrawDigiMap"
-      crvDigiMCIndexMapTag : "SelectRecoMC:CrvDigiMap"
+      crvDigiMCIndexMapTag : ""
       keepAllGenParticles : false
-      crvCoincClusterMCTag : "CrvCoincidenceClusterMatchMC"
+      crvCoincClusterMCTag : ""
       primaryParticleTag : "FindMCPrimary"
       rekeySimParticleCollection : false
     }
@@ -214,7 +215,7 @@ Reconstruction : {
 			@sequence::CaloCluster.Reco ]
 #    TrkCaloMatchSequence : [ @sequence::TrackCaloMatching.matching_dem_TRF, 
 #                         @sequence::TrackCaloMatching.matching_dep_TRF ]
-  CrvRecoSequence : [ CrvRecoPulses, CrvCoincidence, CrvCoincidenceClusterFinder ]
+  CrvRecoSequence : [ MakeDigis, CrvRecoPulses, CrvCoincidence, CrvCoincidenceClusterFinder ]
 # full MC sequence
   RecoMCSequence :  [ CaloMCFix, FindMCPrimary,  CrvCoincidenceClusterMatchMC, SelectRecoMC, compressRecoMCs ]
 
@@ -296,11 +297,12 @@ Reconstruction.UmuPath : [
 # Full reconstruction Path
 Reconstruction.RecoPath : [
   @sequence::Reconstruction.CaloRecoSequence, # CaloReco needs to preceed TrkReco
-  @sequence::Reconstruction.TrkRecoSequence,
+  @sequence::Reconstruction.TrkRecoSequence
+  ,
   @sequence::Reconstruction.CrvRecoSequence 
 ]
 # Full reco path with MC
-Reconstruction.RecoMCPath : [
+Reconstruction.RecoMCPath : [MakeDigis,
   @sequence::Reconstruction.RecoPath,
   @sequence::Reconstruction.RecoMCSequence,
   RecoFilter
