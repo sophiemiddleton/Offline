@@ -8,17 +8,11 @@
 #include "CaloMC/fcl/prolog.fcl"
 #include "CRVResponse/fcl/prolog.fcl"
 #include "Filters/fcl/prolog.fcl"
-#include "Mu2eG4Filters/fcl/prolog.fcl"
 #
 BEGIN_PROLOG
 
 Primary: {
   producers : {
-    # dummy protonBunchIntensity objects for primary-only datasets
-    protonBunchIntensity : { module_type: ProtonBunchIntensityFlat
-	mean      : 0.0 # No PBI possible for pure signal! 
-	halfWidth : 1.0
-    }
     g4run : @local::mu2e.physics.producers.g4run.muons
     genCounter: { module_type: GenEventCounter }
     @table::EventGenerator.producers
@@ -45,29 +39,21 @@ Primary: {
     }
 # digi filtering for Primary selection.
     DigiFilter : {
-	module_type : StrawDigiMCFilter
-	StrawDigiMCCollection : "makeSD"
-	MinNDigis             : 10
-	particleTypes         : [ 11, -11, 13, -13 ]
-	MinParticleMom        : 40.0
-	MaxParticleMom        : 1e8
+      module_type : StrawDigiMCFilter
+      StrawDigiMCCollection : "makeSD"
     }
 # shower filter for calorimeter selection
     CaloFilter : {
       module_type : CaloShowerSimFilter
-    }
-    GammaFilter : { module_type : GammaDaughterProcessFilter
-	doFilter    : false
-	verbosityLevel : 0
     }
   }
   analyzers: {
     genCountLogger: { module_type: GenEventCountReader makeHistograms: false }
     digiCompressionCheck : @local::DigiCompression.Check
   }
-  GenAndG4 :  [ generate, genCounter, g4run, g4status, protonBunchIntensity ]
+  GenAndG4 :  [ generate, g4run, g4status ]
 
- EndPath : [ genCountLogger, digiCompressionCheck, Output ]
+ EndPath : [ digiCompressionCheck, Output ]
   Output : {
      module_type : RootOutput
      SelectEvents : [ TriggerPath ]
@@ -78,12 +64,11 @@ Primary: {
 }
 # must define this outside the brackets due to internal dependence
 Primary.TriggerPath : [ @sequence::Primary.GenAndG4,
-			GammaFilter,                            # does nothing by default
-			@sequence::CommonMC.DigiSim,
-			@sequence::TrackerMC.DigiSim,
-			DigiFilter,
-			@sequence::CaloDigiMC.DigiSim,
-			@sequence::CrvDAQPackage.CrvResponseSequence,
-			compressDigiMCs ]
+  @sequence::CommonMC.DigiSim,
+  @sequence::TrackerMC.DigiSim,
+  DigiFilter,
+  @sequence::CaloDigiMC.DigiSim,
+  @sequence::CrvDAQPackage.CrvResponseSequence,
+  compressDigiMCs ]
 
 END_PROLOG

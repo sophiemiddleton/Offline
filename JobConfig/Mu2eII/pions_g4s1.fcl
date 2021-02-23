@@ -1,6 +1,6 @@
-// Andrei Gaponenko, 2013
-// Jake Colston & Joseph Brock, 2015 (edit for cd3)
-
+//
+// Fcl file makes final stage of pions i.e. from DS to TS3
+//
 #include "fcl/minimalMessageService.fcl"
 #include "fcl/standardProducers.fcl"
 #include "fcl/standardServices.fcl"
@@ -21,6 +21,7 @@ process_name : pionsg4s1
 
 source : {
     module_type : EmptyEvent
+    //maxEvents   : 1000000
 }
 
 services : {

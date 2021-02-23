@@ -1,5 +1,6 @@
-// Andrei Gaponenko, 2013
-// Jake Colston & Joseph Brock, 2015 (edit for cd3)
+//
+// Fcl file makes final stage of pions i.e. from TS to ST
+//
 
 #include "fcl/minimalMessageService.fcl"
 #include "fcl/standardProducers.fcl"
@@ -17,18 +18,18 @@ CutEPPhN : {
 END_PROLOG
 
 # Give this job a name.
-process_name : pionsg4s1
+process_name : pionsg4s3
 
-source : {
-    module_type : EmptyEvent
+source : { 
+    module_type : RootInput
+    maxEvents   : 1000000000
 }
 
 services : {
     message                : @local::default_message
-    TFileService           : { fileName : "nts.owner.pions-g4s1.version.sequencer.root" }
+    TFileService           : { fileName : "nts.owner.pions-g4s3.version.sequencer.root" }
     RandomNumberGenerator  : {defaultEngineKind: "MixMaxRng"}
     GeometryService        : { inputFile      : "JobConfig/common/geom_baseline.txt"    }
-   
     ConditionsService      : { conditionsfile : "Mu2eG4/test/conditions_01.txt"      }
     GlobalConstantsService : { inputFile      : "Mu2eG4/test/globalConstants_01.txt" }
     G4Helper               : {}
@@ -39,10 +40,6 @@ physics : {
 
     producers : {
 
-        generate: @local::PrimaryProtonGun
-
-        genCounter : { module_type : GenEventCounter }
-
         g4run : {
 
             module_type       : Mu2eG4
@@ -52,80 +49,106 @@ physics : {
             debug             : @local::mu2eg4DefaultDebug
             visualization     : @local::mu2eg4NoVisualization
 
-            generatorModuleLabel : generate
+            MultiStageParameters : {
+                simParticleNumberOffset  : 200000
+                genInputHits             : [ "g4filter:vacuuas2" ]
+                inputSimParticles        : "g4filter"
+                inputMCTrajectories      : ""
+                inputPhysVolumeMultiInfo : "compressPV"
+            }
+
+            //doWriteLegacyPhysVolumeInfo : false
 
             SDConfig : {
-                enableSD : [ virtualdetector ] // activate just the explicitly listed SDs
-                TimeVD   : { times : [] }
+                enableSD         : [ virtualdetector ] // activate just the explicitly listed SDs
+                preSimulatedHits : [ "g4filter:virtualdetector" ]
+                TimeVD           : { times : [] }
             }
 
             // Mu2eG4 cuts are evaluated in the listed order.
             // The first match wins.  For the "intersection"
             // type, the first false stops the evaluation.
-            // For the "union" type the first true stops the evaluation.
             Mu2eG4StackingOnlyCut : @local::mu2eg4CutNeutrinos
             Mu2eG4SteppingOnlyCut : @local::mu2eg4NoCut
             Mu2eG4CommonCut : {
                 type : union
                 pars : [
                     @local::CutEPPhN,
-                    { type: inVolume pars: [ HallAir ] },
-                    {
-                        type  : inVolume
-                        pars  : [ TS3Vacuum, TS4Vacuum, TS5Vacuum, DS1Vacuum, DS2Vacuum, DS3Vacuum ]
-                        write : vacuuas1
-                    }
+                    { type: inVolume pars: [ HallAir ] }
                 ]
+            }
+
+            SimParticlePrinter : {
+                enabled       : false
+                primariesOnly : false
+                prefix        : "SimParticle : "
             }
         } // g4run
 
-        compressPV : {
+        vacuuas1 : {
+            module_type     : StepPointMCCollectionUpdater
+            remapping       : g4run
+            inputs          : [ "g4filter:vacuuas1:pionsg4s2" ]
+            outInstanceName : "vacuuas1"
+        }
+
+        vacuuas2 : {
+            module_type     : StepPointMCCollectionUpdater
+            remapping       : g4run
+            inputs          : [ "g4filter:vacuuas2:pionsg4s2" ]
+            outInstanceName : "vacuuas2"
+        }
+
+        compressPVStop : {
             module_type    : CompressPhysicalVolumes
             volumesInput   : "g4run"
             hitInputs      : []
-            particleInputs : [ "g4filter" ]
+            particleInputs : [ "stopFilter" ]
+        }
+
+        stoppedPionFinder : {
+            module_type      : StoppedParticlesFinder
+            particleInput    : "g4run"
+            // multiple matches, we'll get the one from the current process, which is what we want
+            physVolInfoInput : "g4run"
+            stoppingMaterial : "StoppingTarget_Al"
+            particleTypes    : [ -211 ] // pi-
         }
     } // producers
 
-    analyzers : {
-
-        genCountLogger : { module_type : GenEventCountReader }
-
-        collectionSizes : {
-            module_type              : CollectionSizeAnalyzer
-            userModuleLabel          : true
-            useInstanceName          : true
-            useProcessName           : false
-        }
-    } // analyzers
-
     filters : {
-        g4filter : {
+        stopFilter : {
             module_type               : FilterG4Out
-            mainHitInputs             : [ "g4run:vacuuas1" ]
-            extraHitInputs            : [ "g4run:virtualdetector" ]
-            vetoDaughters             : []
+            mainHitInputs             : []
+            extraHitInputs            : [ "g4run:virtualdetector", "vacuuas1:vacuuas1" , "vacuuas2:vacuuas2" ]
+            mainSPPtrInputs           : [ "stoppedPionFinder" ]
+            vetoDaughters             : [ "stoppedPionFinder" ]
         }
     } // filters
 
-    trigFilter    : [ generate, genCounter, g4run, g4filter, compressPV ]
-    trigger_paths : [ trigFilter ]
+    analyzers : {
+        genCountLogger : { module_type : GenEventCountReader }
+    } // analyzers
 
-    e1        : [ filteredOutput ]
-    end_paths : [ e1 ]
-} // physics
+    pionStopFilter : [ g4run, vacuuas1, vacuuas2, stoppedPionFinder, stopFilter, compressPVStop ]
+    trigger_paths  : [ pionStopFilter ]
+
+    out       : [ pionStopOutput ]
+    stops     : [ genCountLogger ]
+    end_paths : [ out, stops ]
+}
 
 outputs : {
-    filteredOutput     : {
+    pionStopOutput : {
         module_type    : RootOutput
-        SelectEvents   : ["trigFilter"]
+        SelectEvents   : [pionStopFilter]
         outputCommands : [ "drop *_*_*_*",
                            "keep mu2e::GenParticles_*_*_*",
                            "keep mu2e::GenEventCount_*_*_*",
                            "keep mu2e::StatusG4_*_*_*",
-                           "keep *_g4filter_*_*",
-                           "keep *_compressPV_*_*" ]
-        fileName       : "sim.owner.pions-g4s1.version.sequencer.art"
+                           "keep *_stopFilter_*_*",
+                           "keep *_compressPVStop_*_*" ]
+        fileName       : "sim.owner.pions-g4s3.version.sequencer.art"
     }
 }
 
@@ -142,4 +165,3 @@ services.SeedService.baseSeed          : 8
 services.SeedService.maxUniqueEngines  : 20
 services.GeometryService.simulatedDetector.tool_type : "Mu2e"
 services.scheduler.wantSummary: true
-services.TimeTracker.printSummary: true
