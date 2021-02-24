@@ -29,22 +29,23 @@ namespace mu2e {
       float x;
       float y;
       float z;
-       float px;
+      float t;
+      /*float px;
       float py;
       float pz;
       float pt;
       float t;
-       float code;
-      float id;
+      float code;
+      float id;*/
       float tauNormalized;
 
-      StoppedParticleTauNormF() : x(), y(), z(), px(), py(), pz(), pt(), t(), code(), id(), tauNormalized() {}
+      StoppedParticleTauNormF() : x(), y(), z(),  t(), tauNormalized() {}// px(), py(), pz(), pt(), code(), id(), 
 
       static const char *branchDescription() {
-        return "x/F:y/F:z/F:px/F:py/F:pz/F:pt/F:time/F:code/F:id/F:tauNormalized/F";
+        return "x/F:y/F:z/F:time/F:tauNormalized/F";//px/F:py/F:pz/F:pt/F:code/F:id/F:
       }
 
-      static unsigned numBranchLeaves() { return 11; }
+      static unsigned numBranchLeaves() { return 5; }//11
     };
 
     //================================================================

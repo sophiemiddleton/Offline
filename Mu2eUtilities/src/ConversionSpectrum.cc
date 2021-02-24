@@ -54,7 +54,7 @@ namespace mu2e {
     double eMax  = ((ConversionSpectrum::Params_t*) p)->eMax;
     double me    = ((ConversionSpectrum::Params_t*) p)->me;
     double alpha = ((ConversionSpectrum::Params_t*) p)->alpha;
-
+    std::cout<<"CeEndpoint"<<eMax<<std::endl;
     double f     = (1./eMax)*(alpha/(2*M_PI))*(log(4*E*E/me/me)-2.)*((E*E+eMax*eMax)/eMax/(eMax-E));
 
     // below 0.7 MeV the function becomes negative, work around

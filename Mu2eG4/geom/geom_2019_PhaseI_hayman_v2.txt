@@ -70,9 +70,12 @@ double mu2e.detectorSystemZ0 = 10171.;   // mm  G4BL: (17730-7292=9801 mm)
 //Titanitum:
 //#include "Mu2eG4/geom/stoppingTarget_Ti_25.txt" // 37 foil muon stopping target with holes
 
+//Vanadium
+#include "Mu2eG4/geom/stoppingTarget_V_30foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_V_34foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_V_37foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Ti_34foils.txt"
-#include "Mu2eG4/geom/stoppingTarget_Ti_30foils.txt"
-
+//#include "Mu2eG4/geom/stoppingTarget_Ti_17foils.txt"
 //Foils:
 //#include "Mu2eG4/geom/stoppingTargetHoles_42_foils.txt" // 42 foil muon stopping target with holes - first test of non-standard
 

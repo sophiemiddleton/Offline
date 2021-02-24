@@ -48,6 +48,13 @@ CaloClusterCompareOld : {
         CaloClusterCollection : CaloClusterFast
 }
 
+TargetStudy : {
+        module_type : TargetStudy
+        g4ModuleLabel : "compressDigiMCs"
+        TrajModuleLabel : "compressDigiMCs"
+        stepModuleLabel : "compressDigiMCs:virtualdetector"
+}
+
 VirtualDetectorDefaults: {
 
     module_type            : ReadVirtualDetector
