@@ -73,6 +73,7 @@ namespace mu2e {
     TH1F*   _hZ;
     TTree*  _Ntup;
     Float_t _TMom;
+    Float_t _TTime;
     Float_t _Tx;
     Float_t _Ty;
     Float_t _Tz;
@@ -144,6 +145,7 @@ namespace mu2e {
 	    _Ntup  = tfs->make<TTree>("GenTree", "GenTree");
 	    _Ntup->Branch("nEv", &_nEv , "_nEv/I");	    
 	    _Ntup->Branch("TMom", &_TMom , "TMom/F");
+	    _Ntup->Branch("TTime", &_TTime , "TTime/F");
 	    _Ntup->Branch("Tx", &_Tx, "Tx/F");
 	    _Ntup->Branch("Ty", &_Ty, "Ty/F");
 	    _Ntup->Branch("Tz", &_Tz, "Tz/F");
@@ -191,6 +193,7 @@ namespace mu2e {
       _hTime->Fill(stop.t);
       _hZ->Fill(pos.z());
       _TMom = p;
+      _TTime = stop.t;
       _Tx = pos.x();
       _Ty = pos.y();
       _Tz = pos.z();

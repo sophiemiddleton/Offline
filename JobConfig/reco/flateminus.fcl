@@ -2,5 +2,5 @@
 #include "JobConfig/reco/mcdigis_primary.fcl"
 # compress MCTrajectories: this only works for digis produced in MDC2018h and later
 physics.producers.compressRecoMCs.mcTrajectoryTag : "compressDigiMCs"
-services.TFileService.fileName: "nts.owner.CeEndpoint.version.sequencer.root"
-outputs.Output.fileName: "mcs.owner.CeEndpoint.version.sequencer.art"
+services.TFileService.fileName: "nts.owner.FlateElectron.version.sequencer.root"
+outputs.Output.fileName: "mcs.owner.FlateElectron.version.sequencer.art"

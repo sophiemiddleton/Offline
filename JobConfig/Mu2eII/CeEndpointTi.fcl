@@ -1,0 +1,31 @@
+#
+# mono-energetic e- at the Ti Ce endpoint without background mixing
+#
+# original author: S Middleton
+#
+#include "JobConfig/primary/prolog.fcl"
+process_name: CeEndpointTi
+
+source: { module_type : EmptyEvent }
+services: @local::Services.Sim
+physics : { 
+  producers : {
+    generate : @local::CeEndpointGunTi
+    @table::Primary.producers
+  }
+  filters: { @table::Primary.filters }
+  analyzers: { @table::Primary.analyzers }
+  TriggerPath : @local::Primary.TriggerPath
+  EndPath : @local::Primary.EndPath
+}
+outputs : { 
+  Output :@local::Primary.Output
+}
+#
+# final configuration
+#
+#include "JobConfig/primary/epilog.fcl"
+# customize the output
+services.TFileService.fileName: "nts.owner.CeEndpointTi.version.sequencer.root"
+outputs.Output.fileName: "dig.owner.CeEndpointTi.version.sequencer.art"
+physics.end_paths : [ EndPath ] # needed for generate_fcl

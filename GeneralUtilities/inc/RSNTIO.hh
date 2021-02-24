@@ -26,21 +26,27 @@ namespace mu2e {
       static unsigned numBranchLeaves() { return 4; }
     };
 
-    //================================================================
+     //================================================================
     struct StoppedParticleTauNormF {
       float x;
       float y;
       float z;
       float t;
+      float px;
+      float py;
+      float pz;
+      float pt;
+      float code;
+      float id;
       float tauNormalized;
 
-      StoppedParticleTauNormF() : x(), y(), z(), t(), tauNormalized() {}
+      StoppedParticleTauNormF() : x(), y(), z(),  t(),  px(), py(), pz(), pt(), code(), id(), tauNormalized() {}
 
       static const char *branchDescription() {
-        return "x/F:y/F:z/F:time/F:tauNormalized/F";
+        return "x/F:y/F:z/F:time/F:tauNormalized/F:px/F:py/F:pz/F:pt/F:code/F:id/F";
       }
 
-      static unsigned numBranchLeaves() { return 5; }
+      static unsigned numBranchLeaves() { return 11; }//11
     };
 
     //================================================================
@@ -119,4 +125,4 @@ namespace mu2e {
   } // IO
 } // mu2e
 
-#endif/*GeneralUtilities_inc_RSNTIO_hh*/
+#endif

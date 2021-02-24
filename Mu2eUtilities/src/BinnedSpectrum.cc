@@ -51,6 +51,17 @@ namespace mu2e {
       double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
       this->initialize(endpoint);
     }
+    else if (spectrumShape == "CeMEndpointTitanium") {
+      // think this is total energy
+      double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
+      this->initialize(endpoint);
+    }
+    else if (spectrumShape == "CeMEndpointVanadium") {
+      // think this is total energy
+      double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
+      std::cout<<"Endpoint is "<<endpoint<<std::endl;
+      this->initialize(endpoint);
+    }
     else if (spectrumShape == "ceLeadingLog") {
 //-----------------------------------------------------------------------------
 // ehi determines the conversion electron energy (tabulated in the .FCL file)
@@ -58,6 +69,32 @@ namespace mu2e {
       double elow = psphys.get<double>("elow",0);
       double ehi  = psphys.get<double>("ehi" );
                                         // for radiatively corrected spectrum, elow and ehi are derivatives
+      double bin   = psphys.get<double>("spectrumResolution");
+      // int    ratio = *ehi/bin;
+      // *ehi         = (ratio+1.)*bin;
+
+      _finalBin = true;
+      this->initialize<ConversionSpectrum>(elow,ehi,bin,ehi,bin);
+    }else if (spectrumShape == "ceLeadingLogTi") {
+//-----------------------------------------------------------------------------
+// ehi determines the conversion electron energy (tabulated in the .FCL file)
+      // should be total energy
+      double elow = psphys.get<double>("elow",0);
+      double ehi  = psphys.get<double>("ehi",104.3 );
+                                        // for radiatively corrected spectrum, elow and ehi are derivatives 
+      double bin   = psphys.get<double>("spectrumResolution");
+      // int    ratio = *ehi/bin;
+      // *ehi         = (ratio+1.)*bin;
+
+      _finalBin = true;
+      this->initialize<ConversionSpectrum>(elow,ehi,bin,ehi,bin);
+    }else if (spectrumShape == "ceLeadingLogV") {
+//-----------------------------------------------------------------------------
+// ehi determines the conversion electron energy (tabulated in the .FCL file)
+      // should be total energy
+      double elow = psphys.get<double>("elow",0);
+      double ehi  = psphys.get<double>("ehi",104.0 );
+                                        // for radiatively corrected spectrum, elow and ehi are derivatives 
       double bin   = psphys.get<double>("spectrumResolution");
       // int    ratio = *ehi/bin;
       // *ehi         = (ratio+1.)*bin;

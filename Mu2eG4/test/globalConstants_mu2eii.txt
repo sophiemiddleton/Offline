@@ -5,6 +5,8 @@ double physicsParams.protonKE = 800.; // - in MeV
 
 //Alternate stopping target material
 // string physicsParams.chosenStoppingTargetMaterial = "Ti";
+//string physicsParams.chosenStoppingTargetMaterial = "Al";
+//string physicsParams.chosenStoppingTargetMaterial = "V";
 
 // This tells emacs to view this file in c++ mode.
 // Local Variables:

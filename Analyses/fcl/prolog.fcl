@@ -1,6 +1,12 @@
 # -*- mode: tcl -*-
 BEGIN_PROLOG
 
+TargetStudy : {
+        module_type : TargetStudy
+        g4ModuleLabel : "compressDigiMCs"
+        TrajModuleLabel : "compressDigiMCs"
+        stepModuleLabel : "compressDigiMCs:virtualdetector"
+}
 
 CosmicFilter: {
     module_type           : CosmicFilter

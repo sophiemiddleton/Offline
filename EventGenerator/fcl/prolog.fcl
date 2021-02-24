@@ -105,6 +105,27 @@ CeplusEndpointGun : {
     }
     muonStops      : @local::mu2e.tgtMuonStops
 }
+CeEndpointGunTi: {
+    module_type    : StoppedParticleReactionGun
+    physics: {
+      genId : CeEndpoint
+      pdgId : 11
+      spectrumShape: CeMEndpointTitanium
+      spectrumVariable: totalEnergy
+    }
+    muonStops      : @local::mu2e.tgtMuonStops
+}
+
+CeEndpointGunV: {
+    module_type    : StoppedParticleReactionGun
+    physics: {
+      genId : CeEndpoint
+      pdgId : 11
+      spectrumShape: CeMEndpointVanadium
+      spectrumVariable: totalEnergy
+    }
+    muonStops      : @local::mu2e.tgtMuonStops
+}
 
 PrimaryProtonGun: {
     module_type : PrimaryProtonGun
@@ -247,6 +268,33 @@ EventGenerator : { @table::EventGenerator
     }
     doHistograms              : true
 	}
+	CeMEndpointVanadium              : {   module_type: StoppedParticleReactionGun
+	    physics: { @table::StoppedParticleReactionGun.physics
+		genId                 : CeEndpoint 
+		pdgId                 : 11
+		spectrumShape         : "CeMEndpointVanadium"  
+		spectrumVariable      : "totalEnergy"     
+		# "momentum" or "totalEnergy"
+		ehi                   : 104.0523
+	    } 
+	    muonStops            : { @table::mu2e.tgtMuonStops
+		inputFiles: @local::mergedMuon_tgtStops_mdc2018_1
+	    }
+	    doHistograms              : true
+	}
+	CeMEndpointTitanium              : {   module_type: StoppedParticleReactionGun
+	    physics: { @table::StoppedParticleReactionGun.physics
+		genId                 : CeEndpoint 
+		pdgId                 : 11
+		spectrumShape         : "CeEndpoint"       # could also be "flat" or "ceLeadingLog" or "CeEndpoint"
+		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
+		ehi                   : 104.394
+	    } 
+	    muonStops            : { @table::mu2e.tgtMuonStops
+		inputFiles: @local::mergedMuon_tgtStops_mdc2018_1
+	    }
+	    doHistograms              : true
+	}
 	CePEndpoint              : {   module_type: StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeEndpoint 
@@ -276,7 +324,36 @@ EventGenerator : { @table::EventGenerator
 	    }
 	    doHistograms              : true
 	}
-
+  CeMLeadingLogTi              : {   module_type: StoppedParticleReactionGun
+	    physics: { @table::StoppedParticleReactionGun.physics
+		genId                 : CeLeadingLog 
+		pdgId                 : 11
+		spectrumShape         : "ceLeadingLog"     # could also be "flat" or "CeEndpoint"
+		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
+		spectrumResolution    : 0.1                # MeV
+		ehi                   : 104.394
+		elow                  : 0.
+	    } 
+	    muonStops            : { @table::mu2e.tgtMuonStops
+		inputFiles       : @local::mergedMuon_tgtStops_mdc2018_1
+	    }
+	    doHistograms              : true
+	}
+CeMLeadingLogV              : {   module_type: StoppedParticleReactionGun
+	    physics: { @table::StoppedParticleReactionGun.physics
+		genId                 : CeLeadingLog 
+		pdgId                 : 11
+		spectrumShape         : "ceLeadingLog"     # could also be "flat" or "CeEndpoint"
+		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
+		spectrumResolution    : 0.1                # MeV
+		ehi                   : 104.0523
+		elow                  : 0.
+	    } 
+	    muonStops            : { @table::mu2e.tgtMuonStops
+		inputFiles       : @local::mergedMuon_tgtStops_mdc2018_1
+	    }
+	    doHistograms              : true
+	}
 	CePLeadingLog              : {   module_type: StoppedParticleReactionGun
 	    physics: { @table::StoppedParticleReactionGun.physics
 		genId                 : CeLeadingLog 

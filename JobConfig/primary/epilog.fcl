@@ -3,7 +3,7 @@
 #  Currently set for MDC2018 production
 #  
 # set the stops
-physics.producers.generate.muonStops.inputFiles : [ "mergedMuonStops/nts.mu2e.DS-TGTstops.MDC2018a.001002_00000000.root" ]
+physics.producers.generate.muonStops.inputFiles : [ "JobConfig/Mu2eII/Mu2eII_Muon_Stops.root" ]
 # adjust the time range for the cosmics
 physics.producers.cosmicTimeMap.tmin : 400
 physics.producers.cosmicTimeMap.tmax : 1705
