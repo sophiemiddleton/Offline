@@ -4,7 +4,7 @@
 #include "TMath.h"
 #include "TMatrixD.h"
 #include "DataProducts/inc/XYZVec.hh"
-#include "Mu2eUtilities/inc/PointLinePCA_XYZ.hh"
+#include "Mu2eUtilities/inc/TwoLinePCA_XYZ.hh"
 #include <vector>
 #include <bitset>
 #include <tuple>
@@ -42,8 +42,8 @@ using namespace std;
     TrackCov Covarience; //FIXME backwards compatibility
     std::vector<double> cov;
 
-	  XYZVec Direction() const { return XYZVec(A1, B1, 1).unit();};
-	  XYZVec Position() const { return XYZVec(A0, B0, 0);};
+	  XYZVec Direction() const { return XYZVec(A1, -1, B1).unit();};
+	  XYZVec Position() const { return XYZVec(A0, 0, B0);};
    };
 
    //Struct to hold Coordinate System
@@ -138,16 +138,7 @@ namespace mu2e {
         this->MinuitEquation = Track;
       }
 
-      std::tuple <XYZVec, double, double> GetTrackPOCAInfo() {
-        XYZVec TrackerCenter(0,0,0);//FIXME!!
-        std::tuple <XYZVec, double, double> poca_info;
-        PointLinePCA_XYZ PCA = PointLinePCA_XYZ(TrackerCenter, this->FirstHitVec, this->LastHitVec);
-        XYZVec POCA = PCA.pca();
-        double DOCA = PCA.dca();
-        double AMSIGN = copysign(1.0,PCA.pca().X());
-        poca_info = make_tuple(POCA, DOCA, AMSIGN);
-        return poca_info;
-	    }
+      std::tuple <XYZVec, double, double> GetTrackPOCAInfo() {}
 	    
       XYZVec Pos0() const { 
         return XYZVec intercept(this->MinuitParams.A0, 0, this->MinuitParams.B0); 
