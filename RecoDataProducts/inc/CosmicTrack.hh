@@ -126,6 +126,7 @@ namespace mu2e {
       TrackCov Cov(siga0, siga0a1, siga1a0, siga1, sigb0, sigb0b1, sigb1b0, sigb1);
         this->FitParams.Covarience = Cov;
       }
+      
       void SetMinuitCoordSystem(TrackAxes coordsys){
         this->MinuitCoordSystem = coordsys;
       }
@@ -141,7 +142,8 @@ namespace mu2e {
       std::tuple <XYZVec, double, double> GetTrackPOCAInfo() {}
 	    
       XYZVec Pos0() const { 
-        return XYZVec intercept(this->MinuitParams.A0, 0, this->MinuitParams.B0); 
+        XYZVec intercept(this->MinuitParams.A0, 0, this->MinuitParams.B0);
+        return intercept; 
       }
 
       XYZVec Dir() const {
@@ -167,7 +169,7 @@ namespace mu2e {
       bool converged = false;
       bool minuit_converged = false;
 
-      //-----------Fill Diag info this is legacy it will probably be removed soon----------//
+      //Fill Diag info this is legacy it will probably be removed soon: - TODO can we remove this?
       void set_finalchisq_dof(double finalchisq_dof)   { Diag.FinalChiTot = finalchisq_dof; }
       void set_finalchisq_dofX(double finalchisq_dofX) { Diag.FinalChiX = finalchisq_dofX; }
       void set_finalchisq_dofY(double finalchisq_dofY) { Diag.FinalChiY = finalchisq_dofY; }
@@ -177,6 +179,7 @@ namespace mu2e {
       void set_initchisq_dofY(double initchisq_dofY) { Diag.InitialChiY = initchisq_dofY; }
       void set_niter(int iter){ _niters= (iter);}
       
+      //Kinkal params:
       double d0(){ return d0_; }
       double z0(){ return d0_; }
       double phi0(){ return d0_; }

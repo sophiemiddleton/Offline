@@ -94,7 +94,7 @@ CosmicTrackFinderLoose : {
     UseTime : false
     UseLineFinder : false
     CosmicTrackFit :{
-        @table::CosmicTrackFit
+    @table::CosmicTrackFit
 	minNComboHits : 4
 	MaxSeedChi2DOF : 10
 	MaxDeltaChi2 : 0.5
