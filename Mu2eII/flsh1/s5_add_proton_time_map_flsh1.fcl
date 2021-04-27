@@ -1,0 +1,37 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# flsh1 : beam flash 
+# read "mothers" input, add proton time map (need for mixing), make CaloShowerSteps
+# to reduce the data size, require an event to have at least one step with T > 200 ns
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p15_flash ]          # defined below
+  TIME_MAPS     @protect_ignore: [ "protonTimeMap"  ]          # defined below
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                           : S5GenProtMap
+source                                 : { module_type: RootInput }   # RootInput/EmptyEvent
+physics                                : { @table::Mu2eII.physics }
+
+physics.filters.filterStepPointMomentum.inputs         : [ "g4run:tracker", "g4run:calorimeter", "g4run:calorimeterRO"]
+physics.filters.filterStepPointMomentum.cutMomentumMin : -1.        # accept any hit
+physics.filters.filterStepPointMomentum.tMin           : 200.       # to reduce data volume for physics mixing
+physics.filters.filterStepPointMomentum.fillHistograms : true       # do histogramming
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands   : [ "drop    *_*_*_*"                                 ,
+					   "keep    *_g4run_*_*"                             ,
+					   "drop    mu2e::StepPointMCs_g4run_calorimeter_*"  ,
+					   "drop    mu2e::StepPointMCs_g4run_calorimeterRO_*",
+					   "drop    *mu2e::PhysicalVolumeInfo*_*_*_*"        ,
+					   "keep    mu2e::CaloShowerSteps_*_*_*"             ,
+					   "keep    mu2e::GenParticles_*_*_*"                ,
+					   "keep    *_protonTimeMap_*_*"
+					  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName         : "nts._USER_.flsh1s51b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "sim._USER_.flsh1s51b0.Mu2eII.001000_00000000.art"

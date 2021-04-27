@@ -1,0 +1,17 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# input  : sim.mu2e.beam-g4s1-mubeam.beams1-g4-10-5-alcc.art (charged component)
+# output : CRV01S21b0
+# initial simulation 5.8e8 POT ? 
+# two outputs streams 
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/DS-resampler.fcl"
+
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile : "Mu2eII/crv01/geom_Mu2eII_crv01.txt"
+services.TFileService.fileName     : "nts.owner.crv01s21b0.Mu2eII.sequencer.root"    # not used anyway
+outputs.tgtStopOutput.fileName     : "sim.owner.crv01s21b0.Mu2eII.sequencer.art"
+outputs.detectorOutput.fileName    : "sim.owner.crv01s22b0.Mu2eII.sequencer.art"
+
+# first staged file: sim.mu2e.beam-g4s1-mubeam.beams1-g4-10-5-alcc.002701_00000183.art
+physics.filters.resamplingMixer.fileNames: [ "/pnfs/mu2e/tape/phy-sim/sim/mu2e/beam-g4s1-mubeam/beams1-g4-10-5-alcc/art/5c/3f/sim.mu2e.beam-g4s1-mubeam.beams1-g4-10-5-alcc.002701_00000183.art" ]

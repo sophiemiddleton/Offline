@@ -1,0 +1,22 @@
+# -*- mode: tcl -*-
+
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput    # choices: EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: Mu2eII_p2    # defined in Mu2eII/common/templates.fcl
+  PROCESS_NAME  @protect_ignore: Reco
+  GEN_ID        @protect_ignore: "dioTail"
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type : @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics   }
+physics.output_path                     : [ defaultOutput            ]
+outputs.defaultOutput.SelectEvents      : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands    : [ @sequence::Reconstruction.Output.outputCommands ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName          : "nts._USER_.mupl2s51b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "mcs._USER_.mupl2s51b0.Mu2eII.001000_00000000.art"

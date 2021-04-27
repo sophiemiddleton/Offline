@@ -1,0 +1,24 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# fcl file to generate trkana trees for mumi0 dataset
+# Mu2eII_p2 (defined in JobConfig/common/Mu2eII.fcl) : standard reconstruction paths, no CRV reco 
+# _USER_ below to be replaced by the real user name, fcl sucks
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  bgHitFiles                  : @nil
+  INPUT_MODULE @protect_ignore: RootInput
+#  TRIGGER_PATH @protect_ignore: pXX
+  PROCESS_NAME @protect_ignore: TrkAna
+  GEN_ID       @protect_ignore: "dioTail"
+END_PROLOG
+
+#include "TrkDiag/fcl/TrkAnaReco.fcl"
+
+# no trigger info at the moment
+physics.analyzers.TrkAnaNeg.FillTriggerInfo : false
+physics.analyzers.TrkAnaPos.FillTriggerInfo : false
+
+services.TFileService.fileName            : "nts._USER_.mumi0s6b0.Mu2eII.000001.root"
+#------------------------------------------------------------------------------
+# everything below is created by generate_fcl
+#------------------------------------------------------------------------------

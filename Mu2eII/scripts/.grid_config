@@ -1,0 +1,6 @@
+#
+Mu2eII.base_release      /mu2e/app/users/sophie/Mu2eII-Targets/Offline             # base release used to build the code tarball
+Mu2eII.code_tarball      Mu2eII.code.904a9d81.tbz                      # name of the code tarball to be used
+Mu2eII.tmp_dir           tmp/Mu2eII                                    # location of the temporary work files
+Mu2eII.grid_output_dir   /pnfs/mu2e/persistent/users/mu2epro/workflow  # grid output arrives here
+Mu2eII.log_dir           /mu2e/data/users/mu2epro/Mu2eII               # location of logfiles on disk

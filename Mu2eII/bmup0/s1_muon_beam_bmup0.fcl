@@ -1,0 +1,31 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# bmup0: study e+ background to pi+ --> e+ nu momentum calibration
+# trace only pions and muons , but not electrons and photons below 50 MeV -
+# it is a matter of saving the CPU time
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/PS.fcl"
+
+services.GeometryService.inputFile: "Mu2eII/bmup0/geom_Mu2eII_bmup0.txt"
+
+// Energy cuts on electrons, positrons, photons, and neutrons.
+
+CutEPPhN : {
+    type : intersection
+    pars : [ { type: kineticEnergy cut: 50.0 },
+             { type: pdgId pars: [ 11, -11, 22, 2112 ] } ]
+}
+
+physics.producers.g4run.Mu2eG4CommonCut : {
+    type : union
+    pars : [
+	    @local::CutEPPhN,
+	    @local::dsRegionCuts,
+	    @local::extMonRegionCuts
+	   ]
+}
+
+physics.outputs: [ mubeamout ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bmup0s10b0.Mu2eII.sequencer.root"
+outputs.mubeamout.fileName         : "sim.owner.bmup0s11b0.Mu2eII.sequencer.art"

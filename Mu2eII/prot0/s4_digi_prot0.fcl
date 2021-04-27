@@ -1,0 +1,37 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# protons from muon captures : read output of gen_sim job, digitize, start from steppoints 
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput                        # source choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ p1 ]                           # defined in Mu2eII/common/Mu2eII.fcl
+  GEN_ID        @protect_ignore: StoppedParticleReactionGun
+  BLIND_TIME    @protect_ignore: 0                                # digitize everything 
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                           : S4Digi
+
+outputs                                : { @table::Mu2eII.outputs  }
+
+physics                                : { @table::Mu2eII.physics }
+
+physics.p1 : [ @sequence::Mu2eII.pbi_ewm      ,
+	       @sequence::CommonMC.TimeMaps   ,
+	       @sequence::TrackerMC.DigiSim   ,
+	                                                # CaloShowerStepFromStepPt already ran in gen_sim
+	       CaloShowerStepROFromShowerStep, CaloDigiFromShower,   # this is what remains from CaloDigiMC.DigiSim
+	       @sequence::Mu2eII.calo_hit_reco,
+	       compressDigiMCs
+	      ]
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands   : [ @sequence::Mu2eII.gen_sim_digi_output ]
+
+physics.producers.compressDigiMCs.mcTrajectoryTag : ""                  # no MC trajectories for this job
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName         : "nts.user.prot0s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "dig.user.prot0s41b0.Mu2eII.001000_00000000.art"

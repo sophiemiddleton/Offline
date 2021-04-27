@@ -1,0 +1,13 @@
+# -*- mode: tcl -*-
+#include "JobConfig/beam/DS.fcl"
+
+services.GeometryService.inputFile                    : "Mu2eII/bmum3/geom_Mu2eII_bmum3.txt"
+
+physics.producers.stoppedMuonFinder.particleTypes     : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+physics.producers.outOfTargetMuonFinder.particleTypes : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+
+physics.out                                           : [ tgtStopOutput, ootStopOutput ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName                        : "nts.owner.bmum3s30b0.Mu2eII.sequencer.root"
+outputs.tgtStopOutput.fileName                        : "sim.owner.bmum3s31b0.Mu2eII.sequencer.art"
+outputs.ootStopOutput.fileName                        : "sim.owner.bmum3s32b0.Mu2eII.sequencer.art"

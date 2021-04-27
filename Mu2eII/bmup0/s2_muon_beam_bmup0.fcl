@@ -1,0 +1,46 @@
+# -*- mode: tcl -*-
+#include "JobConfig/beam/TS.fcl"
+
+services.GeometryService.inputFile: "Mu2eII/bmup0/geom_Mu2eII_bmup0.txt"
+
+// Energy cuts on electrons, positrons, photons, and neutrons.
+CutEPPhN : {
+    type : intersection
+    pars : [ { type: kineticEnergy cut: 100.0 },
+             { type: pdgId pars: [ 11, -11, 22, 2112 ] } ]
+}
+
+physics.producers.g4run.Mu2eG4CommonCut : {
+    type : union
+    pars : [
+    	    @local::CutEPPhN,
+	    {
+		type: inVolume
+		pars: [TS5Vacuum, DS1Vacuum, DS2Vacuum, DS3Vacuum ]
+		write: DSVacuum
+	    }
+	   ]
+}
+#------------------------------------------------------------------------------
+# output format : keep it explicit
+#------------------------------------------------------------------------------
+outputs: {
+    
+    mubeamout : {
+	module_type : RootOutput
+	SelectEvents: ["trigmubeam"]
+	outputCommands:   [ "drop *_*_*_*",
+			    "keep mu2e::GenParticles_*_*_*",
+			    "keep mu2e::GenEventCount_*_*_*",
+			    "keep mu2e::StatusG4_*_*_*",
+			    "keep mu2e::SimParticlemv_muonBeamFilter_*_TS",
+			    "keep mu2e::StepPointMCs_muonBeamFilter_DSVacuum_TS",
+			    "keep mu2e::StepPointMCs_muonBeamFilter_virtualdetector_TS"
+			   ]
+	fileName    : "sim.owner.TS-mubeam.version.sequencer.art"
+    }
+}
+#------------------------------------------------------------------------------
+physics.outputs                    : [ mubeamout ]
+services.TFileService.fileName     : "nts.owner.bmup0s20b0.Mu2eII.sequencer.root"
+outputs.mubeamout.fileName         : "sim.owner.bmup0s21b0.Mu2eII.sequencer.art"

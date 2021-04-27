@@ -1,0 +1,69 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# Data products: 
+#   Friendly Class Name            Module Label    Instance Name  Process Name     Product ID
+#   mu2e::SimParticlemv          detectorFilter                    dsresampler  1380157234
+#    mu2e::StepPointMCs          detectorFilter              CRV   dsresampler  1576446401
+#    mu2e::StepPointMCs          detectorFilter  virtualdetector   dsresampler  1706646304
+# mu2e::CaloShowerSteps       CaloShowerROSteps                    dsresampler  2072060001
+#    mu2e::StepPointMCs          detectorFilter   protonabsorber   dsresampler  2402418743
+#        mu2e::StatusG4                   g4run                    dsresampler  2638715744
+#    mu2e::StepPointMCs          detectorFilter          tracker   dsresampler  3691237318
+# mu2e::CaloShowerSteps  CaloShowerCrystalSteps                    dsresampler  3850789914
+#    mu2e::GenParticles         resamplingMixer                    dsresampler  4002379536
+# 
+# Found 1 data products in this SubRun
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TIME_MAPS        @protect_ignore: [ ]
+  TIME_OFFSET_MAPS @protect_ignore: { inputs : @local::TIME_MAPS }
+  TRIGGER_PATHS    @protect_ignore: [ stntuple_p0 ]
+  GEN_ID           @protect_ignore: -1
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name : S2G4MubeamStn
+
+source       : { module_type : RootInput fileNames : ["undefined", "undefined"] }
+
+outputs      : { @table::Stntuple.outputs   }
+filters      : { @table::Stntuple.filters   }
+
+physics : { @table::Stntuple.physics 
+    
+    filters  : { @table::filters 
+	StntupleMaker: { @table::filters.StntupleMaker
+#------------------------------------------------------------------------------
+# disable everything, enable StepPointMC's, VDET block is just yet another StepPointMC block
+#------------------------------------------------------------------------------
+	    makeClusters     : 0
+	    makeCrvClusters  : 0  # default: 1
+	    makePid          : 0
+	    makeSimp         : 1
+	    makeStepPointMC  : 1
+	    makeTracks       : 0
+	    makeTrigger      : 0
+
+	    simpCollTag      : "detectorFilter"
+
+	    spmcBlockName    : [ "SpmcBlock"         , "VDetBlock"                      ]
+	    spmcCollTag      : [ "detectorFilter:CRV", "detectorFilter:virtualdetector" ]
+	    statusG4Tag      : [ "g4run"             , "g4run"                          ]
+	}
+    }
+
+    out           : [ ]                   # [defaultOutput]/[]
+    end_paths     : [ gcl, out ]
+}
+
+#------------------------------------------------------------------------------
+# uncomment the next 2 lines if you want the DST file to be written out
+#-----------------------------------------------------------------------------
+# physics.out                               : [ defaultOutput ]
+# outputs.detectorOutput.SelectEvents       : [ @local::TRIGGER_PATH ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/crv01/geom_Mu2eII_crv01.txt"
+services.TFileService.fileName            : "nts.user.s2_spmc_crv_stn.project.sequencer.hist"
+physics.filters.InitStntuple.histFileName : "nts.user.s2_spmc_crv_stn.project.sequencer.stn"
+outputs.detectorOutput.fileName           : "sim.user.s2_spmc_crv_stn.project.sequencer.art"

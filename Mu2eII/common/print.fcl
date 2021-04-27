@@ -1,0 +1,30 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+#  Ray's print.fcl with pCut=0
+#------------------------------------------------------------------------------
+#include "Print/fcl/print.fcl"
+
+physics.analyzers.printModule.bkgClusterPrinter.verbose       : 1
+physics.analyzers.printModule.bkgQualPrinter.verbose          : 1
+
+physics.analyzers.printModule.caloClusterPrinter.verbose      : 1
+physics.analyzers.printModule.caloDigiPrinter.verbose         : 1
+physics.analyzers.printModule.caloShowerStepPrinter.verbose   : 1
+physics.analyzers.printModule.caloShowerStepROPrinter.verbose : 1
+
+physics.analyzers.printModule.comboHitPrinter.verbose         : 1
+
+physics.analyzers.printModule.crvDigiPrinter.verbose          : 1
+physics.analyzers.printModule.crvPhotonsPrinter.verbose       : 1
+
+physics.analyzers.printModule.simParticlePrinter.pCut         : -1
+physics.analyzers.printModule.stepPointMCPrinter.pCut         : -1
+
+physics.analyzers.printModule.mcTrajectoryPrinter.verbose     : 10
+
+physics.analyzers.printModule.strawDigiPrinter.verbose        : 1
+physics.analyzers.printModule.strawDigiMCPrinter.verbose      : 1
+physics.analyzers.printModule.strawHitPrinter.verbose         : 1
+physics.analyzers.printModule.strawHitFlagPrinter.verbose     : 1
+
+physics.analyzers.printModule.timeClusterPrinter.verbose      : 1

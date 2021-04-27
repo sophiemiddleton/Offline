@@ -1,0 +1,34 @@
+//-----------------------------------------------------------------------------
+// SU2020 geometry with the degrader turned on 
+//-----------------------------------------------------------------------------
+#include "Mu2eG4/geom/geom_2019_PhaseI_hayman_v2.txt"
+//-----------------------------------------------------------------------------
+// TS3 window: 150 um Ti
+//-----------------------------------------------------------------------------
+string pbar.materialName                  = "G4_Ti";
+double pbar.halfLength                    = 0.075;   // 150 um thick
+//-----------------------------------------------------------------------------
+// TS3 pbar wedge : 2 strips 127 um starting from 50 mm
+//                  heights 90mm and 140 mm
+//-----------------------------------------------------------------------------
+string         pbar.Type                  = "wedge";
+int            pbarwedge.nStrips          = 2;
+vector<double> pbarwedge.stripThicknesses = { 0.127, 0.127 };  // mm
+vector<double> pbarwedge.stripHeights     = {  90.0, 140.0 };  // mm
+//-----------------------------------------------------------------------------
+// stopping target foil thickness: 105.6 um. 
+// this number comes as an average of the actual measurements - see mu2e-31398 
+//-----------------------------------------------------------------------------
+vector<double> stoppingTarget.halfThicknesses  = { 0.0528 };
+//-----------------------------------------------------------------------------
+// switch ON the degrader and move it into the beam
+//-----------------------------------------------------------------------------
+bool   degrader.build               = true;       // DEFAULT: false;
+double degrader.rotation            = 0.0;        // DEFAULT: 90.
+string degrader.filter.materialName = "G4_Ti";    // DEFAULT: "G4_Be"
+double degrader.filter.halfLength   = 1;          // DEFAULT: 1.75
+
+// This tells emacs to view this file in c++ mode.
+// Local Variables:
+// mode:c++
+// End:

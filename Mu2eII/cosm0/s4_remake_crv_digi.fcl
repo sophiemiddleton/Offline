@@ -1,0 +1,30 @@
+# -*- mode: tcl -*-
+# assume running on a S71 dataset - test: drop output of S7 and remake CRV digi
+#
+BEGIN_PROLOG
+  PROCESS_NAME  @protect_ignore: S3RemakeCrvDigi
+  INPUT_MODULE  @protect_ignore: RootInput          # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ p1        ]      # defined in Mu2eII/common/Mu2eII.fcl
+  GEN_ID        @protect_ignore: "CosmicCRY"
+  TIME_MAPS     @protect_ignore: [ "compressDigiMCs:muonTimeMap", "compressDigiMCs:protonTimeMap", "compressDigiMCs:cosmicTimeMap" ]
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+source                                 : { module_type: @local::INPUT_MODULE }
+source.inputCommands                   : [ "keep  *"                               , 
+					   "drop  *_*_*_S7RecoStn"                 ,
+					   "drop  mu2e::CrvDigis_CrvDigi_*_cosmics"
+					  ]
+
+physics                                : { @table::Mu2eII.physics }
+physics.producers.generate             : { @table::Mu2eII.physics.producers.CeMLeadingLog }
+physics.p1                             : [ @sequence::CrvDAQPackage.CrvDAQSequence ]
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+# outputs.defaultOutput.outputCommands   : [ @sequence::Mu2eII.gen_sim_digi_output ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName         : "nts._user_.cosm0s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "dig._user_.cosm0s41b0.Mu2eII.001000_00000000.art"

@@ -1,0 +1,18 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# take out everything not related to particles hitting the detector volume
+# missing: mu+ selection for stopped mu+ ntuples
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/DS.fcl"
+
+services.GeometryService.inputFile                    : "Mu2eII/bmup2/geom_Mu2eII_bmup2.txt"
+
+physics.producers.stoppedMuonFinder.particleTypes     : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+physics.producers.outOfTargetMuonFinder.particleTypes : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+
+physics.trigger_paths : [ tgtFilter    , ootFilter     ]
+physics.out           : [ tgtStopOutput, ootStopOutput ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bmum2s30b0.Mu2eII.sequencer.root"
+outputs.tgtStopOutput.fileName     : "sim.owner.bmum2s31b0.Mu2eII.sequencer.art"
+outputs.ootStopOutput.fileName     : "sim.owner.bmum2s32b0.Mu2eII.sequencer.art"

@@ -1,0 +1,31 @@
+# -*- mode: tcl -*-
+#
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput      # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p41, 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME  @protect_ignore: RecoStn
+  GEN_ID        @protect_ignore: "CeLeadingLog" # the same for e- and e+
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+
+source                                    : { module_type : @local::INPUT_MODULE }
+physics                                   : { @table::Stntuple.physics }              # note Stntuple.physics
+physics.output_path                       : [ defaultOutput            ]              # [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.cpos0s51b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.cpos0s51b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.cpos0s51b0.Mu2eII.001000_00000000.art"
+
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"

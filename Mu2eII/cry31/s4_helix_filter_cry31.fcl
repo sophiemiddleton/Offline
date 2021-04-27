@@ -1,0 +1,37 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# strip events with at least one electron helix from cosmics
+# how different are they from muons ?
+#------------------------------------------------------------------------------
+
+BEGIN_PROLOG
+  PROCESS_NAME  @protect_ignore: GenSimDigi
+  TRIGGER_PATHS @protect_ignore: [ helix_filter_de ] 
+  GEN_ID        @protect_ignore: "CosmicCRY"
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+Mu2eII.physics.filters.helixFilter   : { module_type : HelixFilter
+    helixSeedCollection                : MHFinderDe
+    doHelicityCheck                    : false
+    helicity                           : 1
+    maxChi2XY                          : 100
+    maxChi2PhiZ                        : 100
+    maxd0                              : 600
+    mind0                              : -600
+    triggerPath                        : cprSeedDeP
+}
+
+Mu2eII.physics.helix_filter_de         : [ @sequence::Mu2eII.paths.Mu2eII_p22, helixFilter ]
+
+source                                 : { module_type: RootInput }  # choices: EmptyEvent / RootInput
+physics                                : { @table::Mu2eII.physics }
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+# outputs.defaultOutput.outputCommands   : [ @sequence::Mu2eII.gen_sim_digi_output ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName         : "nts._user_.cry31s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "dig._user_.cry31s41b0.Mu2eII.001000_00000000.art"

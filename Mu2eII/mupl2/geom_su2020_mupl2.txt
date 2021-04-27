@@ -1,0 +1,26 @@
+//-----------------------------------------------------------------------------
+// SU2020 geometry [ DS default - no degrader ]
+//-----------------------------------------------------------------------------
+#include "Mu2eII/common/geom_baseline.txt"
+//
+double ts.coll3.rotationAngle    = 180.0; // DEFAULT: 0.0
+//-------------------------------------------
+// Magnetic field: set DS field to 50%, use Mau9
+//-------------------------------------------
+
+// Form of DS field: 0 is full field;
+//                   1 is full upstream, const downstream;
+//                   2 is const throughout
+//  "BFieldMaps/Mau13/DSMap.header",
+//  "BFieldMaps/Mau13/TSdMap.header",
+
+int detSolFieldForm = 0;
+vector<string> bfield.innerMaps = {
+  "BFieldMaps/Mau13/PSMap.header",
+  "BFieldMaps/Mau13/TSuMap_fix.header",
+  "BFieldMaps/Mau13/TSdMap.header",
+  "BFieldMaps/Mau9/50Percent/Mu2e_DSMap50.header",
+  "BFieldMaps/Mau13/PStoDumpAreaMap.header",
+  "BFieldMaps/Mau13/ProtonDumpAreaMap.header",
+  "BFieldMaps/Mau13/DSExtension.header"
+};

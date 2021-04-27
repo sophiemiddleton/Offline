@@ -1,0 +1,72 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# mu+'s, resample stage2, trace through TS and DS
+#------------------------------------------------------------------------------
+#include "Filters/fcl/prolog.fcl"
+#include "JobConfig/beam/DS.fcl"
+
+process_name                       : S2Resample
+
+services.GeometryService.inputFile : "Mu2eII/bmup1/geom_Mu2eII_bmup1.txt"
+
+source : { module_type  : EmptyEvent
+  firstRun     :  1000
+  maxEvents    : -1
+}
+
+#------------------------------------------------------------------------------
+# define resampler, a list of fileNames has to be specified via post-processing
+#------------------------------------------------------------------------------
+physics.filters.resamplingMixer : {
+    module_type  : ResamplingMixer
+    fileNames    : ["/pnfs/mu2e/persistent/users/mu2epro/workflow/Mu2eII.bmup2s00b0.s1_sim/outstage/13527219/00/00000/sim.mu2e.bmup2s11b0.Mu2eII.001000_00000000.art"]
+    readMode     : "sequential"  #  "sequential" or "randomNoReplace"
+    wrapFiles    : true
+
+    mu2e: {
+	nSecondaries : 1
+	products: {
+	    genParticleMixer: { mixingMap: [ [ "generate"      , "" ] ] }
+	    simParticleMixer: { mixingMap: [ [ "muonBeamFilter", "" ] ] }
+	    stepPointMCMixer: { mixingMap: [ [ "muonBeamFilter:virtualdetector", ":" ], ["muonBeamFilter:mubeam", ":"] ] }
+	}
+    }
+}
+#------------------------------------------------------------------------------
+# resampling redefines the input object names, G4 uses the redefined ones
+#------------------------------------------------------------------------------
+physics.producers.g4run.MultiStageParameters.inputSimParticles          : "resamplingMixer"
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo   : ""                                    #  "compressPVmuonBeam"
+physics.producers.g4run.MultiStageParameters.genInputHits               : [ "resamplingMixer:mubeam" ]
+physics.producers.g4run.SDConfig.preSimulatedHits                       : [ "resamplingMixer:virtualdetector" ]
+
+physics.producers.genCounter: { module_type: GenEventCounter }
+
+physics.producers.stoppedMuonFinder.particleTypes     : [ 13 ] // only mu-
+physics.producers.outOfTargetMuonFinder.particleTypes : [ 13 ] // only mu-
+#------------------------------------------------------------------------------
+# in DS.fcl, 'physics.end_paths' are defined as [ out, gsl ]
+#------------------------------------------------------------------------------
+physics.out                                           : [ mothersOutput ]
+#------------------------------------------------------------------------------
+# insert resamplingMixer in front of the used paths
+#------------------------------------------------------------------------------
+physics.motherFilter: [ resamplingMixer      , genCounter              , 
+			g4run                , g4consistent            ,
+			stoppedMuonFinder    , stoppedMuonDaughters    ,
+			outOfTargetMuonFinder, outOfTargetMuonDaughters,
+			mothersFilter                                          # , compressPVMothers
+		       ]
+
+physics.trigger_paths : [ motherFilter ]                                       # , g4StatusFilter ]
+
+outputs.mothersOutput : { @table::outputs.mothersOutput 
+    outputCommands    :   [ "drop *_*_*_*"                     ,
+			    "keep mu2e::GenParticles_*_*_*"    ,
+			    "keep mu2e::StatusG4_*_*_*"        ,
+			    "keep *_mothersFilter_*_S2Resample"
+			   ]
+}
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bmup1s20b0.Mu2eII.sequencer.root"
+outputs.mothersOutput.fileName         : "sim.owner.bmup1s23b0.Mu2eII.sequencer.art"

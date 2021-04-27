@@ -1,0 +1,97 @@
+# -*- mode:tcl -*-
+# pure background frames with full (digi + mc) and detector (digi only) output streams
+# add trigger path to digi generation
+# original author: Dave Brown, LBNL
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  MIXER_READ_MODE         @protect_ignore: sequential   # randomReplace / sequential
+  MIXER_MU2E_SKIP_FACTOR  @protect_ignore: 0            # default - 1 (JobConfig/mixing/prolog1.fcl)
+  TRIGGER_PATHS           @protect_ignore: [ p1 ]
+  END_PATHS               @protect_ignore: [ e1 ]
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl" 
+
+process_name: S4NoPrimary
+
+services.message.destinations.log.categories.ArtReport.limit       : 10000  # number of events 
+
+source  : { module_type : EmptyEvent }
+outputs           : { @table::Mu2eII.outputs   }
+
+physics : { 
+    producers     : { @table::Mu2eII.producers @table::Mixing.producers }
+    filters       : { @table::Mu2eII.filters   @table::Mixing.filters   }
+
+    trigger_paths : [ @sequence::TRIGGER_PATHS ]
+    end_paths     : [ @sequence::END_PATHS     ]                     # needed for generate_fcl
+}
+#------------------------------------------------------------------------------
+# 1. paths
+#------------------------------------------------------------------------------
+physics.p1        : [ @sequence::Mixing.minbias_crv ] 
+physics.e1        : [ DetOutput                     ]
+#------------------------------------------------------------------------------
+# beam intensity: 3.9e7 (2-batch mode) 1.6e7 (1-batch mode) SFD=0.6 (default)
+#------------------------------------------------------------------------------
+physics.producers.protonBunchIntensity.extendedMean :  1.6e7  # <mean> of the unconstrained distribution
+#-------------------------------------------------------------------------------------------------------
+# debug printouts : want to print number of mixed events
+#------------------------------------------------------------------------------
+# physics.filters.flashMixerTrkCal.mu2e.debugLevel                  : 1
+# physics.filters.ootMixerTrkCal.mu2e.debugLevel                    : 1
+# physics.filters.neutronMixerTrkCal.mu2e.debugLevel                : 1
+# physics.filters.dioMixerTrkCal.mu2e.debugLevel                    : 1
+#------------------------------------------------------------------------------
+# input maps from prirmaries and flash. these get used first, new times are only generated for mu-daughter backgrounds
+# no primary in the time maps
+#------------------------------------------------------------------------------
+physics.producers.protonTimeMap.InputTimeMaps          : [ @sequence::Mixing.protonTimeMapsCRV ]
+physics.producers.muonTimeMap.InputTimeMaps            : [ ]
+#------------------------------------------------------------------------------
+# after flash time cut mix change
+# don't include VD and IPA steps from flash: they just add bulk
+# P.M. : resample flash after stage 3, thus the name "resamplingMixer"
+# ":" preserves the product name 
+#------------------------------------------------------------------------------
+physics.filters.DSMixerCRV.mu2e.products.genParticleMixer      : { mixingMap: [ [ "resamplingMixer"    , ""  ] ] }
+physics.filters.DSMixerCRV.mu2e.products.simParticleMixer      : { mixingMap: [ [ "detectorFilter"     , ""  ] ] }
+physics.filters.DSMixerCRV.mu2e.products.stepPointMCMixer      : { mixingMap: [ [ "detectorFilter:CRV" , ":" ] ] }
+physics.filters.DSMixerCRV.mu2e.products.protonTimeMapMixer    : { mixingMap: [ [ "protonTimeMap"      , "protonTimeMap" ] ] }
+
+physics.filters.PSMixerCRV.mu2e.products.genParticleMixer      : { mixingMap: [ [ "resamplingMixer"    , ""  ] ] }
+physics.filters.PSMixerCRV.mu2e.products.simParticleMixer      : { mixingMap: [ [ "detectorFilter"     , ""  ] ] }
+physics.filters.PSMixerCRV.mu2e.products.stepPointMCMixer      : { mixingMap: [ [ "detectorFilter:CRV" , ":" ] ] }
+physics.filters.PSMixerCRV.mu2e.products.protonTimeMapMixer    : { mixingMap: [ [ "protonTimeMap"      , "protonTimeMap" ] ] }
+
+physics.filters.neutronMixerCRV.mu2e.products.simParticleMixer : { mixingMap: [ [ "g4run"              , ""  ] ] }
+physics.filters.neutronMixerCRV.mu2e.products.stepPointMCMixer : { mixingMap: [ [ "g4run:CRV"          , ":" ] ] }
+
+physics.filters.dioMixerCRV.mu2e.products.simParticleMixer     : { mixingMap: [ [ "g4run"              , ""  ] ] }
+physics.filters.dioMixerCRV.mu2e.products.stepPointMCMixer     : { mixingMap: [ [ "g4run:CRV"          , ":" ] ] }
+#------------------------------------------------------------------------------
+# redefinition of simParticleTags is neded, as Mixing.producers.compressDigiMCs, 
+# defined in JobConfig/common/Mu2eII_mixing_templates.fcl, by default, also includes 
+# "g4run" tag for primary particle
+#------------------------------------------------------------------------------
+physics.producers.compressDigiMCs.simParticleTags      : [ @sequence::Mixing.CRVMixSequence ] #
+physics.producers.compressDigiMCs.extraStepPointMCTags : [ ]
+physics.producers.compressDigiMCs.mcTrajectoryTag      : ""
+physics.producers.compressDigiMCs.crvDigiMCTag         : "CrvWaveforms"                       # CRV mixing
+#------------------------------------------------------------------------------
+# output files
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile : "Mu2eII/crv01/geom_Mu2eII_crv01.txt"
+# outputs.DetOutput.outputCommands : [ "keep *_*_*_*" ]
+
+services.TFileService.fileName : "nts.user.crv01s40b1.Mu2eII.sequencer.root"
+# outputs.FullOutput.fileName    : "dig.user.crv01s41b1.Mu2eII.sequencer.art"
+outputs.DetOutput.fileName     : "dig.user.crv01s41b1.Mu2eII.sequencer.art"
+
+physics.filters.DSMixerCRV.fileNames      : [""]
+physics.filters.PSMixerCRV.fileNames      : [""]
+physics.filters.dioMixerCRV.fileNames     : [""]
+physics.filters.neutronMixerCRV.fileNames : [""]
+
+physics.producers.compressDigiMCs.simParticleTags    : [ @sequence::Mixing.CRVMixSequence ]
+physics.producers.compressDigiMCs.caloShowerStepTags : [ "CaloShowerStepFromStepPt:calorimeter" , "CaloShowerStepFromStepPt:calorimeterRO" ]

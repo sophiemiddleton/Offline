@@ -1,0 +1,43 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# 104.97 MeV electrons: read MCS file, drop reco output, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+# variables in the top-level prolog are the ones which need to be set to the same value
+# in various individual prolog files
+# 
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p42_dar, 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME  @protect_ignore: S6RecoStn
+  GEN_ID        @protect_ignore: StoppedParticleReactionGun
+  PDG_ID        @protect_ignore: 13
+
+  TIME_MAPS     @protect_ignore:  [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap", "compressDigiMCs:cosmicTimeMap" ]
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+
+source                                    : { module_type : @local::INPUT_MODULE }
+source.inputCommands                      : [ "keep *", 
+					      "drop *_*_*_*RecoStn"
+					     ]
+
+physics                                   : { @table::Stntuple.physics }           # note Stntuple.physics, not Mu2eII.physics
+physics.output_path                       : [                          ]           # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.mumi1s61b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.mumi1s61b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.mumi1s61b0.Mu2eII.001000_00000000.art"
+
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"

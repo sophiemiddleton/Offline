@@ -1,0 +1,66 @@
+# -*- mode: tcl -*-
+#include "JobConfig/beam/DS.fcl"
+
+physics.producers.stoppedMuonFinder.particleTypes     : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+physics.producers.outOfTargetMuonFinder.particleTypes : [ 13, -13, 211, -211, -2212 ] // mu-, mu+, pi+, pi-, pbar
+
+physics.out                                           : [ tgtStopOutput, ootStopOutput ]
+#------------------------------------------------------------------------------
+outputs.tgtStopOutput.outputCommands: [
+			 "drop *_*_*_*",
+			                                       # GenParticles and GenEventCount are produced by the s1
+			                                       # don't care about the s1 process name
+                                                               # keep G4 status from all stages
+			 "keep mu2e::GenParticles_*_*_*",
+			 "keep mu2e::GenEventCount_*_*_*",
+			 "keep mu2e::StatusG4_*_*_*",
+                                                               # keep StepPointMC collections produced by the output filters 
+                                                               # at previous stages
+
+			 "keep  mu2e::StepPointMCs_muonBeamFilter_mubeam_*",
+			 "keep  mu2e::StepPointMCs_muonBeamFilter_DSVacuum_*",
+
+                                                               # keep all SimParticles and StepPointMC collections produced
+			                                       # by the output filter in the current process (DS)
+
+			 "keep mu2e::SimParticlemv_tgtStopFilter_*_DS",
+			 "keep  mu2e::StepPointMCs_tgtStopFilter_*_DS",
+
+			                                       # don't know why, but this is needed
+			 "keep *_compressPVTGTStops_*_DS"
+			]
+
+outputs.ootStopOutput.outputCommands: [
+			 "drop *_*_*_*",
+			                                       # GenParticles and GenEventCount are produced by the s1
+			                                       # don't care about the s1 process name
+                                                               # keep G4 status from all stages
+			 "keep mu2e::GenParticles_*_*_*",
+			 "keep mu2e::GenEventCount_*_*_*",
+			 "keep mu2e::StatusG4_*_*_*",
+                                                               # keep tepPointMC collections produced by the output filters 
+                                                               # at previous stages
+
+			 "keep  mu2e::StepPointMCs_muonBeamFilter_mubeam_*",
+			 "keep  mu2e::StepPointMCs_muonBeamFilter_DSVacuum_*",
+
+                                                               # keep all SimParticles and StepPointMC collections produced
+			                                       # by muonBeamFilter in the current process (TS)
+
+			 "keep mu2e::SimParticlemv_ootStopFilter_*_DS",
+			 "keep  mu2e::StepPointMCs_ootStopFilter_*_DS",
+
+			                                       # don't know why, but this is needed
+			 "keep *_compressPVOOTStops_*_DS"
+			]
+
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.scheduler.wantSummary          : true
+
+physics.producers.g4run.physics.noDecay : [ 211, -211 ]
+
+services.TFileService.fileName          : "nts.owner.bpim0s30b0.Mu2eII.sequencer.root"
+
+outputs.tgtStopOutput.fileName          : "sim.owner.bpim0s31b0.Mu2eII.sequencer.art"
+outputs.ootStopOutput.fileName          : "sim.owner.bpim0s32b0.Mu2eII.sequencer.art"

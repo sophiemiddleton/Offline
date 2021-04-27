@@ -1,0 +1,13 @@
+// -*- mode:c++ -*-
+//-----------------------------------------------------------------------------
+// SU2020 geometry + CLV2 absorber
+//-----------------------------------------------------------------------------
+#include "Mu2eII/common/geom_baseline.txt"
+
+////increment version number
+int    mbs.Version            = 8;
+
+//turn on absorber for STM
+bool   mbs.CLV2.absorber.build          = true;
+string mbs.CLV2.absorber.MaterialName   = "Polyethylene0935";
+double mbs.CLV2.absorber.halflength     =  10.0;

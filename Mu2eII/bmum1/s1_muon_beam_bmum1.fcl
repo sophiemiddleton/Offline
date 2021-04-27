@@ -1,0 +1,30 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this FCL file is used to produce stopped muon ntuple
+# trace only pions and muons , but not electrons and photons below 100 MeV - it is a matter of saving time
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/PS.fcl"
+
+services.GeometryService.inputFile: "Mu2eII/bmum1/geom_Mu2eII_bmum1.txt"
+
+// Energy cuts on electrons, positrons, photons, and neutrons.
+
+CutEPPhN : {
+    type : intersection
+    pars : [ { type: kineticEnergy cut: 100.0 },
+             { type: pdgId pars: [ 11, -11, 22, 2112 ] } ]
+}
+
+physics.producers.g4run.Mu2eG4CommonCut : {
+    type : union
+    pars : [
+	    @local::CutEPPhN,
+	    @local::dsRegionCuts,
+	    @local::extMonRegionCuts
+	   ]
+}
+
+physics.outputs: [ mubeamout ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bmum1s10b0.Mu2eII.sequencer.root"
+outputs.mubeamout.fileName         : "sim.owner.bmum1s10b0.Mu2eII.sequencer.art"

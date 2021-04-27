@@ -1,0 +1,46 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# p1 : default reconstruction path
+# p2 : read and ntuple (use with RootInput to ntuple MDC'2018 files)
+# p3 : path to debug the TPR and CPR reconstruction paths separately
+# assume reading standard compressed "digi" output format
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE        @protect_ignore: RootInput
+  TRIGGER_PATHS       @protect_ignore: [ p1 ]
+  GEN_ID              @protect_ignore: "unknown"                            # to store all SimParticles
+  TIME_MAPS           @protect_ignore: [ "compressDigiMCs:protonTimeMap" ]  # no muon time map for flash
+  BLIND_TIME          @protect_ignore: 0                                    # digitize everything 
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name : ReadStrawHitsStn
+
+outputs      : { @table::Stntuple.outputs }
+physics      : { @table::Stntuple.physics }
+
+physics.p1   : [ @sequence::Mu2eII.trk_hit_reco , @sequence::Stntuple.stnmaker ]
+#------------------------------------------------------------------------------
+# configure STNTUPLE maker: just one StepPointMCBlock - tracker
+#------------------------------------------------------------------------------
+physics.filters.StntupleMaker.makeSimp                : 1
+physics.filters.StntupleMaker.makeStepPointMC         : 1
+physics.filters.StntupleMaker.makeStrawData           : 1
+physics.filters.StntupleMaker.makeTrigger             : 0
+physics.filters.StntupleMaker.makeCalData             : 0
+physics.filters.StntupleMaker.makeClusters            : 0
+physics.filters.StntupleMaker.makeTracks              : 0
+physics.filters.StntupleMaker.makeTrackSeeds          : 0
+physics.filters.StntupleMaker.makeTimeClusters        : 0
+physics.filters.StntupleMaker.makePid                 : 0
+
+physics.filters.StntupleMaker.spmcBlockName           : [ "SpmcBlock"               ]
+physics.filters.StntupleMaker.spmcCollTag             : [ "compressDigiMCs:tracker" ]
+physics.filters.StntupleMaker.statusG4Tag             : [ "g4run"                   ]
+#------------------------------------------------------------------------------
+# output file names
+#------------------------------------------------------------------------------
+services.TFileService.fileName            : "nts.user.read_straw_hits.project.sequencer.root"
+physics.filters.InitStntuple.histFileName : "nts.user.read_straw_hits.project.sequencer.stn"
+outputs.detectorOutput.fileName           : "sim.user.read_straw_hits.project.sequencer.art"

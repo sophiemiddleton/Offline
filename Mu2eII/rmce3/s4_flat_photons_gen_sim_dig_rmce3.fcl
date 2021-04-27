@@ -1,0 +1,54 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this FCL file is used to generate flat photons from muon stops aimed at the
+# calorimeter
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: EmptyEvent     # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p1, Mu2eII_p1calo ]      # defined in JobConfig/common/Mu2eII.fcl
+  PROCESS_NAME  @protect_ignore: GenSimDigi
+  GEN_ID        @protect_ignore: "ExternalRMC" # the same for e- and e+
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type: @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics }
+physics.producers.generate : { @table::EventGenerator.producers.RMCGun }
+#include "JobConfig/primary/epilog.fcl"
+
+## Generator info ##
+# set to Mu2eII muon stop file
+physics.producers.generate.muonStops.inputFiles          : @local::mergedMuon_tgtStops_Mu2eII_1
+physics.producers.generate.physics.elow                  : 70  #MeV
+physics.producers.generate.physics.ehi                   : 102 #MeV
+physics.producers.generate.czmin                         : 0.98 #calorimeter disk max at cos = ~0.99
+physics.producers.generate.czmax                         : 1.00 
+physics.producers.generate.physics.spectrumShape         : "flat" 
+physics.producers.generate.physics.genId                 : @local::GEN_ID
+#print histograms for helpful debugging/understanding generator spectra
+physics.producers.generate.doHistograms                  : true
+
+physics.output_path                    : [ defaultOutput ]
+
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands   : [ "drop    *_*_*_*",
+					   "keep    *_compressDigiMCs_*_*",
+					   "keep     mu2e::StatusG4_g4run_*_*",
+					   "keep     mu2e::CaloDigis_CaloDigiFromShower_*_*",
+					   "keep     mu2e::CrvDigis_CrvDigi_*_*",
+					   "keep     mu2e::StrawDigis_makeSD_*_*",
+					   "keep     art::TriggerResults_TriggerResults_*_*",
+					   "keep     mu2e::EventWindowMarker_EWMProducer_*_*",
+					   "keep     mu2e::StrawGasSteps_makeSGS_*_*",
+					   "keep     mu2e::GenParticle_generate_photon_*", #stores the gen information of original photon
+					   "keep     mu2e::GenParticles_generate_photon_*", #stores the gen information of original photon (newer versions)
+					   "keep     mu2e::GenEventCount_*_*_*" #ensure we're getting all gen count values
+					  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.GeometryService.printConfigTopLevel : true
+services.TFileService.fileName          : "nts._USER_.rmce3s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "dig._USER_.rmce3s41b0.Mu2eII.001000_00000000.art"

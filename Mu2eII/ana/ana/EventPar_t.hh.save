@@ -1,0 +1,34 @@
+#ifndef __Mu2eII_ana_EventPar_t__
+#define __Mu2eII_ana_EventPar_t__
+
+namespace Mu2eII {
+
+  struct EventPar_t {
+    int           fNGenp;
+    TGenParticle* fParticle;                // generator "signal" particle
+    float         fGenE;		    // generator (signal) particle energy
+
+    int           fNTracks;                 // might need two for different reasons: DAR<->PAR, ELE<->MUO
+    int           fNGoodTracks;
+    int           fNStrawHits;
+
+    int           fNClusters;               // calorimeter clusters
+
+    int           fNCrvClusters;
+    int           fNCrvCoincidences;
+    int           fNCrvPulses;
+
+    int           fCandidate_BOX;           // if 1, passes analysis cuts = event candidate
+    int           fCandidate_MVA;           // if 1, passes analysis cuts = event candidate
+
+    float         fInstLum;
+					    // different weights, one per event
+    double        fOneBatchWeight;
+    double        fTwoBatchWeight;
+    double        fLumiWt;		    // reweighting factor: either mode=2: Two/One, mode=1: One/Two
+
+    double        fDioLOWt;
+    double        fDioLLWt;
+  };
+}
+#endif

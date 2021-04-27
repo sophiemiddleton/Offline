@@ -1,0 +1,29 @@
+# -*- mode: tcl -*-
+###############################################################################
+# write GDML file with the Mu2e geometry
+# need to process at least one event for GDML file to be written out
+# to speed up the job, use G4 physics table called "Minimal"
+################################################################################
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name : WriteGdml
+
+source : {
+  module_type : EmptyEvent
+  maxEvents   : 1
+  firstRun    : 1
+}
+
+physics : { @table::Mu2eII.physics 
+    p1             : [ g4run ]
+    trigger_paths  : [ p1    ]
+    end_paths      : [       ]
+}
+
+physics.producers.g4run.debug.writeGDML         : true
+physics.producers.g4run.debug.GDMLFileName      : "mu2e_geometry_Mu2eII_bmup3.gdml"
+services.GeometryService.inputFile              : "Mu2eII/bmup3/geom_Mu2eII_bmup3.txt"
+
+# reduce the initialization time
+physics.producers.g4run.physics.physicsListName : "Minimal"
+

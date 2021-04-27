@@ -1,0 +1,37 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# flsh1 : beam flash 
+# read "mothers" input, add proton time map (need for mixing), make CaloShowerSteps
+# to reduce the data size, require an event to have at least one step with T > 200 ns
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TRIGGER_PATHS @protect_ignore: [ p1               ]          # defined below
+  TIME_MAPS     @protect_ignore: [ "protonTimeMap"  ]          # defined below
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                           : GenProtMap
+source                                 : { module_type: RootInput }   # RootInput/EmptyEvent
+physics                                : { @table::Mu2eII.physics }
+
+physics.p1                             : [  protonTimeMap, filterStepPointMomentum ]
+
+physics.filters.filterStepPointMomentum.inputs         : [ "detectorFilter:CRV"]
+physics.filters.filterStepPointMomentum.cutMomentumMin : -1.        # accept any hit
+physics.filters.filterStepPointMomentum.tMin           : 200.       # to reduce data volume for physics mixing
+physics.filters.filterStepPointMomentum.fillHistograms : true       # do histogramming
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands   : [ "drop    *_*_*_*"                                 ,
+					   "keep    *_detectorFilter_*_*"                    ,
+					   "keep    *_*_CRV_*"                               ,
+					   "keep    mu2e::GenEventCount_*_*_*"               ,
+					   "keep    mu2e::GenParticles_*_*_*"                ,
+					   "keep    *_protonTimeMap_*_*"                     
+					  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/crv01/geom_Mu2eII_crv01.txt"
+services.TFileService.fileName         : "nts._USER_.crv01s33b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "sim._USER_.crv01s33b0.Mu2eII.001000_00000000.art"

@@ -1,0 +1,34 @@
+# -*- mode: tcl -*-
+
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: EmptyEvent     # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p1 ]  # defined in Mu2eII/common/Mu2eII.fcl
+  PROCESS_NAME  @protect_ignore: GenSimDigi
+  GEN_ID        @protect_ignore: "InternalRPC"
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type: @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics }
+#------------------------------------------------------------------------------
+# generator: internal conversions from RPC
+# Richie modified RPCGun to produce a time map, use it
+#------------------------------------------------------------------------------
+physics.producers.generate                             : { @table::Mu2eII.physics.producers.RPCGun }
+
+physics.producers.generate.randPDFparameters.pulseType : default                # popular choices: [default/oot]
+physics.producers.generate.tmin                        : 450.                   # 
+physics.producers.protonTimeMap.FixedModule            : "generate"             # tell protonTimeMap about Richie
+#------------------------------------------------------------------------------
+# configure output
+#------------------------------------------------------------------------------
+physics.output_path                     : [ defaultOutput            ]
+outputs.defaultOutput.SelectEvents      : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands    : [ @sequence::Mu2eII.gen_sim_digi_output ] 
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName          : "nts._USER_.rpci0s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "dig._USER_.rpci0s41b0.Mu2eII.001000_00000000.art"

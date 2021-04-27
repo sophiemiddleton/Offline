@@ -1,0 +1,64 @@
+# -*- mode:tcl -*-
+#include "Mu2eII/pbar0/DSpbar.fcl"  
+
+# physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+
+physics.producers.g4run.MultiStageParameters.simParticleNumberOffset    : 400000
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo   : "" # "compressPVmuonBeam"
+
+physics.producers.stoppedMuonFinder.particleTypes                       : [ -2212 ]
+physics.producers.stoppedMuonFinder.particleOffsetThreshold             : 400000
+
+physics.producers.outOfTargetMuonFinder.particleTypes                   : [ -2212 ]
+physics.producers.outOfTargetMuonFinder.particleOffsetThreshold         : 400000
+
+
+physics.analyzers : {
+        genCountLogger : {
+            module_type : GenEventCountReader
+        }
+        readAntiProtonSteps : {
+	    module_type : ReadAntiProtonSteps
+	    generatorModuleLabel : "resamplingMixer"
+	    savePDG : [-2212]
+	    psVacuumStepPoints : "virtualdetector"                  //StepPointsMC
+	    g4ModuleLabel : "tgtStopFilter"      //SimParticles
+	    diagLevel 	       : 0
+	    stage              : 4
+	}
+        readDelayedRPCSteps : {
+	    module_type : ReadAntiProtonSteps
+	    generatorModuleLabel : "resamplingMixer"
+	    savePDG : [-211]
+	    psVacuumStepPoints : "virtualdetector"                  //StepPointsMC
+	    g4ModuleLabel : "tgtStopFilter"      //SimParticles
+	    diagLevel 	       : 0
+	    stage              : 4
+	}
+    stoppedAntipDumper: {
+	    module_type: StoppedParticlesDumper
+	    inputCollection: "tgtStopFilter"
+	    dumpSimParticleLeaves: true
+	    writeProperTime: false
+	    writePbars:  true
+        }
+    
+
+    } // analyzers
+
+
+
+#------------------------------------------------------------------------------
+# take out volume info
+#------------------------------------------------------------------------------
+physics.tgtFilter      : [ g4run, g4consistent, stoppedMuonFinder    , tgtStopFilter] # , compressPVTGTStops]
+physics.ootFilter      : [ g4run, g4consistent, outOfTargetMuonFinder, ootStopFilter] # , compressPVOOTStops]
+physics.g4StatusFilter : [ g4run, "!g4status"]                                        # , compressPVFull ]
+
+# trigger_paths  : [motherFilter, trigCRV, tgtFilter, ootFilter, g4StatusFilter]
+physics.trigger_paths  : [ tgtFilter, g4StatusFilter]
+
+physics.out            : [ tgtStopOutput, readAntiProtonSteps, readDelayedRPCSteps, stoppedAntipDumper]
+physics.end_paths      : [ out]                                                        # , gcl]
+
+services.TFileService.fileName     : "nts.owner.pbar0s41b0.version.sequencer.root"

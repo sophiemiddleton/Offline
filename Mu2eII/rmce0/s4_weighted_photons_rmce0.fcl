@@ -1,0 +1,57 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this FCL file is used to produce photon conversion ntuple from muon stop ntuple
+#------------------------------------------------------------------------------
+#include "JobConfig/primary/flatmugamma.fcl"
+services.TimeTracker : {
+    printSummary : true
+    dbOutput : {
+	filename  : ""
+	overwrite : false
+    }
+}
+
+physics.producers.generate : { @table::EventGenerator.producers.RMCGun }
+physics.filters.conversionwriter : {@table::Mu2eG4.filters.ConversionWriter }
+#include "JobConfig/primary/epilog.fcl"
+
+## Generator info ##
+# set to Mu2eII muon stop file
+physics.producers.generate.muonStops.inputFiles : @local::mergedMuon_tgtStops_Mu2eII_1
+physics.producers.generate.physics.generateIntConversion : 0 #generate external conversion
+physics.producers.generate.physics.elow : 85 #MeV
+physics.producers.generate.physics.ehi  : 93 #MeV
+physics.producers.generate.physics.spectrumShape  : "flat" #define our own spectrum shape, so don't use physics spectrum
+# energy spectrum to generate photons with
+physics.producers.generate.doEnergyWeights  : true #increase statistics near 90 MeV
+physics.producers.generate.energyFuncString : "1/((90.-x)^4 + 0.1)"
+# cos(theta) spectrum to generate photons with, a triangle on top of a flat spectrum
+physics.producers.generate.doCosWeights  : true #~x5 more stops / gen particle, but mapping is fast either way
+physics.producers.generate.czFuncString : "max(100*(0.1-abs(x)), 0.1)" #PDF is 100x higher at 0 than near +1/-1
+#make it so the event often fails and will quit after the conversion in geant4
+physics.producers.g4run.physics.steppingActionMinRMCDaughterEnergy : 84.5 // MeV below this E < 90 MeV contribute
+physics.producers.g4run.physics.steppingActionMaxRMCEndpoint : 93.0 // MeV only used if error in finding photon energy
+physics.producers.g4run.physics.steppingActionRMCKillAfterConvert : true //no reason to continue after found
+#print histograms for helpful debugging/understanding generator spectra
+physics.producers.generate.doHistograms : true
+
+## Conversion map writer info ##
+physics.filters.conversionwriter.rMin : -1. // no cut
+physics.filters.conversionwriter.rMax : 500. // mm, beyond IPA
+physics.filters.conversionwriter.zMin : 5000. // mm include target and IPA
+physics.filters.conversionwriter.zMax : 8000. // mm
+
+#No reason to use better nuclear lists if only watching EM effects, use more sophisticated EM list
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT_EMZ" // _EMZ is ~20% slower, uses BetheHeitler5D conversion model
+
+physics.p1 : [ generate, g4run, conversionwriter]
+physics.e1 : [ ]
+physics.trigger_paths : [ p1 ]
+physics.end_paths : [ e1 ]
+
+#------------------------------------------------------------------------------
+# output files - I guess, 'outputs' might need renaming. --Pasha
+services.GeometryService.inputFile           : "Mu2eII/common/geom_baseline.txt"
+services.GeometryService.printConfigTopLevel : true
+services.TFileService.fileName          : "nts.owner.rmce0s41b0.Mu2eII.sequencer.root"
+outputs.defaultOutput.fileName          : "dig.owner.rmce0s41b0.Mu2eII.sequencer.art"

@@ -1,0 +1,56 @@
+# -*- mode: tcl -*- 
+#------------------------------------------------------------------------------
+# make a 'stop ntuple' for stopped-in-ST mu-'s
+# assume that the input list of stopped particles contains more than just mu-'s, 
+# therefore need to select mu-'s explicitly
+# BEWARE: that the structure (!) and the format of inputs of StoppedParticlesDumper 
+#         changes depending on whether it is configured to write out pion or muon ntuples 
+#         - thus commented out lines needed for pions, but breaking muon jobs
+#------------------------------------------------------------------------------
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+process_name : MuonOOTStopNtuple
+
+source       : { module_type : RootInput }
+services     : { @table::Services.Sim }
+
+# Limit the rate of "Begin processing the ... record" messages
+services.message.destinations.log.categories.ArtReport.reportEvery : 1
+services.message.destinations.log.categories.ArtReport.limit : 1
+services.message.destinations.log.categories.ArtReport.timespan : 300
+
+physics : {
+    producers : {
+	stopFinder: { module_type: StoppedParticlesFinder 
+	    particleInput    : tgtStopFilter
+	    particleTypes    : [ 13 ]  # select mu-'s
+	    physVolInfoInput : "compressPVTGTStops"
+	    vetoedMaterials  : [ "" ]
+	}
+    }
+    analyzers: {
+	stopDumper: { module_type: StoppedParticlesDumper
+	    inputCollection       : "stopFinder"
+	    dumpSimParticleLeaves : false  # true (take pointers input from stopFinder)
+#	    writeProperTime       : true
+#	    decayOffPDGCodes      : [ -211, 211 ]
+#	    hitCollections        : [ "muonBeamFilter:mubeam", "muonBeamFilter:DSVacuum" ]
+	}
+	genCountLogger: {
+	    module_type: GenEventCountReader
+	}
+    }
+    
+    p1       : [ stopFinder ]
+    stops    : [ stopDumper, genCountLogger ]
+
+    trigger_paths : [ p1    ]
+    end_paths     : [ stops ]
+}
+#------------------------------------------------------------------------------
+# redefined parameters
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bmum1s41b0.Mu2eII.sequencer.root"
+services.GeometryService.inputFile : "Mu2eII/common/geom_baseline.txt"

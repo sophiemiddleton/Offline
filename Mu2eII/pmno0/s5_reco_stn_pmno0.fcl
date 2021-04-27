@@ -1,0 +1,52 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# conversion electrons: read digi file, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TRIGGER_PATHS @protect_ignore: [
+				  stntuple_p42          , # no CRV reco
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME @protect_ignore: S5RecoStn
+
+  BLIND_TIME             @protect_ignore: 200.
+  PROTON_BUNCH_INTENSITY @protect_ignore: 3.9e6         # nominal/10
+  FLASH_EVENTS_PER_POT   @protect_ignore: 9.777e-4      # for uncut flash to be used in mixing
+  # // TIME_MAPS     @protect_ignore: [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap", "compressDigiMCs:cosmicTimeMap" ]
+  TIME_MAPS     @protect_ignore: ["protonTimeMap", "muonTimeMap", "cosmicTimeMap"]
+
+  GEN_ID                 @protect_ignore: "unknown"
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+
+source                                    : { module_type : RootInput  }
+outputs                                   : { @table::Stntuple.outputs }
+physics                                   : { @table::Stntuple.physics }  # note Stntuple.physics, not Mu2eII.physics
+
+physics.filters.StntupleMakerDeDmu.strawDigiMCCollTag : "makeSD"
+physics.filters.StntupleMakerDeDmu.simpCollTag        : "g4run"
+
+physics.output_path                       : [ defaultOutput ]  # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+
+stntuple_p42 : [ @sequence::Mu2eII.trk_hit_reco     ,
+		 @sequence::Mu2eII.calo_reco        ,
+		 @sequence::Mu2eII.trk_reco_de
+		]
+#------------------------------------------------------------------------------
+
+services.GeometryService.inputFile        : "Mu2eII/pmno0/geom_Mu2eII_pmno0.txt"
+services.TFileService.fileName            : "nts._USER_.pmno0s51b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.pmno0s51b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.pmno0s51b0.Mu2eII.001000_00000000.art"
+
+#include "JobConfig/common/Mu2eII_blind_time.fcl"
+
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"
