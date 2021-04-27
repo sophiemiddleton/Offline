@@ -75,7 +75,7 @@ namespace mu2e {
     float InitX;
     float InitY;
     float InitZ;
-
+    float InitPt;
     float time;
 
     float px;
@@ -98,7 +98,7 @@ namespace mu2e {
 	    , InitX(std::numeric_limits<double>::quiet_NaN())
 	    , InitY(std::numeric_limits<double>::quiet_NaN())
             , InitZ(std::numeric_limits<double>::quiet_NaN())
-
+, InitPt(std::numeric_limits<double>::quiet_NaN())
             , time(std::numeric_limits<double>::quiet_NaN())
 
             , px(std::numeric_limits<double>::quiet_NaN())
@@ -125,6 +125,7 @@ namespace mu2e {
       , InitY(hit.simParticle()->startPosition().y())
       , InitZ(hit.simParticle()->startPosition().z())
 
+      , InitPt(hit.simParticle()->startMomentum().mag())
       , time(toff.timeWithOffsetsApplied(hit))
 
       , px(hit.momentum().x())
@@ -189,7 +190,7 @@ namespace mu2e {
   //================================================================
   void StepPointMC1stHitDumper::beginJob() {
     art::ServiceHandle<art::TFileService> tfs;
-    static const char branchDesc[] = "x/F:y/F:z/F:InitX/F:InitY/F:InitZ/F:time/F:px/F:py/F:pz/F:pmag/F:ek/F:charge/F:pdgId/I:particleId/i:volumeCopy/i:eventId/I:subrunId/I";
+    static const char branchDesc[] = "x/F:y/F:z/F:InitX/F:InitY/F:InitZ/F:InitPt/F:time/F:px/F:py/F:pz/F:pmag/F:ek/F:charge/F:pdgId/I:particleId/i:volumeCopy/i:eventId/I:subrunId/I";
     nt_ = tfs->make<TTree>( "nt", "StepPointMC1stHitDumper ntuple");
     nt_->Branch("hits", &hit_, branchDesc);
     if(writeProperTime_) {

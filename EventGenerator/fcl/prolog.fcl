@@ -127,6 +127,17 @@ CeEndpointGunV: {
     muonStops      : @local::mu2e.tgtMuonStops
 }
 
+CeEndpointGunLi: {
+    module_type    : StoppedParticleReactionGun
+    physics: {
+      genId : CeEndpoint
+      pdgId : 11
+      spectrumShape: CeMEndpointLithium
+      spectrumVariable: totalEnergy
+    }
+    muonStops      : @local::mu2e.tgtMuonStops
+}
+
 PrimaryProtonGun: {
     module_type : PrimaryProtonGun
     beamDisplacementOnTarget : [0.,0.,0.]
@@ -275,7 +286,21 @@ EventGenerator : { @table::EventGenerator
 		spectrumShape         : "CeMEndpointVanadium"  
 		spectrumVariable      : "totalEnergy"     
 		# "momentum" or "totalEnergy"
-		ehi                   : 104.0523
+		ehi                   : 104.055
+	    } 
+	    muonStops            : { @table::mu2e.tgtMuonStops
+		inputFiles: @local::mergedMuon_tgtStops_mdc2018_1
+	    }
+	    doHistograms              : true
+	}
+	CeMEndpointLithium              : {   module_type: StoppedParticleReactionGun
+	    physics: { @table::StoppedParticleReactionGun.physics
+		genId                 : CeEndpoint 
+		pdgId                 : 11
+		spectrumShape         : "CeMEndpointLithium"  
+		spectrumVariable      : "totalEnergy"     
+		# "momentum" or "totalEnergy"
+		ehi                   : 104.78
 	    } 
 	    muonStops            : { @table::mu2e.tgtMuonStops
 		inputFiles: @local::mergedMuon_tgtStops_mdc2018_1
@@ -288,7 +313,7 @@ EventGenerator : { @table::EventGenerator
 		pdgId                 : 11
 		spectrumShape         : "CeEndpoint"       # could also be "flat" or "ceLeadingLog" or "CeEndpoint"
 		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
-		ehi                   : 104.394
+		ehi                   : 104.272
 	    } 
 	    muonStops            : { @table::mu2e.tgtMuonStops
 		inputFiles: @local::mergedMuon_tgtStops_mdc2018_1
@@ -331,7 +356,7 @@ EventGenerator : { @table::EventGenerator
 		spectrumShape         : "ceLeadingLog"     # could also be "flat" or "CeEndpoint"
 		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
 		spectrumResolution    : 0.1                # MeV
-		ehi                   : 104.394
+		ehi                   : 104.272
 		elow                  : 0.
 	    } 
 	    muonStops            : { @table::mu2e.tgtMuonStops
@@ -346,7 +371,7 @@ CeMLeadingLogV              : {   module_type: StoppedParticleReactionGun
 		spectrumShape         : "ceLeadingLog"     # could also be "flat" or "CeEndpoint"
 		spectrumVariable      : "totalEnergy"      # could be  "kineticEnergy" or "momentum" or "totalEnergy"
 		spectrumResolution    : 0.1                # MeV
-		ehi                   : 104.0523
+		ehi                   : 104.055
 		elow                  : 0.
 	    } 
 	    muonStops            : { @table::mu2e.tgtMuonStops

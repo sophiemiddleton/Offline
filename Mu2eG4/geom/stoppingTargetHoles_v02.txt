@@ -2,6 +2,7 @@
 // M. MacKenzie, May 2020
 
 #include "Mu2eG4/geom/stoppingTargetHoles_DOE_review_2017.txt"
+//#include "Mu2eG4/geom/stoppingTarget_Al_17foils.txt"
 
 // last thickness given will be repeated up to number radii.size()
 vector<double> stoppingTarget.halfThicknesses  =

@@ -298,7 +298,8 @@ namespace mu2e {
                   );
       }
     }
-
+ 
+    
 
     // DS coils support system
     G4Material*   dsSupportMaterial = findMaterialOrThrow( ds->support_material() );
@@ -438,6 +439,17 @@ namespace mu2e {
                 G4Colour::Yellow(),
                 "dsVacuum"
                 );
+                
+      if(_config.getBool("beamline.hasDSPA", true)) {
+      std::cout<<"has DSPA!!!!!!"<<std::endl;
+      TubsParams paramsDSPA(_config.getDouble("beamline.dspa.rin"), _config.getDouble("beamline.dspa.rout"), _config.getDouble("beamline.dspa.halflength4"));
+      G4Material* matDSPA = findMaterialOrThrow(_config.getString("beamline.dspa.material"));
+      CLHEP::Hep3Vector locDSPA(0.0,0.0,-ds->vac_halfLengthDs2() + _config.getDouble("beamline.dspa.halflength4") + _config.getDouble("beamline.dspa.offset"));
+      //G4Helper* _helper = &(*(art::ServiceHandle<G4Helper>()));
+       //VolumeInfo const & ds2VacuumInfo = _helper->locateVolInfo("DS2Vacuum");
+      nestTubs("DSPA", paramsDSPA, matDSPA, 0 /*no rotation*/, locDSPA, ds2VacInfo /*or other mother*/, 0, G4Colour::Cyan(), "ds" /*or other lookup*/);
+      std::cout<<"finished DSPA>>>>>"<<std::endl;
+}
 
     // Polycone geometry allows for MBS to extend beyond solenoid
     // physical boundaries

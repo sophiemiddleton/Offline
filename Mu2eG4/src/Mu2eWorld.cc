@@ -42,6 +42,7 @@
 #include "Mu2eG4/inc/constructSaddles.hh"
 #include "Mu2eG4/inc/constructServicesGeom.hh"
 #include "Mu2eG4/inc/constructTSdA.hh"
+#include "Mu2eG4/inc/constructDSPA.hh"
 #include "Mu2eG4/inc/constructMBS.hh"
 #include "Mu2eG4/inc/constructVirtualDetectors.hh"
 #include "Mu2eG4/inc/constructVirtualDetectorSDs.hh"
@@ -237,6 +238,10 @@ namespace mu2e {
     if ( _config.getBool("hasTSdA",false) ) {
       constructTSdA(_config);
     }
+    
+    /*if ( _config.getBool("hasDSPA",false) ) {
+      constructDSPA(_config);
+    }*/
 
     if ( _config.getBool("hasMBS",false) ) {
       constructMBS(_config);

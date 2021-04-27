@@ -75,6 +75,8 @@ namespace mu2e {
         , code(p->stoppingCode())
         , id(p->pdgId())
       {
+        //std::cout<<sqrt(p->startMomentum().x()*p->startMomentum().x()+p->startMomentum().y()*p->startMomentum().y()+p->startMomentum().z()*p->startMomentum().z())<<"   "<<p->startPosition().x()<<" "<<p->startPosition().y()<<" "<<p->startPosition().z()<<std::endl;
+        std::cout<<"PDG "<<p->pdgId()<<std::endl;
         /*int n=0;
         double pdg = 211;
         art::Ptr<SimParticle>  sp =p->parent();
@@ -163,7 +165,7 @@ namespace mu2e {
 
     TTree *nt_;
     StopInfo data_;
-    Float_t pod, ang;
+    Float_t pod, ang,pdg;
     TH2F *pvz;
     TH2F *tvz;
     TH1F *weightedP;
@@ -200,6 +202,7 @@ namespace mu2e {
     nt_->Branch("Pions", &data_, branchDesc.c_str());
     nt_->Branch("Production", &pod, "pod/F");
     nt_->Branch("ProductionAngle", &ang, "ang/F");
+    nt_->Branch("PDG", &pdg, "pdg/F");
     pvz = tfs->make<TH2F>("Total Mom v z [mm] ", "Total Mom v Z[mm]", 40, 5400, 6300, 100, 0, 100);
     tvz = tfs->make<TH2F>("Global Time v Z [mm] ", "Global Time v Z[mm]", 40, 5400,6300, 100, 100, 700);
 		weightedZ =  tfs->make<TH1F>("Weighted Z", "Weighted MomZ", 40, 5400, 6300);
@@ -239,7 +242,8 @@ namespace mu2e {
   //================================================================
   void myStoppedParticleDumper::process(const art::Ptr<SimParticle>& p, const VspMC& spMCColls) {
     const float tau = writeProperTime_ ? SimParticleGetTau::calculate(p,spMCColls,decayOffCodes_) : -1;
-     data_ = StopInfo(p, spMCColls, tau);
+     pdg = static_cast<double>(p->pdgId());
+     if(abs(p->pdgId()) == 13)data_ = StopInfo(p, spMCColls, tau);
      //----pions
        int n=0;
         double pdg = 211;
@@ -257,6 +261,7 @@ namespace mu2e {
 			 double productionP = sqrt(sp->startMomentum().x()*sp->startMomentum().x()+sp->startMomentum().y()*sp->startMomentum().y()+sp->startMomentum().z()*sp->startMomentum().z());
 			 ang = sp->startMomentum().z()/productionP;
 			 pod = productionP;
+			 
 			// -----pions
      double weight = exp(-1*p->endProperTime()/tau);
      pvz->Fill(p->endPosition().z(), (sqrt(p->startMomentum().x()*p->startMomentum().x()+p->startMomentum().y()*p->startMomentum().y()+p->startMomentum().z()*p->startMomentum().z())));

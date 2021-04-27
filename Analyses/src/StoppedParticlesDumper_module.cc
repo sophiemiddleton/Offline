@@ -50,8 +50,8 @@ namespace mu2e {
       float z;
       float t;
       float tau; // proper time, for stopped pion weights
-
-      StopInfo() : x(), y(), z(), t(), tau() {}
+      float pt;
+      StopInfo() : x(), y(), z(), t(), tau(), pt() {}
 
       StopInfo(const art::Ptr<SimParticle>& p, const VspMC& spMCcolls, float tt)
         : x(p->endPosition().x())
@@ -59,6 +59,7 @@ namespace mu2e {
         , z(p->endPosition().z())
         , t(p->endGlobalTime())
         , tau(tt)
+        , pt(sqrt(p->startMomentum().x()*p->startMomentum().x()+p->startMomentum().y()*p->startMomentum().y()+p->startMomentum().z()*p->startMomentum().z()))
       {
         if(!p->endDefined()) {
           throw cet::exception("BADINPUTS")
@@ -127,6 +128,7 @@ namespace mu2e {
     art::InputTag input_;
     bool writeProperTime_;
     std::vector<art::InputTag> hitColls_;
+    Float_t pod;
 
     std::vector<int> decayOffCodes_;
 
@@ -157,12 +159,13 @@ namespace mu2e {
   //================================================================
   void StoppedParticlesDumper::beginJob() {
     art::ServiceHandle<art::TFileService> tfs;
-    std::string branchDesc("x/F:y/F:z/F:time/F");
+    std::string branchDesc("x/F:y/F:z/F:time/F:pt/F");
     if(writeProperTime_) {
       branchDesc += ":tauNormalized/F";
     }
     nt_ = tfs->make<TTree>( "stops", "Stopped particles ntuple");
     nt_->Branch("stops", &data_, branchDesc.c_str());
+    nt_->Branch("Production", &pod, "pod/F");
   }
 
   //================================================================
@@ -198,6 +201,22 @@ namespace mu2e {
   void StoppedParticlesDumper::process(const art::Ptr<SimParticle>& p, const VspMC& spMCColls) {
     const float tau = writeProperTime_ ? SimParticleGetTau::calculate(p,spMCColls,decayOffCodes_) : -1;
     data_ = StopInfo(p, spMCColls, tau);
+    //----pions
+       int n=0;
+        double pdg = 211;
+        art::Ptr<SimParticle>  sp =p->parent();
+			  while(abs(pdg) == 211){
+			    art::Ptr<SimParticle> temppart = sp->parent();
+			    pdg = temppart->pdgId();
+			    if(abs(pdg) == 211){ 
+			      sp = temppart;
+			    }
+			    std::cout<<n<<" "<<pdg<<std::endl;
+			    n++;
+			  }
+
+			 double productionP = sqrt(sp->startMomentum().x()*sp->startMomentum().x()+sp->startMomentum().y()*sp->startMomentum().y()+sp->startMomentum().z()*sp->startMomentum().z());
+			 pod = productionP;
     nt_->Fill();
   }
 

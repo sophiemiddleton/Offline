@@ -56,6 +56,11 @@ namespace mu2e {
       double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
       this->initialize(endpoint);
     }
+    else if (spectrumShape == "CeMEndpointLithium") {
+      // think this is total energy
+      double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());
+      this->initialize(endpoint);
+    }
     else if (spectrumShape == "CeMEndpointVanadium") {
       // think this is total energy
       double endpoint = psphys.get<double>("ehi", GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy());

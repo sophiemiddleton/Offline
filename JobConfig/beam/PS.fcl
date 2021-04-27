@@ -247,7 +247,7 @@ outputs: {
          "keep *_muonBeamFilter_*_*",
          "keep *_compressPVmuonBeam_*_*"
       ]
-      fileName    : "sim.owner.PS-mubeam.version.sequencer.art"
+      fileName    : "sim.owner.PS-Mu2e2.version.sequencer.art"
    }
 
    dsout : {

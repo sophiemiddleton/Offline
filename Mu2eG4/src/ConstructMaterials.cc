@@ -1582,6 +1582,14 @@ namespace mu2e {
       ProductionTargetCarbon->AddElement(getElementOrThrow("C"), 1.);
     }
 
+//S Middleton: for primary absorber for momentum changes in DS
+    mat = uniqueMaterialOrThrow( "LiH" );
+    {
+      G4Material* LiH = new G4Material(mat.name, 0.78*CLHEP::g/CLHEP::cm3, 2 );
+      LiH->AddElement( getElementOrThrow("Li"), 1);
+      LiH->AddElement( getElementOrThrow("H"), 1);
+    }
+    
     setBirksConstant(config_);
 
   }

@@ -8,6 +8,11 @@ TargetStudy : {
         stepModuleLabel : "compressDigiMCs:virtualdetector"
 }
 
+DSMomentum : {
+        module_type : DSMomentum
+        stepModuleLabel : "compressDigiMCs:virtualdetector"
+}
+
 CosmicFilter: {
     module_type           : CosmicFilter
     diagLevel             : 0
