@@ -145,7 +145,7 @@ outputs: {
          "keep *_muonBeamFilter_*_TS",
          "keep *_compressPVmuonBeam_*_TS"
       ]
-      fileName    : "sim.owner.TS-mubeam.version.sequencer.art"
+      fileName    : "sim.owner.TS-Mu2e2.version.sequencer.art"
    }
 
    crvout : {
