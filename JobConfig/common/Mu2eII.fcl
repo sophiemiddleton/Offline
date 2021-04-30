@@ -1,0 +1,60 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# Mu2eII 
+# p1 : generate, simulate, reconstruct, stntuple
+# p2 : read, reconstruct, stntuple
+# p3 : old reco path: TPR and CPR reconstruction paths fully separated
+# p4 : read, filter, reconstruct, display
+# p5 : read, filter, reconstruct
+# p6 : read, filter, display
+#
+# variables defined in the following PROLOG can be redefined in the top-level
+# job configuration file using "@protect_ignore:" FCL construct
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  bgHitFiles    : @nil
+  INPUT_MODULE  : EmptyEvent
+  TRIGGER_PATHS : [ Mu2eII_p1 ]
+  PROCESS_NAME  : Mu2eII
+  BLIND_TIME    : 500.                            # default start of digitization
+END_PROLOG
+
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+#include "JobConfig/reco/prolog.fcl"
+#include "TrkDiag/fcl/prolog.fcl"
+
+#include "TrkPatRec/fcl/prolog_trigger.fcl"
+#include "CalPatRec/fcl/prolog_trigger.fcl"
+#include "CaloReco/fcl/prolog_trigger.fcl"
+#include "CaloCluster/fcl/prolog_trigger.fcl"
+#include "TrkHitReco/fcl/prolog_trigger.fcl"
+#include "TrkReco/fcl/prolog_trigger.fcl"
+#include "TrkFilters/fcl/prolog_trigger.fcl"
+#include "CaloFilters/fcl/prolog_trigger.fcl"
+
+#include "JobConfig/common/trigger_templates.fcl"
+#include "JobConfig/common/Mu2eII_mixing_templates.fcl"
+#include "JobConfig/common/Mu2eII_templates.fcl"
+
+outputs      : { @table::Mu2eII.outputs   }
+
+Mu2eII.physics : {
+    producers: { @table::Mu2eII.producers }
+    filters  : { @table::Mu2eII.filters   }
+    analyzers: { @table::Mu2eII.analyzers }
+#------------------------------------------------------------------------------
+# paths
+#------------------------------------------------------------------------------
+    @table::Mu2eII.paths
+
+    trigger_paths   : [ @sequence::TRIGGER_PATHS ]
+
+    output_path     : [             ]
+    end_paths       : [ output_path ]
+}
+#------------------------------------------------------------------------------
+# nothing below this line
+#------------------------------------------------------------------------------

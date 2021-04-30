@@ -1,0 +1,599 @@
+# -*- mode:tcl -*- 
+#------------------------------------------------------------------------------
+# Mu2eII/common/templates.fcl 
+# all prolog files have to be included before the templates files
+# template file can include each other
+#------------------------------------------------------------------------------
+# global defaults 
+#------------------------------------------------------------------------------
+# BEGIN_PROLOG
+#   bgHitFiles   : @nil
+#   INPUT_MODULE : EmptyEvent             # EmptyEvent / RootInput
+#   TRIGGER_PATH : p1
+#   PROCESS_NAME : Stnmaker
+# END_PROLOG
+#------------------------------------------------------------------------------
+# no more prologs beyond this point
+# 
+# (1): services section (Services.SimAndReco and Services.Sim today are the same)
+#       add time tracker template
+#------------------------------------------------------------------------------
+# onclude "JobConfig/common/trigger_templates.fcl"
+
+services : { @table::Services.SimAndReco
+    TimeTracker : {
+	printSummary : true
+	dbOutput : {
+	    filename  : ""
+	    overwrite : false
+	}
+    }
+}
+
+services.scheduler.wantSummary        : true
+services.TFileService.fileName        : "nts._USER_._DATASET_._DSCONF_.sequencer.root" 
+
+# Limit the amount of "Begin processing the ... record" messages
+services.message.destinations.log.categories.ArtReport.reportEvery : 1
+services.message.destinations.log.categories.ArtReport.limit       : 10000
+services.message.destinations.log.categories.ArtReport.timespan    : 300
+#------------------------------------------------------------------------------
+# (2): definition of the input module - can redefine in the top-level prolog
+#------------------------------------------------------------------------------
+source : { 
+    module_type : @local::INPUT_MODULE
+    #    fileNames : ["/mu2e/data/tdr/beam/g4s4p5/tdr.beam.g4s4.conversion.1504a.15729672/good/00000/dsStopsToHitsConversion.root"]
+    #    maxEvents   : 100
+    inputCommands : ['keep *_*_*_*'
+		     #		     , 'drop *_muonTimeMap_*_*'
+		     #		     , 'drop *_protonTimeMap_*_*'
+		     #		     , 'drop mu2eStrawDigis_*_*_*'
+		     #		     , 'drop mu2eStrawHits_*_*_*'
+		     #		     , 'drop *_CaloReadoutHitsMaker_*_*'
+		     #		     , 'drop *_CaloCrystalHitsMaker_*_*'
+		     # Uncomment the above lines to reduce file size.
+		    ]
+}
+
+Mu2eII : {
+    producers : { 
+#------------------------------------------------------------------------------
+# MC producers
+#------------------------------------------------------------------------------
+	@table::Trigger.producers
+	@table::EventGenerator.producers  # defined in EventGenerator
+	@table::CommonMC.producers        # FIXME
+	@table::Mu2eG4.producers          # defined in Mu2eG4/fcl
+	@table::CaloDigiMC.producers      # defined in CaloDigiMC
+	@table::CaloDigiMC.producersMC    # defined in CaloDigiMC
+	@table::CaloCluster.producersMC   # defined in CaloCluster
+	@table::CrvDAQPackage.producers   # 
+	@table::TrackerMC.producers       # defined in TrackerMC
+
+	compressDigiMCs : { @table::DigiCompression.Primary       # defined in Filters/fcl/
+	    crvDigiMCTag         : ""
+	}
+                                                                  # need these tags for mixing
+	makeSGSPrimary   : { @table::makeSGS }
+	                                                          # in mixing mode, still filter on primary
+	makeSDPrimary    : { @table::makeSD
+	    StrawGasStepModule : makeSGSPrimary
+	    TimeOffsets        : [ @sequence::CommonMC.TimeMapsPrimary ]
+	}
+
+	generate  : { @table::EventGenerator.producers.egun }      # to avoid unnecessary diagnostics
+	genCounter: { module_type: GenEventCounter }
+
+	# dummy protonBunchIntensity objects for primary-only datasets
+	protonBunchIntensity : { module_type: ProtonBunchIntensityFlat
+	    mean      : 0.0 # No PBI possible for pure signal! 
+	    halfWidth : 1.0
+	}
+
+	SeparateCaloShowerSteps : { @table::SeparateCaloShowerSteps } # defined in Filters
+#------------------------------------------------------------------------------
+# reco producers, compressDigiMCs defined there 
+#------------------------------------------------------------------------------
+
+	@table::Reconstruction.producers   # inherited from JobConfig/reco/prolog.fcl
+
+	@table::ParticleID.producers
+	@table::TrackCaloMatching.producers
+
+	@table::CommonTrk.producers
+
+	TrkQualDeMHPar  : { @table::TrkQualDeM  KalSeedCollection: "KFFDeMHPar"  }
+	TrkQualDeMHDar  : { @table::TrkQualDeM  KalSeedCollection: "KFFDeMHDar"  }
+	TrkQualDmuMHPar : { @table::TrkQualDmuM KalSeedCollection: "KFFDmuMHPar" }
+	TrkQualDmuMHDar : { @table::TrkQualDmuM KalSeedCollection: "KFFDmuMHDar" }
+
+	TrkQualUeMHPar  : { @table::TrkQualUeM  KalSeedCollection: "KFFUeMHPar"  }
+	TrkQualUeMHDar  : { @table::TrkQualUeM  KalSeedCollection: "KFFUeMHDar"  }
+	TrkQualUmuMHPar : { @table::TrkQualUmuM KalSeedCollection: "KFFUmuMHPar" }
+	TrkQualUmuMHDar : { @table::TrkQualUmuM KalSeedCollection: "KFFUmuMHDar" }
+#------------------------------------------------------------------------------
+# helix mergers: each combines all found helices with the same direction and mass 
+# into one collection
+#------------------------------------------------------------------------------
+	MHFinderDe : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderDe:Positive", "CalHelixFinderDe:Positive", "HelixFinderDe:Negative", "CalHelixFinderDe:Negative"]
+	}
+	MHFinderDmu : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderDmu:Positive", "CalHelixFinderDmu:Positive", "HelixFinderDe:Negative", "CalHelixFinderDe:Negative"]
+	}
+	MHFinderUe : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderUe:Positive", "HelixFinderUe:Negative"]
+	}
+	MHFinderUmu : { @table::TrkReco.producers.MergeHelices
+	    HelixFinders : [ "HelixFinderUe:Positive", "HelixFinderUe:Negative"]
+	}
+
+#------------------------------------------------------------------------------
+# track fit, downstream electron hypothesis
+#------------------------------------------------------------------------------
+	KSFDeMH     : { @table::KSFDeM                            SeedCollection : MHFinderDe  CheckHelicity:false }
+	KFFDeMHPar  : { @table::KFFDeM                            SeedCollection : KSFDeMH  }
+	KFFDeMHDar  : { @table::CalPatRec.producers.CalTrkFitDem  SeedCollection : KSFDeMH  }
+
+#------------------------------------------------------------------------------
+# track fit, downstream muon hypothesis
+#------------------------------------------------------------------------------
+	KSFDmuMH    : { @table::KSFDmuM                           SeedCollection : MHFinderDmu CheckHelicity:false}
+	KFFDmuMHPar : { @table::KFFDmuM                           SeedCollection : KSFDmuMH }
+	KFFDmuMHDar : { @table::CalPatRec.producers.CalTrkFitDmm  SeedCollection : KSFDmuMH }
+
+#------------------------------------------------------------------------------
+# track fit, upstream electron hypothesis
+#------------------------------------------------------------------------------
+	KSFUeMH     : { @table::KSFUeM                            SeedCollection : MHFinderUe  CheckHelicity:false }
+	KFFUeMHPar  : { @table::KFFUeM                            SeedCollection : KSFUeMH  }
+#------------------------------------------------------------------------------
+# track fit, upstream muon hypothesis
+#------------------------------------------------------------------------------
+	KSFUmuMH    : { @table::KSFUmuM                           SeedCollection : MHFinderUmu CheckHelicity:false}
+	KFFUmuMHPar : { @table::KFFUmuM                           SeedCollection : KSFUmuMH }
+    }
+#------------------------------------------------------------------------------
+#  filters
+#------------------------------------------------------------------------------
+    filters : {
+	@table::Trigger.filters
+
+	g4status       : { @table::g4status }   # in Filters/fcl/prolog.fcl
+
+	detectorFilter : { module_type: FilterG4Out
+	    mainHitInputs   : [ "g4run:tracker" ]
+	    mainSPPtrInputs : [ ]
+	    extraHitInputs  : [ "g4run:virtualdetector", "g4run:protonabsorber" ]
+	    vetoDaughters   : [ ]
+	}
+
+	crvFilter: { module_type: FilterG4Out
+	    mainHitInputs : [ "g4run:CRV" ]
+	    extraHitInputs: [ "g4run:virtualdetector" ]
+	    vetoParticles : [ ]
+	}
+
+	filterStepPointMomentum : { @table::FilterStepPointMomentum
+	    cutMomentumMin : -1
+	}
+
+	@table::CalPatRec.filters
+
+	StrawDigiMCFilter : { @table::StrawDigiMCFilter }              # Filters/fcl/prolog.fcl
+
+	CaloShowerSimFilter : { module_type :CaloShowerSimFilter
+	    particleTypes     : [ 22, 11, -11, 13, -13, 2212, -2212  ] # save photons, electrons, muons, and protons
+	    MinParticleEnergy : 40.0
+	    MinTotalEnergy    : 10000.0 # disable
+	}
+	GammaFilter : { module_type : GammaDaughterFilter
+	    doFilter    : false 
+	}
+    }
+
+    analyzers : {
+	@table::Trigger.analyzers
+        genCountLogger            : { module_type: GenEventCountReader } # defalt: 1 StepPointMC, 10 MeV
+    }
+}
+
+#------------------------------------------------------------------------------
+# output event formats
+# 1. event format for mixing input
+#------------------------------------------------------------------------------
+Mu2eII.gen_sim_output       : [ "drop    *_*_*_*"                                 ,
+				"keep    mu2e::EventWeight_*_*_*"                 ,
+				"keep    mu2e::EventWindowMarker_EWMProducer_*_*" ,
+				"keep    mu2e::FixedTimeMap_*_*_*"                ,
+				"keep    mu2e::GenEventCount_*_*_*"               ,
+				"keep    mu2e::GenParticles_*_*_*"                ,
+				"keep    *_g4run_*_*"                             ,
+				"drop    mu2e::StepPointMCs_g4run_calorimeter_*"  ,
+				"drop    mu2e::StepPointMCs_g4run_calorimeterRO_*",
+				"keep    mu2e::CaloShowerSteps_*_*_*"
+			       ]
+#------------------------------------------------------------------------------
+# 2. output format for digi files
+#------------------------------------------------------------------------------
+Mu2eII.gen_sim_digi_output  : [ "drop    *_*_*_*"                                ,
+				"keep    *_compressDigiMCs_*_*"                  ,
+				"keep    mu2e::GenEventCount_*_*_*"              ,
+				"keep    mu2e::GenParticles_generate_photon_*"   ,
+				"keep    mu2e::StatusG4_g4run_*_*"               ,
+				"keep    mu2e::EventWeight_*_*_*"                ,
+				"keep    mu2e::EventWindowMarker_EWMProducer_*_*",
+				"keep    mu2e::FixedTimeMap_*_*_*"               ,
+				"keep    mu2e::CaloDigis_CaloDigiFromShower_*_*" ,
+				"keep    mu2e::CrvDigis_CrvDigi_*_*"             ,
+				"keep    mu2e::ProtonBunchIntensity_*_*_*"       ,
+				"keep    mu2e::StrawDigis_makeSD_*_*"            ,
+				"keep    art::TriggerResults_TriggerResults_*_*"
+			       ]
+#------------------------------------------------------------------------------
+# 2. output format for digi files after mixing
+#------------------------------------------------------------------------------
+Mu2eII.mixing_output : [ "drop *_*_*_*"                               ,
+			 "keep *_compressDigiMCs_*_*"                 ,
+			 "keep mu2e::GenEventCount_*_*_*"             ,
+			 "keep mu2e::GenParticles_generate_photon_*"  ,
+			 "keep mu2e::EventWeight_*_*_*"               ,
+			 "keep mu2e::EventWindowMarker_*_*_*"         ,
+			 "keep mu2e::ProtonBunchIntensity_*_*_*"      ,
+			 "keep mu2e::StrawDigis_*_*_*"                ,
+			 "keep mu2e::CaloDigis_*_*_*"                 ,
+			 "keep mu2e::CrvDigis_*_*_*"                  ,
+			 "keep art::TriggerResults_TriggerResults_*_*"
+			]
+
+Mu2eII.outputs: {
+    defaultOutput : { module_type : RootOutput
+	SelectEvents  : [ @sequence::TRIGGER_PATHS ]
+	outputCommands: [ "keep *_*_*_*" ]
+    }
+    FullOutput : { @table::Mixing.Output  outputCommands : [ "keep *_*_*_*"                  ] }
+    DetOutput  : { @table::Mixing.Output  outputCommands : [ @sequence::Mu2eII.mixing_output ] }
+}
+
+#------------------------------------------------------------------------------
+# module sequences - by functionality
+#------------------------------------------------------------------------------
+Mu2eII.gen_g4              : [ generate, genCounter, g4run, g4status ]
+
+Mu2eII.gen_g4_pbi          : [ generate, genCounter, g4run, protonBunchIntensity ]
+
+Mu2eII.gen_g4_pbi_detFilter: [ generate, genCounter, g4run, protonBunchIntensity, filterStepPointMomentum ]
+
+Mu2eII.pbi_ewm             : [ protonBunchIntensity, EWMProducer ]
+
+Mu2eII.digis               : [ @sequence::TrackerMC.DigiSim, StrawDigiMCFilter, 
+			       @sequence::CaloDigiMC.DigiSim, 
+			       @sequence::CrvDAQPackage.CrvDAQSequence 
+			       # compressDigiMCs 
+			      ]
+
+Mu2eII.digis_no_filter     : [ @sequence::TrackerMC.DigiSim, 
+			       # StrawDigiMCFilter, 
+			       @sequence::CaloDigiMC.DigiSim, 
+			       @sequence::CrvDAQPackage.CrvDAQSequence
+			       # compressDigiMCs 
+			      ]
+
+Mu2eII.digisCaloFilter     : [ @sequence::CaloDigiMC.DigiSim, CaloShowerSimFilter,
+			       @sequence::TrackerMC.DigiSim, 
+			       @sequence::CrvDAQPackage.CrvDAQSequence 
+			       # compressDigiMCs 
+			      ]
+
+# calorimeter reconstruction
+Mu2eII.calo_hit_reco        : [ CaloRecoDigiFromDigi ,CaloCrystalHitFromHit ]
+
+Mu2eII.calo_cluster_reco    : [ CaloProtoClusterFromCrystalHit, CaloClusterFromProtoCluster ]
+
+Mu2eII.calo_reco            : [ @sequence::Mu2eII.calo_hit_reco,
+				@sequence::Mu2eII.calo_cluster_reco ]
+
+# track hit reconstruction
+Mu2eII.trk_hit_reco         : [ makeSH, makePH, FlagBkgHits]
+
+
+# CRV reconstruction
+Mu2eII.crv_reco             : [ @sequence::CrvRecoMCPackage.CrvRecoMCSequence ]
+
+# downstream e+/e- helix reconstruction
+Mu2eII.helix_reco_de : [
+			TimeClusterFinderDe, HelixFinderDe,                     # TrkPatRec
+			CalTimePeakFinder, DeltaFinder, CalHelixFinderDe,       # CalPatRec
+			MHFinderDe                                              # helix merging
+		       ]
+
+# upstream e+/e- helix reconstruction
+Mu2eII.helix_reco_ue : [
+			TimeClusterFinderUe, HelixFinderUe,                     # TrkPatRec-only
+			MHFinderUe                                              # helix merging
+		       ]
+
+# downstream electron reconstruction: e- and e+ combined
+Mu2eII.trk_reco_de  : [
+		       TimeClusterFinderDe, HelixFinderDe,                     # TrkPatRec
+		       CalTimePeakFinder, DeltaFinder, CalHelixFinderDe,       # CalPatRec
+		       MHFinderDe,                                             # helix merging
+		       KSFDeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFDeMHPar, KFFDeMHDar                                  # final Kalman filter fit with the Panel-based AR
+		      ]
+
+Mu2eII.trk_reco_de_dar : [
+		       TimeClusterFinderDe, HelixFinderDe,                     # TrkPatRec
+		       CalTimePeakFinder, DeltaFinder, CalHelixFinderDe,       # CalPatRec
+		       MHFinderDe,                                             # helix merging
+		       KSFDeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFDeMHDar                                              # final Kalman filter, DAR-only
+		      ]
+
+# downstream muon reconstruction: mu- and mi+ combined
+Mu2eII.trk_reco_dmu : [
+		       TimeClusterFinderDmu, HelixFinderDmu,                   # TrkPatRec
+		       CalTimePeakFinderMu, DeltaFinderMu, CalHelixFinderDmu,  # CalPatRec
+		       MHFinderDmu,                                            # helix merging
+		       KSFDmuMH,                                               # Seed fit (chisquared, no drift)
+		       KFFDmuMHPar, KFFDmuMHDar                                # final Kalman filter fit with the panel-based AR
+		      ]
+
+Mu2eII.trk_reco_dmu_dar : [
+		       TimeClusterFinderDmu, HelixFinderDmu,                   # TrkPatRec
+		       CalTimePeakFinderMu, DeltaFinderMu, CalHelixFinderDmu,  # CalPatRec
+		       MHFinderDmu,                                            # helix merging
+		       KSFDmuMH,                                               # Seed fit (chisquared, no drift)
+		       KFFDmuMHDar                                             # final Kalman filter fit, DAR-only
+		      ]
+
+# upstream electron reconstruction (e- and e+): standalone-only pattern recognition, 
+# calorimeter-seeded algorithm is designed to deal only with the downstream tracks
+Mu2eII.trk_reco_ue  : [
+		       TimeClusterFinderUe, HelixFinderUe,   
+		       MHFinderUe,                                             # helix merging
+		       KSFUeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFUeMHPar , KFFUeMHDar                                 # final Kalman filter fit
+		      ]
+
+# upstream electron reconstruction, DAR
+Mu2eII.trk_reco_ue_dar : [
+		       TimeClusterFinderUe, HelixFinderUe,                     # TrkPatRec
+		       MHFinderUe,                                             # helix merging
+		       KSFUeMH,                                                # Seed fit (chisquared, no drift)
+		       KFFUeMHDar                                              # final Kalman filter, DAR-only
+		      ]
+
+# upstream muon reconstruction (mu- and mu+): standalone-only pattern recognition, 
+# calorimeter-seeded algorithm is designed to deal only with the downstream tracks
+Mu2eII.trk_reco_umu : [
+		       TimeClusterFinderUmu, HelixFinderUmu,   
+		       MHFinderUmu,                                            # helix merging
+		       KSFUmuMH,                                               # Seed fit (chisquared, no drift)
+		       KFFUmuMHPar , KFFUeMHDar                                # final Kalman filter fit
+		      ]
+
+# tracks reconstructions: positive and negative charges separate
+# use sequecnes defined in JobConfig/reco/prolog.fcl
+Mu2eII.trk_reco_sep  : [ @sequence::Reconstruction.DeSequence,
+			 @sequence::Reconstruction.UeSequence,
+			 @sequence::Reconstruction.DmuSequence,
+			 @sequence::Reconstruction.UmuSequence
+		       ]
+
+# MC compression at the end of reco, assume the pulse punch intensity to be present
+Mu2eII.reco_compression : [ FindMCPrimary,        # find the primary particle
+			    SelectRecoMC,         # identify the MC information we want to keep
+			    compressRecoMCs       # compress
+			  ]
+
+# trigger paths considered, include into digi datasets
+Mu2eII.triggers         : [
+			   tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+			   cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+			   tprHelixIPADeM_trigger
+			  ]
+#------------------------------------------------------------------------------
+# Mu2eII paths
+#------------------------------------------------------------------------------
+    Mu2eII.paths : {
+	@table::Trigger.paths
+#------------------------------------------------------------------------------
+# start from including the trigger paths
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# gcl: an attempt to introduce a standard name for genCountLogger path
+#------------------------------------------------------------------------------
+	gcl        : [ genCountLogger ]
+#------------------------------------------------------------------------------
+# p1  : MC generation, G4, digitization
+# p12 : MC generation, G4, filter events with at least one step point in the tracker of the calorimeter
+# p14 : prepare inputs for mixing
+#------------------------------------------------------------------------------
+	Mu2eII_p1 : [ @sequence::Mu2eII.gen_g4_pbi,           # includes protonBunchIntensity
+		      GammaFilter,                            # does nothing by default
+		      @sequence::CommonMC.DigiSim      ,      # adds TimeMaps, EWMProducer (name - confusing)
+		      @sequence::Mu2eII.digis          ,
+		      compressDigiMCs
+		     ]
+
+	# same as Mu2eII_p1, but using a calo filter instead of straw digi filter
+	Mu2eII_p1calo : [ @sequence::Mu2eII.gen_g4_pbi     , 
+			  GammaFilter                      ,  # does nothing by default
+			  @sequence::CommonMC.DigiSim      ,  # TimeMaps, EWMProducer
+			  @sequence::Mu2eII.digisCaloFilter,
+			  compressDigiMCs
+
+			 ]
+
+	Mu2eII_p10 : [ @sequence::Mu2eII.gen_g4_pbi,          # includes ProtonBunchIntensity
+		       filterStepPointMomentum ,
+		       GammaFilter,                           # does nothing by default
+		       @sequence::CommonMC.DigiSim       ,    # adds TimeMaps, EWMProducer (name - confusing)
+		       @sequence::Mu2eII.digis_no_filter ,    # no StrawDigiMCFilter, for mixing
+		       compressDigiMCs
+		      ]
+
+	Mu2eII_p11 : [ g4run, protonBunchIntensity,           # what's left of @sequence::Mu2eII.gen_g4_time_map,
+		       @sequence::CommonMC.DigiSim, 
+		       GammaFilter                ,           # does nothing by default
+		       @sequence::Mu2eII.digis    ,
+		       compressDigiMCs
+		     ]
+
+	Mu2eII_p111 : [ @sequence::Mu2eII.pbi_ewm   ,          # what's left of @sequence::Mu2eII.gen_g4_time_map,
+			@sequence::CommonMC.TimeMaps, 
+			GammaFilter                 ,          # does nothing by default
+			@sequence::Mu2eII.digis_no_filter,
+			compressDigiMCs
+		       ]
+
+	Mu2eII_p12 : [ @sequence::Mu2eII.gen_g4_pbi,          # includes ProtonBunchIntensity
+		       filterStepPointMomentum,               # 
+		       @sequence::CommonMC.DigiSim            # adds TimeMaps, EWMProducer (name - confusing)
+		      ]
+
+
+	Mu2eII_p13 : [ g4run , 
+		       filterStepPointMomentum,               # 
+		       @sequence::CommonMC.DigiSim            # adds TimeMaps, EWMProducer (name - confusing)
+		      ]
+
+	Mu2eII_p14_mustop : [ generate, genCounter, g4run, filterStepPointMomentum, 
+			      # protonTimeMap, muonTimeMap, 
+			      CaloShowerStepFromStepPt
+			     ]                                # path for producing mixing inputs from muon captures
+
+	Mu2eII_p14_flash : [ g4run, filterStepPointMomentum
+			     # protonTimeMap, 
+			     # CaloShowerStepFromStepPt
+			    ]                                 # path for producing the mixing input from beam flash 
+
+	Mu2eII_p15_flash : [ protonTimeMap           , 
+			     filterStepPointMomentum ,        # filter again, now - on time, need step points...
+			     CaloShowerStepFromStepPt
+			    ]                                 # path for producing the mixing input from beam flash 
+#------------------------------------------------------------------------------
+# p2: read digis, do reconstruction: run downstream electron and muon reco paths
+#------------------------------------------------------------------------------
+	Mu2eII_p2 : [ @sequence::Mu2eII.calo_reco,
+		      @sequence::Mu2eII.trk_hit_reco,
+		      @sequence::Mu2eII.trk_reco_de ,
+		      @sequence::Mu2eII.trk_reco_dmu , 
+		      @sequence::Mu2eII.trk_reco_sep ,
+		      @sequence::Mu2eII.reco_compression
+		     ]
+
+#------------------------------------------------------------------------------
+# p21: read digis, do reconstruction: run downstream electron and muon reco paths
+#------------------------------------------------------------------------------
+	Mu2eII_p21 : [ @sequence::Mu2eII.calo_reco,
+		       @sequence::Mu2eII.trk_hit_reco,
+		       @sequence::Mu2eII.trk_reco_de ,
+		       @sequence::Mu2eII.trk_reco_dmu
+		      ]
+
+#------------------------------------------------------------------------------
+# p22: read digis, reconstruct helices - both directions, 
+#      2021-03-21: currently time clustering is currently not direction-symmetric
+#------------------------------------------------------------------------------
+	Mu2eII_p22 : [ @sequence::Mu2eII.calo_reco,
+		       @sequence::Mu2eII.trk_hit_reco,
+		       @sequence::Mu2eII.helix_reco_de,
+		       @sequence::Mu2eII.helix_reco_ue
+		      ]
+
+#------------------------------------------------------------------------------
+# p100: concatenation job, trigger path is empty
+#------------------------------------------------------------------------------
+	Mu2eII_p100 : [ ]
+    }
+#------------------------------------------------------------------------------
+# introduce blind time - start of digitization
+#------------------------------------------------------------------------------
+services.DbService.verbose                                   : 0
+services.ProditionsService.strawElectronics.useDb            : false
+services.ProditionsService.strawElectronics.verbose          : 0
+
+services.ProditionsService.strawElectronics.flashEnd         : @erase
+services.ProditionsService.strawElectronics.flashEnd         : @local::BLIND_TIME
+
+physics.producers.makeSH.minimumTime                         : @erase
+physics.producers.makeSH.minimumTime                         : @local::BLIND_TIME
+
+physics.producers.CaloShowerStepROFromShowerStep.blindTime   : @erase
+physics.producers.CaloShowerStepROFromShowerStep.blindTime   : @local::BLIND_TIME
+
+physics.producers.CaloDigiFromShower.blindTime               : @erase 
+physics.producers.CaloDigiFromShower.blindTime               : @local::BLIND_TIME
+
+physics.producers.CaloProtoClusterFromCrystalHit.timeCut     : @erase
+physics.producers.CaloProtoClusterFromCrystalHit.timeCut     : @local::BLIND_TIME
+
+physics.producers.TimeClusterFindere.tmin                    : @erase
+physics.producers.TimeClusterFindere.tmin                    : @local::BLIND_TIME
+# 
+physics.filters.CalTimePeakFinder.minClusterTime             : @erase
+physics.filters.CalTimePeakFinder.minClusterTime             : @local::BLIND_TIME
+# 
+physics.producers.DeltaFinder.minimumTime                    : @erase
+physics.producers.DeltaFinder.minimumTime                    : @local::BLIND_TIME
+# 
+physics.filters.CalHelixFinderDe.HelixFinderAlg.minimumTime : @erase
+physics.filters.CalHelixFinderDe.HelixFinderAlg.minimumTime : @local::BLIND_TIME
+
+#------------------------------------------------------------------------------
+# common patches to offline modules (inherited from JobConfig)
+#------------------------------------------------------------------------------
+Mu2eII.producers.cosmicTimeMap.tmin   : 400 
+Mu2eII.producers.makeSD.AllHitsPlanes : [34,35]
+
+Mu2eII.producers.g4run.SDConfig.enableSD : [ @sequence::Mu2eII.producers.g4run.SDConfig.enableSD, "protonabsorber" ]
+
+services.ConditionsService : { @table::services.ConditionsService
+    StrawElectronics: { 
+	FlashStart             : 1705
+	DiscriminatorThreshold : [  # 192 total
+				  12.2 , 11.3 , 12.6 , 12.5 , 12.7 , 12.5 , 12.3 , 11.1 , 11.3 , 12.1 , #  0
+				  11.6 , 11.5 , 13.0 , 11.1 , 10.5 , 11.4 , 11.0 , 12.0 , 12.8 , 12.8 , # 10
+				  12.1 , 11.2 , 11.6 , 13.1 , 12.3 , 12.3 , 12.2 , 11.8 , 13.5 , 13.4 , # 20
+				  10.7 , 11.7 , 13.6 , 12.3 ,  9.9 , 12.1 , 10.4 , 13.2 , 11.9 , 13.5 , 
+				  12.5 , 12.6 , 12.1 , 14.2 , 13.3 , 11.5 , 11.5 , 11.7 , 11.6 , 13.2 , 
+				  14.9 , 12.7 , 12.7 , 12.6 , 11.4 , 13.5 , 12.2 , 12.6 , 11.9 , 10.3 , 
+				  12.4 , 12.3 , 11.1 , 10.7 , 12.0 , 12.9 , 13.4 , 13.8 , 11.1 , 13.1 , 
+				  13.2 , 12.3 , 13.3 , 12.6 , 11.6 , 11.4 , 11.6 , 11.9 , 10.9 , 10.8 , 
+				  11.5 , 12.4 , 11.5 , 11.0 , 12.3 , 12.4 , 12.2 , 10.9 , 11.7 , 11.3 , 
+				  12.8 , 13.3 , 11.4 , 12.6 , 10.7 , 12.0 , 14.3 , 12.1 , 12.4 , 12.6 , 
+				  11.5 , 13.3 , 11.8 , 13.3 , 11.4 , 11.0 , 11.8 , 13.1 , 12.6 , 11.5 , # 100
+				  10.5 , 11.2 , 12.5 , 11.9 , 11.4 , 12.3 , 11.7 , 12.2 , 13.4 , 10.5 , 
+				  12.6 , 11.7 , 12.3 , 11.3 , 12.0 , 12.6 , 12.5 , 12.1 , 11.2 , 13.6 , 
+				  11.9 , 11.4 , 12.6 , 12.9 , 11.4 , 12.8 , 11.4 , 13.2 , 13.0 , 11.4 , 
+				  13.2 , 12.4 , 13.1 , 14.9 , 12.4 , 11.2 , 10.6 , 10.4 , 11.3 , 13.0 , 
+				  10.8 , 11.9 , 11.6 , 12.3 , 11.4 , 12.6 , 12.3 , 13.7 , 12.7 , 12.1 , 
+				  12.3 , 10.2 ,  9.9 , 10.9 , 11.6 , 12.6 , 12.7 , 12.4 , 10.9 , 12.2 , 
+				  13.2 , 13.2 , 11.3 , 12.8 , 11.7 , 12.7 , 13.3 , 12.4 , 12.0 , 12.3 , 
+				  12.0 , 12.9 , 11.9 , 12.6 , 11.6 , 13.6 , 12.8 , 13.6 , 13.3 , 13.2 , # 190
+				  12.4 , 11.6 ]
+    }
+}
+#----------------------------------------------------------------------------
+# 2020-09-18 P.M. : update CRV light yield - take out the 30% "safety factor"
+#----------------------------------------------------------------------------
+Mu2eII.producers.CrvPhotons.scintillationYield               : 16545
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# 2020-08-18 P.M. : changes to the CRV thresholds wrt CRVResponse/fcl/prolog_v8.fcl (by Ben/Yuri)
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#                      old(v8)  PEthresholds                 : [  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  26 ,  36 ,  22 ,  18 ,  20 ,  36 ,  36 ,  28 ,  36 ,  36 ,  36 ,  36 ,  26 ,  26 ,  26 ,  26 ]
+Mu2eII.producers.CrvCoincidence.PEthresholds                 : [  8  ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,   8 ,   8 ,  8  ,  8  ,   8 ,  8  ,   8 ,   8 ,   8 ,   8 ]
+
+#                      old(v8)  useFourLayers                : [false,false,false,false,false,false,false, true, true,false,false, true, true, true,false,false,false,false,false,false,false,false] 
+Mu2eII.producers.CrvCoincidence.useFourLayers                : [false,false,false,false,false,false,false, true,false,false,false, true, true, true, true, true, true, true,false,false,false,false]
+
+#                      old(v8)  adjacentPulseTimeDifferences : [   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,  10 ,  10 ,   5 ,   5 ,  10 ,  10 ,  10 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ,   5 ] //ns
+Mu2eII.producers.CrvCoincidence.adjacentPulseTimeDifferences : [  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ,  10 ] //ns
+
+# for reco compression we don't have CRV reco path at the moment
+Mu2eII.producers.SelectRecoMC.SkipCrv                        : true
+Mu2eII.producers.compressRecoMCs.crvDigiMCTag                : ""
+Mu2eII.producers.compressRecoMCs.crvDigiMCIndexMapTag        : ""
+Mu2eII.producers.compressRecoMCs.crvCoincClusterMCTag        : ""
