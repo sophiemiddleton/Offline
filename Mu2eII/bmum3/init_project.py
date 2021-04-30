@@ -48,7 +48,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]         = job
         self.fStage[s.name()]      = s;
@@ -64,7 +64,7 @@ class Project:
 
         job.fInputDsID             = 'bmum3s11b0'
         dsn                        = project+'.'+job.fInputDsID+'art';
-        job.fInputDataset          = Daatset(dsn,'bmum3s11b0','local')
+        job.fInputDataset          = Dataset(dsn,'bmum3s11b0','local')
         job.fNInputFiles           = -1
 
         job.fMaxInputFilesPerSegment = 1
@@ -81,7 +81,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]         = job
         self.fStage[s.name()]      = s;
@@ -115,7 +115,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]           = job
         self.fStage[s.name()]        = s;

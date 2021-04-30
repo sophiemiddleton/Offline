@@ -151,11 +151,11 @@ libmu2e_TrkDiag_TrackAnalysisReco_module.so
 libmu2e_TrkDiag_TrackPID_module.so
 libmu2e_TrkDiag_TrkRecoDiag_module.so
 
-lib/libmu2e_murat*.so
+lib/libmu2e_sophie*.so
 
 lib/libmu2e_Validation*
 
 lib/libStntuple_gui.so
-lib/libmurat*.so
+lib/libsophie*.so
 lib/librmc_fit_ana.so
 lib/libMu2eII*.so

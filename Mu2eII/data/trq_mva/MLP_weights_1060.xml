@@ -3,10 +3,10 @@
   <GeneralInfo>
     <Info name="TMVA Release" value="4.2.1 [262657]"/>
     <Info name="ROOT Release" value="6.18/04 [397828]"/>
-    <Info name="Creator" value="murat"/>
+    <Info name="Creator" value="sophie"/>
     <Info name="Date" value="Wed Dec 23 16:16:28 2020"/>
     <Info name="Host" value="Linux buildservice007.fnal.gov 3.10.0-1062.9.1.el7.x86_64 #1 SMP Thu Dec 5 14:44:59 CST 2019 x86_64 x86_64 x86_64 GNU/Linux"/>
-    <Info name="Dir" value="/mu2e/app/users/murat/Mu2eII_prof"/>
+    <Info name="Dir" value="/mu2e/app/users/sophie/Mu2eII_prof"/>
     <Info name="Training events" value="70000"/>
     <Info name="TrainingTime" value="2.51402614e+02"/>
     <Info name="AnalysisType" value="Classification"/>

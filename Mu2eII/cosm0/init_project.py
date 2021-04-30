@@ -76,7 +76,7 @@ class Project:
         desc                         = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
@@ -245,7 +245,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
@@ -306,7 +306,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------

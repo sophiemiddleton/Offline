@@ -136,7 +136,7 @@ class Project:
         desc                         = project+'.'+job.input_dataset().id()+'.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 #------------------------------------------------------------------------------
 # s5:reco_stn
 #------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 #------------------------------------------------------------------------------
 # s5:reco_stn_b1  : reconstruct and stntuple 1-batch mode dataset, don't write output, only stntuple's
 #------------------------------------------------------------------------------

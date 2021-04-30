@@ -350,7 +350,7 @@ void JobSubGui::list_pnfs_files() {
 void JobSubGui::jobsub_q() {
   TString cmd;
 
-  cmd = Form("time jobsub_q --user murat");
+  cmd = Form("time jobsub_q --user sophie");
 
   ExecuteCommand(cmd.Data(),fDebugLevel);
 }
@@ -431,7 +431,7 @@ void JobSubGui::submit_stnmaker_job() {
 void JobSubGui::catalog_stntuples() {
   TString cmd;
 
-  //  Stntuple/scripts/catalog_stntuples --bluearc -b ts_warm_bore -d ${dsid}_s3_tgtstops -p .stn -D /mu2e/data/users/murat/datasets/ts_warm_bore/$dsid/s3_stn_tgtstops --install  ;
+  //  Stntuple/scripts/catalog_stntuples --bluearc -b ts_warm_bore -d ${dsid}_s3_tgtstops -p .stn -D /mu2e/data/users/sophie/datasets/ts_warm_bore/$dsid/s3_stn_tgtstops --install  ;
 
   MyTabElement_t* tab = fTabElement+fActiveTabID;
 
@@ -455,7 +455,7 @@ void JobSubGui::catalog_stntuples() {
 	 job_stage.Data(),job_type.Data());
 	 
 
-  cmd = Form("Stntuple/scripts/catalog_stntuples --bluearc -b %s -d %s.%s -p nts.%s -D /mu2e/data/users/murat/datasets/%s/%s/%s_%s_%s --install %s",
+  cmd = Form("Stntuple/scripts/catalog_stntuples --bluearc -b %s -d %s.%s -p nts.%s -D /mu2e/data/users/sophie/datasets/%s/%s/%s_%s_%s --install %s",
 	     fProject.Data(),
 	     fDsid.Data(),
 	     istage.Data(),
@@ -465,7 +465,7 @@ void JobSubGui::catalog_stntuples() {
 	     job_stage.Data(),
 	     job_type.Data(),
 	     input_dataset.Data(),
-	     "/publicweb/m/murat/cafdfc");
+	     "/publicweb/m/sophie/cafdfc");
 
   ExecuteCommand(cmd.Data(),fDebugLevel);
 }

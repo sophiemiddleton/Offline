@@ -3,8 +3,8 @@
 //
 // location of the input training ntuples:
 //
-// /mu2e/data/users/murat/datasets/Mu2eII/pid_tmva_training/ele00s51b0.tmva_training_1000.root
-// /mu2e/data/users/murat/datasets/Mu2eII/pid_tmva_training/mumi0s51b0,tmva_training_1000.root
+// /mu2e/data/users/sophie/datasets/Mu2eII/pid_tmva_training/ele00s51b0.tmva_training_1000.root
+// /mu2e/data/users/sophie/datasets/Mu2eII/pid_tmva_training/mumi0s51b0,tmva_training_1000.root
 //
 // last used with ROOT v6.28
 ///////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ int    pid_tmva            (const char* EleFn, const char* MuoFn, const char* Tr
 //-----------------------------------------------------------------------------
 int train_pid_mva(const char* EleDsID = "ele00s61b0", const char* MuoDsID = "mumi0s61b0", int AlgorithmCode = 1000) {
 
-  TString dir = "/mu2e/data/users/murat/datasets/Mu2eII/pid_tmva_training/";
+  TString dir = "/mu2e/data/users/sophie/datasets/Mu2eII/pid_tmva_training/";
 
   TString ele_fn = dir+Form("%s.tmva_training_%04i.root",EleDsID,AlgorithmCode);
   TString muo_fn = dir+Form("%s.tmva_training_%04i.root",MuoDsID,AlgorithmCode);

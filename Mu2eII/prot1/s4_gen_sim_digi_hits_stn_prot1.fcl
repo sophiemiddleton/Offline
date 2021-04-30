@@ -55,5 +55,5 @@ outputs.detectorOutput.fileName           : "sim._user_.prot1s41b0.Mu2eII.001000
 #------------------------------------------------------------------------------
 physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
 #------------------------------------------------------------------------------
-# everything below is appended by murat/scripts/submit_mu2e_job
+# everything below is appended by sophie/scripts/submit_mu2e_job
 #------------------------------------------------------------------------------

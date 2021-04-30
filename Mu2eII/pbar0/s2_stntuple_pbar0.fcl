@@ -51,5 +51,5 @@ services.TFileService.fileName            : "nts._USER_.pbar0s21b0.Mu2eII.001000
 physics.filters.InitStntuple.histFileName : "nts._USER_.pbar0s21b0.Mu2eII.001000_00000000.stn"
 outputs.defaultOutput.fileName            : "mcs._USER_.pbar0s21b0.Mu2eII.001000_00000000.art"
 #------------------------------------------------------------------------------
-# everything below is appended by murat/scripts/submit_mu2e_job
+# everything below is appended by sophie/scripts/submit_mu2e_job
 #------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ process_name : G4S3TgtstopsStn
 
 source       : { module_type : RootInput 
 # use one of the concatenated Stage1 files 
-    fileNames : ["/mu2e/data/users/murat/datasets/ts3_tooth/v2/g4s3/00000/sim.murat.cd3-beam-g4s3-tgtstops.v622.001002_00010600.art"]
+    fileNames : ["/mu2e/data/users/sophie/datasets/ts3_tooth/v2/g4s3/00000/sim.sophie.cd3-beam-g4s3-tgtstops.v622.001002_00010600.art"]
 }
 
 outputs      : { @table::Stntuple.outputs   }
@@ -89,5 +89,5 @@ services.TFileService.fileName            : "nts._USER_.bmum0s31b0.Mu2eII.001000
 # physics.producers.CalPatRecDmm.diagLevel : 1
 # physics.producers.AvikPID.debugLevel     : 100
 #------------------------------------------------------------------------------
-# everything below is appended by murat/scripts/submit_mu2e_job
+# everything below is appended by sophie/scripts/submit_mu2e_job
 #------------------------------------------------------------------------------

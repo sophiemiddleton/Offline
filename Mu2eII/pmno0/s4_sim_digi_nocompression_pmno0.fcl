@@ -86,5 +86,5 @@ physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
 
 #include "JobConfig/common/Mu2eII_blind_time.fcl"
 #------------------------------------------------------------------------------
-# everything below is appended by murat/scripts/submit_mu2e_job
+# everything below is appended by sophie/scripts/submit_mu2e_job
 #------------------------------------------------------------------------------

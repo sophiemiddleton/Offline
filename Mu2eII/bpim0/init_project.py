@@ -48,7 +48,7 @@ class Project:
         desc = project+'.bpim0s00b0.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]           = job
         self.fStage[s.name()]        = s;
@@ -77,7 +77,7 @@ class Project:
         # grid output dir
         job.fDescription             = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]           = job
         self.fStage[s.name()]        = s;
@@ -108,7 +108,7 @@ class Project:
         desc                         = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]           = job
         self.fStage[s.name()]        = s;
@@ -139,7 +139,7 @@ class Project:
         desc = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.fJob[job.name()]           = job
         self.fStage[s.name()]        = s;

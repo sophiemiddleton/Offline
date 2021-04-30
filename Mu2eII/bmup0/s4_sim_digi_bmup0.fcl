@@ -90,5 +90,5 @@ physics.producers.DeltaFinder.minimumTime                    : @local::BLIND_TIM
 physics.filters.CalHelixFinderDe.HelixFinderAlg.minimumTime : @erase
 physics.filters.CalHelixFinderDe.HelixFinderAlg.minimumTime : @local::BLIND_TIME
 #------------------------------------------------------------------------------
-# everything below is appended by murat/scripts/submit_mu2e_job
+# everything below is appended by sophie/scripts/submit_mu2e_job
 #------------------------------------------------------------------------------

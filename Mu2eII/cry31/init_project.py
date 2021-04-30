@@ -83,7 +83,7 @@ class Project:
         desc                         = project+'.'+job.input_dsid()+'.'+s.name()+'_'+job.name()
         job.fDescription             = desc;
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 #------------------------------------------------------------------------------
 # s5: reconstruction
 #------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir          = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
 #------------------------------------------------------------------------------
 # s7: re-reconstruction of s6
 #------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 #------------------------------------------------------------------------------
 # s8: re-reconstruction of s7 with the '2025 light yield (no 30 "safety factor")
 #------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ class Project:
         job.fDescription             = desc;
 
         # directory where output is saved from scratch dcache
-        job.fOutputTopDir            = '/mu2e/data/users/murat/datasets'
+        job.fOutputTopDir            = '/mu2e/data/users/sophie/datasets'
 
         s.add_job(job)
 #------------------------------------------------------------------------------
