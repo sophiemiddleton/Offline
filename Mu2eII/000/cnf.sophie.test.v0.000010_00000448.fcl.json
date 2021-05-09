@@ -1,0 +1,26 @@
+{
+    "content_status": "good",
+    "parents": [
+        "sim.sophie.PS-Mu2e2.v0.000010_00001390.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00005534.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00009150.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00002180.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00000448.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00001810.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00005274.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00004692.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00001997.art",
+        "sim.sophie.PS-Mu2e2.v0.000010_00006852.art"
+    ],
+    "data_tier": "cnf",
+    "dh.configuration": "v0",
+    "dh.dataset": "cnf.sophie.test.v0.fcl",
+    "dh.description": "test",
+    "dh.owner": "sophie",
+    "dh.sequencer": "000010_00000448",
+    "dh.sha256": "0329aac868107fb013fe0933bccd8c3365931cb90521c3f3bc704757d8914d5e",
+    "file_format": "fcl",
+    "file_name": "cnf.sophie.test.v0.000010_00000448.fcl",
+    "file_size": 7328,
+    "file_type": "mc"
+}
