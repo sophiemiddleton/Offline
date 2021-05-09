@@ -1,0 +1,27 @@
+// TS Primary Absorber
+double TSPA.rFactorForVDs        = 650.; // Just for virtual detector build
+
+double beamline.tspa.rout		 = 300; // outer radius, inner radius is TS5
+double beamline.tspa.rin          = 0; // inner radius in newest spec.  shadow COL5
+double beamline.tspa.halflength4  = 100; //mm
+double beamline.tspa.offset  = 0; //mm
+double beamline.tspa.z0           = 0.; // Why this value?.  It is 4204 in Mu2e coords.  Apparently, this is zMu2e + 1667.  Hmmm.
+string beamline.tspa.material = "BePA";//"LiH";
+
+int    beamline.tspa.verbosityLevel = 0;
+bool   beamline.tspa.visible      = true;
+bool   beamline.tspa.solid        = false;
+
+
+//
+//
+// End notes:
+//
+// 1) Sources of information:
+//
+//
+//
+// This tells emacs to view this file in c++ mode.
+// Local Variables:
+// mode:c++
+// End:

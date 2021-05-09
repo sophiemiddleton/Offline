@@ -58,9 +58,12 @@ namespace mu2e {
       float tau; // proper time, for stopped pion weights
       ProcessCode code;
       PDGCode::type id;
+      float x0;
+      float y0;
+      float z0;
       float productionP;
       float angle;
-      StopInfo() : x(), y(), z(), px(), py(), pz(), pt(), t(), tau(), code(), id(), productionP(), angle() {}
+      StopInfo() : x(), y(), z(), px(), py(), pz(), pt(), t(), tau(), code(), id(), x0(), y0(), z0(), productionP(), angle() {}
 
       StopInfo(const art::Ptr<SimParticle>& p, const VspMC& spMCcolls, float tt)
         : x(p->endPosition().x())
@@ -74,6 +77,9 @@ namespace mu2e {
         , tau(tt)
         , code(p->stoppingCode())
         , id(p->pdgId())
+        , x0(p->startPosition().x())
+        , y0(p->startPosition().y())
+        , z0(p->startPosition().z())
       {
         //std::cout<<sqrt(p->startMomentum().x()*p->startMomentum().x()+p->startMomentum().y()*p->startMomentum().y()+p->startMomentum().z()*p->startMomentum().z())<<"   "<<p->startPosition().x()<<" "<<p->startPosition().y()<<" "<<p->startPosition().z()<<std::endl;
         std::cout<<"PDG "<<p->pdgId()<<std::endl;
@@ -194,7 +200,7 @@ namespace mu2e {
   //================================================================
   void myStoppedParticleDumper::beginJob() {
     art::ServiceHandle<art::TFileService> tfs;
-    std::string branchDesc("x/F:y/F:z/F:px/F:py/F:pz/F:pt/F:time/F:code/I:id/I:productionP/F");
+    std::string branchDesc("x/F:y/F:z/F:px/F:py/F:pz/F:pt/F:time/F:code/I:id/I:productionP/F:x0/F:y0/F:z0/F");
     if(writeProperTime_) {
       branchDesc += ":tauNormalized/F";
     }

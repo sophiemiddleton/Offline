@@ -1,12 +1,12 @@
 // DS Primary Absorber
 double DSPA.rFactorForVDs        = 650.; // Just for virtual detector build
 
-double beamline.dspa.rout		 = 75; // outer radius, inner radius is TS5
-double beamline.dspa.rin          = 21.5; // inner radius in newest spec.  shadow COL5
-double beamline.dspa.halflength4  = 0.05; //mm
-double beamline.dspa.offset  = 1000; //mm
+double beamline.dspa.rout		 = 300; // outer radius, inner radius is TS5
+double beamline.dspa.rin          = 0; // inner radius in newest spec.  shadow COL5
+double beamline.dspa.halflength4  = 5; //mm
+double beamline.dspa.offset  = 0; //mm
 double beamline.dspa.z0           = 5871.; // Why this value?.  It is 4204 in Mu2e coords.  Apparently, this is zMu2e + 1667.  Hmmm.
-string beamline.dspa.material = "Be";//"LiH";
+string beamline.dspa.material = "G4_Be";//"LiH";
 
 int    beamline.dspa.verbosityLevel = 0;
 bool   beamline.dspa.visible      = true;

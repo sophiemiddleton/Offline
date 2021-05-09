@@ -1590,11 +1590,11 @@ namespace mu2e {
       LiH->AddElement( getElementOrThrow("H"), 1);
     }
     
-    /*mat = uniqueMaterialOrThrow( "Be" );
+    mat = uniqueMaterialOrThrow( "BePA" );
     {
-      G4Material* LiH = new G4Material(mat.name, 0.78*CLHEP::g/CLHEP::cm3, 2 );
-      LiH->AddElement( getElementOrThrow("Be"), 1);
-    }*/
+      G4Material* Be = new G4Material(mat.name, 1.85*CLHEP::g/CLHEP::cm3, 1 );
+      Be->AddElement( getElementOrThrow("Be"), 1);
+    }
     setBirksConstant(config_);
 
   }
