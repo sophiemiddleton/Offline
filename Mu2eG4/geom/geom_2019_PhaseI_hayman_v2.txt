@@ -9,7 +9,7 @@ bool hasTarget          = true;
 bool hasProtonAbsorber  = true;
 bool hasTSdA           = true;
 bool beamline.hasDSPA          = false;
-bool beamline.hasTSPA          = true;
+bool beamline.hasTSPA          = false;
 bool hasExternalShielding = true;
 bool hasDiskCalorimeter = true;
 bool hasBFieldManager   = true;
@@ -58,20 +58,22 @@ double mu2e.detectorSystemZ0 = 10171.;   // mm  G4BL: (17730-7292=9801 mm)
 #include "Mu2eG4/geom/ElectronicRack_v01.txt"
 
 // #include "Mu2eG4/geom/stoppingTargetHoles_DOE_review_2017.txt" // 37 foil muon stopping target with holes
-#include "Mu2eG4/geom/stoppingTargetHoles_v02.txt" // 37 foil muon stopping target with holes and thicker foils (0.1 mm -> 0.1056 mm)
+//#include "Mu2eG4/geom/stoppingTargetHoles_v02.txt" // 37 foil muon stopping target with holes and thicker foils (0.1 mm -> 0.1056 mm)
 //#include "Mu2eG4/geom/stoppingTarget_Ti_34foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Ti_17foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Ti_10foils.txt"
-//#include "Mu2eG4/geom/stoppingTarget_Ti_25.txt"
+//#include "Mu2eG4/geom/stoppingTarget_Ti_24foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_V_30foils.txt"
-//#include "Mu2eG4/geom/stoppingTarget_V_17foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_V_19foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_V_12foils.txt"
-//#include "Mu2eG4/geom/stoppingTarget_V_25foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_V_17foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_V_8foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Li_400foils_3mm.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Al_17foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Al_25foils.txt"
-//#include "Mu2eG4/geom/stoppingTarget_Ti_20foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_Al_20foils.txt"
+//#include "Mu2eG4/geom/stoppingTarget_Al_30foils.txt"
+#include "Mu2eG4/geom/stoppingTarget_Ti_23foils.txt"
 //#include "Mu2eG4/geom/stoppingTarget_Li_100foils.txt"
 #include "Mu2eG4/geom/TSdA_v02.txt"
 #include "Mu2eG4/geom/DSPA.txt"

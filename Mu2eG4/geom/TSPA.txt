@@ -1,16 +1,16 @@
 // TS Primary Absorber
 double TSPA.rFactorForVDs        = 650.; // Just for virtual detector build
 
-double beamline.tspa.rout		 = 300; // outer radius, inner radius is TS5
-double beamline.tspa.rin          = 0; // inner radius in newest spec.  shadow COL5
-double beamline.tspa.halflength4  = 1000; //mm
-double beamline.tspa.offset  = 0; //mm
-double beamline.tspa.z0           = 0.; // Why this value?.  It is 4204 in Mu2e coords.  Apparently, this is zMu2e + 1667.  Hmmm.
-string beamline.tspa.material = "BePA";//"LiH";
+double beamline.tspa.rout		 = 200; // mm outer radius
+double beamline.tspa.rin          = 0; // mm inner radius 
+double beamline.tspa.halflength4  = 3; //mm 
+double beamline.tspa.offset  = 0; //mm (to shift the thing down the TS)
+double beamline.tspa.z0           = 0.; //offset in z0
+string beamline.tspa.material = "G4_Be";//;
 
 int    beamline.tspa.verbosityLevel = 0;
 bool   beamline.tspa.visible      = true;
-bool   beamline.tspa.solid        = false;
+bool   beamline.tspa.solid        = true;
 
 
 //

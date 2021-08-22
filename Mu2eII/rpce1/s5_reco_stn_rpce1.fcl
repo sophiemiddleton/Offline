@@ -1,0 +1,31 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# conversion electrons: read digi file, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p41, 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+  PROCESS_NAME @protect_ignore: RecoStn
+  GEN_ID       @protect_ignore: ExternalRPC
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+
+physics                                   : { @table::Stntuple.physics }  # note Stntuple.physics, not Mu2eII.physics
+physics.output_path                       : [ defaultOutput            ]  # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.rpce1s51b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.rpce1s51b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.rpce1s51b0.Mu2eII.001000_00000000.art"
+
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"

@@ -1,0 +1,120 @@
+#!/usr/bin/python
+
+from local_classes import *
+
+#------------------------------------------------------------------------------
+def get_number_of_files(dataset):
+    
+    if (dataset == 'Mu2eII.1000_1998.g4s4_digi.art') :
+        nfiles = 10;
+
+class Project:
+    #------------------------------------------------------------------------------
+# no need to have config files, can do initialization in python directly
+    def __init__(self):
+
+        project                          = 'Mu2eII'
+        dsid                             = 'bmum0'
+
+        self.fProjectName                = project
+        self.fDsid                       = dsid
+        self.fStage                      = {}
+#------------------------------------------------------------------------------
+# init first stage. a Stage can have one or several jobs associated with it
+#------------------------------------------------------------------------------        
+        s                          = Stage('s1');
+
+        job                        = Job('sim');
+        job.fRunNumber             = 1000;
+        job.fBaseFcl               = project+'/'+dsid+'/'+s.name()+'_muon_beam_'+dsid+'.fcl'
+        job.fInputStage            = 's0'
+        job.fInputStream           = 'gen'
+
+        job.fInputDataset          = None
+        job.fInputDsID             = 'bmum0s00b0'             # 's00' means: generator
+        job.fNInputFiles           = -1
+
+        job.fNInputFilesPerSegment =  1
+        job.fResample              = 'no'   # yes/no
+        job.fRequestedTime         = '12h'
+        job.fIfdh                  = 'xrootd'                 # ifdh/xrootd
+        job.fOutputStream          = ['mubeamout'  ]
+        job.fOutputFnPattern       = ['PS-mubeam'  ]
+        job.fOutputDsID            = ['bmum0s11b0' ]
+        job.fOutputPath            = ['trigmubeam' ]
+        
+        # grid output dir
+        desc                         = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
+        job.fDescription             = desc;
+        # directory where output is saved from scratch dcache
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
+
+        s.fJob[job.name()]         = job
+        self.fStage[s.name()]      = s;
+#------------------------------------------------------------------------------
+# init second stage
+#------------------------------------------------------------------------------        
+        s                          = Stage('s2');
+
+        job                        = Job('sim');
+        job.fBaseFcl               = project+'/'+dsid+'/'+s.name()+'_muon_beam_'+dsid+'.fcl'
+        job.fInputStage            = 's1'
+        job.fInputStream           = 'mubeam'
+
+        job.fInputDsID             = 'bmum0s11b0'
+        dsn                        = project+'.'+job.fInputDsID+'.art'
+        job.fInputDataset          = Dataset(dsn,'bmum0s11b0','local')
+
+        job.fNInputFiles           = -1
+        job.fNInputFilesPerSegment =  1
+        job.fResample              = 'no'   # yes/no
+        job.fRequestedTime         = '5h'
+        job.fIfdh                  = 'xrootd'                 # ifdh/xrootd
+        job.fOutputStream          = ['mubeamout'  ]
+        job.fOutputFnPattern       = ['TS-mubeam'  ]
+        job.fOutputDsID            = ['bmum0s21b0' ]
+        job.fOutputPath            = ['trigmubeam' ]
+        
+        # grid output dir
+        desc                       = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
+        job.fDescription           = desc;
+        # directory where output is saved from scratch dcache
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
+
+        s.fJob[job.name()]         = job
+        self.fStage[s.name()]      = s;
+#------------------------------------------------------------------------------
+# init 3rd stage
+#------------------------------------------------------------------------------        
+        s                          = Stage('s3');
+
+        job                        = Job('sim');
+        job.fBaseFcl               = project+'/'+dsid+'/'+s.name()+'_muon_beam_'+dsid+'.fcl'
+        job.fInputStage            = 's2'
+        job.fInputStream           = 'mubeam'
+        job.fInputDsID             = 'bmum0s21b0'
+        dsn                        = project+'.'+job.fInputDsID+'.art'
+        job.fInputDataset          = Dataset(dsn,'bmum0s21b0','local');
+        job.fNInputFiles           = -1
+
+        job.fNInputFilesPerSegment =  1
+        job.fResample              = 'no'   # yes/no
+        job.fRequestedTime         = '5h'
+        job.fIfdh                  = 'xrootd'                 # ifdh/xrootd
+
+        job.fOutputStream          = ['tgtstops'     , 'ootstops'     ]
+        job.fOutputFnPattern       = ['DS-TGTstops'  , 'DS-OOTstops'  ]
+        job.fOutputPath            = ['tgtStopOutput', 'ootStopOutput']
+        job.fOutputDsID            = ['bmum0s31b0'   , 'bmum0s32b0'   ]
+
+        # grid output dir
+        desc                         = project+'.'+job.fInputDsID+'.'+s.name()+'_'+job.name()
+        job.fDescription             = desc;
+        # directory where output is saved from scratch dcache
+        job.fOutputTopDir          = '/mu2e/data/users/sophie/datasets'
+
+        s.fJob[job.name()]         = job
+        self.fStage[s.name()]      = s;
+#------------------------------------------------------------------------------
+# end
+#------------------------------------------------------------------------------

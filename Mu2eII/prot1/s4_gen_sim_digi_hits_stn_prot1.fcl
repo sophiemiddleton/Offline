@@ -1,0 +1,59 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# generate protons (E default = look Stntuple.producers.pgun) and make STNTUPLE
+# require at least one straw hit produced by a proton
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  bgHitFiles    @protect_ignore: @nil
+  TRIGGER_PATHS @protect_ignore: [ p1 ]
+  PROCESS_NAME  @protect_ignore: PPlusGunStnmaker ##EMinusGunStnmaker
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+source  : { module_type : EmptyEvent }
+outputs : { @table::Stntuple.outputs }
+physics : { @table::Stntuple.physics }
+
+physics.p1 : [
+	      @sequence::Mu2eII.gen_g4         , 
+	      @sequence::CommonMC.DigiSim      ,  # time maps + window marker
+	      @sequence::Mu2eII.digis          ,
+	      @sequence::Mu2eII.trk_hit_reco   ,
+	      #    @sequence::Mu2eII.calo_reco      ,
+	      #    @sequence::Mu2eII.trk_reco_de    ,
+	      #    @sequence::Mu2eII.crv_reco       ,
+	      #    @sequence::Stntuple.post_reco_de , 
+	      @sequence::Stntuple.stnmaker
+	     ]
+
+physics.producers.generate : { @table::EventGenerator.producers.MuonCaptureProtonGun 
+    doHistograms : true
+    muonStops    : { @table::EventGenerator.ootMuonStops }
+}
+
+physics.filters.StrawDigiMCFilter.MinNDigis      : 1
+physics.filters.StrawDigiMCFilter.particleTypes  : [ 2212 ]
+physics.filters.StrawDigiMCFilter.MinParticleMom : 0.0
+
+physics.filters.StntupleMaker.makeClusters       : 0
+physics.filters.StntupleMaker.makePid            : 0
+#------------------------------------------------------------------------------
+# uncomment the next 2 lines if you want the DST (.art) file to be written out
+#------------------------------------------------------------------------------
+physics.out                               : [ ]                    # either [] or [defaultOutput]
+# outputs.detectorOutput.SelectEvents       : [ @local::TRIGGER_PATH ]
+#------------------------------------------------------------------------------
+# output file names ##/mu2e/data/personal/bvitali/nts._USER_.proton_gun_stnmaker.xxx.000003.root
+#------------------------------------------------------------------------------
+services.TFileService.fileName            : "nts._user_.prot1s41b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._user_.prot1s41b0.Mu2eII.001000_00000000.stn"
+outputs.detectorOutput.fileName           : "sim._user_.prot1s41b0.Mu2eII.001000_00000000.art"
+#------------------------------------------------------------------------------
+# uncomment to avoid waisting time on the initialization of detailed neutron 
+# cross sections - that shouldn't affect the electron simulation 
+#------------------------------------------------------------------------------
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+#------------------------------------------------------------------------------
+# everything below is appended by sophie/scripts/submit_mu2e_job
+#------------------------------------------------------------------------------

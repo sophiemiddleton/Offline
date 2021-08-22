@@ -1,0 +1,11 @@
+//-----------------------------------------------------------------------------
+// SU2020 geometry, ST foil thickness 150 um
+//-----------------------------------------------------------------------------
+#include "Mu2eII/common/geom_baseline.txt"
+
+vector<double> stoppingTarget.halfThicknesses  = { 0.075 };
+
+// This tells emacs to view this file in c++ mode.
+// Local Variables:
+// mode:c++
+// End:

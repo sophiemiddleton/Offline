@@ -1,0 +1,22 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# warning: use geometry with the MBS plug
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput          # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p100 ]    # defined in Mu2eII/common/Mu2eII.fcl
+  PROCESS_NAME  @protect_ignore: S4Concat
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type: @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics            }
+physics.output_path                     : [ defaultOutput                     ]
+outputs.defaultOutput.SelectEvents      : [                                   ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/crv01/geom_Mu2eII_crv01.txt"
+services.TFileService.fileName          : "nts._USER_.dio00s42b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "sim._USER_.dio00s42b0.Mu2eII.001000_00000000.art"

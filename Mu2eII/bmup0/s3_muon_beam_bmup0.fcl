@@ -1,0 +1,24 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# take out everything related to CRV and stopping target, writing out the geometry tree
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/DS.fcl"
+
+services.GeometryService.inputFile                    : "Mu2eII/bmup0/geom_Mu2eII_bmup0.txt"
+
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo : ""
+
+physics.filters.detectorFilter : { @table::FilterStepPointMomentum 
+    inputs : [ "g4run:DetectorMother" ]
+}
+
+physics.motherFilter   : [ g4run, g4consistent, stoppedMuonFinder, stoppedMuonDaughters,
+			   outOfTargetMuonFinder, outOfTargetMuonDaughters,
+			   mothersFilter, detectorFilter
+			  ]
+
+physics.trigger_paths  : [ motherFilter  ]
+physics.out            : [ mothersOutput ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName       : "nts.owner.bmup0s30b0.Mu2eII.sequencer.root"
+outputs.mothersOutput.fileName       : "sim.owner.bmup0s33b0.Mu2eII.sequencer.art"

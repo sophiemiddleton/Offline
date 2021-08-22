@@ -1,0 +1,8 @@
+// -*- mode:c++ -*-
+///////////////////////////////////////////////////////////////////////////////
+// use quasi-delta-function for the proton pulse shape
+///////////////////////////////////////////////////////////////////////////////
+
+#include "Mu2eG4/test/conditions_01.txt"
+
+string acceleratorParams.potPulse  = "ConditionsService/data/potTimingDistribution_deltaFunction.txt";

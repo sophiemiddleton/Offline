@@ -1,0 +1,71 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# generate 70 MeV/c electrons and make STNTUPLE
+# p1 : default reconstruction path
+# p2 : read and ntuple (use with RootInput to ntuple MDC'2018 files)
+# p3 : path to debug the TPR and CPR reconstruction paths separately
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TRIGGER_PATHS          @protect_ignore: [ Mu2eII_p1 ]  # defined in Mu2eII/common/Mu2eII.fcl
+  PROCESS_NAME           @protect_ignore: S4GenSimDigi
+  GEN_ID                 @protect_ignore: "PiCaptureCombined"
+  BLIND_TIME             @protect_ignore: 200.
+#  TIME_OFFSET_MAPS       @protect_ignore: { inputs : [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap" ] }
+#  TIME_OFFSET_MAPS       @protect_ignore: [ "g4run", "g4run" ]
+  PROTON_BUNCH_INTENSITY @protect_ignore: 3.9e6         # nominal/10
+  FLASH_EVENTS_PER_POT   @protect_ignore: 9.777e-4      # for uncut flash to be used in mixing
+
+StoppedParticleReactionGunPion: { module_type    : StoppedParticleReactionGunPion
+    physics: {
+	genId           : StoppedParticleReactionGun
+	pdgId           : -11
+	spectrumShape   : CeEndpoint
+	spectrumVariable: totalEnergy
+    }
+}
+
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                                           : @local::PROCESS_NAME
+source                                                 : { module_type: @local::INPUT_MODULE }
+outputs                                                : { @table::Mu2eII.outputs }
+physics                                                : { @table::Mu2eII.physics }
+
+physics.producers.generate                      : { @table::StoppedParticleReactionGunPion
+    physics : { @table::StoppedParticleReactionGun.physics
+	genId            : piEplusNuGun
+	pdgId            : -13
+	elow             : 29.380
+	ehi              : 29.381
+	spectrumVariable : "momentum"
+	spectrumShape    : "flat"
+    }
+
+    pionStops            : { 
+	  inputFiles            : ["xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/mhedges/DataFiles/pionStops/s3_pipl00_tgt/nts.owner.pions-nts3.version_Ti_degrader_3mm.sequencer.root"]
+	averageNumRecordsToUse: 500000
+	treeName              : "stoppedPionDumper/stops"
+	branchName            : "stops"
+	verbositylevel        : 0
+    }
+}
+physics.output_path                       : [ defaultOutput            ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands      : [ @sequence::Mu2eII.gen_sim_digi_output ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/pmnt0/geom_Mu2eII_pmnt0.txt"
+services.TFileService.fileName            : "nts._USER_.pmnt0s41b0.piplusenu.000001.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.pmnt0s41b0.piplusenu.000001.stn"
+outputs.defaultOutput.fileName            : "sim._USER_.pmnt0s41b0.piplusenu.000001.art"
+#------------------------------------------------------------------------------
+# uncomment to avoid waisting time on the initialization of detailed neutron 
+# cross sections - that shouldn't affect the electron simulation 
+#------------------------------------------------------------------------------
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+
+#include "JobConfig/common/Mu2eII_blind_time.fcl"
+#------------------------------------------------------------------------------
+# everything below is appended by sophie/scripts/submit_mu2e_job
+#------------------------------------------------------------------------------

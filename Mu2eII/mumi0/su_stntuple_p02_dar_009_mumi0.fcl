@@ -1,0 +1,53 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# 104.97 MeV electrons: read digi file, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+# variables in the top-level prolog are the ones which need to be set to the same value
+# in various individual prolog files
+# reprocess output of S5, dont use the calorimeter cluster in the fit
+# use delta function for the proton pulse timing distribution
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE         @protect_ignore: EmptyEvent                                            # EmptyEvent/RootInput
+  TRIGGER_PATHS        @protect_ignore: [ stntuple_p02_dar ]
+  GEN_ID               @protect_ignore: StoppedParticleReactionGun
+  TRACK_CALO_DT_OFFSET @protect_ignore: 0.0
+  STN_VDHITS_COLL_TAG  @protect_ignore: "g4run:virtualdetector"                  # or "compressDigiMCs:virtualdetector"
+
+  CALO_RECODIGI_FROM_DIGI_DT_OFFSET @protect_ignore: -1.6                        # after Stefano's corrections
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : su
+
+source                                    : { module_type : EmptyEvent }
+outputs                                   : { @table::Stntuple.outputs }
+physics                                   : { @table::Stntuple.physics }               # note Stntuple.physics, not Mu2eII.physics
+
+physics.producers.generate                : { @table::Stntuple.physics.producers.mgun }
+
+physics.filters.StntupleMakerDeDmuDar.makeTrigger : 0 
+#------------------------------------------------------------------------------
+# no compressDigiMCs
+#------------------------------------------------------------------------------
+physics.filters.StntupleMakerDeDmuDar.strawDigiMCCollTag : "makeSD"  # "compressDigiMCs"
+physics.filters.StntupleMakerDeDmuDar.simpCollTag        : "g4run"   # "compressDigiMCs"
+physics.filters.StntupleMakerDeDmuDar.genpCollTag        : "g4run"   # "compressDigiMCs"
+
+
+# physics.output_path                       : [ defaultOutput            ]               # choices: [ ] / [ defaultOutput ]
+physics.output_path                       : [                          ]               # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.ConditionsService.conditionsfile : "Mu2eII/common/conditions.txt"
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+
+services.TFileService.fileName            : "nts.mu2e.su_stntuple_p02_dar_009_mumi0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts.mu2e.su_stntuple_p02_dar_009_mumi0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs.mu2e.su_stntuple_p02_dar_009_mumi0.Mu2eII.001000_00000000.art"
+
+physics.producers.KFFDeMHDar.KalFit.useTrkCaloHit             : true
+physics.producers.KFFDmuMHDar.KalFit.useTrkCaloHit            : true
+#------------------------------------------------------------------------------
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT"

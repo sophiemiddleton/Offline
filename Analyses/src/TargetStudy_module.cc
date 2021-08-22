@@ -208,7 +208,7 @@ namespace mu2e {
          const StepPointMCCollection& stepPC = *steps;
         
         for (const auto& step : stepPC) {
-                if(step.position().z()>8400 and !inVolume){
+                if(step.position().z()>8400 and !inVolume){ //This is where we change the end point!
                         std::cout<<"Found "<<event.id().event()<<std::endl;
                         nstep[0] = step.momentum().x();
                         nstep[1] = step.momentum().y();

@@ -1,0 +1,43 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# S6: remaking S5 ntuples
+# conversion electrons: read digi file, reconstruct, stntuple 
+# by default: do not write reconstructed output (DST), set physics.output_path to [] 
+# includes tuned calorimeter timing resolution
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p42  , 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME  @protect_ignore: RecoStn
+  GEN_ID        @protect_ignore: "CeLeadingLog"
+  PDG_ID        @protect_ignore: 11
+  TIME_MAPS     @protect_ignore: [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap", "compressDigiMCs:cosmicTimeMap" ]
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+outputs                                   : { @table::Stntuple.outputs }  
+physics                                   : { @table::Stntuple.physics }  # note Stntuple.physics, not Mu2eII.physics
+
+# tune calorimeter timing resolution for 1-batch running mode, <proton pulse intensity> = 1.6e7
+physics.producers.CaloCrystalHitFromHit.aCorr : 6.745
+physics.producers.CaloCrystalHitFromHit.bCorr : 0.204
+#------------------------------------------------------------------------------
+# paths
+#------------------------------------------------------------------------------
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"
+
+physics.output_path                       : [                           ] # [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.cele0s50b2.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.cele0s51b2.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.cele0s51b2.Mu2eII.001000_00000000.art"

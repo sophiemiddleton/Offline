@@ -1,0 +1,40 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# flsh1 : beam flash - read mothers input... for mixing
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput                    # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p14_flash ]               # defined in Mu2eII/common/Mu2eII.fcl
+  GEN_ID        @protect_ignore: StoppedParticleReactionGun
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                           : S4Sim
+source                                 : { module_type: @local::INPUT_MODULE }
+physics                                : { @table::Mu2eII.physics }
+
+physics.producers.g4run.MultiStageParameters : { 
+    simParticleNumberOffset  : 300000                               # safe b/c of g4.particlesSizeLimit in stage1
+    genInputHits             : [ "mothersFilter:DetectorMother" ]
+    inputSimParticles        :   "mothersFilter"
+    inputMCTrajectories      : ""
+    inputPhysVolumeMultiInfo : ""                                   # "compressPVmuonBeam"
+}
+
+physics.producers.g4run.generatorModuleLabel      : ""                      # turn off to not use the primary proton for the second time
+physics.producers.g4run.TrajectoryControl         : { produce : false }
+physics.producers.g4run.SDConfig.preSimulatedHits : [ "mothersFilter:virtualdetector" ]
+
+physics.output_path                    : [ defaultOutput ]
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+
+outputs.defaultOutput.outputCommands   : [ "drop    *_*_*_*",
+					   "keep    mu2e::GenEventCount_*_*_*",
+					   "keep    *_g4run_*_*",
+					   "keep    mu2e::GenParticles_*_*_*"
+					  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile     : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName         : "nts._USER_.flsh1s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName         : "sim._USER_.flsh1s41b0.Mu2eII.001000_00000000.art"

@@ -1,0 +1,43 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this FCL file is used to generate 101.85 MeV photons from muon stops
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: EmptyEvent     # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p1, Mu2eII_p1calo ]      # defined in JobConfig/common/Mu2eII.fcl
+  PROCESS_NAME  @protect_ignore: GenSimDigi
+  GEN_ID        @protect_ignore: "ExternalRMC" # the same for e- and e+
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type: @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics }
+physics.producers.generate              : { @table::EventGenerator.producers.RMCGun }
+
+####################
+## Generator info ##
+####################
+
+# set to Mu2eII muon stop file
+physics.producers.generate.physics.elow                  : 101.849 #MeV
+physics.producers.generate.physics.ehi                   : 101.851 #MeV
+physics.producers.generate.physics.spectrumShape         : "flat" 
+physics.producers.generate.physics.genId                 : @local::GEN_ID
+#print histograms for helpful debugging/understanding generator spectra
+physics.producers.generate.doHistograms                  : true
+
+physics.output_path                    : [ defaultOutput ]
+
+outputs.defaultOutput.SelectEvents     : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands   : [ @sequence::Mu2eII.gen_sim_digi_output,
+					   "keep     mu2e::GenParticle_generate_photon_*", #stores the gen information of original photon
+					   "keep     mu2e::GenParticles_generate_photon_*" #stores the gen information of original photon (newer versions)
+					  ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.GeometryService.printConfigTopLevel : true
+services.TFileService.fileName          : "nts._USER_.rmce6s41b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "dig._USER_.rmce6s41b0.Mu2eII.001000_00000000.art"

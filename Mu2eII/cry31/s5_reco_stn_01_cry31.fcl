@@ -1,0 +1,46 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# conversion electrons: read digi file, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p41, 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME  @protect_ignore: S5RecoStn
+  GEN_ID        @protect_ignore: "CosmicCRY"
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+physics                                   : { @table::Stntuple.physics }  # note Stntuple.physics, not Mu2eII.physics
+
+physics.output_path                       : [ defaultOutput            ]  # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+# process first 1000 events (8 sec/event), drop output of S4 filtering
+#------------------------------------------------------------------------------
+source.maxEvents                          : 2000
+source.skipEvents                         : 2000
+source.inputCommands                      : [ "keep *", "drop *_*_*_GenSimDigi", "drop *_*_*_S5RecoStn" ]
+#------------------------------------------------------------------------------
+# cosmic datasets does't have "compressDigiMCs:protonabsorber"
+#------------------------------------------------------------------------------
+physics.producers.compressRecoMCs.extraStepPointMCTags : [ "compressDigiMCs:virtualdetector" ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.cry31s51b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.cry31s51b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.cry31s51b0.Mu2eII.001000_00000000.art"
+
+# services.message.destinations.log.categories.ArtSummary.limit      : 0    # exponential ?
+services.message.destinations.log.categories.ArtReport.limit       : 100  # number of events 
+
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"
+#------------------------------------------------------------------------------

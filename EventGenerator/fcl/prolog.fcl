@@ -224,6 +224,8 @@ EventGenerator : { @table::EventGenerator
     spectrumVariable : "totalEnergy"
     spectrumShape    : "tabulated"
     spectrumFileName : "ConditionsService/data/mueX.tbl"
+    ehi                   : 104.97
+    elow                  : 100.
     }
   }
   

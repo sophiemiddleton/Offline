@@ -359,7 +359,7 @@ namespace mu2e {
 
     // Build TS3
     strsec = ts->getTSCryo<StraightSection>(TransportSolenoid::TSRegion::TS3,TransportSolenoid::TSRadialPart::IN );
-    nestTubs( "TS3Vacuum",
+    VolumeInfo ts3VacInfo = nestTubs( "TS3Vacuum",
               TubsParams( 0., ts->ts3InnerRadius(), strsec->getHalfLength() ),
               downstreamVacuumMaterial,
               strsec->getRotation(),
@@ -809,19 +809,20 @@ namespace mu2e {
       } //end of " if pbarAbsTS3Version..."
     } //end if buildPbar
     
-    //build new absorber:
+    //build new TSPA absorber:
     if(config.getBool("beamline.hasTSPA", true)) {
       std::cout<<"has TSPA!!!!!!"<<std::endl;
       TubsParams paramsTSPA(config.getDouble("beamline.tspa.rin"), config.getDouble("beamline.tspa.rout"), config.getDouble("beamline.tspa.halflength4"));
       G4Material* matTSPA = findMaterialOrThrow(config.getString("beamline.tspa.material"));
       //CLHEP::Hep3Vector locTSPA(0.0,0.0,-ds->vac_halfLengthDs2() + _config.getDouble("beamline.tspa.halflength4") + _config.getDouble("beamline.tspa.offset"));
-      //G4Helper* _helper = &(*(art::ServiceHandle<G4Helper>()));
-       VolumeInfo ts3VacInfo = _helper->locateVolInfo( "TS3CryoInsVac" );
+       //G4Helper* _helper = &(*(art::ServiceHandle<G4Helper>()));
+       //VolumeInfo ts3VacInfo = _helper->locateVolInfo( "TS3CryoInsVac" );
        //CLHEP::HepRotation* pasubRotat = new CLHEP::HepRotation(CLHEP::HepRotation::IDENTITY);
 	     // pasubRotat->rotateY(90.0*CLHEP::degree);
-      nestTubs("TSPA", paramsTSPA, matTSPA, 0,  ts3VacInfo.centerInMu2e(),  ts3VacInfo /*or other mother*/, 0, G4Colour::Cyan(), "ts" /*or other lookup*/);
-      std::cout<<"finished TSPA>>>>>"<<std::endl;
-}
+	     CLHEP::Hep3Vector off(0,0,config.getDouble("beamline.tspa.offset"));
+      nestTubs("TSPA", paramsTSPA, matTSPA, 0,   off,  ts3VacInfo  /*or other mother*/, 0, G4Colour::Cyan(), "TSCryo" /*or other lookup*/);
+      std::cout<<"finished building TSPA!!!!"<<std::endl;
+    }
 
 
     // Build downstream end wall of TS5

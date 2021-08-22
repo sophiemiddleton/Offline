@@ -1,0 +1,12 @@
+# -*- mode: tcl -*-
+#include "JobConfig/beam/DS.fcl"
+
+services.GeometryService.inputFile                    : "Mu2eII/common/geom_baseline.txt"
+
+physics.producers.stoppedMuonFinder.particleTypes     : [ 13 ] // only mu-
+physics.producers.outOfTargetMuonFinder.particleTypes : [ 13 ] // only mu-
+
+physics.out                                           : [ mothersOutput ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.flsh1s30b0.Mu2eII.sequencer.root"
+outputs.mothersOutput.fileName     : "sim.owner.flsh1s33b0.Mu2eII.sequencer.art"

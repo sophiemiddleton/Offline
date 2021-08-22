@@ -1,0 +1,42 @@
+# -*- mode: tcl -*-
+###############################################################################
+# write GDML file with the Mu2e geometry
+# need to process at least one event for GDML file to be written out
+# to speed up the job, use G4 physics table called "Minimal"
+################################################################################
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+process_name : WriteGdml
+
+services : { @table::Services.Sim }
+
+source : {
+  module_type : EmptyEvent
+  maxEvents   : 1
+  firstRun    : 1
+}
+
+physics : {
+    producers: { 
+	g4run: { @table::Mu2eG4.producers.g4run
+	    debug  : { @table::Mu2eG4.producers.g4run.debug 
+		writeGDML    : true 
+		GDMLFileName : "mu2e_geometry_Mu2eII_flsh1.gdml"
+	    }
+	}
+    }
+    
+    p1 : [ g4run ] # @sequence::sophie.gen_g4 ] 
+    e1 : [ ]
+    
+    trigger_paths  : [p1]
+    end_paths      : [e1]
+}
+
+# reduce initialization time
+physics.producers.g4run.physics.physicsListName : "Minimal"
+
+# template for changing the geometry file, if needed
+services.GeometryService.inputFile: "Mu2eII/common/geom_baseline.txt"

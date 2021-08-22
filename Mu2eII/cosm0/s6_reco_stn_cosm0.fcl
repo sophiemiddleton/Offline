@@ -1,0 +1,47 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# conversion electrons: read digi file, reconstruct, stntuple 
+# by default: write reconstructed output (DST), set physics.out to [] if not needed
+# stntuple_p40 includes full CRV reco
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS @protect_ignore: [ 
+				  stntuple_p40, 
+				  tprSeedDeM_trigger    , cprSeedDeM_trigger    , tprSeedDeP_trigger    , cprSeedDeP_trigger    , 
+				  cprLowPSeedDeM_trigger, cprLowPSeedDeP_trigger, tprLowPSeedDeM_trigger, tprLowPSeedDeP_trigger, 
+				  tprHelixIPADeM_trigger
+				 ]
+
+  PROCESS_NAME  @protect_ignore: S6RecoStn
+  GEN_ID        @protect_ignore: "CosmicCRY"
+
+  TIME_MAPS     @protect_ignore:  [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap", "compressDigiMCs:cosmicTimeMap" ]
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name                              : @local::PROCESS_NAME
+
+source.inputCommands                      : [ "keep *", "drop *_*_*_GenSimDigi", "drop *_*_*_S5RecoStn" ]
+
+# services.message.destinations.log.categories.ArtSummary.limit      : 0    # exponential ?
+services.message.destinations.log.categories.ArtReport.limit       : 10000  # number of events 
+
+physics                                   : { @table::Stntuple.physics }    # note Stntuple.physics, not Mu2eII.physics
+physics.output_path                       : [ defaultOutput            ]    # choices: [ ] / [ defaultOutput ]
+#------------------------------------------------------------------------------
+# cosmic datasets does't have "compressDigiMCs:protonabsorber"
+physics.producers.compressRecoMCs.extraStepPointMCTags : [ "compressDigiMCs:virtualdetector" ]
+#------------------------------------------------------------------------------
+# fill both CRV blocks
+physics.filters.StntupleMakerDeDmu.makeCrvPulses       : 1
+
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.cosm0s61b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.cosm0s61b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.cosm0s61b0.Mu2eII.001000_00000000.art"
+#------------------------------------------------------------------------------
+#include "gen/fcl/Trigger/offline/allTrig/allPaths.fcl"

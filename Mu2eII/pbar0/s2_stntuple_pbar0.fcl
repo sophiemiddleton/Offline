@@ -1,0 +1,55 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# generate 105 MeV/c electrons
+# make STNTUPLE in one go, without creating an intermediate file
+# for 105 MeV/c electron : E = 105.00124           MeV
+# for 105 MeV/c muon     : E = 148.9584269653785   MeV
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE     @protect_ignore: RootInput      # EmptyEvent/RootInput
+  TRIGGER_PATHS    @protect_ignore: [ stntuple_p0 ]
+  TIME_MAPS        @protect_ignore: [ ]
+  TIME_OFFSET_MAPS @protect_ignore: { inputs : @local::TIME_MAPS }
+
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name : G4TS1MubeamStn
+
+source       : { module_type : RootInput 
+# use one of the concatenated Stage1 files 
+    fileNames : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/cd3-beam-cs1-mubeam/0506a/art/00/01/sim.mu2e.cd3-beam-cs1-mubeam.0506a.001002_00488421.art"]
+}
+
+physics                                   : { @table::Stntuple.physics }
+physics.output_path                       : [                          ]  # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+
+physics.filters.StntupleMaker: { @table::physics.filters.StntupleMaker
+#------------------------------------------------------------------------------
+# disable everything, enable StepPointMC
+# VDET block is just yet another step point MC block
+#------------------------------------------------------------------------------
+    makeClusters     : 0
+    makeCrvClusters  : 0  # default: 1
+    makePid          : 0
+    makeSimp         : 1
+    makeTracks       : 0
+    makeStepPointMC  : 1
+
+    genpCollTag      : "ResamplingMixer"
+    simpCollTag      : "g4filter"
+    
+    spmcBlockName    : ["SpmcBlock"               , "VDetBlock"                      ]
+    spmcCollTag      : ["g4filter:Coll31OutRecord", "g4filter:virtualdetector" ]
+    statusG4Tag      : [ "g4run"                  , "g4run"                          ]
+}
+
+services.GeometryService.inputFile        : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName            : "nts._USER_.pbar0s21b0.Mu2eII.001000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.pbar0s21b0.Mu2eII.001000_00000000.stn"
+outputs.defaultOutput.fileName            : "mcs._USER_.pbar0s21b0.Mu2eII.001000_00000000.art"
+#------------------------------------------------------------------------------
+# everything below is appended by sophie/scripts/submit_mu2e_job
+#------------------------------------------------------------------------------

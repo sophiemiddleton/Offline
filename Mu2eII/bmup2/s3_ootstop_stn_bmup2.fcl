@@ -1,0 +1,49 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# make STNTUPLE from the output of the stage 3 simulation - stopped muons (tgtStopFilter)
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  TIME_MAPS        @protect_ignore: [ ]
+  TIME_OFFSET_MAPS @protect_ignore: { inputs : @local::TIME_MAPS }
+  TRIGGER_PATHS    @protect_ignore: [ stntuple_p0 ] 
+  INPUT_MODULE     @protect_ignore: RootInput        # choices: RootInput / EmptyEvent
+END_PROLOG
+
+#include "Stntuple/fcl/stnmaker.fcl"
+
+process_name : G4S3OotstopsStn
+
+outputs      : { @table::Stntuple.outputs }
+physics      : { @table::Stntuple.physics }
+
+physics.filters.StntupleMaker : { @table::physics.filters.StntupleMaker
+#------------------------------------------------------------------------------
+# disable everything, enable StepPointMC
+#------------------------------------------------------------------------------
+    makeClusters    : 0
+    makeCrvClusters : 0  # default: 1
+    makePid         : 0
+    makeTracks      : 0
+    makeTrigger     : 0
+    makeSimp        : 1
+    makeStepPointMC : 1
+    
+    simpCollTag     : "ootStopFilter"
+#------------------------------------------------------------------------------
+# suppress calculation of MC time offsets, not really needed, just an example
+#------------------------------------------------------------------------------
+    TimeOffsets         : {}
+#------------------------------------------------------------------------------
+# contrary to stage1 and stage2, stage3 contains only one StepPointMCCollection
+#------------------------------------------------------------------------------
+    spmcBlockName   : ["VDetBlock"                     ]
+    spmcCollTag     : ["ootStopFilter:virtualdetector" ]
+    statusG4Tag     : [ "g4run"                        ]
+}
+
+physics.output_path                       : [ ]                            # choices: [ ] / [ defaultOutput ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/bmup2/geom_Mu2eII_bmup2.txt"
+services.TFileService.fileName            : "nts._USER_.bmup2s32b0.Mu2eII.0010000_00000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.bmup2s32b0.Mu2eII.001002_00010600.stn" 

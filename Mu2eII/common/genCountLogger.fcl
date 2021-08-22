@@ -1,0 +1,22 @@
+# -*- mode: tcl -*-
+
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: RootInput          # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ ]                # defined in Mu2eII/common/Mu2eII.fcl
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : xx
+
+source                                  : { module_type: @local::INPUT_MODULE }
+outputs                                 : { @table::Mu2eII.outputs            }
+
+physics                                 : { @table::Mu2eII.physics            }
+# physics.output_path                     : gcl
+physics.end_paths                       : [ gcl                               ]
+outputs.defaultOutput.SelectEvents      : [                                   ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName          : "nts._USER_.crv01s22b0.Mu2eII.001000_00000000.root"
+# outputs.defaultOutput.fileName          : "sim._USER_.crv01s22b0.Mu2eII.001000_00000000.art"

@@ -1,0 +1,83 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# generate 70 MeV/c electrons and make STNTUPLE
+# p1 : default reconstruction path
+# p2 : read and ntuple (use with RootInput to ntuple MDC'2018 files)
+# p3 : path to debug the TPR and CPR reconstruction paths separately
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  # TRIGGER_PATHS          @protect_ignore: [ Mu2eII_p1 ]  # defined in Mu2eII/common/Mu2eII.fcl
+  TRIGGER_PATHS          @protect_ignore: [ p1 ]  # defined in Mu2eII/common/Mu2eII.fcl
+  PROCESS_NAME           @protect_ignore: S4GenSimDigi
+  GEN_ID                 @protect_ignore: "PiCaptureCombined"
+  BLIND_TIME             @protect_ignore: 200.
+#  TIME_OFFSET_MAPS       @protect_ignore: { inputs : [ "compressDigiMCs:protonTimeMap", "compressDigiMCs:muonTimeMap" ] }
+#  TIME_OFFSET_MAPS       @protect_ignore: [ "g4run", "g4run" ]
+  PROTON_BUNCH_INTENSITY @protect_ignore: 3.9e6         # nominal/10
+  FLASH_EVENTS_PER_POT   @protect_ignore: 9.777e-4      # for uncut flash to be used in mixing
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+StoppedParticleReactionGunPion: { module_type    : StoppedParticleReactionGunPion
+    physics: {
+	genId           : StoppedParticleReactionGun
+	pdgId           : -11
+	spectrumShape   : CeEndpoint
+	spectrumVariable: totalEnergy
+    }
+    #muonStops         : @local::mu2e.tgtMuonStops
+}
+
+process_name                                           : @local::PROCESS_NAME
+source                                                 : { module_type: @local::INPUT_MODULE }
+outputs                                                : { @table::Mu2eII.outputs }
+physics                                                : { @table::Mu2eII.physics }
+
+physics.producers.generate                      : { @table::StoppedParticleReactionGunPion
+    physics : { @table::StoppedParticleReactionGun.physics
+	genId            : piEplusNuGun
+	pdgId            : -11
+	elow             : 70.
+	ehi              : 70.01
+	spectrumVariable : "momentum"
+	spectrumShape    : "flat"
+    }
+
+    pionStops            : {
+	inputFiles            : ["xroot://fndca1.fnal.gov/pnfs/fnal.gov/usr/mu2e/resilient/users/mhedges/DataFiles/pionStops/s3_pipl00_tgt/nts.owner.pions-nts3.version_Ti_degrader_3mm.sequencer.root"]
+	averageNumRecordsToUse: 500000
+	treeName              : "stoppedPionDumper/stops"
+	branchName            : "stops"
+	verbositylevel        : 0
+   }
+}
+
+physics.p1 : [ @sequence::Mu2eII.gen_g4_pbi,           # includes protonBunchIntensity
+	       filterStepPointMomentum           ,
+	       GammaFilter                       ,           # does nothing by default
+	       @sequence::CommonMC.DigiSim       ,      # adds TimeMaps, EWMProducer (name - confusing)
+	       @sequence::Mu2eII.digis_no_filter
+	      ]
+
+physics.filters.filterStepPointMomentum.inputs         : [ "g4run:tracker"]
+
+physics.output_path                       : [ defaultOutput            ]
+outputs.defaultOutput.SelectEvents        : [ @sequence::TRIGGER_PATHS ]
+outputs.defaultOutput.outputCommands      : [ @sequence::Mu2eII.gen_sim_digi_output ]
+outputs.defaultOutput.outputCommands      : ["keep *_*_*_*"]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile        : "Mu2eII/pent0/geom_Mu2eII_pent0.txt"
+services.TFileService.fileName            : "nts._USER_.pent0s41b0.Mu2eII.001000_000000.root"
+physics.filters.InitStntuple.histFileName : "nts._USER_.pent0s41b0.Mu2eII.001000_000000.stn"
+outputs.defaultOutput.fileName            : "sim._USER_.pent0s41b0.Mu2eII.001000_000000.art"
+#------------------------------------------------------------------------------
+# uncomment to avoid waisting time on the initialization of detailed neutron
+# cross sections - that shouldn't affect the electron simulation
+#------------------------------------------------------------------------------
+physics.producers.g4run.physics.physicsListName : "QGSP_BERT"
+
+#include "JobConfig/common/Mu2eII_blind_time.fcl"
+#------------------------------------------------------------------------------
+# everything below is appended by sophie/scripts/submit_mu2e_job
+#------------------------------------------------------------------------------

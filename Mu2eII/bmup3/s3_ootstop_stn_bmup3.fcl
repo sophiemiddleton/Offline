@@ -1,0 +1,93 @@
+# -*- mode:tcl -*-
+#------------------------------------------------------------------------------
+# make STNTUPLE from the output of the stage 3 simulation - stopped muons (tgtStopFilter)
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+
+  TIME_MAPS        @protect_ignore: [ ]
+  TIME_OFFSET_MAPS @protect_ignore: { inputs : @local::TIME_MAPS }
+
+END_PROLOG
+
+#include "Stntuple/fcl/templates.fcl"
+
+process_name : G4S3TgtstopsStn
+
+source       : { module_type : RootInput 
+# use one of the concatenated Stage1 files 
+    fileNames : ["/mu2e/data/users/sophie/datasets/ts3_tooth/v2/g4s3/00000/sim.sophie.cd3-beam-g4s3-tgtstops.v622.001002_00010600.art"]
+}
+
+outputs      : { @table::Stntuple.outputs   }
+producers    : { @table::Stntuple.producers }
+filters      : { @table::Stntuple.filters   }
+analyzers    : { @table::Stntuple.analyzers }
+paths        : { @table::Stntuple.paths     }
+
+physics : {
+    producers: { @table::producers 
+	generate                 : { @table::producers.egun }
+# for CE, not old background mixing - default: 'compressPVDetector'
+	CaloShowerStepFromStepPt : { @table::producers.CaloShowerStepFromStepPt  
+	    physVolInfoInput: "g4run" 
+	}
+    }
+    
+    filters  : { @table::filters 
+	StntupleMaker: { @table::filters.StntupleMaker
+#------------------------------------------------------------------------------
+# disable everything, enable StepPointMC
+#------------------------------------------------------------------------------
+	    makeClusters    : 0
+	    makeCrvClusters : 0  # default: 1
+	    makePid         : 0
+	    makeSimp        : 1
+	    makeTracks      : 0
+	    makeStepPointMC : 1
+
+	    simpCollTag     : "ootStopFilter"
+
+# suppress calculation of MC time offsets, not really needed, just an example
+	    TimeOffsets         : {}
+# contrary to stage1 and stage2, stage3 contains only one StepPointMCCollection
+
+	    spmcBlockName   : ["VDetBlock"                     ]
+	    spmcCollTag     : ["ootStopFilter:virtualdetector" ]
+	    statusG4Tag     : [ "g4run"                        ]
+	}
+	InitStntuple : { @table::filters.InitStntuple 
+	    histFileName : "nts._USER_.bmup3s32b0.Mu2eII.001002_00010600.stn" 
+	}
+    }
+
+    analyzers : { @table::analyzers }
+
+    @table::paths
+
+    p1            : [ @sequence::stnmaker_seq ]
+
+    trigger_paths : [ p1 ]
+    
+    #    out : [defaultOutput]  # defaultOutput is defined in Stntuple/fcl/templates.fcl
+    out           : []
+#    end_paths     : [ gcl, out ]   # gcl defined in paths
+    end_paths     : [ out ]   # gcl defined in paths
+}
+
+services.GeometryService.inputFile        : "Mu2eII/bmup3/geom_Mu2eII_bmup3.txt"
+services.TFileService.fileName            : "nts._USER_.bmup3s32b0.Mu2eII.0010000_00000000.root"
+#------------------------------------------------------------------------------
+# uncomment the next 2 lines if you want the DST file to be written out
+#-----------------------------------------------------------------------------
+# physics.out                               : [ defaultOutput ]
+# outputs.defaultOutput.SelectEvents       : [ path_gen_digi_reco_stn_dem_dmm ]
+# outputs.defaultOutput.fileName           : "sim._USER_.bmup3s32b0.Mu2eII._6RUN___8SUBRUN_.art"
+#------------------------------------------------------------------------------
+# debugging
+#------------------------------------------------------------------------------
+# physics.producers.CalPatRecDem.diagLevel : 1
+# physics.producers.CalPatRecDmm.diagLevel : 1
+# physics.producers.AvikPID.debugLevel     : 100
+#------------------------------------------------------------------------------
+# everything below is appended by sophie/scripts/submit_mu2e_job
+#------------------------------------------------------------------------------

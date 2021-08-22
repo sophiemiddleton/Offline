@@ -1,0 +1,128 @@
+# -*- mode: tcl -*- 
+#------------------------------------------------------------------------------
+# trace pbar's from VD91 to the from TS3u coll
+#------------------------------------------------------------------------------
+# Andrei Gaponenko, 2013
+# Jake Colston & Joseph Brock, 2015 (edit for cd3)--> rhb adapts for antiprotons
+# starts at VD91 and traces protons up to Coll31Out
+#------------------------------------------------------------------------------
+#include "Filters/fcl/prolog.fcl"
+#include "JobConfig/beam/TS.fcl"
+
+process_name : S2Sim
+#------------------------------------------------------------------------------
+# use empty input module - this automatically resets teh eent counting
+#------------------------------------------------------------------------------
+source : { 
+    module_type : EmptyEvent
+    firstRun	: 1000
+    maxEvents	: -1 	
+}
+
+physics: { @table::physics
+
+    trigFilter    : [ genCounter, resamplingMixer, g4run, g4filter ]
+    trigger_paths : [ trigFilter ]
+    
+    e1            : [ filteredOutput, readAntiProtonSteps, readDelayedRPCSteps, genCountLogger ]
+    end_paths     : [ e1 ]
+}
+#------------------------------------------------------------------------------
+# resampling job uses ResamplingMixer module for actual input
+# define resampler, a list of fileNames has to be defined via post-processing
+#------------------------------------------------------------------------------
+physics.filters.resamplingMixer : { 
+    module_type  : ResamplingMixer
+    fileNames    : @nil          # @nil or [""]
+    readMode     : "sequential"             #  "sequential" or "randomNoReplace"
+    wrapFiles    : true
+    
+    mu2e: {
+	nSecondaries : 1
+	products: {
+	    genParticleMixer: { mixingMap: [ [ "generate", "" ] ] }
+	    simParticleMixer: { mixingMap: [ [ "g4filter", "" ] ] }
+	    stepPointMCMixer: { mixingMap: [ [ "g4filter:virtualdetector", ":" ], ["g4filter:VirtualDetectorPSPbarIn", ":"] ] }
+	}
+    }
+}
+#------------------------------------------------------------------------------
+# redefine default logic of G4 tracing:
+# do not trace e+-, mu+-, photons, neutrons, protons, and pi+ below 200 MeV/c 
+# write event out if a pbar / pi- reaches a VD plane called Coll31OutRecord
+#------------------------------------------------------------------------------
+CutEPPhN : {
+    type : intersection
+#    pars : [ { type: kineticEnergy cut: 100.0 }, { type: pdgId pars: [ 11, -11, -13, 13, 22, 2112, 2212 ] } ]
+    pars : [ { type: kineticEnergy cut: 100.0 }, { type: pdgId pars: [ 11, -11, 22, 2112 ] } ]
+}
+
+physics.producers.g4run.Mu2eG4CommonCut : { 
+    type : union 
+    pars : [ @local::CutEPPhN,
+	     { type: inVolume     pars: [ HallAir ] },
+	     { type: intersection pars: 
+		 [ 
+		  { type : inVolume pars : [ Coll31OutRecord ] },
+		  { type : pdgId    pars : [ -2212 , -211    ] }
+		 ]
+		 write : Coll31OutRecord
+	     }
+	    ]
+}
+
+#------------------------------------------------------------------------------
+#  ntuple makers
+#------------------------------------------------------------------------------
+physics.analyzers.readAntiProtonSteps : {
+    module_type          : ReadAntiProtonSteps
+    savePDG              : [-2212]
+    psVacuumStepPoints   : "Coll31OutRecord"
+    generatorModuleLabel : "resamplingMixer"
+    g4ModuleLabel        : "g4filter"
+    diagLevel            : 0 
+    stage                : 2
+}
+
+physics.analyzers.readDelayedRPCSteps : {
+    module_type          : ReadAntiProtonSteps
+    savePDG              : [-211]
+    psVacuumStepPoints   : "Coll31OutRecord"
+    generatorModuleLabel : "resamplingMixer"
+    g4ModuleLabel        : "g4filter"
+    diagLevel            : 0 
+    stage                : 2
+}
+#------------------------------------------------------------------------------
+# resampling redefines the input object names, G4 uses the redefined ones
+#------------------------------------------------------------------------------
+# physics.producers.g4run.compressPVmuonBeam.particleInputs               : [ "resamplingMixer" ]
+
+physics.producers.g4run.MultiStageParameters.simParticleNumberOffset    : 200000  
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo   : ""        # was "compressPV"
+physics.producers.g4run.MultiStageParameters.inputSimParticles          : "resamplingMixer"
+physics.producers.g4run.MultiStageParameters.genInputHits               : [ "resamplingMixer:VirtualDetectorPSPbarIn" ]
+physics.producers.g4run.SDConfig.preSimulatedHits                       : [ "resamplingMixer:virtualdetector" ]
+
+physics.filters.g4filter.mainHitInputs  : [ "g4run:Coll31OutRecord" ]       # end of tracing
+physics.filters.g4filter.extraHitInputs : [ "g4run:virtualdetector" ]
+#------------------------------------------------------------------------------
+# paths: there are two paths using g4run, insert resamplingMixer in front of both...
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile       : "Mu2eII/common/geom_baseline.txt" 
+services.TFileService.fileName           : "nts.owner.pbar0s20b0.Mu2eII.sequencer.root"
+
+outputs : {
+    filteredOutput     : {
+	module_type    : RootOutput
+	SelectEvents   : ["trigFilter"]
+	outputCommands : [ "drop *_*_*_*",
+                           "keep mu2e::GenParticles_*_*_*",
+                           "keep mu2e::GenEventCount_*_*_*",
+                           "keep mu2e::StatusG4_*_*_*",
+                           "keep mu2e::StepPointMCs_g4filter_*_S2*", 
+                           "keep mu2e::SimParticlemv_g4filter_*_S2*"
+			  ]
+	fileName       : "sim.owner.pbar0s20b0.Mu2eII.sequencer.art"
+    }
+}

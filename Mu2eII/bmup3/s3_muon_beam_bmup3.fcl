@@ -1,0 +1,26 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# take out everything not related to particles hitting the detector volume
+# 
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/DS.fcl"
+
+services.GeometryService.inputFile                    : "Mu2eII/bmup3/geom_Mu2eII_bmup3.txt"
+
+physics.producers.g4run.MultiStageParameters.inputPhysVolumeMultiInfo : ""
+
+physics.filters.detectorFilter : { @table::FilterStepPointMomentum 
+    inputs : [ "g4run:DetectorMother" ]
+}
+
+physics.motherFilter   : [ g4run, g4consistent, stoppedMuonFinder, stoppedMuonDaughters,
+			   outOfTargetMuonFinder, outOfTargetMuonDaughters,
+			   mothersFilter, detectorFilter
+			  ]
+
+physics.trigger_paths  : [ motherFilter  ]
+physics.out            : [ mothersOutput ]
+
+#------------------------------------------------------------------------------
+services.TFileService.fileName       : "nts.owner.bmup3s30b0.Mu2eII.sequencer.root"
+outputs.mothersOutput.fileName       : "sim.owner.bmup3s33b0.Mu2eII.sequencer.art"

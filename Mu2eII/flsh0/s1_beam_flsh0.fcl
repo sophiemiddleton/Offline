@@ -1,0 +1,28 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# beam flash
+#------------------------------------------------------------------------------
+#include "JobConfig/beam/PS.fcl"
+
+services.GeometryService.inputFile: "Mu2eII/common/geom_baseline.txt"
+
+// Energy cuts on electrons, positrons, photons, and neutrons.
+
+beamDeltaElectronCuts: {
+   type: intersection
+   pars: [ { type: kineticEnergy cut: 0.1 }, { type: pdgId pars: [ 11 ] }]
+}
+
+physics.producers.g4run.Mu2eG4CommonCut : {
+    type : union
+    pars : [
+	    @local::beamDeltaElectronCuts,
+	    @local::dsRegionCuts,
+	    @local::extMonRegionCuts
+	   ]
+}
+
+physics.outputs: [ mubeamout ]
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.flsh0s10b0.Mu2eII.sequencer.root"
+outputs.mubeamout.fileName         : "sim.owner.flsh0s10b0.Mu2eII.sequencer.art"

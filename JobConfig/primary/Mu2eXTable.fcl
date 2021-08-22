@@ -8,7 +8,7 @@ source: { module_type : EmptyEvent }
 services: @local::Services.Sim
 physics : { 
   producers : {
-    generate : @local::EventGenerator.producers.mu2eXS1 #change here for different model
+    generate : @local::EventGenerator.producers.mueXTable #change here for different model
     @table::Primary.producers
   }
   filters: { @table::Primary.filters }

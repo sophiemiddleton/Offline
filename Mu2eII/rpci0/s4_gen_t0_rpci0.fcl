@@ -1,0 +1,32 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# fill generator-level histograms to determine efficiency of the generator-level 
+# timing cutoff
+# histogram of interest: "vtime" - distibution of the generated vertex time - 
+# see details in Mu2eII.rpci0.org
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  INPUT_MODULE  @protect_ignore: EmptyEvent     # choices: EmptyEvent / RootInput
+  TRIGGER_PATHS @protect_ignore: [ p1 ]         # 
+  PROCESS_NAME  @protect_ignore: GenT0
+  GEN_ID        @protect_ignore: "InternalRPC"
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : @local::PROCESS_NAME
+
+source                                  : { module_type: @local::INPUT_MODULE }
+physics                                 : { @table::Mu2eII.physics }
+physics.producers.generate              : { @table::Mu2eII.physics.producers.RPCGun }
+
+# Richie modified RPCGun to produce a time map, use it
+physics.producers.generate.randPDFparameters.pulseType : default                # popular choices: [default/oot]
+physics.producers.generate.doHistograms                : true                   # 
+physics.producers.generate.tmin                        : 0.                     # 
+
+physics.p1                              : [ generate ]
+physics.output_path                     : [          ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName          : "nts.mu2e.s4_gen_t0_rpci0.Mu2eII.001000_00000000.root"

@@ -1,0 +1,14 @@
+#!/bin/bash
+# echo pwd  `pwd`
+#------------------------------------------------------------------------------
+# 'Mu2eII' and its subpackages, excluding Stntuple
+#------------------------------------------------------------------------------
+dir=include
+if [ ! -d ../$dir/Mu2eII ] ; then mkdir -p ../$dir/Mu2eII ; fi
+
+for d in ana ; do
+    if [ ! -e ../$dir/Mu2eII/$d ] ; then 
+	echo `pwd`$0 : creating symbolic link ../$dir/Mu2eII/$d
+	ln -s ../../Mu2eII/$d/$d ../$dir/Mu2eII/$d
+    fi
+done

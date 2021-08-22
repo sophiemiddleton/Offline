@@ -1,0 +1,123 @@
+# -*- mode: tcl -*-
+#------------------------------------------------------------------------------
+# this FCL file is used to generate flat photons from muon stops
+#------------------------------------------------------------------------------
+BEGIN_PROLOG
+  MIXER_READ_MODE         @protect_ignore: sequential   # randomReplace / sequential
+  MIXER_MU2E_SKIP_FACTOR  @protect_ignore: 0            # default - 1 (JobConfig/mixing/prolog1.fcl)
+  TRIGGER_PATHS           @protect_ignore: [ p1, p1_calo ]
+  END_PATHS               @protect_ignore: [ e1 ]
+  GEN_ID                  @protect_ignore: "ExternalRMC"
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl" 
+
+process_name: S4SignalMinbias
+
+services.message.destinations.log.categories.ArtReport.limit       : 10000  # number of events 
+
+source            : { module_type : EmptyEvent }
+
+outputs           : { 
+    FullOutput : { @table::Mixing.Output 
+	outputCommands : [ "keep *_*_*_*" ]
+    }
+    DetOutput  : { @table::Mixing.Output 
+	outputCommands : [ @sequence::Mu2eII.mixing_output ] 
+    }
+}
+
+physics : { 
+    producers     : { @table::Mu2eII.producers @table::Mixing.producers }
+    filters       : { @table::Mu2eII.filters   @table::Mixing.filters   }
+
+    trigger_paths : [ @sequence::TRIGGER_PATHS ]
+
+    EndPath       : [ DetOutput                ]                     # take out FullOutput, digiCompressionCheck
+    end_paths     : [ EndPath                  ]                     # needed for generate_fcl
+}
+
+
+
+physics.p1                   : [ @sequence::Mixing.signal_minbias_nocrv      ]
+physics.p1_calo              : [ @sequence::Mixing.signal_minbias_nocrv_calo ]
+physics.e1                   : [ DetOutput                                   ] 
+
+physics.producers.generate : { @table::EventGenerator.producers.RMCGun }
+physics.filters.GammaFilter.doFilter : true
+physics.producers.generate.physics.spectrumShape         : "flat" 
+physics.producers.generate.physics.elow                  : 70  #MeV
+physics.producers.generate.physics.ehi                   : 102 #MeV
+physics.producers.generate.physics.genId                 : @local::GEN_ID
+#print histograms for helpful debugging/understanding generator spectra
+physics.producers.generate.doHistograms                  : true
+
+# configure geant4 to kill the event if it's a low energy conversion
+physics.producers.g4run.physics.steppingActionMinRMCDaughterEnergy :  68.0 // MeV, < 0 means not used
+physics.producers.g4run.physics.steppingActionMaxRMCEndpoint       : 102.0 // MeV
+physics.producers.g4run.physics.steppingActionRMCKillAfterConvert  : false 
+
+physics.filters.StrawDigiMCFilter.MinNDigis         : 10
+physics.filters.StrawDigiMCFilter.MinParticleMom    : 40.
+physics.filters.StrawDigiMCFilter.MaxParticleMom    : 1.e6
+
+physics.producers.muonTimeMapPrimary.verbosityLevel   : 0 # 100
+physics.producers.protonTimeMapPrimary.verbosityLevel : 0 # 100
+
+services.GeometryService.printConfigTopLevel : true
+
+#------------------------------------------------------------------------------
+# beam intensity: 3.9e7 (2-batch mode) 1.6e7 (1-batch mode) : defined in Mu2eII_mixing_templates.fcl
+#------------------------------------------------------------------------------
+physics.producers.protonBunchIntensity.extendedMean :  1.6e7  # <mean> of the unconstrained distribution
+# physics.producers.protonBunchIntensity.sigma        : 0.7147  # SDF = 0.6
+# physics.producers.protonBunchIntensity.cutMax       : 12.0e7  # beam intensity cut-off
+#-------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# input maps from primaries and flash. these get used first, new times are only generated for mu-daughter backgrounds
+# input maps: primary + mixing
+#------------------------------------------------------------------------------
+physics.producers.protonTimeMap.InputTimeMaps : [ "protonTimeMapPrimary", @sequence::Mixing.protonTimeMaps ]
+physics.producers.muonTimeMap.InputTimeMaps   : [ "muonTimeMapPrimary" ]
+
+#------------------------------------------------------------------------------
+# after flash time cut mix change
+# don't include VD and IPA steps from flash: they just add bulk
+# P.M. : resample flash after stage 3, thus the name "resamplingMixer"
+#------------------------------------------------------------------------------
+physics.filters.flashMixerTrkCal.mu2e.products.genParticleMixer   : { mixingMap: [ [ "resamplingMixer"                       , ""              ] ] }
+physics.filters.flashMixerTrkCal.mu2e.products.simParticleMixer   : { mixingMap: [ [ "g4run"                                 , ""              ] ] }
+physics.filters.flashMixerTrkCal.mu2e.products.protonTimeMapMixer : { mixingMap: [ [ "protonTimeMap"                         , "protonTimeMap" ] ] }
+physics.filters.flashMixerTrkCal.mu2e.products.stepPointMCMixer   : { mixingMap: [ [ "g4run:tracker"                         , ":"             ] ] }
+
+physics.filters.flashMixerTrkCal.mu2e.products.caloShowerStepMixer: { mixingMap: [ [ "CaloShowerStepFromStepPt:calorimeter"  , ":"             ] ,
+										   [ "CaloShowerStepFromStepPt:calorimeterRO", ":"             ] ] }
+#------------------------------------------------------------------------------
+# calo configuration : primary + mixing
+#------------------------------------------------------------------------------
+physics.producers.CaloShowerStepROFromShowerStep.caloCrystalShowerInputs     : [ "CaloShowerStepFromStepPt:calorimeter", 
+										 @sequence::Mixing.caloMixerTags 
+										]
+#------------------------------------------------------------------------------
+# dataset-specific compression configuration : 
+# keep hits in the virtual detector and the proton absorber for the signal particle
+#------------------------------------------------------------------------------
+physics.producers.compressDigiMCs.extraStepPointMCTags : [ "g4run:virtualdetector", "g4run:protonabsorber" ]
+physics.producers.compressDigiMCs.mcTrajectoryTag      : ""
+physics.producers.compressDigiMCs.crvDigiMCTag         : ""                     # no CRV
+#------------------------------------------------------------------------------
+# output files
+#------------------------------------------------------------------------------
+services.TFileService.fileName : "nts.user.rmce2s41b1.Mu2eII.sequencer.root"
+outputs.FullOutput.fileName    : "dig.user.rmce2s41b1.Mu2eII.sequencer.art"
+outputs.DetOutput.fileName     : "dig.user.rmce2s41b1.Mu2eII.sequencer.art"
+#------------------------------------------------------------------------------
+# min-ins, unavoidable
+#------------------------------------------------------------------------------
+physics.filters.deuteronMixerTrkCal.fileNames   : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/deut0s41b0/Mu2eII/art/31/17/sim.mu2e.deut0s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.dioMixerTrkCal.fileNames        : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/dio00s41b0/Mu2eII/art/3f/53/sim.mu2e.dio00s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.neutronMixerTrkCal.fileNames    : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/neut0s41b0/Mu2eII/art/8b/73/sim.mu2e.neut0s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.ootMixerTrkCal.fileNames        : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/ootm0s41b0/Mu2eII/art/43/df/sim.mu2e.ootm0s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.photonMixerTrkCal.fileNames     : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/epho0s41b0/Mu2eII/art/21/df/sim.mu2e.epho0s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.protonMixerTrkCal.fileNames     : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/prot0s41b0/Mu2eII/art/43/c9/sim.mu2e.prot0s41b0.Mu2eII.001000_00000000.art"]
+physics.filters.flashMixerTrkCal.fileNames      : ["/pnfs/mu2e/tape/phy-sim/sim/mu2e/flsh1s51b0/Mu2eII/art/87/d2/sim.mu2e.flsh1s51b0.Mu2eII.001000_00000000.art"]

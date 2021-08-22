@@ -1,0 +1,53 @@
+# -*- mode: tcl -*- 
+#------------------------------------------------------------------------------
+# make stopped pion ntuple for out-of-target pions 
+# assume that the input list of stopped particles contains more than just pi-'s, 
+# therefore need to select pi-'s explicitly
+#------------------------------------------------------------------------------
+#include "fcl/minimalMessageService.fcl"
+#include "fcl/standardProducers.fcl"
+#include "fcl/standardServices.fcl"
+
+process_name : PionOotstopNtuple
+
+source       : { module_type : RootInput }
+services     : { @table::Services.Sim    }
+
+physics : {
+    producers : {
+	stoppedPionFinder: { module_type: StoppedParticlesFinder 
+	    particleInput    : ootStopFilter
+	    particleTypes    : [ -211 ]  # select pi-'s
+	    physVolInfoInput : "compressPVOOTStops"
+	    vetoedMaterials  : [ "" ]
+	}
+    }
+    analyzers: {
+	stoppedPionDumper: { module_type: StoppedParticlesDumper
+	    inputCollection       : "stoppedPionFinder"
+	    dumpSimParticleLeaves : false  # true (take pointers input from stoppedPionFinder)
+	    writeProperTime       : true
+	    decayOffPDGCodes      : [ -211, 211 ]
+	    hitCollections        : [ "muonBeamFilter:mubeam", "muonBeamFilter:DSVacuum" ]
+	}
+	genCountLogger: {
+	    module_type: GenEventCountReader
+	}
+    }
+    
+    p1       : [ stoppedPionFinder ]
+    stops    : [ stoppedPionDumper, genCountLogger ]
+
+    trigger_paths : [ p1    ]
+    end_paths     : [ stops ]
+}
+#------------------------------------------------------------------------------
+# redefined parameters
+#------------------------------------------------------------------------------
+services.TFileService.fileName     : "nts.owner.bpim0s32b0.Mu2eII.sequencer.root"
+services.GeometryService.inputFile : "Mu2eII/common/geom_baseline.txt"
+
+// Limit the rate of "Begin processing the ... record" messages
+services.message.destinations.log.categories.ArtReport.reportEvery : 1
+services.message.destinations.log.categories.ArtReport.limit : 1
+services.message.destinations.log.categories.ArtReport.timespan : 300

@@ -1,0 +1,37 @@
+# -*- mode:org -*-
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# temporary transition: Mu2eII project definitions
+#
+# -----------------------------------------------------------------------------------------------------------------------------------------------
+# DSID   istage istream  jstage   jtype       base_fcl      N input   nev_per_f    nev per  ninput    grid_jobid   output_streams   sec/evt   status
+#                             [:resample]                     files      (est)     segment   files                                        (optional)
+#                                                          /segment                 (est)    total                                  
+# -----------------------------------------------------------------------------------------------------------------------------------------------
+1000_1000  g4s4    digi    s6     reco_stn  rpc_external_stn    50         50        2500     999     33877335   rpc_external_stn   0.04     COMPLETED
+1000_1010  g4s4    digi    s6     reco_stn  ppbar_stn           50         50        2500     999     xxxxxxxx   ppbar_stn          0.04     
+#
+1000_1997  s0      gen     s9     reco_stn  flateminus_stn       1         50          10       1     xxxxxxxx   ppbar_stn          0.04     
+1000_1998  s0      gen     s9     reco_stn  flateminus_stn       1         50          10       1     xxxxxxxx   ppbar_stn          0.04     
+1000_1999  g4s4    digi    s6     reco_stn  rpc_external_stn     1         50          10      10     xxxxxxxx   ppbar_stn          0.04     
+#
+bmum0      s0      gen     s1     sim       bmum0_s1             0          1      250000     400     9387862    mubeam             0.04  
+bmum0      s1      sim     s2     sim       bmum0_s2            20       7500      150000     400     34359763   mubeam             0.04  
+bmum0      s2      sim     s3     sim       bmum0_s3             2      30000       60000      20     9573077    tgtstop,ootstop    0.04  
+bmum0      s3      s31b0   s3     stn       tgtstop_stn_s3     100      30000       60000      10                tgtstop            0.04  
+bmum0      s3      s32b0   s3     stn       ootstop_stn_s3     100      30000       60000      10                ootstop            0.04  
+#
+bmum1      s2      sim     s3     sim       bmum1_s3             2      30000       60000      20     9508441    tgtstop,ootstop    0.04  
+bmum1      s3      s31b0   s3     stn       tgtstop_stn_s3     100      30000       60000      10                tgtstop            0.04  
+bmum1      s3      s32b0   s3     stn       ootstop_stn_s3     100      30000       60000      10                ootstop            0.04  
+#
+bmum2      s2      s21b0   s3     sim       bmum2_s3             2      30000       60000      20     34447744   tgtstop,ootstop    0.04  
+bmum2      s3      s31b0   s3     stn       tgtstop_stn_s3     100      30000       60000      10                tgtstop            0.04  
+bmum2      s3      s32b0   s3     stn       ootstop_stn_s3     100      30000       60000      10                ootstop            0.04  
+#
+bmum3      s2      s21b0   s3     sim       bmum3_s3             2      30000       60000      20                tgtstop,ootstop    0.04  
+bmum3      s3      s31b0   s3     stn       tgtstop_stn_s3     100      30000       60000      10                tgtstop            0.04  
+bmum3      s3      s32b0   s3     stn       ootstop_stn_s3     100      30000       60000      10                ootstop            0.04  
+#
+bpim0      s0      gen     s1     sim       pion_beam_s1         0          1      250000     400     9648996    mubeam             0.04  SUBMITTED mu2epro
+bpim0      s1      sim     s2     sim       pion_beam_s2        20       7500      150000     400     34359763   mubeam             0.04  
+bpim0      s2      sim     s3     sim       pion_beam_s3         2      30000       60000      20     9573077    tgtstop,ootstop    0.04  

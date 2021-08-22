@@ -1,0 +1,18 @@
+# -*- mode: tcl -*-
+
+BEGIN_PROLOG
+  TRIGGER_PATHS @protect_ignore: [ Mu2eII_p100 ]    # defined in Mu2eII/common/Mu2eII.fcl
+END_PROLOG
+
+#include "JobConfig/common/Mu2eII.fcl"
+
+process_name                            : S1Concat
+
+source                                  : { module_type: RootInput }
+physics                                 : { @table::Mu2eII.physics }
+physics.output_path                     : [ defaultOutput          ]
+outputs.defaultOutput.SelectEvents      : [                        ]
+#------------------------------------------------------------------------------
+services.GeometryService.inputFile      : "Mu2eII/common/geom_baseline.txt"
+services.TFileService.fileName          : "nts._user_.flsh0s10b0.Mu2eII.001000_00000000.root"
+outputs.defaultOutput.fileName          : "sim._user_.flsh0s11b0.Mu2eII.001000_00000000.art"
