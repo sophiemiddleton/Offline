@@ -251,7 +251,8 @@ namespace mu2e {
        G4int nPipes                      = cal.caloInfo().getInt("nPipes");      
        G4double pipeRadius               = cal.caloInfo().getDouble("pipeRadius");
        G4double pipeThickness            = cal.caloInfo().getDouble("pipeThickness");
-       G4double pipeInitSeparation       = cal.caloInfo().getDouble("pipeInitSeparation");    
+       G4double pipeInitSeparation       = cal.caloInfo().getDouble("pipeInitSeparation"); 
+          
        std::vector<double> pipeTorRadius = cal.caloInfo().getVDouble("pipeTorRadius");
        std::vector<double> largeTorPhi    = cal.caloInfo().getVDouble("largeTorPhi");
        std::vector<double> smallTorPhi   = cal.caloInfo().getVDouble("smallTorPhi");
