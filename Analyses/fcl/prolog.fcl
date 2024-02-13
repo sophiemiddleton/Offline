@@ -27,6 +27,11 @@ CaloClusterCompareNew : {
         CaloClusterCollection : CaloClusterOnline
 }
 
+DIFAna : {
+        module_type : DIFAna
+        SimParticleCollection : "BeamFilter"
+}
+
 CaloClusterCompareOld : {
         module_type : CaloClusterCompare
         CaloClusterCollection : CaloClusterFast
@@ -70,6 +75,14 @@ VirtualDetectorDefaults: {
     writeNTPART1 : true
     writeNTVDEXT : false
 
+}
+
+DIFAna :
+{
+   analyzers : {
+        DIFAna : @local::DIFAna
+   }
+   Analysis : [DIFAna]
 }
 
 # Many configurations use "readvd"

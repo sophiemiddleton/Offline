@@ -112,7 +112,6 @@ namespace mu2e {
       }
       if((_maxr < maxr_max_ and _maxr > maxr_min_ )){ passed = true; }
     }
-    
     return passed;
   }
 }
