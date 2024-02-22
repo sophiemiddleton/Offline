@@ -1,4 +1,4 @@
-// Purpose: Event filter for DIO simulations
+/*// Purpose: Event filter for DIO simulations
 // author: S Middleton  2024
 #include "art/Framework/Core/EDFilter.h"
 #include "art/Framework/Principal/Event.h"
@@ -24,19 +24,21 @@
 using namespace std;
 namespace mu2e {
 
-  class GenFilter : public art::EDFilter {
+  class DIFFilter : public art::EDFilter {
     public:
       struct Config {
         using Name=fhicl::Name;
         using Comment=fhicl::Comment;
         fhicl::Atom<art::InputTag> SimToken{Name("StageParticleCollection"),Comment("")};
         fhicl::Atom<art::InputTag>SimTag{Name("StageParticleCollection"),Comment("SimTag")};
-        fhicl::Atom<double> maxr_min{Name("maxr_min"),0};
-        fhicl::Atom<double> maxr_max{Name("maxr_max"),1e7};
+        fhicl::Atom<double> max_mom{Name("max_mom"),1e7};
+        fhicl::Atom<double> min_mom{Name("min_mom"),0};
+        fhicl::Atom<double> max_mom{Name("max_pos"),1e7};
+        fhicl::Atom<double> min_mom{Name("min_pos"),0};
         fhicl::Atom<bool> makeplots{Name("makeplots"),false};
         fhicl::Atom<bool> isNull{Name("isNull"),true};
       };
-      explicit GenFilter(const art::EDFilter::Table<Config>& config);
+      explicit DIFFilter(const art::EDFilter::Table<Config>& config);
       virtual bool filter(art::Event& event) override;
 
     private:
@@ -54,7 +56,7 @@ namespace mu2e {
       Float_t _time;
   };
 
-  GenFilter::GenFilter(const art::EDFilter::Table<Config>& config) :
+  DIFFilter::DIFFilter(const art::EDFilter::Table<Config>& config) :
      EDFilter{config}
     , _SimToken(config().SimToken())
     , maxr_min_(config().maxr_min())
@@ -73,13 +75,12 @@ namespace mu2e {
     }
   }
 
-  bool GenFilter::filter(art::Event& event) {
+  bool DIFFilter::filter(art::Event& event) {
     if(isNull_) return true;
     bool passed = false;
     auto sim = event.getValidHandle<StageParticleCollection>(_SimToken);
     _SimCol = sim.product();
     for(const auto& aParticle : *_SimCol){
-     
     //  make momentum and position vectors
       GeomHandle<DetectorSystem> det;
       ROOT::Math::XYZVectorF pos = XYZVectorF(det->toDetector(aParticle.position()));
@@ -94,6 +95,7 @@ namespace mu2e {
       GeomHandle<BFieldManager> bfmgr;
       mu2e::GeomHandle<mu2e::Tracker> tracker;
       auto tracker_origin = det->toMu2e(tracker->origin());
+      //XYZVectorF pos3Vec = XYZVectorF(aParticle.position().x(),aParticle.position().y(),aParticle.position().z());
       ROOT::Math::XYZVector bnom(bfmgr->getBField(tracker_origin));
 
       // make the loophelix
@@ -114,5 +116,5 @@ namespace mu2e {
   }
 }
 
-using mu2e::GenFilter;
-DEFINE_ART_MODULE(GenFilter)
+using mu2e::DIFFilter;
+DEFINE_ART_MODULE(DIFFilter)*/

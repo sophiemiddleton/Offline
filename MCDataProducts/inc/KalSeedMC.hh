@@ -28,25 +28,26 @@ namespace mu2e {
   struct SimPartStub {
     typedef art::Ptr<SimParticle> SPPtr;
     typedef art::Handle<SimParticleCollection> SPCH;
+    typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<float> > LVPM;
     PDGCode::type _pdg; // code of this particle
-    ProcessCode _proc; // particle creation process
-    ProcessCode _stop; // particle stopping process
+    ProcessCode _startCode; // particle creation process
+    ProcessCode _stopCode; // particle stopping process
     GenId _gid; // generator code
     MCRelationship _rel; // relationship of this particle to its primary
     uint16_t _nhits; // number of associated StrawHits
     uint16_t _nactive; // number of associated active hits
-    XYZTVectorF   _mom; // initial momentum
-    XYZVectorF _pos; // initial position
+    LVPM   _mom; // initial momentum
+    XYZTVectorF _pos; // initial position
     XYZVectorF _endpos; // end position
-    double _time; //global start time
     cet::map_vector_key _spkey; // key to the SimParticle
     // construct a Ptr from Handle and key
     SPPtr simParticle(SPCH spcH) const { return SPPtr(spcH,_spkey.asUint()); }
     SimPartStub() : _pdg(PDGCode::unknown), _nhits(0), _nactive(0) {}
     // partial constructor from a SimParticle;
     SimPartStub(SPPtr const& spp)  : _pdg(spp->pdgId()),
-    _proc(spp->creationCode()), _gid(GenId::unknown), _rel(MCRelationship::none),
-    _nhits(0), _nactive(0), _mom(CLHEP::HepLorentzVector(spp->startMomentum())),  _pos(XYZVectorF(spp->startPosition())),_endpos(XYZVectorF(spp->endPosition())), _time(spp->startGlobalTime()), _spkey(spp.key()){
+    _startCode(spp->creationCode()), _gid(GenId::unknown), _rel(MCRelationship::none),
+    _nhits(0), _nactive(0), _mom(LVPM(spp->startMomentum())),  _pos(CLHEP::Hep3Vector(spp->startPosition()).x(),CLHEP::Hep3Vector(spp->startPosition()).y(),CLHEP::Hep3Vector(spp->startPosition()).z(),spp->startGlobalTime() ), _endpos(XYZVectorF(spp->endPosition())), _spkey(spp.key()){
+
     // dig down to the GenParticle
       auto simPtr = spp;
       while (simPtr->genParticle().isNull() && simPtr->parent().isNonnull()) {
