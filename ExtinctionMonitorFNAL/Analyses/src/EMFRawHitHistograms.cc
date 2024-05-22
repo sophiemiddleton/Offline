@@ -3,11 +3,11 @@
 #include "Offline/ExtinctionMonitorFNAL/Analyses/inc/EMFRawHitHistograms.hh"
 
 #include "Offline/RecoDataProducts/inc/ExtMonFNALRawHit.hh"
-#include "Offline/ConditionsService/inc/ExtMonFNALConditions.hh"
-#include "Offline/ConditionsService/inc/ConditionsHandle.hh"
 
 #include "Offline/ExtinctionMonitorFNAL/Geometry/inc/ExtMonFNAL.hh"
 #include "Offline/ExtinctionMonitorFNAL/Geometry/inc/ExtMonFNALModuleIdConverter.hh"
+#include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
+#include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 
 #include "art_root_io/TFileService.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
@@ -23,6 +23,7 @@ namespace mu2e {
   EMFRawHitHistograms::EMFRawHitHistograms(const fhicl::ParameterSet& pset)
     : hitClock_()
     , hitToT_()
+    , numClockTicksPerDebuncherPeriod_(GlobalConstantsHandle<PhysicsParams>()->getNominalDAQTicks())
   {}
 
   // Book histograms in the subdirectory, given by the relativePath; that path is
@@ -30,22 +31,20 @@ namespace mu2e {
   void EMFRawHitHistograms::book(const ExtMonFNAL::ExtMon& extmon, const std::string& relativePath)
   {
     art::ServiceHandle<art::TFileService> tfs;
-    art::TFileDirectory tfdir = relativePath.empty() ? *tfs : tfs->mkdir(relativePath.c_str());
+    art::TFileDirectory tfdir = tfs->mkdir(relativePath.c_str());
     book (extmon, tfdir);
   }
 
   // Book the histograms.
-  void EMFRawHitHistograms::book(const ExtMonFNAL::ExtMon& extmon, art::TFileDirectory& tfdir) {
-
-    ConditionsHandle<ExtMonFNALConditions> cond("ignored");
+  void EMFRawHitHistograms::book(const ExtMonFNAL::ExtMon& extmon, const art::TFileDirectory& tfdir) {
 
     hitClock_ = tfdir.make<TH1D>("hitClock", "Hit clock, all hits",
-                                 cond->numClockTicksPerDebuncherPeriod(),
-                                 -0.5, cond->numClockTicksPerDebuncherPeriod() - 0.5);
+                                 numClockTicksPerDebuncherPeriod_,
+                                 -0.5, numClockTicksPerDebuncherPeriod_ - 0.5);
 
     hitToT_ =   tfdir.make<TH1D>("hitToT", "Hit time over threshold, all hits", 16, -0.5, 15.5);
 
-    
+
     const unsigned nmodules = extmon.nmodules();
     ExtMonFNALModuleIdConverter con(extmon);
     for(unsigned mid = 0; mid < nmodules; ++mid) {
@@ -77,7 +76,7 @@ namespace mu2e {
       hitToT_->Fill(hit->tot());
       const ExtMonFNALPixelId& pix = hit->pixelId();
       chipOccupancy_[pix.chip()]->Fill(pix.col(), pix.row());
-      
+
     }
 
   } // end EMFRawHitHistograms::fill()

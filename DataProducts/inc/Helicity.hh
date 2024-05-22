@@ -16,18 +16,19 @@ namespace mu2e {
     bool operator == (Helicity const& other) const { return _value == other._value; }
     bool operator != (Helicity const& other) const { return !(operator ==(other)); }
     bool operator < (Helicity const& other) const { return _value < other._value; }
+    float value() const { return static_cast<float>(_value); }
     helicity _value;
     static const char* name(Helicity const& h) {
       switch (h._value) {
-	case Helicity::neghel:
-	  return "Negative";
-	  break;
-	case Helicity::poshel:
-	  return "Positive";
-	  break;
-	case Helicity::unknown : default:
-	  return "Unknown";
-	  break;
+        case Helicity::neghel:
+          return "Negative";
+          break;
+        case Helicity::poshel:
+          return "Positive";
+          break;
+        case Helicity::unknown : default:
+          return "Unknown";
+          break;
       }
     }
   };

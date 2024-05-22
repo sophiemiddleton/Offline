@@ -11,7 +11,6 @@
 #include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 // conditions
 #include "Offline/ConditionsService/inc/ConditionsHandle.hh"
@@ -31,8 +30,7 @@
 #include "Offline/RecoDataProducts/inc/ProtonBunchTime.hh"
 #include "Offline/MCDataProducts/inc/ProtonBunchTimeMC.hh"
 #include "Offline/DataProducts/inc/EventWindowMarker.hh"
-// Utilities
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
+
 using namespace std;
 using CLHEP::Hep3Vector;
 
@@ -51,7 +49,7 @@ namespace mu2e
       bool findData(const art::Event& e);
       // control flags
       bool _mcdiag, _digidiag, _useshfcol;
-  // data tags
+      // data tags
       art::InputTag _shTag;
       art::InputTag _chTag;
       art::InputTag _shfTag;
@@ -67,8 +65,6 @@ namespace mu2e
       const StrawDigiMCCollection *_mcdigis;
       const StrawDigiCollection *_digis;
       const StrawDigiADCWaveformCollection *_digiadcs;
-      // time offset
-      SimParticleTimeOffset _toff;
       // strawhit tuple variables
       TTree *_shdiag;
       Int_t _eventid, _subrunid, _runid;
@@ -92,7 +88,7 @@ namespace mu2e
       Float_t _mcwt[2];
       Double_t _mcsptime;
       Double_t _mcptime;
-      Int_t _esel,_rsel, _tsel,  _bkgclust, _bkg, _stereo, _tdiv, _isolated, _strawxtalk, _elecxtalk, _calosel;
+      Int_t _esel,_rsel, _tsel,  _bkgclust, _bkg, _dead, _stereo, _tdiv, _isolated, _strawxtalk, _elecxtalk, _calosel;
       Int_t _sid, _plane, _panel, _layer, _straw;
       Float_t _shwres, _shtres;
       Bool_t _mcxtalk;
@@ -121,21 +117,20 @@ namespace mu2e
     _pbtmcTag(pset.get<art::InputTag>("ProtonBunchTimeMC","EWMProducer")),
     _mcdigisTag(pset.get<art::InputTag>("StrawDigiMCCollection","makeSD")),
     _digisTag(pset.get<art::InputTag>("StrawDigiCollection","makeSD")),
-    _toff(pset.get<fhicl::ParameterSet>("TimeOffsets")),
     _end{StrawEnd::cal,StrawEnd::hv}
   {
     if(pset.get<bool>("TestStrawId",false)) {
       for(uint16_t plane = 0; plane < StrawId::_nplanes; ++plane){
-	StrawId sid(plane,0,0);
-	std::cout << "Plane StrawId " << sid.asUint16() << " plane " << sid.plane() << std::endl;
-	for(uint16_t panel = 0; panel < StrawId::_npanels; ++panel){
-	  StrawId sid(plane,panel,0);
-	  std::cout << "Panel StrawId " << sid.asUint16() << " panel " << sid.uniquePanel() << std::endl;
-	  for(uint16_t straw = 0; straw < StrawId::_nstraws; ++straw){
-	    StrawId sid(plane,panel,straw);
-	      std::cout << "Straw StrawId " << sid.asUint16() << " unique straw " << sid.uniqueStraw() << std::endl;
-	  }
-	}
+        StrawId sid(plane,0,0);
+        std::cout << "Plane StrawId " << sid.asUint16() << " plane " << sid.plane() << std::endl;
+        for(uint16_t panel = 0; panel < StrawId::_npanels; ++panel){
+          StrawId sid(plane,panel,0);
+          std::cout << "Panel StrawId " << sid.asUint16() << " panel " << sid.uniquePanel() << std::endl;
+          for(uint16_t straw = 0; straw < StrawId::_nstraws; ++straw){
+            StrawId sid(plane,panel,straw);
+            std::cout << "Straw StrawId " << sid.asUint16() << " unique straw " << sid.uniqueStraw() << std::endl;
+          }
+        }
       }
     }
   }
@@ -175,8 +170,6 @@ namespace mu2e
     if(_mcdiag){
       auto mcdH = evt.getValidHandle<StrawDigiMCCollection>(_mcdigisTag);
       _mcdigis = mcdH.product();
-      // update time offsets
-      _toff.updateMap(evt);
       auto pbtmcHandle = evt.getValidHandle<ProtonBunchTimeMC>(_pbtmcTag);
       _pbtmc = pbtmcHandle.product()->pbtime_;
     }
@@ -220,6 +213,7 @@ namespace mu2e
     _shdiag->Branch("bkgclust",&_bkgclust,"bkgclust/I");
     _shdiag->Branch("bkg",&_bkg,"bkg/I");
     _shdiag->Branch("stereo",&_stereo,"stereo/I");
+    _shdiag->Branch("dead",&_dead,"dead/I");
     _shdiag->Branch("tdiv",&_tdiv,"tdiv/I");
     _shdiag->Branch("strawxtalk",&_strawxtalk,"strawxtalk/I");
     _shdiag->Branch("elecxtalk",&_elecxtalk,"elecxtalk/I");
@@ -281,7 +275,7 @@ namespace mu2e
 
   void StrawHitDiag::fillStrawHitDiag(StrawElectronics const& strawele) {
     GeomHandle<DetectorSystem> det;
-    const Tracker& tracker = *GeomHandle<Tracker>();
+    const Tracker& tracker = *GeomHandle<Tracker>(); //FIXME switch to aligned
     static const double rstraw = tracker.strawOuterRadius();
     unsigned nstrs = _chcol->size();
     for(unsigned istr=0; istr<nstrs;++istr){
@@ -297,8 +291,8 @@ namespace mu2e
       _straw = straw.id().getStraw();
       _edep = ch.energyDep();
       for(size_t iend=0;iend<2;++iend){
-	_time[iend] = sh.time(_end[iend]);
-	_tot[iend] = sh.TOT(_end[iend]);
+        _time[iend] = sh.time(_end[iend]);
+        _tot[iend] = sh.TOT(_end[iend]);
       }
       _correcttime = ch.correctedTime();
       _ctime = ch.time();
@@ -308,6 +302,7 @@ namespace mu2e
       _shlen =(ch.posCLHEP()-straw.getMidPoint()).dot(straw.getDirection());
       _slen = straw.halfLength();
       _stereo = ch.flag().hasAllProperties(StrawHitFlag::stereo);
+      _dead = ch.flag().hasAllProperties(StrawHitFlag::dead);
       _tdiv = ch.flag().hasAllProperties(StrawHitFlag::tdiv);
       _esel = shf.hasAllProperties(StrawHitFlag::energysel);
       _rsel = shf.hasAllProperties(StrawHitFlag::radsel);
@@ -364,9 +359,9 @@ namespace mu2e
         StrawEnd itdc;
         auto const& spmcp = mcdigi.strawGasStep(itdc);
         art::Ptr<SimParticle> const& spp = spmcp->simParticle();
-	SimParticle const& osp = spp->originParticle();
-	Hep3Vector dprod = spmcp->position()-det->toDetector(osp.startPosition());
-	static Hep3Vector zdir(0.0,0.0,1.0);
+        SimParticle const& osp = spp->originParticle();
+        Hep3Vector dprod = spmcp->position()-det->toDetector(osp.startPosition());
+        static Hep3Vector zdir(0.0,0.0,1.0);
         _pdist = dprod.mag();
         _pperp = dprod.perp(zdir);
         _pmom = sqrt(spmcp->momentum().mag2());
@@ -379,43 +374,43 @@ namespace mu2e
         _mcgen = -1;
         if(osp.genParticle().isNonnull())
           _mcgen = osp.genParticle()->generatorId().id();
-        _mcsptime = _toff.timeWithOffsetsApplied(*spmcp) + _pbtmc;
-	for(size_t iend=0;iend<2; ++iend){
-	  _mcwt[iend] = mcdigi.wireEndTime(_end[iend]);
-	  _mcct[iend] = mcdigi.clusterPosition(_end[iend]).t();
+        _mcsptime = _pbtmc;
+        for(size_t iend=0;iend<2; ++iend){
+          _mcwt[iend] = mcdigi.wireEndTime(_end[iend]);
+          _mcct[iend] = mcdigi.clusterPosition(_end[iend]).t();
           Hep3Vector cpos = mcdigi.clusterPosition(_end[iend]).vect();
           Hep3Vector cdir = (cpos-straw.getMidPoint());
           cdir -= straw.getDirection()*(cdir.dot(straw.getDirection()));
           _mccphi[iend] = cdir.theta();
           _mccd[iend] = min(cdir.perp(straw.getDirection()),tracker.strawProperties()._strawInnerRadius);
-	}
+        }
         _mcshp = spmcp->position();
         _mcop = det->toDetector(osp.startPosition());
         _mcoe = osp.startMomentum().e();
         _mcom = osp.startMomentum().vect().mag();
         _mcshlen = (spmcp->position()-straw.getMidPoint()).dot(straw.getDirection());
-	Hep3Vector mdir = GenVector::Hep3Vec(spmcp->momentum()).unit();
-	Hep3Vector tdir = (straw.getDirection().cross(mdir)).unit();
+        Hep3Vector mdir = GenVector::Hep3Vec(spmcp->momentum()).unit();
+        Hep3Vector tdir = (straw.getDirection().cross(mdir)).unit();
         _mcshd = (spmcp->position()-straw.getMidPoint()).dot(tdir);
-	double scos = mdir.dot(straw.getDirection());
+        double scos = mdir.dot(straw.getDirection());
         _mcplen = 2.0*sqrt( (rstraw*rstraw -_mcshd*_mcshd)/(1.0-scos*scos) );
-	_mcsphi = atan2(tdir.perp(),tdir.z()); // 'azimuth' around the straw of the POCA
-	// immediate parent information
-	art::Ptr<SimParticle> psp = osp.parent();
-	if(psp.isNonnull()){
-	  SimParticle const& posp =psp->originParticle();
+        _mcsphi = atan2(tdir.perp(),tdir.z()); // 'azimuth' around the straw of the POCA
+        // immediate parent information
+        art::Ptr<SimParticle> psp = osp.parent();
+        if(psp.isNonnull()){
+          SimParticle const& posp =psp->originParticle();
           _mcppdg = posp.pdgId();
           _mcpproc = posp.creationCode();
-          _mcptime = _toff.totalTimeOffset(psp) + psp->startGlobalTime();
+          _mcptime = psp->startGlobalTime();
           _mcpop = det->toDetector(posp.startPosition());
           _mcpoe = posp.startMomentum().e();
           _mcpom = posp.startMomentum().vect().mag();
         }
-// generator information
+        // generator information
         if(spp.isNonnull()){
-	  _mcid = spp->id().asInt();
-	  art::Ptr<SimParticle> sp = spp;
-        // find the first parent which comes from a generator
+          _mcid = spp->id().asInt();
+          art::Ptr<SimParticle> sp = spp;
+          // find the first parent which comes from a generator
           while(sp->genParticle().isNull() && sp->parent().isNonnull()){
             sp = sp->parent();
           }
@@ -453,10 +448,10 @@ namespace mu2e
       }
       _shwres = _chcol->at(istr).posRes(ComboHit::wire);
       _shtres = _chcol->at(istr).posRes(ComboHit::trans);
-//  Info depending on stereo hits
+      //  Info depending on stereo hits
       _shdiag->Fill();
     }
   }
 }  // end namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::StrawHitDiag);
+DEFINE_ART_MODULE(mu2e::StrawHitDiag)

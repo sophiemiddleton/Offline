@@ -19,21 +19,21 @@ namespace mu2e {
   class GenericTrap;
   class SimpleConfig;
   class VolumeInfo;
-  class NotchManager;
+  class NotchHoleManager;
 
   VolumeInfo constructHall(const VolumeInfo& worldInfo, const SimpleConfig& config);
 
   void constructSolids( const SimpleConfig& config,
-                        const VolumeInfo& hallInfo, 
-		        const std::map<std::string,ExtrudedSolid>& solidMap,
-			const CLHEP::HepRotation& rot,
-			const NotchManager& notchMgr);
+                        const VolumeInfo& hallInfo,
+                        const std::map<std::string,ExtrudedSolid>& solidMap,
+                        const CLHEP::HepRotation& rot,
+                        const NotchHoleManager& notchMgr);
 
   void constructTrapSolids( const SimpleConfig& config,
-			    const VolumeInfo& hallInfo, 
-			    const std::map<std::string,GenericTrap>& solidMap,
-			    const CLHEP::HepRotation& rot,
-			    const NotchManager& notchMgr);
+                            const VolumeInfo& hallInfo,
+                            const std::map<std::string,GenericTrap>& solidMap,
+                            const CLHEP::HepRotation& rot,
+                            const NotchHoleManager& notchMgr);
 
 }
 

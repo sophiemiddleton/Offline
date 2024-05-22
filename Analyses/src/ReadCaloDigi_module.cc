@@ -19,7 +19,6 @@
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art_root_io/TFileService.h"
 #include "art_root_io/TFileDirectory.h"
@@ -29,16 +28,15 @@
 
 // Mu2e includes.
 #include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
-#include "Offline/ConditionsService/inc/ConditionsHandle.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
+#include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 #include "Offline/ConditionsService/inc/CalorimeterCalibrations.hh"
-#include "Offline/ConditionsService/inc/AcceleratorParams.hh"
+#include "Offline/DataProducts/inc/CaloSiPMId.hh"
 #include "Offline/GeometryService/inc/GeometryService.hh"
 #include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/RecoDataProducts/inc/CaloHit.hh"
 #include "Offline/SeedService/inc/SeedService.hh"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 
 #include "Offline/RecoDataProducts/inc/CaloRecoDigi.hh"
 #include "Offline/RecoDataProducts/inc/CaloCluster.hh"
@@ -136,7 +134,6 @@ namespace mu2e {
     TrkParticle                _tpart;
     TrkFitDirection            _fdir;
 
-    SimParticleTimeOffset      _toff;     // time offset smearing
     double                     _mbtime;
     double                     _mbbuffer;
     double                     _blindTime;
@@ -235,7 +232,6 @@ namespace mu2e {
     _trackModuleLabel              (pset.get<string>("trackModuleLabel")),
     _tpart     ((TrkParticle::type)(pset.get<int>("fitparticle",TrkParticle::e_minus))),
     _fdir((TrkFitDirection::FitDirection)(pset.get<int>("fitdirection",TrkFitDirection::downstream))),
-    _toff                          (pset.get<fhicl::ParameterSet>("TimeOffsets", fhicl::ParameterSet())),
     _mbbuffer                      (pset.get<double>             ("TimeFoldingBuffer")),  // ns
     _blindTime                     (pset.get<double>             ("blindTime" )),         // ns
     _fillWaveforms                 (pset.get<int>                ("fillWaveforms" )),
@@ -376,9 +372,7 @@ namespace mu2e {
     ++_nProcess;
 
     //load the timeoffset
-    ConditionsHandle<AcceleratorParams> accPar("ignored");
-    _mbtime = accPar->deBuncherPeriod;
-    _toff.updateMap(event);
+    _mbtime = GlobalConstantsHandle<PhysicsParams>()->getNominalDRPeriod();
 
     //data about hits in the calorimeter crystals
     art::Handle<CaloHitMCCollection> caloDigiMCHandle;
@@ -448,7 +442,7 @@ namespace mu2e {
       nTraks             = list_of_ele_tracks->size();
     }
 
-    GlobalConstantsHandle<ParticleDataTable> pdt;
+    GlobalConstantsHandle<ParticleDataList> pdt;
 
     _evt          = event.id().event();
     _run          = event.run();
@@ -534,7 +528,7 @@ namespace mu2e {
               }
               if ( !sim.fromGenerator() )                 continue;
 
-              double     hitTime = fmod(hit.time() + _toff.totalTimeOffset(simptr), _mbtime);
+              double     hitTime = fmod(hit.time(), _mbtime);
               if (hitTime < _mbbuffer) {
                 if (hitTime+_mbtime > _blindTime) {
                   hitTime = hitTime + _mbtime;
@@ -561,7 +555,7 @@ namespace mu2e {
               _vPz   [_vNHits]  = hit.momentum().z();
               _vPt   [_vNHits]  = std::sqrt( std::pow(_vPx[_vNHits],2.)+std::pow(_vPy[_vNHits],2.) );
               _vPdgId[_vNHits]  = hit.simParticle()->pdgId();
-              _vM    [_vNHits]  = pdt->particle(_vPdgId[_vNHits]).ref().mass();
+              _vM    [_vNHits]  = pdt->particle(_vPdgId[_vNHits]).mass();
               _vE    [_vNHits]  = sqrt(_vP[_vNHits]*_vP[_vNHits] + _vM[_vNHits]*_vM[_vNHits]);
               _vEKin [_vNHits]  = _vE[_vNHits] - _vM[_vNHits];
 
@@ -615,7 +609,7 @@ namespace mu2e {
     }
 
     int        ncrystals(_caloCrystals);
-    int        nWordsCrystals       [ncrystals] = {0};
+    vector<int>        nWordsCrystals(ncrystals,0);
 
     std::vector<int>   pulse;
     CLHEP::Hep3Vector  crystalPos(0);
@@ -640,7 +634,7 @@ namespace mu2e {
       recoDigi   = &recoCaloDigiCol->at(i);
       //amplitude  = recoDigi->amplitude()*ADC2mV;
       roId       = recoDigi->SiPMID();
-      crystalID  = _calorimeter->caloIDMapper().crystalIDFromSiPMID(roId);
+      crystalID  = CaloSiPMId(roId).crystal().id();
       diskId     = _calorimeter->crystal(crystalID).diskID();
 
       crystalPos = _calorimeter->geomUtil().mu2eToDiskFF(diskId,_calorimeter->crystal(crystalID).position());
@@ -650,14 +644,14 @@ namespace mu2e {
 
       _recoDigiEnergy[i] = recoDigi->energyDep();
 
-      const CaloDigi&	caloDigi = *recoDigi->caloDigiPtr();
+      const CaloDigi&        caloDigi = *recoDigi->caloDigiPtr();
 
       pulse      = caloDigi.waveform();
       nWords     = pulse.size();
       //get the amplitude
       for (int j=0; j<nWords; ++j){
-	double content = pulse.at(j);
-	if (content > amplitude) amplitude = content;
+        double content = pulse.at(j);
+        if (content > amplitude) amplitude = content;
       }
       _recoDigiAmp     [i] = amplitude;
 
@@ -801,53 +795,53 @@ namespace mu2e {
       double   energyMax(0), eMeanTot(0), clusterTime(0), clusterMCMeanTime(0), clusterMeanTime(0), clusterMCTime(0), eDep, psd, crystalTime(0);
 
       for (int j=0; j<nCrystals; ++j){
-      	crystalHit	 = crystals->at(j).operator ->();
-      	recoDigi         = crystalHit->recoCaloDigis().at(0).operator ->();
+              crystalHit         = crystals->at(j).operator ->();
+              recoDigi         = crystalHit->recoCaloDigis().at(0).operator ->();
 
-      	indexMC          = 0;//caloDigi.index();
+              indexMC          = 0;//caloDigi.index();
 
-      	eDep             = crystalHit->energyDep();
-      	psd              = 0;//recoDigi  ->psd();
+              eDep             = crystalHit->energyDep();
+              psd              = 0;//recoDigi  ->psd();
 
-      	if (psd >= _psdThreshold){
-      	  crystalTime        =   crystalHit->time();
+              if (psd >= _psdThreshold){
+                crystalTime        =   crystalHit->time();
 
-      	  if (eDep> 10.){
-      	    eMeanTot          += eDep;
-      	    clusterMeanTime   += crystalTime*eDep;
-      	  }
+                if (eDep> 10.){
+                  eMeanTot          += eDep;
+                  clusterMeanTime   += crystalTime*eDep;
+                }
 
-      	  if (eDep > energyMax){
-      	    clusterTime       = crystalTime;
-      	    energyMax         = eDep;
+                if (eDep > energyMax){
+                  clusterTime       = crystalTime;
+                  energyMax         = eDep;
 
-	    if (nCaloHitMC > 0) {
-	      caloDigiMC        = &caloDigiMCCol->at(indexMC);
-	      clusterMCMeanTime = caloDigiMC->time();
-	      clusterMCTime     = caloDigiMC->time();
-	    }
-  	  }
-      	}
+            if (nCaloHitMC > 0) {
+              caloDigiMC        = &caloDigiMCCol->at(indexMC);
+              clusterMCMeanTime = caloDigiMC->time();
+              clusterMCTime     = caloDigiMC->time();
+            }
+            }
+              }
 
-	if (nCaloHitMC > 0) {
+        if (nCaloHitMC > 0) {
 
-	  for (unsigned k=0; k<caloDigiMC->nParticles(); ++k){
-	    sim =   caloDigiMC->energyDeposit(k).sim().operator ->();
-	    int        pdgId       = sim->pdgId();
-	    double     ceEnergy    = 104.9;
-	    double     startEnergy = sim->startMomentum().e();
-	    if ( (pdgId == 11) && (startEnergy>ceEnergy))
-	      {
-		isConversion = 1;
-	      }
-	    // if ( sim->fromGenerator() ){
-	    //   GenParticle* gen = (GenParticle*) &(sim->genParticle());
-	    //   if ( gen->generatorId().isConversion() ){
-	    // 	isConversion = 1;
-	    //   }
-	    // }
-	  }//end loop on the particles inside the crystalHit
-	}
+          for (unsigned k=0; k<caloDigiMC->nParticles(); ++k){
+            sim =   caloDigiMC->energyDeposit(k).sim().operator ->();
+            int        pdgId       = sim->pdgId();
+            double     ceEnergy    = 104.9;
+            double     startEnergy = sim->startMomentum().e();
+            if ( (pdgId == PDGCode::e_minus) && (startEnergy>ceEnergy))
+              {
+                isConversion = 1;
+              }
+            // if ( sim->fromGenerator() ){
+            //   GenParticle* gen = (GenParticle*) &(sim->genParticle());
+            //   if ( gen->generatorId().isConversion() ){
+            //         isConversion = 1;
+            //   }
+            // }
+          }//end loop on the particles inside the crystalHit
+        }
       }
       if (eMeanTot>0){
         clusterMeanTime /= eMeanTot;
@@ -872,4 +866,4 @@ namespace mu2e {
   }
 }  // end namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ReadCaloDigi);
+DEFINE_ART_MODULE(mu2e::ReadCaloDigi)

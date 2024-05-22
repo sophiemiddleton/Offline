@@ -8,7 +8,6 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 #include "art/Utilities/make_tool.h"
 #include "canvas/Persistency/Common/Ptr.h"
@@ -52,6 +51,7 @@ namespace mu2e{
         fhicl::Atom<float> maxDOCA{Name("maxDOCA"), Comment("Largest DOCA that is considered on the track (mm)")};
         fhicl::Atom<float> t0offset{Name("t0offset"), Comment("T0 offset")};
         fhicl::Atom<int> nsteps{Name("NSteps"), Comment("Number of steps per straw")};
+        fhicl::Atom<int> ntsteps{Name("NTSteps"), Comment("Number of transverse steps per straw")};
         fhicl::Atom<float> stepsize{Name("StepSize"), Comment("Size of each step in fraction of res")};
         fhicl::Atom<art::InputTag> chToken{Name("ComboHitCollection"),Comment("tag for straw hit collection")};
         fhicl::Atom<art::InputTag> tcToken{Name("TimeClusterCollection"),Comment("tag for time cluster collection")};
@@ -70,7 +70,7 @@ namespace mu2e{
       int  _minPeak;
       float _maxDOCA;
       float _t0offset;
-      int _Nsteps;
+      int _Nsteps, _Ntsteps;
       float _stepSize;
       art::InputTag  _chToken;
       art::InputTag  _tcToken;
@@ -83,14 +83,15 @@ namespace mu2e{
 
  LineFinder::LineFinder(const Parameters& conf) :
    art::EDProducer(conf),
-   	_diag (conf().diag()),
+           _diag (conf().diag()),
         _minPeak (conf().minpeak()),
         _maxDOCA (conf().maxDOCA()),
         _t0offset (conf().t0offset()),
         _Nsteps (conf().nsteps()),
+        _Ntsteps (conf().ntsteps()),
         _stepSize (conf().stepsize()),
-    	_chToken (conf().chToken()),
-	_tcToken (conf().tcToken())
+            _chToken (conf().chToken()),
+        _tcToken (conf().tcToken())
 {
   consumes<ComboHitCollection>(_chToken);
   consumes<TimeClusterCollection>(_tcToken);
@@ -112,17 +113,19 @@ void LineFinder::produce(art::Event& event ) {
   for (size_t index=0;index< tccol.size();++index) {
     const auto& tclust = tccol[index];
 
+    // convert (presumably) panel hits in time clusterto straw hits
+    CosmicTrackSeed tseed;
     ComboHitCollection tchits;
+    tchits.reserve(tclust.hits().size()*2); // guess 2 straw hits/panel hit
 
     int nhits = 0;
-    std::vector<ComboHitCollection::const_iterator> chids;
-    chcol.fillComboHits(event, tclust.hits(), chids);
+    ComboHitCollection::CHCIter chids;
+    chcol.fillComboHits( tclust.hits(), chids);
     for (auto const& it : chids){
-      tchits.push_back(it[0]);
-      nhits += it[0].nStrawHits();
+      tchits.push_back(*it);
+      nhits += it->nStrawHits();
     }
 
-    CosmicTrackSeed tseed;
     tseed._timeCluster = art::Ptr<TimeCluster>(tcH,index);
     tseed._track.converged = true;
 
@@ -132,15 +135,13 @@ void LineFinder::produce(art::Event& event ) {
 
     if (seedSize >= _minPeak){
       if (_diag > 0)
-        std::cout << "LineFinder: found line (" << seedSize << ")" << std::endl;
+        std::cout << "LineFinder: found line (" << seedSize << ")" << " " << tseed._track.FitParams.T0 << " " << tseed._track.FitParams.A0 << " " << tseed._track.FitParams.B0 << " " << tseed._track.FitParams.A1 << " " << tseed._track.FitParams.B1 << std::endl;
       tseed._status.merge(TrkFitFlag::Straight);
       tseed._status.merge(TrkFitFlag::hitsOK);
       tseed._status.merge(TrkFitFlag::helixOK);
       tseed._status.merge(TrkFitFlag::helixConverged);
       tseed._track.MinuitParams.cov = std::vector<double>(15, 0);
-
-      CosmicTrackSeedCollection*  tcol  = seed_col.get();
-      tcol->push_back(tseed);
+      seed_col->push_back(tseed);
     }
   }
 
@@ -157,10 +158,15 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
   CLHEP::Hep3Vector seedDir(0,0,0);
   CLHEP::Hep3Vector seedInt(0,0,0);
 
+  bool found_all = false;
   // lets get the best pairwise vector
   for (size_t i=0;i<shC.size();i++){
+    if (found_all)
+      break;
     Straw const& strawi = tracker->getStraw(shC[i].strawId());
     for (size_t j=i+1;j<shC.size();j++){
+      if (found_all)
+        break;
       Straw const& strawj = tracker->getStraw(shC[j].strawId());
       for (int is=-1*_Nsteps;is<_Nsteps+1;is++){
         CLHEP::Hep3Vector ipos = shC[i].posCLHEP() + strawi.getDirection()*shC[i].wireRes()*_stepSize*is;
@@ -168,30 +174,47 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
           CLHEP::Hep3Vector jpos = shC[j].posCLHEP() + strawj.getDirection()*shC[j].wireRes()*_stepSize*js;
 
           CLHEP::Hep3Vector newdir = (jpos-ipos).unit();
-          // now loop over all hits and see how many are in this track
-          int count = 0;
-          double ll = 0;
-          for (size_t k=0;k<shC.size();k++){
-            Straw const& strawk = tracker->getStraw(shC[k].strawId());
-            TwoLinePCA pca( strawk.getMidPoint(), strawk.getDirection(),
-                ipos, newdir);
-            double dist = (pca.point1()-strawk.getMidPoint()).mag();
-            if (pca.dca() < _maxDOCA && dist < strawk.halfLength()){
-              count += 1;
-              ll += pow(dist-shC[k].wireDist(),2)/shC[k].wireErr2();
+          CLHEP::Hep3Vector icross = (jpos-ipos).cross(strawi.getDirection()).unit();
+          CLHEP::Hep3Vector jcross = (jpos-ipos).cross(strawj.getDirection()).unit();
+          for (int its=-1*_Ntsteps;its<_Ntsteps+1;its++){
+            ipos += icross*2.5*its;
+            for (int jts=-1*_Ntsteps;jts<_Ntsteps+1;jts++){
+              jpos += jcross*2.5*its;
+
+              // now loop over all hits and see how many are in this track
+              int count = 0;
+              double ll = 0;
+              for (size_t k=0;k<shC.size();k++){
+                Straw const& strawk = tracker->getStraw(shC[k].strawId());
+                TwoLinePCA pca( strawk.getMidPoint(), strawk.getDirection(),
+                    ipos, newdir);
+                double dist = (pca.point1()-strawk.getMidPoint()).mag();
+                if (pca.dca() < _maxDOCA && dist < strawk.halfLength()){
+                  count += 1;
+                  ll += pow(dist-shC[k].wireDist(),2)/shC[k].wireVar();
+                }
+              }
+              if (count == (int) shC.size())
+                found_all = true;
+              if (count > bestcount || (count == bestcount && ll < bestll)){
+                bestcount = count;
+                bestll = ll;
+                seedDir = newdir.unit();
+                if (seedDir.y() > 0) seedDir *= -1;
+                if (seedDir.y() != 0)
+                  seedInt = ipos - newdir*ipos.y()/newdir.y();
+              }
             }
-          }
-          if (count > bestcount || (count == bestcount && ll < bestll)){
-            bestcount = count;
-            bestll = ll;
-            seedDir = newdir.unit();
-            if (seedDir.y() > 0) seedDir *= -1;
-            if (seedDir.y() != 0)
-              seedInt = ipos - newdir*ipos.y()/newdir.y();
           }
         }
       }
     }
+  }
+
+  // get pos and direction into Z alignment
+  if (seedDir.y() != 0){
+    seedDir /= -1*seedDir.y();
+    seedInt -= seedDir*seedInt.y()/seedDir.y();
   }
 
   double avg_t0 = 0;
@@ -213,16 +236,16 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
 
   tseed._t0._t0 = avg_t0-_t0offset;
 
-  // get pos and direction into Z alignment
-  if (seedDir.z() != 0){
-    seedDir /= seedDir.z();
-    seedInt -= seedDir*seedInt.z()/seedDir.z();
-  }
-
+  tseed._track.FitParams.T0 = tseed._t0._t0;
   tseed._track.FitParams.A0 = seedInt.x();
-  tseed._track.FitParams.B0 = seedInt.y();
+  tseed._track.FitParams.B0 = seedInt.z();
   tseed._track.FitParams.A1 = seedDir.x();
-  tseed._track.FitParams.B1 = seedDir.y();
+  tseed._track.FitParams.B1 = seedDir.z();
+  tseed._track.MinuitParams.T0 = tseed._t0._t0;
+  tseed._track.MinuitParams.A0 = seedInt.x();
+  tseed._track.MinuitParams.B0 = seedInt.z();
+  tseed._track.MinuitParams.A1 = seedDir.x();
+  tseed._track.MinuitParams.B1 = seedDir.z();
   XYZVectorF X(1,0,0);
   XYZVectorF Y(0,1,0);
   XYZVectorF Z(0,0,1);
@@ -233,12 +256,14 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
   XYZVectorF xyzdir(seedDir);
   TrackEquation XYZTrack(xyzint,xyzdir);
   tseed._track.SetFitEquation(XYZTrack);
+  tseed._track.SetMinuitEquation(XYZTrack);
 
   // For compatibility FIXME
   for(size_t ich= 0; ich<tseed._straw_chits.size(); ich++){
     std::vector<StrawHitIndex> shitids;
-    tseed._straw_chits.fillStrawHitIndices(event, ich, shitids);
+    tseed._straw_chits.fillStrawHitIndices(ich, shitids);
 
+    /*
     for(auto const& ids : shitids){
       size_t    istraw   = (ids);
       TrkStrawHitSeed tshs;
@@ -246,6 +271,7 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
       tshs._t0 = tseed._t0;
       tseed._trkstrawhits.push_back(tshs);
     }
+    */
   }
 
   return good_hits;
@@ -253,4 +279,4 @@ int LineFinder::findLine(const ComboHitCollection& shC, art::Event const& event,
 
 }//end mu2e namespace
 using mu2e::LineFinder;
-DEFINE_ART_MODULE(LineFinder);
+DEFINE_ART_MODULE(LineFinder)

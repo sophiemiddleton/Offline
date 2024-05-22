@@ -28,7 +28,6 @@
 #include "canvas/Persistency/Provenance/BranchType.h"
 #include "canvas/Persistency/Provenance/ProductID.h"
 #include "canvas/Persistency/Provenance/canonicalProductName.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
@@ -150,7 +149,7 @@ namespace mu2e {
                                        art::EventPrincipal*& outE)
     {
       std::unique_ptr<GenParticleCollection> particles(new GenParticleCollection());
-      unsigned int primaries;
+      unsigned long long primaries;
       bool still_data = _corsikaGen.generate(*particles, primaries);
 
       if (!still_data) {
@@ -197,4 +196,4 @@ namespace mu2e {
 } // namespace mu2e
 
 typedef art::Source<mu2e::CorsikaBinaryDetail> FromCorsikaBinary;
-DEFINE_ART_INPUT_SOURCE(FromCorsikaBinary);
+DEFINE_ART_INPUT_SOURCE(FromCorsikaBinary)

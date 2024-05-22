@@ -19,6 +19,7 @@
 #include "Offline/CalorimeterGeom/inc/DiskCalorimeter.hh"
 #include "Offline/CalorimeterGeom/inc/Disk.hh"
 #include "Offline/ConfigTools/inc/SimpleConfig.hh"
+#include "Offline/DataProducts/inc/CaloConst.hh"
 
 
 namespace mu2e{
@@ -30,7 +31,7 @@ namespace mu2e{
     class DiskCalorimeterMaker{
 
     public:
- 
+
        DiskCalorimeterMaker(SimpleConfig const& config, double solenoidOffset);
       ~DiskCalorimeterMaker();
 
@@ -45,8 +46,8 @@ namespace mu2e{
 
       int verbosityLevel_;
       double FPHalfZLength_;
-      double diskCaseHalfZLength_;     
-      double BPHalfZLength_;     
+      double diskCaseHalfZLength_;
+      double BPHalfZLength_;
       double diskHalfZLength_;
       double FEBHalfZLength_;
       double motherHalfZ_;
@@ -58,4 +59,4 @@ namespace mu2e{
 
 }
 
-#endif 
+#endif

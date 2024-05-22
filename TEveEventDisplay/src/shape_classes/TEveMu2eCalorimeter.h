@@ -16,7 +16,6 @@
 // ... libRIO
 #include <TFile.h>
 //Calorimeter:
-#include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/CalorimeterGeom/inc/CaloGeomUtil.hh"
 #include "Offline/CalorimeterGeom/inc/CaloInfo.hh"
 #include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
@@ -28,9 +27,14 @@
 #include "Offline/TEveEventDisplay/src/dict_classes/GeomUtils.h"
 //Mu2e:
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
+
+namespace art{
+  class Run;
+}
+
 namespace mu2e{
-	class TEveMu2eCalorimeter
-	{
+        class TEveMu2eCalorimeter
+        {
     public:
       #ifndef __CINT__
       explicit TEveMu2eCalorimeter();

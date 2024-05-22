@@ -26,7 +26,6 @@
 //
 
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 
@@ -40,7 +39,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Offline/GeneralUtilities/inc/csv.hh"
+#include "Offline/GeneralUtilities/inc/CsvReader.hh"
 
 namespace {
 
@@ -119,18 +118,21 @@ namespace {
         // Use c-style IO to get the format that I want.
         FILE* file = fopen(outFile.c_str(), "w");
 
-        io::CSVReader<3> in(c.csv_name);
-        in.set_header("x", "y", "z");
+        mu2e::CsvReader cr(c.csv_name);
+        mu2e::StringVec row;
         double x, y, z;
-        while (in.read_row(x, y, z)) {
+        while (cr.getRow(row)) {
+            x = stod(row[0]);
+            y = stod(row[1]);
+            z = stod(row[2]);
             CLHEP::Hep3Vector field = bfmgr.getBField(CLHEP::Hep3Vector(x, y, z));
 
             std::fprintf(file, "%15.10f %15.10f %15.10f %15.10f %15.10f %15.10f\n", x, y, z,
                          field[0], field[1], field[2]);
         }
-    };
+    }
 
-};  // namespace
+}  // namespace
 
 namespace mu2e {
     class BFieldTest01 : public art::EDAnalyzer {
@@ -164,8 +166,8 @@ namespace mu2e {
         for (auto const& c : scans_) {
             scanCSV(c, *bfmgr);
         }
-    };
+    }
 
 }  // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::BFieldTest01);
+DEFINE_ART_MODULE(mu2e::BFieldTest01)

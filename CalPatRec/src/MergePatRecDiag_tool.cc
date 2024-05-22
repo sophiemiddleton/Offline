@@ -1,6 +1,3 @@
-#ifndef __CalPatRec_MergePatRecDiag_hh__
-#define __CalPatRec_MergePatRecDiag_hh__
-
 #include "TH1.h"
 #include "TH2.h"
 
@@ -27,7 +24,7 @@ namespace mu2e {
   using           CLHEP::Hep3Vector;
 
   class SimParticle;
-  
+
   class MergePatRecDiag: public ModuleHistToolBase {
 
     enum {
@@ -48,7 +45,7 @@ namespace mu2e {
       TH1F*  fNTprTracks;
       TH1F*  fNCprTracks;
     };
-    
+
     struct Hist_t {
       EventHist_t* fEvent[kNEventHistSets];
       TrackHist_t*  fTpr [kNTprHistSets];
@@ -60,12 +57,12 @@ namespace mu2e {
     std::unique_ptr<McUtilsToolBase>      _mcUtils;
 
     int                                   _eventNumber;
-    
+
     Data_t*                               _data;                 // diag data, passed from the caller, cached
     Hist_t                                _hist;
 
   public:
-    
+
     MergePatRecDiag(const fhicl::ParameterSet& PSet);
     ~MergePatRecDiag();
 
@@ -98,11 +95,11 @@ namespace mu2e {
     if (_mcDiag != 0) _mcUtils = art::make_tool<McUtilsToolBase>(PSet.get<fhicl::ParameterSet>("mcUtils"));
     else              _mcUtils = std::make_unique<McUtilsToolBase>();
   }
-  
+
 //-----------------------------------------------------------------------------
   MergePatRecDiag::~MergePatRecDiag() {
   }
-  
+
   //-----------------------------------------------------------------------------
   void MergePatRecDiag::bookEventHistograms(EventHist_t* Hist, art::TFileDirectory* Dir) {
     Hist->fEventNumber     = Dir->make<TH1F>("event" , "Event Number" , 100, 0., 1000.);
@@ -133,15 +130,15 @@ namespace mu2e {
     int book_event_histset[kNEventHistSets];
     for (int i=0; i<kNEventHistSets; i++) book_event_histset[i] = 0;
 
-    book_event_histset[ 0] = 1;		// all events
+    book_event_histset[ 0] = 1;                // all events
 
     for (int i=0; i<kNEventHistSets; i++) {
       if (book_event_histset[i] != 0) {
-	sprintf(folder_name,"evt_%i",i);
-	art::TFileDirectory dir = Tfs->mkdir(folder_name);
-	
-	_hist.fEvent[i] = new EventHist_t;
-	bookEventHistograms(_hist.fEvent[i],&dir);
+        sprintf(folder_name,"evt_%i",i);
+        art::TFileDirectory dir = Tfs->mkdir(folder_name);
+
+        _hist.fEvent[i] = new EventHist_t;
+        bookEventHistograms(_hist.fEvent[i],&dir);
       }
     }
 //-----------------------------------------------------------------------------
@@ -150,15 +147,15 @@ namespace mu2e {
     int book_tpr_histset[kNTprHistSets];
     for (int i=0; i<kNTprHistSets; i++) book_tpr_histset[i] = 0;
 
-    book_tpr_histset[ 0] = 1;		// all tracks
+    book_tpr_histset[ 0] = 1;                // all tracks
 
     for (int i=0; i<kNTprHistSets; i++) {
       if (book_tpr_histset[i] != 0) {
-	sprintf(folder_name,"tpr_%i",i);
-	art::TFileDirectory dir = Tfs->mkdir(folder_name);
-	
-	_hist.fTpr[i] = new TrackHist_t;
-	bookTrackHistograms(_hist.fTpr[i],&dir);
+        sprintf(folder_name,"tpr_%i",i);
+        art::TFileDirectory dir = Tfs->mkdir(folder_name);
+
+        _hist.fTpr[i] = new TrackHist_t;
+        bookTrackHistograms(_hist.fTpr[i],&dir);
       }
     }
 //-----------------------------------------------------------------------------
@@ -167,15 +164,15 @@ namespace mu2e {
     int book_cpr_histset[kNCprHistSets];
     for (int i=0; i<kNCprHistSets; i++) book_cpr_histset[i] = 0;
 
-    book_cpr_histset[ 0] = 1;		// all tracks
+    book_cpr_histset[ 0] = 1;                // all tracks
 
     for (int i=0; i<kNCprHistSets; i++) {
       if (book_cpr_histset[i] != 0) {
-	sprintf(folder_name,"cpr_%i",i);
-	art::TFileDirectory dir = Tfs->mkdir(folder_name);
-	
-	_hist.fCpr[i] = new TrackHist_t;
-	bookTrackHistograms(_hist.fCpr[i],&dir);
+        sprintf(folder_name,"cpr_%i",i);
+        art::TFileDirectory dir = Tfs->mkdir(folder_name);
+
+        _hist.fCpr[i] = new TrackHist_t;
+        bookTrackHistograms(_hist.fCpr[i],&dir);
       }
     }
 
@@ -188,7 +185,7 @@ namespace mu2e {
 
     int event_number = _data->event->event();
     int run_number   = _data->event->run  ();
-    
+
     Hist->fEventNumber->Fill(event_number);
     Hist->fRunNumber  ->Fill(run_number);
 
@@ -225,7 +222,7 @@ namespace mu2e {
     int en = _data->event->event();
     if (_mcDiag) {
       if (_eventNumber != en) {
-	  _eventNumber       = en;
+          _eventNumber       = en;
       }
     }
 //-----------------------------------------------------------------------------
@@ -252,7 +249,7 @@ namespace mu2e {
     }
     return 0;
   }
-  
+
 //-----------------------------------------------------------------------------
 // debugLevel > 0: print seeds
 //-----------------------------------------------------------------------------
@@ -264,5 +261,3 @@ namespace mu2e {
 }
 
 DEFINE_ART_CLASS_TOOL(mu2e::MergePatRecDiag)
-
-#endif

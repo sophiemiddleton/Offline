@@ -11,122 +11,177 @@
 #include "Offline/DataProducts/inc/StrawId.hh"
 #include "Offline/DataProducts/inc/StrawIdMask.hh"
 #include "Offline/DataProducts/inc/GenVector.hh"
+#include "Offline/DataProducts/inc/TrkTypes.hh"
 #include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"
 #include "Offline/RecoDataProducts/inc/StrawHitIndex.hh"
 #include <stdint.h>
-// root includes
-#include "Rtypes.h"
+#include "Math/SMatrix.h"
 // art includes
 #ifndef __ROOTCLING__
-#include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #endif
+#include "canvas/Persistency/Common/ProductPtr.h"
 // C++ includes
 #include <array>
 #include <vector>
 namespace mu2e {
 
   struct ComboHit {
-    enum edir{wire=0,trans};
-    constexpr static size_t MaxNCombo = 8; // needs tuning FIXME!
-    typedef std::array<uint16_t,MaxNCombo> PIArray; // array of indices into parent collection
-    ComboHit();
-    // compatibility constructor (deprecated)
-    ComboHit(const ComboHit&, StrawHitIndex, double);
-    // accessors
-    XYZVectorF centerPos() const { return _pos - _wdist*_wdir; }
+    enum edir{wire=0,trans,z}; // should switch to  UVW TODO
+    enum UVDir{UDir=0,VDir,WDir}; //  UVW
+    constexpr static size_t MaxNCombo = 8;
+    using PIArray = std::array<uint16_t,MaxNCombo>; // array of indices into parent collection
+    // General accessors that apply to all kinds of combo hits
+    // UVW coordinate system
+    XYZVectorF uDir() const { return XYZVectorF(_udir.X(),_udir.Y(),0.0); }
+    XYZVectorF vDir() const { return XYZVectorF(-_udir.Y(),_udir.X(),0.0); }
+    XYZVectorF wDir() const { return XYZVectorF(0.0,0.0,1.0); } // by definition along Z
+    // native 2D versionsof the above
+    XYVectorF const& uDir2D() const { return _udir; } // along wire
+    XYVectorF vDir2D() const { return XYVectorF(-_udir.Y(),_udir.X()); } // perp to wire
+    // hit direction, =wDir except for stereo hits, where it can be the result of a fit
+    XYZVectorF const& hDir() const { return _hdir; }
+    // position
     XYZVectorF const& pos() const { return _pos; }
-    XYZVectorF const& wdir() const { return _wdir; }
-// CLHEP-versions of these for backwards compatibilty
-    CLHEP::Hep3Vector centerPosCLHEP() const { return GenVector::Hep3Vec(_pos - _wdist*_wdir); }
-    CLHEP::Hep3Vector posCLHEP() const { return GenVector::Hep3Vec(_pos); }
-    CLHEP::Hep3Vector wdirCLHEP() const { return GenVector::Hep3Vec(_wdir); }
-//
-    Float_t posRes(edir dir) const;
-    Float_t energyDep() const { return _edep; }
-    Float_t phi() const { return _pos.phi();}
-    Float_t helixPhi() const { return _hphi;}
-    Float_t time() const { return _time; }
-    Float_t driftTime() const { return _dtime; }
-    Float_t propTime() const { return _ptime; }
-    Float_t correctedTime() const { return _time - _ptime - _dtime; }
-    Float_t specificIonization() const { return _edep/_pathlength; }
-    Float_t pathLength() const { return _pathlength; }
-    Float_t qual() const { return _qual; }
+    float uPos() const { return _pos.Dot(uDir()); }
+    float vPos() const { return _pos.Dot(vDir()); }
+    XYZVectorF centerPos() const { return _pos - _wdist*uDir(); } // wire center position
+    // resolution accessors
+    float posRes(edir dir) const;
+    // position and slope variances
+    float uVar() const { return _uvar; }
+    float vVar() const { return _vvar; }
+    float wVar() const { return _wvar; }
+    float hcostVar() const { return _hcostvar; }
+    float hphiVar() const { return _hphivar; }
+    // resolutions from the variances
+    float uRes() const { return sqrt(uVar()); }
+    float vRes() const { return sqrt(vVar()); }
+    float wRes() const { return sqrt(wVar()); }
+    float hcostRes() const { return sqrt(hcostVar()); }
+    float hphiRes() const { return sqrt(hphiVar()); }
+    // other info
+    float energyDep() const { return _edep; }
+    float qual() const { return _qual; }
     StrawHitFlag const& flag() const { return _flag; }
-    StrawEnd const& driftEnd() const { return _tend; } // which end was used for time
     StrawId const& strawId() const { return _sid; }
-    Float_t wireRes() const { return _wres; }
-    Float_t transRes() const { return _tres; }
-    Float_t transErr2() const { return _tres*_tres; }
-    Float_t wireErr2() const { return _wres*_wres; }
-    Float_t wireDist() const { return _wdist; }
-    uint16_t nCombo() const { return _ncombo; }
-    uint16_t nStrawHits() const { return _nsh; }
-    StrawIdMask const& mask() const { return _mask;}
-    void init(ComboHit const& other, uint16_t index);
-    uint16_t index(uint16_t ish=0) const;
-    bool addIndex(uint16_t shi); // append an index to the
-    PIArray const& indexArray() const { return _pind; }
+    // book-keeping accessors
+    auto nCombo() const { return _ncombo; }
+    auto nStrawHits() const { return _nsh; }
+    auto const& mask() const { return _mask;}
+    void init(ComboHit const& other, size_t index);
+    auto index(size_t ish=0) const { return _pind.at(ish); }
+    bool addIndex(size_t shi); // append an index to the
+    auto const& indexArray() const { return _pind; }
+    // general timing info, valid for all hits
+    float timeVar() const { return _timevar; }
+    float timeRes() const { return sqrt(_timevar); }
+    float correctedTime() const { return _time; }
+    // info for single-panel Combo hits
+    float TOT(StrawEnd end=StrawEnd::cal)       const { return _tot[end];}
+    float wireDist() const { return _wdist; }
+    // compatibility constructor (deprecated)
+    float endTime(StrawEnd end=StrawEnd::cal)     const { return _etime[end];}
+    auto const& TOTs() const { return _tot; }
+    auto const& endTimes() const { return _etime; }
+    StrawEnd const& earlyEnd() const { return _eend; } // End with earliest tdc time
+    StrawEnd lateEnd() const { return _eend.otherEnd(); } // End with later tdc time
+    // Accessors for hits used in helices
+    float helixPhi() const { return _hphi;}
+    // other
     void print( std::ostream& ost = std::cout, bool doEndl = true ) const;
-    //
-    XYZVectorF _pos; // position of this hit
-    XYZVectorF _wdir; // 'direction' of this hit, used to define error elipsoid axis
-    XYZVectorF _sdir;           // straw radial direction, perp to Z and wire direction
-    Float_t _wres, _tres; // resolution along and transverse to the 'wire' direction
-    Float_t _wdist; // distance from wire center along this direction (agregate)
-    Float_t _time, _edep, _qual; // derived StrawHit (agregate) info
-    Float_t _dtime; // drift time estimate
-    Float_t _ptime; // prop time estimate
-    Float_t _pathlength; // path length estimate
-    Float_t _hphi; // azimuth relative to a helix center
-    Float_t _xyWeight;       // weight used to perform the x-y circle fit
-    Float_t _zphiWeight;     // weight used to perfom the z-phi linear fit
-    uint16_t _ncombo; // number of associated input objects
-    uint16_t _nsh; // number of underlying straw hits
-    PIArray _pind; // Indices back to parent objects
-    StrawHitFlag _flag; // flag condition of this hit (agregate)
-    StrawId _sid; // straw identifier; some fields may not be complete, use in conjunction with mask
-    StrawIdMask _mask; // mask for valid StrawId fields
-    StrawEnd _tend; // end used to define time measruement
+    // interface returning calibration info: these should be refactored to
+    // use StrawResponse TODO
+    float driftTime() const { return _dtime; }
+    float propTime() const { return _ptime; }
+    // legacy functions
+    //  No new code should use these accessors, they should be removed soon TODO
+    //    ComboHit(const ComboHit&, StrawHitIndex, double);
+    float wireRes() const { return uRes(); }
+    float wireVar() const { return uVar(); }
+    float transRes() const { return vRes(); }
+    float transVar() const { return vVar(); }
+    float phi() const { return _pos.phi();}
+    float time() const { return _etime[_eend]; }
+    CLHEP::Hep3Vector posCLHEP() const { return GenVector::Hep3Vec(pos()); }
+    // persistent payload
+    // vector information.  These are stored explicitly even though they are reducible to a
+    // smaller payload as the processing time cost of reconstituting them is higher than the memory access time cost
+    XYZVectorF _pos; // best estimate of the position of this hit in space
+    XYVectorF _udir; // always perp to Z, defined as the semi-major direction of the covariance matrix
+    XYZVectorF _hdir; // direction of the hit
+    float _uvar= 0.0, _vvar = 0.0, _wvar = 0.0; // diagonals of position covariance;
+    float _hcostvar = 0.0, _hphivar = 0.0; // diagonals of hit direction covariance
+    float _wdist = 0.0; // distance from wire center along the wire direction
+    float _time = 0.0; // best estimate of time the physical particle created this hit: aggregate and calibrated
+    float _timevar = 0.0; // estimated variance of time measurement
+    float _edep = 0.0; // average energy deposition
+    float _qual = 0.0; // quality of hit or combination
+    StrawHitFlag _flag; // condition of this hit
+    StrawId _sid; // straw identifier; for composites, not all fields are complete, use in conjunction with mask
+    StrawIdMask _mask; // mask of valid StrawId fields
+    StrawEnd _eend; // early tdc end
+    // low-level quantities needed for calibration.  These only make sense for single-straw hits
+    TrkTypes::TOTTimes  _tot = {0.0, 0.0 };   // TOT times in ns from each end
+    TrkTypes::TDCTimes _etime = {0.0, 0.0 }; // threshold crossing times in ns from each end
+    // bookkeeping info
+    uint16_t _ncombo = 0; // number of associated input objects
+    uint16_t _nsh = 0; // number of underlying straw hits
+    PIArray _pind = {0,0,0,0,0,0,0,0}; // Indices back to parent objects
+    // information specific to hits associated with a helix
+    float _hphi = 0.0; // azimuth relative to a helix center
+    float _xyWeight = 0.0;       // weight used to perform the x-y circle fit
+    float _zphiWeight = 0.0;     // weight used to perfom the z-phi linear fit
+    // low-level derived data that should move to StrawResponse
+    float _dtime = 0.0; // TOT based drift time estimate
+    float _ptime = 0.0; // prop time estimate
   };
   // ComboHitCollection is a non-trivial subclass of vector which includes navigation of nested ComboHits
   class ComboHitCollection : public std::vector<mu2e::ComboHit> {
     public:
-      ComboHitCollection(bool sorted=false) : _sorted(sorted) {}
-      typedef std::vector<ComboHitCollection::const_iterator> CHCIter;
+      enum Sort {unsorted=0,zsort,sidsort,timesort}; // define sort state of the contents
+      using CHCIter = std::vector<ComboHitCollection::const_iterator>;
+      using CHCPTR = art::ProductPtr<ComboHitCollection>;
+      using SHIV = std::vector<StrawHitIndex>;
+      ComboHitCollection(Sort sort=unsorted) : _sort(sort) {}
       // fill a vector of indices to the underlying digis used in a given ComboHit
       // This function is called recursively, so the the vector must be empty on the top-most call
 #ifndef __ROOTCLING__
-      void fillStrawDigiIndices(art::Event const& event, uint16_t chindex, std::vector<StrawHitIndex>& shids) const;
-      // similarly fill to the StrawHit level
-      void fillStrawHitIndices(art::Event const& event, uint16_t chindex, std::vector<StrawHitIndex>& shids) const;
-      // do this for all the hits in the collection
-      void fillStrawHitIndices(art::Event const& event, std::vector<std::vector<StrawHitIndex> >& shids) const;
+      // find the parent at a given level
+      CHCPTR parent(StrawIdMask::Level level) const;
+      void fillStrawDigiIndices( size_t chindex, SHIV& shids) const;
+      // Fill indices to the specified level.  Return value is the collection to whic
+      // the indices apply.  first, given all my hits
+      ComboHitCollection const* fillStrawHitIndices( SHIV& shiv, StrawIdMask::Level clevel=StrawIdMask::uniquestraw) const;
+      // given a specific hit (index) in myself
+      ComboHitCollection const* fillStrawHitIndices( size_t chindex, SHIV& shiv, StrawIdMask::Level clevel=StrawIdMask::uniquestraw) const;
+      // given a vector of indices
+      ComboHitCollection const* fillStrawHitIndices(SHIV const& inshiv, SHIV& outshiv, StrawIdMask::Level clevel=StrawIdMask::uniquestraw) const;
+      // the following are deprecated in favor of the more-efficient and self-checking functions above
       // translate a collection of ComboHits into the lowest-level (straw) combo hits.  This function is recursive
-      void fillComboHits(art::Event const& event, std::vector<uint16_t> const& indices, CHCIter& iters) const;
+      void fillComboHits( std::vector<uint16_t> const& indices, CHCIter& iters) const;
       // fill a vector of iterators to the ComboHits 1 layer below a given ComboHit.  This is NOT RECURSIVE
-      // return value says whether there's a layer below or not (if not, output is empty)
-      bool fillComboHits(art::Event const& event, uint16_t chindex, CHCIter& iters) const;
-      // recover the parent collection handle from the event
-      void setParentHandle(art::Event const& event, art::Handle<ComboHitCollection>& phandle) const;
+      void fillComboHits( size_t chindex, CHCIter& iters) const;
       // set the parent Id given a handle to the parent collection
       void setParent(art::Handle<ComboHitCollection> const& phandle);
-      // or directly from the product ID
+      void setParent(art::ValidHandle<ComboHitCollection> const& phandle);
+      // or directly from the productPtr
+      void setParent(CHCPTR const& parent);
+      // or set to be the same as another collection
+      void setSameParent(ComboHitCollection const& other);
 #endif
-      void setParent(art::ProductID const& par){ _parent = par; }
       // accessors
-      art::ProductID const& parent() const { return _parent; }
-      bool sorted() const { return _sorted; }
-      uint16_t nStrawHits() const;
+      auto const& parent() const { return _parent; }
+      StrawIdMask::Level level() const;
+      auto sort() const { return _sort; }
+      unsigned nStrawHits() const;
     private:
       // reference back to the input ComboHit collection this one references
-      // This can be used to chain back to the original StrawHit indices
-      art::ProductID _parent;
-      bool _sorted; // record if this collection was sorted
+      CHCPTR _parent; // pointer to the parent object
+      Sort _sort; // record how this collection was sorted
   };
   inline std::ostream& operator<<( std::ostream& ost,
-                                   ComboHit const& hit){
+      ComboHit const& hit){
     hit.print(ost,false);
     return ost;
   }

@@ -10,20 +10,12 @@ LsqSums4::LsqSums4() {
   clear();
 }
 
-LsqSums4::LsqSums4(const LsqSums4& S) {
-  init(S);
-  //  printf(" LsqSums4::LsqSums4 : dont use me!\n");
-}
-
-LsqSums4::~LsqSums4() {
-}
-
 void LsqSums4::clear() {
   _qn   = 0;
   sw    = 0;
   sx    = 0;
   sy    = 0;
-  sx2   = 0; 
+  sx2   = 0;
   sxy   = 0;
   sy2   = 0;
   sx3   = 0;
@@ -40,27 +32,6 @@ void LsqSums4::clear() {
   fY0   = 0;
 }
 
-void LsqSums4::init(const LsqSums4& S) {
-  _qn   = S._qn  ;
-  sw    = S.sw   ;
-  sx    = S.sx   ;
-  sy    = S.sy   ;
-  sx2   = S.sx2  ; 
-  sxy   = S.sxy  ;
-  sy2   = S.sy2  ;
-  sx3   = S.sx3  ;
-  sx2y  = S.sx2y ;
-  sxy2  = S.sxy2 ;
-  sy3   = S.sy3  ;
-  sx4   = S.sx4  ;
-  sx3y  = S.sx3y ;
-  sx2y2 = S.sx2y2;
-  sxy3  = S.sxy3 ;
-  sy4   = S.sy4  ;
-
-  fX0   = S.fX0;
-  fY0   = S.fY0;
-}
 
 void LsqSums4::addPoint(double XX, double YY, double W) {
   double X, Y;
@@ -72,7 +43,7 @@ void LsqSums4::addPoint(double XX, double YY, double W) {
   sw    += W;
   sx    += X*W;
   sy    += Y*W;
-  sx2   += X*X*W; 
+  sx2   += X*X*W;
   sxy   += X*Y*W;
   sy2   += Y*Y*W;
   sx3   += X*X*X*W;
@@ -96,7 +67,7 @@ void LsqSums4::removePoint(double XX, double YY, double W) {
   sw    -= 1*W;
   sx    -= X*W;
   sy    -= Y*W;
-  sx2   -= X*X*W; 
+  sx2   -= X*X*W;
   sxy   -= X*Y*W;
   sy2   -= Y*Y*W;
   sx3   -= X*X*X*W;
@@ -138,21 +109,21 @@ double LsqSums4::radius () {
 
 double LsqSums4::phi0(){
   double phi0, D;
-  D = sw*sx2 - sx*sx;				
-  
+  D = sw*sx2 - sx*sx;
+
   phi0 = sx2*sy - sx*sxy;
   phi0 /= D;
-  
+
   return phi0;
 }
 
 double LsqSums4::dfdz(){
   double dfdz, D;
-  D = sw*sx2 - sx*sx;				
-  
+  D = sw*sx2 - sx*sx;
+
   dfdz = sw*sxy - sy*sx;
   dfdz /= D;
-  
+
   return dfdz;
 }
 
@@ -173,7 +144,7 @@ double LsqSums4::chi2DofCircle() {
   //-----------------------------------------------------------------------------
   chi2 = chi2/(4*r*r);
   chi2 *= sw/_qn;
-  
+
   return chi2;
 }
 
@@ -186,6 +157,6 @@ double LsqSums4::chi2DofLine() {
 
  //  double chi2_new = sigYY() - dfdz()*sigXY();
 //   printf("[LsqSum4::chi2rphiDofCircle] chi2 = %5.3e chi2_new = %5.3e\n", chi2 , chi2_new);
-  
+
   return chi2;
 }

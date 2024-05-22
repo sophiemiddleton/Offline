@@ -1,16 +1,16 @@
-#ifndef __CalPatRec_MergePatRec_types_hh__
-#define __CalPatRec_MergePatRec_types_hh__
+#ifndef CalPatRec_MergePatRec_types_hh
+#define CalPatRec_MergePatRec_types_hh
 
 #include "Offline/RecoDataProducts/inc/KalRepPtrCollection.hh"
 #include "Offline/RecoDataProducts/inc/KalSeed.hh"
 
 namespace art {
   class Event;
-};
+}
 
 namespace fhicl {
   class ParameterSet;
-};
+}
 
 namespace mu2e {
   class Tracker;
@@ -26,7 +26,7 @@ namespace mu2e {
       const KalRepPtrCollection*    list_of_kreps_cpr;
       const KalSeedCollection*      list_of_kseed_tpr;
       const KalSeedCollection*      list_of_kseed_cpr;
-      int                     debugLevel;	     // printout level
+      int                     debugLevel;             // printout level
     };
   }
 }

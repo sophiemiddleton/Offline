@@ -9,7 +9,6 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 
@@ -62,7 +61,7 @@ namespace mu2e {
     PerParticleCount nPrincipal;
     PerParticleCount nAll;
 
-    for(const auto recoMapEntry: *ireco) {
+    for(const auto& recoMapEntry: *ireco) {
       const KalRep& krep = **recoMapEntry.first;
       for(const auto hot : krep.hitVector()) {
         const TrkStrawHit *hit = dynamic_cast<const TrkStrawHit*>(hot);
@@ -82,7 +81,7 @@ namespace mu2e {
           ++nPrincipal[particleEnteringG4Volume(*dmc.strawGasStep(end))];
           // Aggregate all the steps, so that each particle is counted no more than once per hit
           std::set<art::Ptr<SimParticle> > parts;
-	  parts.insert(particleEnteringG4Volume(*dmc.strawGasStep(end)));
+          parts.insert(particleEnteringG4Volume(*dmc.strawGasStep(end)));
           for(const auto& p: parts) {
             ++nAll[p];
           }
@@ -106,4 +105,4 @@ namespace mu2e {
 
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::TrackSummaryTruthMaker);
+DEFINE_ART_MODULE(mu2e::TrackSummaryTruthMaker)

@@ -22,13 +22,12 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Provenance.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 
 #include "Offline/MCDataProducts/inc/StepPointMC.hh"
 
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/Mu2eUtilities/inc/SimParticleGetTau.hh"
 #include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
@@ -42,15 +41,9 @@ namespace mu2e {
     // unlike generic conditions, MC particle data
     // should not change run-to-run, so static is safe
     // use static for efficiency
-    static GlobalConstantsHandle<ParticleDataTable> pdt;
+    static GlobalConstantsHandle<ParticleDataList> pdt;
 
-    ParticleDataTable::maybe_ref info = pdt->particle(pdgId);
-
-    if(!info.isValid()) {
-      throw cet::exception("MISSINGINFO")<<"No valid PDG info for pdgId = "<<pdgId<<"\n";
-    }
-
-    return info.ref().charge();
+    return pdt->particle(pdgId).charge();
   }
 
   //================================================================
@@ -58,15 +51,9 @@ namespace mu2e {
     // unlike generic conditions, MC particle data
     // should not change run-to-run, so static is safe
     // use static for efficiency
-    static GlobalConstantsHandle<ParticleDataTable> pdt;
+    static GlobalConstantsHandle<ParticleDataList> pdt;
 
-    ParticleDataTable::maybe_ref info = pdt->particle(hit.simParticle()->pdgId());
-
-    if(!info.isValid()) {
-      throw cet::exception("MISSINGINFO")<<"No valid PDG info for hit = "<<hit<<"\n";
-    }
-
-    const double mass = info.ref().mass();
+    const double mass = pdt->particle(hit.simParticle()->pdgId()).mass();
     return sqrt(hit.momentum().mag2() + std::pow(mass, 2)) - mass;
   }
 
@@ -88,19 +75,19 @@ namespace mu2e {
     unsigned particleId;
     unsigned volumeCopyNumber;
 
-    VDHit() : x(std::numeric_limits<double>::quiet_NaN())
-              , y(std::numeric_limits<double>::quiet_NaN())
-              , z(std::numeric_limits<double>::quiet_NaN())
+    VDHit() : x(std::numeric_limits<double>::max())
+              , y(std::numeric_limits<double>::max())
+              , z(std::numeric_limits<double>::max())
 
-              , time(std::numeric_limits<double>::quiet_NaN())
+              , time(std::numeric_limits<double>::max())
 
-                , px(std::numeric_limits<double>::quiet_NaN())
-                , py(std::numeric_limits<double>::quiet_NaN())
-                , pz(std::numeric_limits<double>::quiet_NaN())
-                , pmag(std::numeric_limits<double>::quiet_NaN())
-                , ek(std::numeric_limits<double>::quiet_NaN())
+                , px(std::numeric_limits<double>::max())
+                , py(std::numeric_limits<double>::max())
+                , pz(std::numeric_limits<double>::max())
+                , pmag(std::numeric_limits<double>::max())
+                , ek(std::numeric_limits<double>::max())
 
-                , charge(std::numeric_limits<double>::quiet_NaN())
+                , charge(std::numeric_limits<double>::max())
                 , pdgId(0)
                 , particleId(-1U)
                 , volumeCopyNumber(-1U)
@@ -138,10 +125,10 @@ namespace mu2e {
       fhicl::Atom<std::string> hits     {Name("hitsInputTag"     ), Comment("StepPointMC collection")};
       fhicl::OptionalSequence<std::string> tauCollections     {Name("tauHitCollections"), Comment("StepPointMC collections for proper time calculation")};
       fhicl::OptionalSequence<int> decayOffCodes     {Name("decayOffPDGCodes"), Comment("decayOffPDGCodes")};
-      fhicl::Atom<bool>	  writeVDHit  {Name("writeVDHit"),   Comment("Write VDHit format branch"), false};
-      fhicl::Atom<bool>	  writeParticleState  {Name("writeParticleState"),   Comment("Write ParticleState format branch"), false};
-      fhicl::Atom<bool>	  writeProperTime  {Name("writeProperTime"),   Comment("Write ProperTime format branch"), false};
-      fhicl::Atom<bool>	  detectorSystem  {Name("detectorSystem"),   Comment("Use DetectorSystem for position information for ParticleState"), false};
+      fhicl::Atom<bool>          writeVDHit  {Name("writeVDHit"),   Comment("Write VDHit format branch"), false};
+      fhicl::Atom<bool>          writeParticleState  {Name("writeParticleState"),   Comment("Write ParticleState format branch"), false};
+      fhicl::Atom<bool>          writeProperTime  {Name("writeProperTime"),   Comment("Write ProperTime format branch"), false};
+      fhicl::Atom<bool>          detectorSystem  {Name("detectorSystem"),   Comment("Use DetectorSystem for position information for ParticleState"), false};
     };
     typedef art::EDAnalyzer::Table<Config> Parameters;
 
@@ -194,7 +181,7 @@ namespace mu2e {
 
   //================================================================
   void StepPointMCDumper::analyze(const art::Event& event) {
-    auto const& ptable = GlobalConstantsHandle<ParticleDataTable>();
+    auto const& ptable = GlobalConstantsHandle<ParticleDataList>();
     GeomHandle<DetectorSystem> det;
 
     VspMC spMCColls;
@@ -212,7 +199,7 @@ namespace mu2e {
         KinKal::VEC3 mom(i.momentum());
         double time = i.time();
         double mass = i.simParticle()->startMomentum().invariantMass();
-        int charge = static_cast<int>(ptable->particle(i.simParticle()->pdgId()).ref().charge());
+        int charge = static_cast<int>(ptable->particle(i.simParticle()->pdgId()).charge());
         pstate_ = KinKal::ParticleState(pos,mom,time,mass,charge);
       }
 
@@ -227,4 +214,4 @@ namespace mu2e {
 
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::StepPointMCDumper);
+DEFINE_ART_MODULE(mu2e::StepPointMCDumper)

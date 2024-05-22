@@ -1,23 +1,22 @@
 // ======================================================================
 //
-// StrawRecoFromFragmnets_plugin:  Add tracker data products to the event
+// StrawRecoFromFragments_plugin:  Add tracker data products to the event
 //
 // ======================================================================
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "fhiclcpp/ParameterSet.h"
 
 #include "art/Framework/Principal/Handle.h"
-#include "mu2e-artdaq-core/Overlays/FragmentType.hh"
-#include "mu2e-artdaq-core/Overlays/TrackerFragment.hh"
-#include "mu2e-artdaq-core/Overlays/Mu2eEventFragment.hh"
+#include "artdaq-core-mu2e/Data/TrackerDataDecoder.hh"
+#include "artdaq-core-mu2e/Overlays/FragmentType.hh"
 
 #include "Offline/DataProducts/inc/TrkTypes.hh"
-#include "Offline/RecoDataProducts/inc/StrawDigi.hh"
+#include "Offline/RecoDataProducts/inc/IntensityInfoTrackerHits.hh"
 #include "Offline/RecoDataProducts/inc/ProtonBunchTime.hh"
+#include "Offline/RecoDataProducts/inc/StrawDigi.hh"
 
 #include <artdaq-core/Data/Fragment.hh>
 
@@ -28,31 +27,33 @@
 #include <memory>
 
 namespace art {
-class StrawRecoFromFragmnets;
+class StrawRecoFromFragments;
 }
 
 // ======================================================================
 
-class art::StrawRecoFromFragmnets : public EDProducer {
+class art::StrawRecoFromFragments : public EDProducer {
 
 public:
   struct Config {
-    fhicl::Atom<int>           diagLevel{fhicl::Name("diagLevel"), fhicl::Comment("diagnostic level")};
-    fhicl::Atom<int>           useTrkADC{fhicl::Name("useTrkADC"), fhicl::Comment("parse tracker ADC waveforms")};
-    fhicl::Atom<art::InputTag> trkTag   {fhicl::Name("trkTag"),    fhicl::Comment("trkTag")};
+    fhicl::Atom<int> diagLevel{fhicl::Name("diagLevel"), fhicl::Comment("diagnostic level")};
+    fhicl::Atom<int> useTrkADC{fhicl::Name("useTrkADC"),
+                               fhicl::Comment("parse tracker ADC waveforms")};
+    fhicl::Atom<art::InputTag> trkTag{fhicl::Name("trkTag"), fhicl::Comment("trkTag")};
   };
 
   // --- C'tor/d'tor:
-  explicit StrawRecoFromFragmnets(const art::EDProducer::Table<Config>& config);
-  virtual ~StrawRecoFromFragmnets() {}
+  explicit StrawRecoFromFragments(const art::EDProducer::Table<Config>& config);
+  virtual ~StrawRecoFromFragments() {}
 
   // --- Production:
   virtual void produce(Event&);
 
 private:
-  void analyze_tracker_(const mu2e::TrackerFragment& cc,
-                        std::unique_ptr<mu2e::StrawDigiCollection> const& straw_digis,
-                        std::unique_ptr<mu2e::StrawDigiADCWaveformCollection> const& straw_digi_adcs);
+  void
+  analyze_tracker_(const mu2e::TrackerDataDecoder& cc,
+                   std::unique_ptr<mu2e::StrawDigiCollection> const& straw_digis,
+                   std::unique_ptr<mu2e::StrawDigiADCWaveformCollection> const& straw_digi_adcs);
   int diagLevel_;
   int useTrkADC_;
 
@@ -60,93 +61,71 @@ private:
 
   const int hexShiftPrint = 7;
 
-}; // StrawRecoFromFragmnets
+}; // StrawRecoFromFragments
 
 // ======================================================================
 
-art::StrawRecoFromFragmnets::StrawRecoFromFragmnets(const art::EDProducer::Table<Config>& config) :
-  art::EDProducer{config},
-  diagLevel_(config().diagLevel()), 
-  useTrkADC_(config().useTrkADC()),
-  trkFragmentsTag_(config().trkTag()){
-    produces<mu2e::StrawDigiCollection>();
-    if (useTrkADC_) {
-      produces<mu2e::StrawDigiADCWaveformCollection>();
-    }
-    //FIXME!
-    produces<mu2e::ProtonBunchTime>();
+art::StrawRecoFromFragments::StrawRecoFromFragments(const art::EDProducer::Table<Config>& config) :
+    art::EDProducer{config}, diagLevel_(config().diagLevel()), useTrkADC_(config().useTrkADC()),
+    trkFragmentsTag_(config().trkTag()) {
+  produces<mu2e::StrawDigiCollection>();
+  if (useTrkADC_) {
+    produces<mu2e::StrawDigiADCWaveformCollection>();
   }
+  produces<mu2e::IntensityInfoTrackerHits>();
+  // FIXME!
+  produces<mu2e::ProtonBunchTime>();
+}
 
 // ----------------------------------------------------------------------
 
-void art::StrawRecoFromFragmnets::produce(Event& event) {
+void art::StrawRecoFromFragments::produce(Event& event) {
   art::EventNumber_t eventNumber = event.event();
 
   // Collection of StrawDigis for the event
   std::unique_ptr<mu2e::StrawDigiCollection> straw_digis(new mu2e::StrawDigiCollection);
-  std::unique_ptr<mu2e::StrawDigiADCWaveformCollection> straw_digi_adcs(new mu2e::StrawDigiADCWaveformCollection);
+  std::unique_ptr<mu2e::StrawDigiADCWaveformCollection> straw_digi_adcs(
+      new mu2e::StrawDigiADCWaveformCollection);
+  // IntensityInfoTrackerHits
+  std::unique_ptr<mu2e::IntensityInfoTrackerHits> intInfo(new mu2e::IntensityInfoTrackerHits);
 
-  //FIXME! this is temporary
+  // FIXME! this is temporary
   std::unique_ptr<mu2e::ProtonBunchTime> pbt(new mu2e::ProtonBunchTime);
   pbt->pbtime_ = 0;
   pbt->pbterr_ = 0;
   event.put(std::move(pbt));
-    
+
   size_t totalSize = 0;
   size_t numTrkFrags = 0;
-  std::vector<art::Handle<artdaq::Fragments>> fragmentHandles =
-      event.getMany<std::vector<artdaq::Fragment>>();
+  auto fragmentHandle = event.getValidHandle<std::vector<mu2e::TrackerDataDecoder> >(trkFragmentsTag_);
 
-  for (const auto& handle : fragmentHandles) {
-    if (!handle.isValid() || handle->empty()) {
-      continue;
+  for (auto frag : *fragmentHandle) {
+    analyze_tracker_(frag, straw_digis, straw_digi_adcs);
+    for (size_t i = 0; i < frag.block_count(); ++i) {
+      totalSize += frag.blockSizeBytes(i);
     }
-
-    if (handle->front().type() == mu2e::detail::FragmentType::MU2EEVENT) {
-      for (const auto& cont : *handle) {
-        mu2e::Mu2eEventFragment mef(cont);
-        for (size_t ii = 0; ii < mef.tracker_block_count(); ++ii) {
-          auto pair = mef.trackerAtPtr(ii);
-          mu2e::TrackerFragment cc(pair);
-          analyze_tracker_(cc, straw_digis, straw_digi_adcs);
-
-          totalSize += pair.second;
-          numTrkFrags++;
-        }
-      }
-    } else {
-      if (handle->front().type() == mu2e::detail::FragmentType::TRK) {
-        for (auto frag : *handle) {
-          mu2e::TrackerFragment cc(frag.dataBegin(), frag.dataSizeBytes());
-          analyze_tracker_(cc, straw_digis, straw_digi_adcs);
-
-          totalSize += frag.dataSizeBytes();
-          numTrkFrags++;
-        }
-      }
-    }
+    numTrkFrags++;
   }
 
   if (numTrkFrags == 0) {
-    std::cout << "[StrawRecoFromFragmnets::produce] found no Tracker fragments!"
-	      << std::endl;
-    event.put(std::move(straw_digis));
-    return;
+    std::cout << "[StrawRecoFromFragments::produce] found no Tracker fragments!" << std::endl;
   }
-  
+
   if (diagLevel_ > 1) {
     std::cout << std::dec << "Producer: Run " << event.run() << ", subrun " << event.subRun()
               << ", event " << eventNumber << " has " << std::endl;
-    std::cout << numTrkFrags << " TRK fragments. "<< std::endl;
+    std::cout << numTrkFrags << " TRK fragments. " << std::endl;
 
     std::cout << "Total Size: " << (int)totalSize << " bytes." << std::endl;
   }
 
   if (diagLevel_ > 0) {
-    std::cout << "mu2e::StrawRecoFromFragmnets::produce exiting eventNumber="
+    std::cout << "mu2e::StrawRecoFromFragments::produce exiting eventNumber="
               << (int)(event.event()) << " / timestamp=" << (int)eventNumber << std::endl;
   }
 
+  intInfo->setNTrackerHits(straw_digis->size());
+  event.put(std::move(intInfo));
   // Store the straw digis in the event
   event.put(std::move(straw_digis));
   if (useTrkADC_) {
@@ -155,14 +134,13 @@ void art::StrawRecoFromFragmnets::produce(Event& event) {
 
 } // produce()
 
-void art::StrawRecoFromFragmnets::analyze_tracker_(
-    const mu2e::TrackerFragment& cc, std::unique_ptr<mu2e::StrawDigiCollection> const& straw_digis,
+void art::StrawRecoFromFragments::analyze_tracker_(
+    const mu2e::TrackerDataDecoder& cc, std::unique_ptr<mu2e::StrawDigiCollection> const& straw_digis,
     std::unique_ptr<mu2e::StrawDigiADCWaveformCollection> const& straw_digi_adcs) {
-
 
   if (diagLevel_ > 1) {
     std::cout << std::endl;
-    std::cout << "TrackerFragment: ";
+    std::cout << "TrackerDataDecoder: ";
     std::cout << "\tBlock Count: " << std::dec << cc.block_count() << std::endl;
     std::cout << std::endl;
     std::cout << "\t"
@@ -199,7 +177,7 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
 
     auto block = cc.dataAtBlockIndex(curBlockIdx);
     if (block == nullptr) {
-      mf::LogError("StrawRecoFromFragmnets")
+      mf::LogError("StrawRecoFromFragments")
           << "Unable to retrieve block " << curBlockIdx << "!" << std::endl;
       continue;
     }
@@ -207,8 +185,8 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
 
     if (diagLevel_ > 1) {
 
-      std::cout << "timestamp: " << static_cast<int>(hdr->GetEventWindowTag().GetEventWindowTag(true))
-                << std::endl;
+      std::cout << "timestamp: "
+                << static_cast<int>(hdr->GetEventWindowTag().GetEventWindowTag(true)) << std::endl;
       std::cout << "hdr->SubsystemID: " << static_cast<int>(hdr->GetSubsystemID()) << std::endl;
       std::cout << "dtcID: " << static_cast<int>(hdr->GetID()) << std::endl;
       std::cout << "rocID: " << static_cast<int>(hdr->GetLinkID()) << std::endl;
@@ -224,7 +202,7 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
       // Create the StrawDigi data products
       auto trkDataVec = cc.GetTrackerData(curBlockIdx, useTrkADC_);
       if (trkDataVec.empty()) {
-        mf::LogError("StrawRecoFromFragmnets")
+        mf::LogError("StrawRecoFromFragments")
             << "Error retrieving Tracker data from DataBlock " << curBlockIdx
             << "! Aborting processing of this block!";
         continue;
@@ -235,11 +213,11 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
         mu2e::StrawId sid(trkDataPair.first->StrawIndex);
         mu2e::TrkTypes::TDCValues tdc = {trkDataPair.first->TDC0(), trkDataPair.first->TDC1()};
         mu2e::TrkTypes::TOTValues tot = {trkDataPair.first->TOT0, trkDataPair.first->TOT1};
-        mu2e::TrkTypes::ADCValue  pmp = trkDataPair.first->PMP;
+        mu2e::TrkTypes::ADCValue pmp = trkDataPair.first->PMP;
 
         // Fill the StrawDigiCollection
         straw_digis->emplace_back(sid, tdc, tot, pmp);
-        if (useTrkADC_){ 
+        if (useTrkADC_) {
           straw_digi_adcs->emplace_back(trkDataPair.second);
         }
 
@@ -261,7 +239,7 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
           std::cout << "TDC1: " << tdc[1] << std::endl;
           std::cout << "TOT0: " << tot[0] << std::endl;
           std::cout << "TOT1: " << tot[1] << std::endl;
-          std::cout << "PMP:  " << pmp    << std::endl;
+          std::cout << "PMP:  " << pmp << std::endl;
           std::cout << "Waveform: {";
           for (size_t i = 0; i < trkDataPair.second.size(); i++) {
             std::cout << trkDataPair.second[i];
@@ -282,8 +260,7 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
           std::cout << std::endl;
 
           std::cout << "LOOP: " << hdr->GetEventWindowTag().GetEventWindowTag(true) << " "
-                    << curBlockIdx
-                    << std::endl;
+                    << curBlockIdx << std::endl;
 
           // Text format: timestamp strawidx tdc0 tdc1 nsamples sample0-11
           // Example: 1 1113 36978 36829 12 1423 1390 1411 1354 2373 2392 2342 2254 1909 1611 1525
@@ -308,12 +285,11 @@ void art::StrawRecoFromFragmnets::analyze_tracker_(
     }
   }
 
-  //cc.ClearUpgradedPackets();
+  // cc.ClearUpgradedPackets();
 }
-
 
 // ======================================================================
 
-DEFINE_ART_MODULE(art::StrawRecoFromFragmnets)
+DEFINE_ART_MODULE(art::StrawRecoFromFragments)
 
 // ======================================================================

@@ -8,7 +8,7 @@
 #include <vector>
 #include "canvas/Persistency/Common/Wrapper.h"
 #include "canvas/Persistency/Common/Assns.h"
-#include "Offline/RecoDataProducts/inc/CosmicTrack.hh" 
+#include "Offline/RecoDataProducts/inc/CosmicTrack.hh"
 #include "Offline/RecoDataProducts/inc/CosmicTrackSeed.hh"
 
 // beam
@@ -34,6 +34,7 @@
 #include "Offline/RecoDataProducts/inc/TimeCluster.hh"
 #include "Offline/RecoDataProducts/inc/HelixVal.hh"
 #include "Offline/RecoDataProducts/inc/RobustHelix.hh"
+#include "Offline/RecoDataProducts/inc/HelixRecoDir.hh"
 #include "Offline/RecoDataProducts/inc/HelixSeed.hh"
 #include "Offline/RecoDataProducts/inc/BkgCluster.hh"
 #include "Offline/RecoDataProducts/inc/BkgClusterHit.hh"
@@ -46,9 +47,10 @@
 #include "Offline/RecoDataProducts/inc/TrkExtTraj.hh"
 #include "Offline/RecoDataProducts/inc/KalRepPtrCollection.hh"
 #include "Offline/RecoDataProducts/inc/KKLoopHelix.hh"
+#include "Offline/RecoDataProducts/inc/KKCentralHelix.hh"
 #include "Offline/RecoDataProducts/inc/TrackSummaryRecoMap.hh"
 #include "Offline/RecoDataProducts/inc/TrackSummary.hh"
-#include "Offline/RecoDataProducts/inc/TrackCaloAssns.hh" 
+#include "Offline/RecoDataProducts/inc/TrackCaloAssns.hh"
 #include "Offline/RecoDataProducts/inc/KalSeed.hh"
 #include "Offline/RecoDataProducts/inc/KalSeedAssns.hh"
 #include "Offline/RecoDataProducts/inc/TrkCaloHitPID.hh"
@@ -56,12 +58,11 @@
 #include "Offline/RecoDataProducts/inc/RecoQual.hh"
 #include "Offline/RecoDataProducts/inc/AlgorithmID.hh"
 #include "KinKal/General/ParticleState.hh"
+#include "Offline/RecoDataProducts/inc/MVAResult.hh"
 
 // extrapolation and PID
 #include "Offline/RecoDataProducts/inc/TrkCaloIntersect.hh"
 #include "Offline/RecoDataProducts/inc/TrkCaloMatch.hh"
-#include "Offline/RecoDataProducts/inc/AvikPIDProduct.hh"
-#include "Offline/RecoDataProducts/inc/AvikPIDNewProduct.hh"
 #include "Offline/RecoDataProducts/inc/PIDProduct.hh"
 #include "Offline/RecoDataProducts/inc/TrkToCaloExtrapol.hh"
 #include "Offline/RecoDataProducts/inc/TrackClusterMatch.hh"
@@ -87,10 +88,17 @@
 // trigger
 #include "Offline/RecoDataProducts/inc/TriggerInfo.hh"
 
-// POT / stopped muons monitoring bvitaly May 2021
-#include "Offline/RecoDataProducts/inc/IntensityInfo.hh"
+// POT / stopped muons monitoring
+#include "Offline/RecoDataProducts/inc/IntensityInfoCalo.hh"
+#include "Offline/RecoDataProducts/inc/IntensityInfoTrackerHits.hh"
+#include "Offline/RecoDataProducts/inc/IntensityInfoTimeCluster.hh"
 
 // general reco
 #include "Offline/RecoDataProducts/inc/RecoCount.hh"
+
+// STM
+#include "Offline/RecoDataProducts/inc/STMWaveformDigi.hh"
+#include "Offline/RecoDataProducts/inc/STMMWDDigi.hh"
+#include "Offline/RecoDataProducts/inc/STMHit.hh"
 
 #undef ENABLE_MU2E_GENREFLEX_HACKS

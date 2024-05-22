@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
@@ -75,4 +74,4 @@ namespace mu2e {
 
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNALGun);
+DEFINE_ART_MODULE(mu2e::ExtMonFNALGun)

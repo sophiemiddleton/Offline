@@ -12,7 +12,6 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Handle.h"
@@ -97,7 +96,7 @@ namespace mu2e {
           throw cet::exception("BADINPUTS")<<"Primary SimParticle has does not have genParticle\n";
         }
 
-        const MARSInfo& mi = infoFinder.at(gp.key()).ref();
+        const MARSInfo mi = infoFinder.at(gp.key()).ref();
         info->push_back(mi);
 
         assns->addSingle(*i, art::Ptr<MARSInfo>(infoPID, info->size()-1, infoGetter));

@@ -12,7 +12,6 @@
 #include "fhiclcpp/types/Sequence.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 
@@ -102,4 +101,4 @@ namespace mu2e {
 
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::StepPointMCCollectionUpdater);
+DEFINE_ART_MODULE(mu2e::StepPointMCCollectionUpdater)

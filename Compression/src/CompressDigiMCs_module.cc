@@ -4,7 +4,7 @@
 // File:        CompressDigiMCs_module.cc
 //
 // Creates new StrawDigiMC and CrvDigiMC collections after creating new
-// StepPointMC, SimParticle, GenParticle and SimParticleTimeMaps with all
+// StepPointMC, SimParticle, and GenParticle with all
 // unnecessary MC objects removed.
 //
 // Also creates new CaloShowerStep, CaloShowerRO and CaloShowerSim collections after
@@ -15,7 +15,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/Run.h"
@@ -41,7 +40,6 @@
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "Offline/Mu2eUtilities/inc/compressSimParticleCollection.hh"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
-#include "Offline/MCDataProducts/inc/SimParticleTimeMap.hh"
 #include "Offline/MCDataProducts/inc/SimParticleRemapping.hh"
 #include "Offline/DataProducts/inc/IndexMap.hh"
 #include "Offline/MCDataProducts/inc/CrvCoincidenceClusterMC.hh"
@@ -99,7 +97,6 @@ public:
     fhicl::Atom<art::InputTag> crvDigiMCTag{Name("crvDigiMCTag"), Comment("InputTag for the CrvDigiMCCollection")};
     fhicl::Sequence<art::InputTag> simParticleTags{Name("simParticleTags"), Comment("Sequence of InputTags to the SimParticleCollections")};
     fhicl::Sequence<art::InputTag> extraStepPointMCTags{Name("extraStepPointMCTags"), Comment("Sequence of InputTags for additional StepPointMCCollections that you want to keep the steps from")};
-    fhicl::Sequence<art::InputTag> timeMapTags{Name("timeMapTags"), Comment("Sequence of InputTags for TimeMaps")};
     fhicl::Sequence<art::InputTag> caloShowerStepTags{Name("caloShowerStepTags"), Comment("Sequence of InputTags for CaloShowerSteps")};
     fhicl::Atom<art::InputTag> caloShowerSimTag{Name("caloShowerSimTag"), Comment("InputTag for the CaloShowerSim")};
     fhicl::Atom<art::InputTag> caloShowerROTag{Name("caloShowerROTag"), Comment("InputTag for the CaloShowerRO")};
@@ -109,7 +106,7 @@ public:
 
     // Reco objects
     fhicl::Atom<art::InputTag> caloClusterMCTag{Name("caloClusterMCTag"), Comment("InputTag for CaloClusterMCCollection")};
-    fhicl::Atom<art::InputTag> crvCoincClusterMCTag{Name("crvCoincClusterMCTag"), Comment("InputTag for CrvCoincidenceClusterMCCollection")};
+    fhicl::Sequence<art::InputTag> crvCoincClusterMCTags{Name("crvCoincClusterMCTags"), Comment("InputTags for CrvCoincidenceClusterMCCollections")};
 
     fhicl::Atom<art::InputTag> primaryParticleTag{Name("primaryParticleTag"), Comment("InputTag for PrimarParticle")};
     fhicl::Atom<art::InputTag> mcTrajectoryTag{Name("mcTrajectoryTag"), Comment("InputTag for the MCTrajectoryCollection")};
@@ -119,6 +116,9 @@ public:
     fhicl::Atom<bool> rekeySimParticleCollection{Name("rekeySimParticleCollection"), Comment("Set to true to change the keys in the SimParticleCollection (necessary for mixed events)")};
 
     fhicl::Atom<bool> noCompression{Name("noCompression"), Comment("Set to true to turn off compression"), false};
+
+    // detector steps we may want to keep (for the moment, just CrvSteps)
+    fhicl::Sequence<art::InputTag> crvStepsToKeep{Name("crvStepsToKeep"), Comment("InputTags for CrvSteps we want to keep")};
   };
   typedef art::EDProducer::Table<Config> Parameters;
 
@@ -141,20 +141,17 @@ public:
   void keepSimParticle(const art::Ptr<SimParticle>& sim_ptr);
   void copyCaloClusterMC(const mu2e::CaloClusterMC& old_calo_cluster_mc);
   art::Ptr<CaloHitMC> copyCaloHitMC(const mu2e::CaloHitMC& old_calo_hit_mc);
-  void copyCrvCoincClusterMC(const mu2e::CrvCoincidenceClusterMC& old_crv_coinc_cluster_mc);
+  void copyCrvCoincClusterMC(const mu2e::CrvCoincidenceClusterMC& old_crv_coinc_cluster_mc, size_t i_tag);
   void copyPrimaryParticle(const mu2e::PrimaryParticle& old_primary_particle);
 
 private:
-
-  Config _conf;
 
   art::InputTag _strawDigiMCTag;
   art::InputTag _crvDigiMCTag;
   std::vector<art::InputTag> _simParticleTags;
   std::vector<art::InputTag> _extraStepPointMCTags;
-  std::vector<art::InputTag> _timeMapTags;
   art::InputTag _caloClusterMCTag;
-  art::InputTag _crvCoincClusterMCTag;
+  std::vector<art::InputTag> _crvCoincClusterMCTags;
   art::InputTag _primaryParticleTag;
   art::InputTag _mcTrajectoryTag;
   bool _keepAllGenParticles;
@@ -164,11 +161,11 @@ private:
   art::InputTag _caloShowerSimTag;
   art::InputTag _caloShowerROTag;
   bool _rekeySimParticleCollection;
+  std::vector<art::InputTag> _crvStepsToKeep;
 
   // handles to the old collections
   art::Handle<StrawDigiMCCollection> _strawDigiMCsHandle;
   art::Handle<CrvDigiMCCollection> _crvDigiMCsHandle;
-  std::vector<SimParticleTimeMap> _oldTimeMaps;
   art::Handle<CaloShowerSimCollection> _caloShowerSimsHandle;
   art::Handle<CaloShowerROCollection> _CaloShowerROsHandle;
 
@@ -180,7 +177,6 @@ private:
   std::unique_ptr<CrvStepCollection> _newCrvSteps;
   std::unique_ptr<SimParticleCollection> _newSimParticles;
   std::unique_ptr<GenParticleCollection> _newGenParticles;
-  std::vector<std::unique_ptr<SimParticleTimeMap> > _newSimParticleTimeMaps;
   std::unique_ptr<CaloShowerStepCollection> _newCaloShowerSteps;
   std::unique_ptr<CaloShowerSimCollection> _newCaloShowerSims;
   std::unique_ptr<CaloShowerROCollection> _newCaloShowerROs;
@@ -213,8 +209,8 @@ private:
   art::Handle<CaloClusterMCCollection> _caloClusterMCsHandle;
   std::unique_ptr<CaloClusterMCCollection> _newCaloClusterMCs;
   std::unique_ptr<CaloHitMCCollection> _newCaloHitMCs;
-  art::Handle<CrvCoincidenceClusterMCCollection> _crvCoincClusterMCsHandle;
-  std::unique_ptr<CrvCoincidenceClusterMCCollection> _newCrvCoincClusterMCs;
+  std::vector<art::Handle<CrvCoincidenceClusterMCCollection>> _crvCoincClusterMCsHandles;
+  std::vector<std::unique_ptr<CrvCoincidenceClusterMCCollection>> _newCrvCoincClusterMCs;
   art::Handle<PrimaryParticle> _primaryParticleHandle;
   std::unique_ptr<PrimaryParticle> _newPrimaryParticle;
 
@@ -229,29 +225,39 @@ private:
   std::map<art::Ptr<CrvStep>, art::Ptr<CrvStep> > _crvStepsMap;
 
   bool _noCompression;
+
+  // if the map::at fails, produce a useful error message
+  inline art::Ptr<SimParticle>& safeRemapRef(SimParticleRemapping& remap, art::Ptr<SimParticle> const& key, int line) const {
+    auto it = remap.find(key);
+    if(it == remap.end()) {
+      throw cet::exception("CompressDigiMCs::safeRemapRef")
+        << "remap key "<< key.id() <<" not found at line " << line << "\n";
+    }
+    return it->second;
+  }
+
 };
 
 
 mu2e::CompressDigiMCs::CompressDigiMCs(const Parameters& conf)
   : art::EDProducer(conf),
-    _conf(conf()),
-    _strawDigiMCTag(_conf.strawDigiMCTag()),
-    _crvDigiMCTag(_conf.crvDigiMCTag()),
-    _simParticleTags(_conf.simParticleTags()),
-    _extraStepPointMCTags(_conf.extraStepPointMCTags()),
-    _timeMapTags(_conf.timeMapTags()),
-    _caloClusterMCTag(_conf.caloClusterMCTag()),
-    _crvCoincClusterMCTag(_conf.crvCoincClusterMCTag()),
-    _primaryParticleTag(_conf.primaryParticleTag()),
-    _mcTrajectoryTag(_conf.mcTrajectoryTag()),
-    _keepAllGenParticles(_conf.keepAllGenParticles()),
-  _strawDigiMCIndexMapTag(_conf.strawDigiMCIndexMapTag()),
-  _crvDigiMCIndexMapTag(_conf.crvDigiMCIndexMapTag()),
-  _caloShowerStepTags(_conf.caloShowerStepTags()),
-  _caloShowerSimTag(_conf.caloShowerSimTag()),
-  _caloShowerROTag(_conf.caloShowerROTag()),
-  _rekeySimParticleCollection(_conf.rekeySimParticleCollection()),
-  _noCompression(_conf.noCompression())
+    _strawDigiMCTag(conf().strawDigiMCTag()),
+    _crvDigiMCTag(conf().crvDigiMCTag()),
+    _simParticleTags(conf().simParticleTags()),
+    _extraStepPointMCTags(conf().extraStepPointMCTags()),
+    _caloClusterMCTag(conf().caloClusterMCTag()),
+    _crvCoincClusterMCTags(conf().crvCoincClusterMCTags()),
+    _primaryParticleTag(conf().primaryParticleTag()),
+    _mcTrajectoryTag(conf().mcTrajectoryTag()),
+    _keepAllGenParticles(conf().keepAllGenParticles()),
+  _strawDigiMCIndexMapTag(conf().strawDigiMCIndexMapTag()),
+  _crvDigiMCIndexMapTag(conf().crvDigiMCIndexMapTag()),
+  _caloShowerStepTags(conf().caloShowerStepTags()),
+  _caloShowerSimTag(conf().caloShowerSimTag()),
+  _caloShowerROTag(conf().caloShowerROTag()),
+  _rekeySimParticleCollection(conf().rekeySimParticleCollection()),
+                                     _crvStepsToKeep(conf().crvStepsToKeep()),
+                                   _noCompression(conf().noCompression())
 {
   // Call appropriate produces<>() functions here.
   produces<StrawDigiMCCollection>();
@@ -269,15 +275,6 @@ mu2e::CompressDigiMCs::CompressDigiMCs(const Parameters& conf)
   produces<SimParticleCollection>();
   produces<GenParticleCollection>();
 
-  for (std::vector<art::InputTag>::const_iterator i_tag = _timeMapTags.begin(); i_tag != _timeMapTags.end(); ++i_tag) {
-    if ( (*i_tag).instance() == "") {
-      produces<SimParticleTimeMap>( (*i_tag).label() ); // in the case where we have two time maps from different modules
-    }
-    else {
-      produces<SimParticleTimeMap>( (*i_tag).instance() ); // in the case where we have two time maps from the same module (e.g. a first stage compression)
-    }
-  }
-
   // Two possible compressions for calorimeter
   if (_caloShowerStepTags.size() != 0) {
     produces<CaloShowerStepCollection>();
@@ -288,8 +285,9 @@ mu2e::CompressDigiMCs::CompressDigiMCs(const Parameters& conf)
     produces<CaloClusterMCCollection>();
     produces<CaloHitMCCollection>();
   }
-  if (_crvCoincClusterMCTag != "") {
-    produces<CrvCoincidenceClusterMCCollection>();
+  for (const auto& crvCoincClusterMCTag : _crvCoincClusterMCTags) {
+    produces<CrvCoincidenceClusterMCCollection>(crvCoincClusterMCTag.label());
+    _crvCoincClusterMCsHandles.push_back(art::Handle<CrvCoincidenceClusterMCCollection>());
   }
   if (_primaryParticleTag != "") {
     produces<PrimaryParticle>();
@@ -352,22 +350,6 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     }
   }
 
-  _oldTimeMaps.clear();
-  for (std::vector<art::InputTag>::const_iterator i_tag = _timeMapTags.begin(); i_tag != _timeMapTags.end(); ++i_tag) {
-    art::Handle<SimParticleTimeMap> i_timeMapHandle;
-    event.getByLabel(*i_tag, i_timeMapHandle);
-
-    if (!i_timeMapHandle.isValid()) {
-      throw cet::exception("CompressDigiMCs") << "Couldn't find SimParticleTimeMap " << *i_tag << " in event\n";
-    }
-    _oldTimeMaps.push_back(*i_timeMapHandle);
-  }
-
-  _newSimParticleTimeMaps.clear();
-  for (std::vector<art::InputTag>::const_iterator i_tag = _timeMapTags.begin(); i_tag != _timeMapTags.end(); ++i_tag) {
-    _newSimParticleTimeMaps.push_back(std::unique_ptr<SimParticleTimeMap>(new SimParticleTimeMap));
-  }
-
   // If we've been given IndexMap tags, then use those
   if (_strawDigiMCIndexMapTag != "") {
     art::Handle<mu2e::IndexMap> indexMapHandle;
@@ -388,9 +370,13 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     _newCaloHitMCGetter = event.productGetter(_newCaloHitMCsPID);
   }
   // If we have a CrvCoincClusterMC collection, use that
-  if (_crvCoincClusterMCTag != "") {
-    event.getByLabel(_crvCoincClusterMCTag, _crvCoincClusterMCsHandle);
-    _newCrvCoincClusterMCs = std::unique_ptr<CrvCoincidenceClusterMCCollection>(new CrvCoincidenceClusterMCCollection);
+  if (_crvCoincClusterMCTags.size() > 0) {
+    _newCrvCoincClusterMCs.clear();
+    for (size_t i_tag = 0; i_tag < _crvCoincClusterMCTags.size(); ++i_tag) {
+      const auto & crvCoincClusterMCTag = _crvCoincClusterMCTags.at(i_tag);
+      event.getByLabel(crvCoincClusterMCTag, _crvCoincClusterMCsHandles.at(i_tag));
+      _newCrvCoincClusterMCs.push_back(std::unique_ptr<CrvCoincidenceClusterMCCollection>(new CrvCoincidenceClusterMCCollection));
+    }
   }
   // If we have a PrimaryParticle, use that
   if (_primaryParticleTag != "") {
@@ -448,6 +434,31 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
       throw cet::exception("CompressDigiMCs") << "The number of CrvDigiMCs before and after compression does not match ("
                                               << crvDigiMCs.size() << " != " << _newCrvDigiMCs->size() << ")" << std::endl;
     }
+
+    // Sometimes we want to keep all CrvSteps regardless of whether they are in a CrvDigiMCs.
+    // Here we loop through and add any that were not already included
+    for (const auto& crvStepsTag : _crvStepsToKeep) {
+      const auto& oldCrvStepsHandle = event.getValidHandle<mu2e::CrvStepCollection>(crvStepsTag);
+
+      // Loop through the CrvSteps we want to keep
+      //
+      // So far, we have been keeping track of which CrvSteps we have seen through the Ptrs that point to them
+      //
+      // Since these CrvSteps might not be being referred to by any object, we need to create a fake ptr to make sure we haven't seen it before
+      // so let's get the product id and getter so we can construct it
+      art::ProductID old_crv_step_product_id = oldCrvStepsHandle.id();
+      const art::EDProductGetter* old_crv_step_product_getter = event.productGetter(old_crv_step_product_id);
+
+      for (CrvStepCollection::const_iterator i_crvStep = oldCrvStepsHandle->begin(); i_crvStep != oldCrvStepsHandle->end(); ++i_crvStep) {
+        const auto& crvStep = *i_crvStep; // convert from iterator to actual object
+
+        const auto& fake_old_ptr = art::Ptr<CrvStep>(old_crv_step_product_id, i_crvStep - oldCrvStepsHandle->begin(), old_crv_step_product_getter);
+        if (_crvStepsSeen.insert(fake_old_ptr).second == true) { // if we have inserted this CrvStepPtrs (i.e. it hasn't already been seen)
+          art::Ptr<CrvStep> newStepPtr = copyCrvStep(crvStep);
+          _crvStepsMap[fake_old_ptr] = newStepPtr; // need to keep track of these
+        }
+      }
+    }
   }
 
   // Two possible compressions for calorimeter
@@ -493,10 +504,10 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
   }
 
   // Optional CrvCoincidenceClusterMCs
-  if (_crvCoincClusterMCTag != "") {
-    const auto& crvCoincClusterMCs = *_crvCoincClusterMCsHandle;
+  for (size_t i_tag = 0; i_tag < _crvCoincClusterMCTags.size(); ++i_tag) {
+    const auto& crvCoincClusterMCs = *_crvCoincClusterMCsHandles.at(i_tag);
     for (const auto& i_crvCoincClusterMC : crvCoincClusterMCs) {
-      copyCrvCoincClusterMC(i_crvCoincClusterMC);
+      copyCrvCoincClusterMC(i_crvCoincClusterMC, i_tag);
     }
   }
 
@@ -531,18 +542,18 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
   }
 
   // Now compress the SimParticleCollections into their new collections
-  KeyRemap* keyRemap = new KeyRemap;
+  KeyRemap keyRemap;
   SimParticleRemapping remap;
   unsigned int keep_size = 0;
   for (std::vector<art::InputTag>::const_iterator i_tag = _simParticleTags.begin(); i_tag != _simParticleTags.end(); ++i_tag) {
-    keyRemap->clear();
+    keyRemap.clear();
     const auto& oldSimParticles = event.getValidHandle<SimParticleCollection>(*i_tag);
     art::ProductID i_product_id = oldSimParticles.id();
     SimParticleSelector simPartSelector(_simParticlesToKeep[i_product_id]);
     keep_size += _simParticlesToKeep[i_product_id].size();
     if (_rekeySimParticleCollection) {
       compressSimParticleCollection(_newSimParticlesPID, _newSimParticleGetter, *oldSimParticles,
-                                    simPartSelector, *_newSimParticles, keyRemap);
+                                    simPartSelector, *_newSimParticles, &keyRemap);
     }
     else {
       compressSimParticleCollection(_newSimParticlesPID, _newSimParticleGetter, *oldSimParticles,
@@ -554,7 +565,12 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
       cet::map_vector_key oldKey = cet::map_vector_key(i_keptSimPart.key());
       cet::map_vector_key newKey = oldKey;
       if (_rekeySimParticleCollection) {
-        newKey = keyRemap->at(oldKey);
+        auto it = keyRemap.find(oldKey);
+        if(it == keyRemap.end()) {
+          throw cet::exception("CompressDigiMCs::badKeyRemap")
+            << "keyRemap key "<< oldKey <<" not found\n";
+        }
+        newKey = it->second;
       }
       remap[i_keptSimPart] = art::Ptr<SimParticle>(_newSimParticlesPID, newKey.asUint(), _newSimParticleGetter);
     }
@@ -582,40 +598,25 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
 
 
   // Now update all objects with SimParticlePtrs
-  // Update the time maps
-  for (std::vector<SimParticleTimeMap>::const_iterator i_time_map = _oldTimeMaps.begin(); i_time_map != _oldTimeMaps.end(); ++i_time_map) {
-    size_t i_element = i_time_map - _oldTimeMaps.begin();
-
-    const SimParticleTimeMap& i_oldTimeMap = *i_time_map;
-    SimParticleTimeMap& i_newTimeMap = *_newSimParticleTimeMaps.at(i_element);
-    for (const auto& timeMapPair : i_oldTimeMap) {
-      art::Ptr<SimParticle> oldSimPtr = timeMapPair.first;
-      const auto& newSimPtrIter = remap.find(oldSimPtr);
-      if (newSimPtrIter != remap.end()) {
-        art::Ptr<SimParticle> newSimPtr = newSimPtrIter->second;
-        i_newTimeMap[newSimPtr] = timeMapPair.second;
-      }
-    }
-  }
 
    // Update the StepPointMCs
   for (const auto& i_instance : _newStepPointMCInstances) {
     for (auto& i_stepPointMC : *_newStepPointMCs.at(i_instance)) {
-      art::Ptr<SimParticle> newSimPtr = remap.at(i_stepPointMC.simParticle());
+      art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,i_stepPointMC.simParticle(),__LINE__);
       i_stepPointMC.simParticle() = newSimPtr;
     }
   }
- 
+
   // Update the StrawGasSteps
   for (auto& i_strawGasStep : *_newStrawGasSteps) {
-    art::Ptr<SimParticle> newSimPtr = remap.at(i_strawGasStep.simParticle());
+    art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,i_strawGasStep.simParticle(),__LINE__);
     i_strawGasStep.simParticle() = newSimPtr;
   }
 
   // Update the CrvSteps
   if (_crvDigiMCTag != "") {
     for (auto& i_crvStep : *_newCrvSteps) {
-      art::Ptr<SimParticle> newSimPtr = remap.at(i_crvStep.simParticle());
+      art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,i_crvStep.simParticle(),__LINE__);
       i_crvStep.simParticle() = newSimPtr;
     }
   }
@@ -623,7 +624,7 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
   if (_caloShowerStepTags.size() != 0) {
     // Update the CaloShowerSteps
     for (auto& i_caloShowerStep : *_newCaloShowerSteps) {
-      art::Ptr<SimParticle> newSimPtr = remap.at(i_caloShowerStep.simParticle());
+      art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,i_caloShowerStep.simParticle(),__LINE__);
       i_caloShowerStep.setSimParticle(newSimPtr);
     }
   }
@@ -633,7 +634,7 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
   if (_caloClusterMCTag != "") {
     for (auto& i_caloHitMC : *_newCaloHitMCs) {
       for (auto& i_caloMCEDep : i_caloHitMC.energyDeposits()) {
-        i_caloMCEDep.resetSim(remap.at(i_caloMCEDep.sim()));
+        i_caloMCEDep.resetSim(safeRemapRef(remap,i_caloMCEDep.sim(),__LINE__));
       }
     }
   }
@@ -643,7 +644,7 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     art::Ptr<SimParticle> oldSimPtr = i_crvDigiMC.GetSimParticle();
     art::Ptr<SimParticle> newSimPtr;
     if (oldSimPtr.isNonnull()) { // if the old CrvDigiMC doesn't have a null ptr for the SimParticle...
-      newSimPtr = remap.at(oldSimPtr);
+      newSimPtr = safeRemapRef(remap,oldSimPtr,__LINE__);
     }
     else {
       newSimPtr = art::Ptr<SimParticle>();
@@ -651,23 +652,25 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     i_crvDigiMC.setSimParticle(newSimPtr);
   }
   // Update CrvCoincClusterMCs if needs be
-  if (_crvCoincClusterMCTag != "") {
-    for (auto& i_crvCoincClusterMC : *_newCrvCoincClusterMCs) {
-      for (auto& i_pulseInfo : i_crvCoincClusterMC.GetModifiablePulses()) {
-        art::Ptr<SimParticle> oldSimPtr = i_pulseInfo._simParticle;
-        art::Ptr<SimParticle> newSimPtr = remap.at(oldSimPtr);
-        i_pulseInfo._simParticle = newSimPtr;
-      }
+  for (size_t i_tag = 0; i_tag < _crvCoincClusterMCTags.size(); ++i_tag) {
+    for (auto& i_crvCoincClusterMC : *_newCrvCoincClusterMCs.at(i_tag)) {
+      if (i_crvCoincClusterMC.HasMCInfo()) {
+        for (auto& i_pulseInfo : i_crvCoincClusterMC.GetModifiablePulses()) {
+          art::Ptr<SimParticle> oldSimPtr = i_pulseInfo._simParticle;
+          art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,oldSimPtr,__LINE__);
+          i_pulseInfo._simParticle = newSimPtr;
+        }
 
-      art::Ptr<SimParticle> oldSimPtr = i_crvCoincClusterMC.GetMostLikelySimParticle();
-      art::Ptr<SimParticle> newSimPtr = remap.at(oldSimPtr);
-      i_crvCoincClusterMC.SetMostLikelySimParticle(newSimPtr);
+        art::Ptr<SimParticle> oldSimPtr = i_crvCoincClusterMC.GetMostLikelySimParticle();
+        art::Ptr<SimParticle> newSimPtr = safeRemapRef(remap,oldSimPtr,__LINE__);
+        i_crvCoincClusterMC.SetMostLikelySimParticle(newSimPtr);
+      }
     }
   }
   // Update PrimaryParticle if needs be
   if (_primaryParticleTag != "") {
     for (auto& i_simPartPtr : _newPrimaryParticle->modifySimParticles()) {
-      i_simPartPtr = remap.at(i_simPartPtr);
+      i_simPartPtr = safeRemapRef(remap,i_simPartPtr,__LINE__);
     }
   }
   // Create new MC Trajectory collection
@@ -675,7 +678,7 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     for (const auto& i_mcTrajectory : *_mcTrajectoriesHandle) {
       art::Ptr<SimParticle> oldSimPtr = i_mcTrajectory.first;
       if (remap.find(oldSimPtr) != remap.end()) {
-        _newMCTrajectories->insert(std::pair<art::Ptr<SimParticle>, mu2e::MCTrajectory>(remap.at(oldSimPtr), i_mcTrajectory.second));
+        _newMCTrajectories->insert(std::pair<art::Ptr<SimParticle>, mu2e::MCTrajectory>(safeRemapRef(remap,oldSimPtr,__LINE__), i_mcTrajectory.second));
       }
     }
   }
@@ -692,16 +695,6 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
   event.put(std::move(_newSimParticles));
   event.put(std::move(_newGenParticles));
 
-  for (std::vector<art::InputTag>::const_iterator i_tag = _timeMapTags.begin(); i_tag != _timeMapTags.end(); ++i_tag) {
-    size_t i_element = i_tag - _timeMapTags.begin();
-    if ( (*i_tag).instance() == "") {
-      event.put(std::move(_newSimParticleTimeMaps.at(i_element)), (*i_tag).label());
-    }
-    else {
-      event.put(std::move(_newSimParticleTimeMaps.at(i_element)), (*i_tag).instance());
-    }
-  }
-
   if (_caloShowerStepTags.size() != 0) {
     event.put(std::move(_newCaloShowerSteps));
     event.put(std::move(_newCaloShowerSims));
@@ -713,8 +706,9 @@ void mu2e::CompressDigiMCs::produce(art::Event & event)
     event.put(std::move(_newCaloHitMCs));
   }
 
-  if (_crvCoincClusterMCTag != "") {
-    event.put(std::move(_newCrvCoincClusterMCs));
+  for (size_t i_tag = 0; i_tag < _crvCoincClusterMCTags.size(); ++i_tag) {
+    const auto& crvCoincClusterMCTag = _crvCoincClusterMCTags.at(i_tag);
+    event.put(std::move(_newCrvCoincClusterMCs.at(i_tag)), crvCoincClusterMCTag.label());
   }
   if (_primaryParticleTag != "") {
     event.put(std::move(_newPrimaryParticle));
@@ -737,10 +731,10 @@ void mu2e::CompressDigiMCs::copyStrawDigiMC(const mu2e::StrawDigiMC& old_straw_d
     const auto& newStepPtrIter = step_remap.find(old_step_point);
     if (newStepPtrIter == step_remap.end()) {
       if (old_step_point.isAvailable()) {
-	step_remap[old_step_point] = copyStrawGasStep( *old_step_point);
+        step_remap[old_step_point] = copyStrawGasStep( *old_step_point);
       }
       else { // this is a null Ptr but it should be added anyway to keep consistency (not expected for StrawDigis)
-	step_remap[old_step_point] = old_step_point;
+        step_remap[old_step_point] = old_step_point;
       }
     }
     art::Ptr<StrawGasStep> new_step_point = step_remap.at(old_step_point);
@@ -762,7 +756,12 @@ void mu2e::CompressDigiMCs::copyCrvDigiMC(const mu2e::CrvDigiMC& old_crv_digi_mc
         _crvStepsMap[i_step_mc] = newStepPtr;
       }
       else {
-        newStepPtrs.push_back(_crvStepsMap.at(i_step_mc));
+        auto it = _crvStepsMap.find(i_step_mc);
+        if(it == _crvStepsMap.end()) {
+          throw cet::exception("CompressDigiMCs::copyCrvDigiMC")
+            << "remap key "<< i_step_mc.id() <<" not found\n";
+        }
+        newStepPtrs.push_back(it->second);
       }
     }
     else { // this is a null Ptr but it should be added anyway to keep consistency (expected for CrvDigis)
@@ -806,7 +805,12 @@ void mu2e::CompressDigiMCs::copyCaloShowerSim(const mu2e::CaloShowerSim& old_cal
   const auto& caloShowerStepPtrs = old_calo_shower_sim.caloShowerSteps();
   std::vector<art::Ptr<CaloShowerStep> > newCaloShowerStepPtrs;
   for (const auto& i_caloShowerStepPtr : caloShowerStepPtrs) {
-    newCaloShowerStepPtrs.push_back(remap.at(i_caloShowerStepPtr));
+    auto it = remap.find(i_caloShowerStepPtr);
+    if(it==remap.end()) {
+      throw cet::exception("CompressDigiMCs::copyCaloShowerSim")
+        << "remap key "<< i_caloShowerStepPtr.id() <<" not found\n";
+    }
+    newCaloShowerStepPtrs.push_back(it->second);
   }
 
   CaloShowerSim new_calo_shower_sim = old_calo_shower_sim;
@@ -819,7 +823,12 @@ void mu2e::CompressDigiMCs::copyCaloShowerRO(const mu2e::CaloShowerRO& old_calo_
 
   const auto& caloShowerStepPtr = old_calo_shower_step_ro.caloShowerStep();
   CaloShowerRO new_calo_shower_step_ro = old_calo_shower_step_ro;
-  new_calo_shower_step_ro.setCaloShowerStep(remap.at(caloShowerStepPtr));
+  auto it = remap.find(caloShowerStepPtr);
+  if(it == remap.end()) {
+    throw cet::exception("CompressDigiMCs::copyCaloShowerRO")
+      << "remap key "<< caloShowerStepPtr.id() <<" not found\n";
+  }
+  new_calo_shower_step_ro.setCaloShowerStep(it->second);
 
   _newCaloShowerROs->push_back(new_calo_shower_step_ro);
 }
@@ -844,15 +853,17 @@ void mu2e::CompressDigiMCs::copyCaloClusterMC(const mu2e::CaloClusterMC& old_cal
   _newCaloClusterMCs->push_back(new_calo_cluster_mc);
 }
 
-void mu2e::CompressDigiMCs::copyCrvCoincClusterMC(const mu2e::CrvCoincidenceClusterMC& old_crv_coinc_cluster_mc) {
+void mu2e::CompressDigiMCs::copyCrvCoincClusterMC(const mu2e::CrvCoincidenceClusterMC& old_crv_coinc_cluster_mc, size_t i_tag) {
 
-  for (const auto& i_pulseInfo : old_crv_coinc_cluster_mc.GetPulses()) {
-    keepSimParticle(i_pulseInfo._simParticle);
+  if (old_crv_coinc_cluster_mc.HasMCInfo()) { // sometimes CrvCoincidenceClusterMC doesn't have MC information e.g. when it is a noise hit
+    for (const auto& i_pulseInfo : old_crv_coinc_cluster_mc.GetPulses()) {
+      keepSimParticle(i_pulseInfo._simParticle);
+    }
+    keepSimParticle(old_crv_coinc_cluster_mc.GetMostLikelySimParticle());
   }
-  keepSimParticle(old_crv_coinc_cluster_mc.GetMostLikelySimParticle());
 
   CrvCoincidenceClusterMC new_crv_coinc_cluster_mc(old_crv_coinc_cluster_mc);
-  _newCrvCoincClusterMCs->push_back(new_crv_coinc_cluster_mc);
+  _newCrvCoincClusterMCs.at(i_tag)->push_back(new_crv_coinc_cluster_mc);
 }
 
 void mu2e::CompressDigiMCs::copyPrimaryParticle(const mu2e::PrimaryParticle& old_primary_particle) {

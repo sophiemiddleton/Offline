@@ -6,20 +6,18 @@
 
 // ROOT includes
 #include "TH1F.h"
-//#include "TFolder.h"
+// #include "TFolder.h"
 
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art_root_io/TFileDirectory.h"
 #include "art_root_io/TFileService.h"
+#include "artdaq-core-mu2e/Data/CalorimeterDataDecoder.hh"
+#include "artdaq-core-mu2e/Overlays/FragmentType.hh"
+#include "artdaq-core-mu2e/Data/TrackerDataDecoder.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "mu2e-artdaq-core/Overlays/CalorimeterFragment.hh"
-#include "mu2e-artdaq-core/Overlays/FragmentType.hh"
-#include "mu2e-artdaq-core/Overlays/Mu2eEventFragment.hh"
-#include "mu2e-artdaq-core/Overlays/TrackerFragment.hh"
 
 #include <artdaq-core/Data/Fragment.hh>
 
@@ -54,8 +52,8 @@ public:
   virtual void analyze(const art::Event& e) override;
 
 private:
-  void analyze_tracker_(const mu2e::TrackerFragment& cc);
-  void analyze_calorimeter_(const mu2e::CalorimeterFragment& cc);
+  void analyze_tracker_(const mu2e::TrackerDataDecoder& cc);
+  void analyze_calorimeter_(const mu2e::CalorimeterDataDecoder& cc);
 
   int diagLevel_;
 
@@ -135,57 +133,24 @@ void FragmentAna::analyze(const art::Event& event) {
   size_t totalSize = 0;
   size_t numTrkFrags = 0;
   size_t numCalFrags = 0;
-  std::vector<art::Handle<artdaq::Fragments>> fragmentHandles =
-      event.getMany<std::vector<artdaq::Fragment>>();
 
-  for (const auto& handle : fragmentHandles) {
-    if (!handle.isValid() || handle->empty()) {
-      continue;
+  auto caloFragmentsH = event.getValidHandle<std::vector<mu2e::CalorimeterDataDecoder>>(caloFragmentsTag_);
+  auto trkFragmentsH  = event.getValidHandle<std::vector<mu2e::TrackerDataDecoder>>    (trkFragmentsTag_);
+
+  for (auto frag : *trkFragmentsH) {
+    analyze_tracker_(frag);
+    for(size_t i=0;i<frag.block_count();++i){
+      totalSize += frag.blockSizeBytes(i);
     }
+    numTrkFrags++;
+  }
 
-    if (handle->front().type() == mu2e::detail::FragmentType::MU2EEVENT) {
-      for (const auto& cont : *handle) {
-        mu2e::Mu2eEventFragment mef(cont);
-        if (parseTRK_) {
-          for (size_t ii = 0; ii < mef.tracker_block_count(); ++ii) {
-            auto pair = mef.trackerAtPtr(ii);
-            mu2e::TrackerFragment cc(pair);
-            analyze_tracker_(cc);
-
-            totalSize += pair.second;
-            numTrkFrags++;
-          }
-        }
-        if (parseCAL_) {
-          for (size_t ii = 0; ii < mef.calorimeter_block_count(); ++ii) {
-            auto pair = mef.calorimeterAtPtr(ii);
-            mu2e::CalorimeterFragment cc(pair);
-            analyze_calorimeter_(cc);
-
-            totalSize += pair.second;
-            numTrkFrags++;
-          }
-        }
-      }
-    } else {
-      if (handle->front().type() == mu2e::detail::FragmentType::TRK && parseTRK_) {
-        for (auto frag : *handle) {
-          mu2e::TrackerFragment cc(frag.dataBegin(), frag.dataSizeBytes());
-          analyze_tracker_(cc);
-
-          totalSize += frag.dataSizeBytes();
-          numTrkFrags++;
-        }
-      } else if (handle->front().type() == mu2e::detail::FragmentType::CAL && parseCAL_) {
-        for (auto frag : *handle) {
-          mu2e::CalorimeterFragment cc(frag.dataBegin(), frag.dataSizeBytes());
-          analyze_calorimeter_(cc);
-
-          totalSize += frag.dataSizeBytes();
-          numCalFrags++;
-        }
-      }
+  for (auto frag : *caloFragmentsH) {
+    analyze_calorimeter_(frag);
+    for(size_t i=0;i<frag.block_count();++i){
+      totalSize += frag.blockSizeBytes(i);
     }
+    numCalFrags++;
   }
 
   if (parseTRK_) {
@@ -210,7 +175,7 @@ void FragmentAna::analyze(const art::Event& event) {
   }
 }
 
-void FragmentAna::analyze_tracker_(const mu2e::TrackerFragment& cc) {
+void FragmentAna::analyze_tracker_(const mu2e::TrackerDataDecoder& cc) {
 
   if (diagLevel_ > 1) {
     std::cout << std::endl;
@@ -279,7 +244,7 @@ void FragmentAna::analyze_tracker_(const mu2e::TrackerFragment& cc) {
   // cc.ClearUpgradedPackets();
 }
 
-void FragmentAna::analyze_calorimeter_(const mu2e::CalorimeterFragment& cc) {
+void FragmentAna::analyze_calorimeter_(const mu2e::CalorimeterDataDecoder& cc) {
 
   if (diagLevel_ > 1) {
     std::cout << std::endl;
@@ -309,23 +274,15 @@ void FragmentAna::analyze_calorimeter_(const mu2e::CalorimeterFragment& cc) {
 
     if (hdr->GetPacketCount() > 0 && parseCAL_ > 0) { // Parse phyiscs information from CAL packets
 
-      auto calData = cc.GetCalorimeterData(curBlockIdx);
-      if (calData == nullptr) {
+      auto calHitDataVec = cc.GetCalorimeterHitData(curBlockIdx);
+      if (calHitDataVec== nullptr) {
         mf::LogError("FragmentAna") << "Error retrieving Calorimeter data from block "
                                     << curBlockIdx << "! Aborting processing of this block!";
         continue;
       }
 
-      if (diagLevel_ > 0) {
-        std::cout << "[StrawAndCaloDigiFromFragments] NEW CALDATA: NumberOfHits "
-                  << calData->NumberOfHits << std::endl;
-      }
-
-      auto hits = cc.GetCalorimeterHits(curBlockIdx);
-
-      bool err = false;
-      for (auto& hit : hits) {
-
+      for (unsigned int i = 0; i < calHitDataVec->size(); i++) {
+        std::pair<CalorimeterDataDecoder::CalorimeterHitDataPacket, std::vector<uint16_t>> hitDataPair = calHitDataVec->at(i);
         // Fill the CaloDigiCollection
 
         // IMPORTANT NOTE: we don't have a final
@@ -335,20 +292,19 @@ void FragmentAna::analyze_calorimeter_(const mu2e::CalorimeterFragment& cc) {
         // Also, note that until we have an actual map, channel index does not actually correspond
         // to the physical readout channel on a ROC.
 
-        uint16_t crystalID = hit.first.DIRACB & 0x0FFF;
-        uint16_t roId = hit.first.DIRACB >> 12;
+        uint16_t crystalID = hitDataPair.first.DIRACB & 0x0FFF;
+        uint16_t roId = hitDataPair.first.DIRACB >> 12;
         _hCalROId->Fill(crystalID * 2 + roId);
-        _hCalT0->Fill(hit.first.Time);
-        _hCalPeakPos->Fill(hit.first.IndexOfMaxDigitizerSample);
-        _hCalWfSize->Fill(hit.second.size());
+        _hCalT0->Fill(hitDataPair.first.Time);
+        _hCalPeakPos->Fill(hitDataPair.first.IndexOfMaxDigitizerSample);
+        _hCalWfSize->Fill(hitDataPair.second.size());
 
       } // End loop over readout channels in DataBlock
-      if (err)
-        continue;
+
     }
   }
 }
 
 } // end namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::FragmentAna);
+DEFINE_ART_MODULE(mu2e::FragmentAna)

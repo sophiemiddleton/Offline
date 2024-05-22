@@ -11,7 +11,6 @@
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "fhiclcpp/types/Atom.h"
 #include "art_root_io/TFileService.h"
 #include "art/Framework/Services/Registry/ServiceDefinitionMacros.h"
@@ -114,13 +113,13 @@ namespace mu2e {
     const BFieldManager::MapContainerType& outerMaps = bf->getOuterMaps();
 
     //plot inner maps
-    for(std::shared_ptr<BFMap> const & map : innerMaps) {
-      fillHistogram(map.get(), tfs);
+    for(auto const & mapptr : innerMaps) {
+      fillHistogram(mapptr.get(), tfs);
     }
 
     //plot outer maps
-    for(std::shared_ptr<BFMap> const & map : outerMaps) {
-      fillHistogram(map.get(), tfs);
+    for(auto const & mapptr : outerMaps) {
+      fillHistogram(mapptr.get(), tfs);
     }
 
     //plot the default field returned from the manager
@@ -214,4 +213,4 @@ namespace mu2e {
   } //end fillHistorgram
 }  // end namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::BFieldPlotter);
+DEFINE_ART_MODULE(mu2e::BFieldPlotter)

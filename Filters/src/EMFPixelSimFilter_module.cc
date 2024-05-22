@@ -12,7 +12,6 @@
 #include "art/Framework/Core/EDFilter.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "art_root_io/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -145,4 +144,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFPixelSimFilter);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFPixelSimFilter)

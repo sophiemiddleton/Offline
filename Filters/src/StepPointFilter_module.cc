@@ -4,7 +4,6 @@
 // Contact person Rob Kutschke
 
 #include "art/Framework/Core/EDFilter.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "fhiclcpp/ParameterSet.h"
@@ -39,4 +38,4 @@ namespace mu2e{
   }
 }
 
-DEFINE_ART_MODULE(mu2e::STMStepPointFilter);
+DEFINE_ART_MODULE(mu2e::STMStepPointFilter)

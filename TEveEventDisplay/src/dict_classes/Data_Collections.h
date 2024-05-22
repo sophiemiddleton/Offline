@@ -4,10 +4,12 @@
 #include "Offline/RecoDataProducts/inc/CosmicTrackSeed.hh"
 //Calo:
 #include "Offline/RecoDataProducts/inc/CaloHit.hh"
+#include "Offline/RecoDataProducts/inc/TimeCluster.hh"
 //MC Products:
 #include "Offline/MCDataProducts/inc/MCTrajectoryCollection.hh"
 //Kalman Tracks
 #include "Offline/RecoDataProducts/inc/KalSeed.hh"
+#include "Offline/RecoDataProducts/inc/HelixSeed.hh"
 #include "Offline/RecoDataProducts/inc/KalRepCollection.hh"
 #include "Offline/RecoDataProducts/inc/TrkExtTraj.hh"
 //Tracker Hits:
@@ -18,9 +20,6 @@
 //Art/FCL:
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-#include "fhiclcpp/types/Atom.h"
-#include "fhiclcpp/types/Sequence.h"
-#include "fhiclcpp/types/Table.h"
 
 #include <TObject.h>
 #include <TROOT.h>
@@ -32,8 +31,8 @@
 using namespace CLHEP;
 
 namespace mu2e{
-	class Data_Collections
-	{
+        class Data_Collections
+        {
     public:
       #ifndef __CINT__
       explicit Data_Collections(){};
@@ -42,6 +41,7 @@ namespace mu2e{
 
       //RecoDataProducts:
       const ComboHitCollection *chcol = 0;
+      const TimeClusterCollection *tccol = 0;
       const CrvRecoPulseCollection* crvcoincol = 0;
       const CosmicTrackSeedCollection* cosmiccol = 0;
       const CaloClusterCollection* clustercol = 0;
@@ -52,15 +52,15 @@ namespace mu2e{
       std::vector<const KalSeedCollection*> track_list;
       std::vector<std::string> track_labels;
       std::tuple<std::vector<std::string>, std::vector<const KalSeedCollection*>> track_tuple;
-      
+
       //MCDataProducts:
       const MCTrajectoryCollection *mctrajcol = 0;
 
       virtual ~Data_Collections(){};
       #endif
     ClassDef(Data_Collections,0);
-	};
+        };
 
 }
 
-#endif 
+#endif

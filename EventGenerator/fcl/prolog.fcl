@@ -133,6 +133,16 @@ CaloTBGun : {
     module_type    : CaloTBGun
 }
 
+
+CaloCalibGun : {
+  module_type : CaloCalibGun
+  cosmin :  -1.0
+  cosmax :  1.0
+  phimin :  0.0
+  phimax : 2.0
+  tmin  :  500.
+  tmax : 1694.
+}
 # Save state of random numbers at the start of each event
 # the module is defined in art/Framework/Modules
 
@@ -146,7 +156,7 @@ EventGenerator : {
     pionStops : {
         treeName               : "stoppedPionDumper/stops"
         branchName             : "stops"
-        inputFiles             : ["mergedMuonStops/nts.mu2e.pion-DS-TGTstops.MDC2018a.001002_00000000.root" ]
+        inputFiles             : ["mergedMuonStops/nts.mu2e.pion-DS-TGTstops.MDC2018a.001002_00000000.root" ] # does this need removing?
         averageNumRecordsToUse : 0
         verbosityLevel         : 0
     }
@@ -154,6 +164,20 @@ EventGenerator : {
         inputFiles : @local::mergedMuon_tgtStops_mdc2018_1
     }
 }
+
+GenFilter : {
+        module_type : GenFilter
+        StageParticleCollection : "generate"
+        isNull : true
+}
+
+genFilters : # in case we want to add more here
+{
+   filters : {
+        GenFilter: @local::GenFilter
+   }
+}
+
 
 EventGenerator : { @table::EventGenerator
     producers : {
@@ -340,11 +364,11 @@ EventGenerator : { @table::EventGenerator
                 physicsVerbosityLevel : 0
             }
             muonStops                 : { @table::muonStops  }
-	}
+        }
 
         CaloTBGun : {
-	    module_type    : CaloTBGun
-	}
+            module_type    : CaloTBGun
+        }
     }
 }
 

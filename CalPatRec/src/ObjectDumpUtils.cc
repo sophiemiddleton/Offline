@@ -45,7 +45,6 @@
 
 namespace mu2e {
 
-  const SimParticleTimeOffset           *ObjectDumpUtils::_TimeOffsets(NULL);
   const StrawDigiMCCollection           *ObjectDumpUtils::_ListOfMCStrawHits(NULL);
   std::string                            ObjectDumpUtils::_FlagBgrHitsModuleLabel;
 
@@ -53,14 +52,6 @@ namespace mu2e {
 // ObjectDumpUtils::ObjectDumpUtils() {
 
 //   _FlagBgrHitsModuleLabel = "FlagBkgHits";
-
-//   std::vector<std::string> VS;
-//   VS.push_back(std::string("protonTimeMap"));
-//   VS.push_back(std::string("muonTimeMap"));
-  
-//   fhicl::ParameterSet  pset;
-//   pset.put("inputs", VS);
-//   fgTimeOffsets = new mu2e::SimParticleTimeOffset(pset);
 
 // }
 
@@ -72,10 +63,10 @@ namespace mu2e {
 void ObjectDumpUtils::printEventHeader(const art::Event* Event, const char* Message) {
 
   printf(" Run / Subrun / Event : %10i / %10i / %10i : %s\n",
-	 Event->run(),
-	 Event->subRun(),
-	 Event->event(),
-	 Message);
+         Event->run(),
+         Event->subRun(),
+         Event->event(),
+         Message);
 }
 
 //-----------------------------------------------------------------------------
@@ -106,13 +97,13 @@ void ObjectDumpUtils::printCaloProtoCluster(const mu2e::CaloProtoCluster* Cluste
   if ((opt == "") || (opt.Index("data") >= 0)) {
 
     printf("%16p  %3i %5i %5i %10.3f %10.3f\n",
-	   Cluster,
-	   section_id,
-	   nh,
-	   Cluster->isSplit(),
-	   Cluster->time(),
-	   Cluster->energyDep()
-	   );
+           static_cast<const void*>(Cluster),
+           section_id,
+           nh,
+           Cluster->isSplit(),
+           Cluster->time(),
+           Cluster->energyDep()
+           );
   }
 
   if (opt.Index("hits") >= 0) {
@@ -132,15 +123,15 @@ void ObjectDumpUtils::printCaloProtoCluster(const mu2e::CaloProtoCluster* Cluste
       ir = -1;
 
       printf("%6i     %10.3f %5i %5i %8.3f %10.3f %10.3f %10.3f %10.3f\n",
-	     id,
-	     hit->time(),
-	     iz,ir,
-	     hit->energyDep(),
-	     pos->x(),
-	     pos->y(),
-	     pos->z(),
-	     hit->energyDepTot()
-	     );
+             id,
+             hit->time(),
+             iz,ir,
+             hit->energyDep(),
+             pos->x(),
+             pos->y(),
+             pos->z(),
+             hit->energyDepTot()
+             );
     }
   }
 }
@@ -178,7 +169,7 @@ void ObjectDumpUtils::printKalRep(const KalRep* Krep, const char* Opt, const cha
     printf("-----------------------------------------------------\n");
   }
 
-  if ((opt == "") || (opt.find("data") >= 0)) {
+  if ((opt == "") || (opt.find("data") != std::string::npos)) {
     double chi2   = Krep->chisq();
 
     int    nhits(0);
@@ -230,22 +221,22 @@ void ObjectDumpUtils::printKalRep(const KalRep* Krep, const char* Opt, const cha
     printf("%s",form);
 
     printf("  %-16p %3i   %3i %3i %8.3f %8.3f %8.4f %7.4f %7.3f %8.4f",
-	   Krep,
-	   -1,
-	   nhits,
-	   nact,
-	   q*mom,t0,sigp,t0err,pt,costh
-	   );
+           static_cast<const void*>(Krep),
+           -1,
+           nhits,
+           nact,
+           q*mom,t0,sigp,t0err,pt,costh
+           );
 
     printf(" %8.5f %8.3f %8.3f %8.4f %7.4f",
-	   omega,d0,z0,phi0,tandip
-	   );
+           omega,d0,z0,phi0,tandip
+           );
     printf(" %8.3f %10.3e\n",
-	   chi2,
-	   fit_consistency);
+           chi2,
+           fit_consistency);
   }
 
-  if (opt.find("hits") >= 0) {
+  if (opt.find("hits") != std::string::npos) {
 //-----------------------------------------------------------------------------
 // print detailed information about the track hits
 //-----------------------------------------------------------------------------
@@ -290,59 +281,59 @@ void ObjectDumpUtils::printKalRep(const KalRep* Krep, const char* Opt, const cha
 
       for (int i=0; i<nstraws; i++) {
 
-	const mu2e::StrawDigiMC* mcdigi = &_ListOfMCStrawHits->at(i);
+        const mu2e::StrawDigiMC* mcdigi = &_ListOfMCStrawHits->at(i);
 
-	const mu2e::StrawGasStep   *step;
-	if (mcdigi->wireEndTime(mu2e::StrawEnd::cal) < mcdigi->wireEndTime(mu2e::StrawEnd::hv)) {
-	  step = mcdigi->strawGasStep(mu2e::StrawEnd::cal).get();
-	}
-	else {
-	  step = mcdigi->strawGasStep(mu2e::StrawEnd::hv ).get();
-	}
+        const mu2e::StrawGasStep   *step;
+        if (mcdigi->wireEndTime(mu2e::StrawEnd::cal) < mcdigi->wireEndTime(mu2e::StrawEnd::hv)) {
+          step = mcdigi->strawGasStep(mu2e::StrawEnd::cal).get();
+        }
+        else {
+          step = mcdigi->strawGasStep(mu2e::StrawEnd::hv ).get();
+        }
 
-//	vol_id = step->volumeId();
-	vol_id = step->strawId().asUint16();
- 	if (vol_id == straw->id().asUint16()) {
- 					// step found - use the first one in the straw
- 	  break;
- 	}
+//        vol_id = step->volumeId();
+        vol_id = step->strawId().asUint16();
+         if (vol_id == straw->id().asUint16()) {
+                                         // step found - use the first one in the straw
+           break;
+         }
       }
 
       double mcdoca = -99.0;
 
       if (step) {
-	auto v1 = straw->getMidPoint();
-	HepPoint p1(v1.x(),v1.y(),v1.z());
+        auto v1 = straw->getMidPoint();
+        HepPoint p1(v1.x(),v1.y(),v1.z());
 
-	Hep3Vector v2 = step->position();
-	HepPoint    p2(v2.x(),v2.y(),v2.z());
+        Hep3Vector v2 = step->position();
+        HepPoint    p2(v2.x(),v2.y(),v2.z());
 
-	TrkLineTraj trstraw(p1,straw->getDirection()  ,0.,0.);
-	TrkLineTraj trstep (p2,GenVector::Hep3Vec(step->momentum().unit()),0.,0.);
+        TrkLineTraj trstraw(p1,straw->getDirection()  ,0.,0.);
+        TrkLineTraj trstep (p2,GenVector::Hep3Vec(step->momentum().unit()),0.,0.);
 
-	TrkPoca poca(trstep, 0., trstraw, 0.);
+        TrkPoca poca(trstep, 0., trstraw, 0.);
 
-	mcdoca = poca.doca();
+        mcdoca = poca.doca();
       }
 
       //      printf("%3i %5i %1i %1i %9.3f %8.3f %8.3f %9.3f %8.3f %7.3f",
       printf("%3i %5i %1i %9.3f %8.3f %8.3f %9.3f %8.3f %7.3f",
-	     ++i,
-	     straw->id().asUint16(),
-	     //	     hit->isUsable(),
-	     hit->isActive(),
-	     len,
-	     //	     hit->hitRms(),
-	     plen.x(),plen.y(),plen.z(),
-	     sh->time(), 0.//sh->dt()//FIXME!
-	     );
+             ++i,
+             straw->id().asUint16(),
+             //             hit->isUsable(),
+             hit->isActive(),
+             len,
+             //             hit->hitRms(),
+             plen.x(),plen.y(),plen.z(),
+             sh->time(), 0.//sh->dt()//FIXME!
+             );
 
       printf(" %2i %2i %2i %2i",
-	     straw->id().getPlane(),
-	     straw->id().getPanel(),
-	     straw->id().getLayer(),
-	     straw->id().getStraw()
-	     );
+             straw->id().getPlane(),
+             straw->id().getPanel(),
+             straw->id().getLayer(),
+             straw->id().getStraw()
+             );
 
       printf(" %8.3f",hit->hitT0().t0());
 
@@ -350,34 +341,34 @@ void ObjectDumpUtils::printKalRep(const KalRep* Krep, const char* Opt, const cha
       hit->resid(res, sigres, true);
 
       printf("%8.3f %8.3f %9.3f %7.3f %7.3f",
-	     pos.x(),
-	     pos.y(),
-	     pos.z(),
-	     res,
-	     sigres
-	     );
+             pos.x(),
+             pos.y(),
+             pos.z(),
+             res,
+             sigres
+             );
 
       if (hit->isActive()) {
-	if      (hit->ambig()       == 0) printf(" * %6.3f",hit->driftRadius());
-	else if (hit->ambig()*mcdoca > 0) printf("   %6.3f",hit->driftRadius()*hit->ambig());
-	else                              printf(" ? %6.3f",hit->driftRadius()*hit->ambig());
+        if      (hit->ambig()       == 0) printf(" * %6.3f",hit->driftRadius());
+        else if (hit->ambig()*mcdoca > 0) printf("   %6.3f",hit->driftRadius()*hit->ambig());
+        else                              printf(" ? %6.3f",hit->driftRadius()*hit->ambig());
       }
       else {
 //-----------------------------------------------------------------------------
 // do not analyze correctness of the drift sign determination for hits not
 // marked as 'active'
 //-----------------------------------------------------------------------------
-	printf("   %6.3f",hit->driftRadius());
+        printf("   %6.3f",hit->driftRadius());
       }
 
       printf("  %7.3f",mcdoca);
       printf(" %6.3f %6.3f %6.3f %6.3f %6.3f",
-	     hit->totalErr(),
-	     hit->hitErr(),
-	     hit->t0Err(),
-	     hit->penaltyErr(),
-	     hit->temperature()
-	     );
+             hit->totalErr(),
+             hit->hitErr(),
+             hit->t0Err(),
+             hit->penaltyErr(),
+             hit->temperature()
+             );
 //-----------------------------------------------------------------------------
 // test: calculated residual in fTmp[0]
 //-----------------------------------------------------------------------------
@@ -391,8 +382,8 @@ void ObjectDumpUtils::printKalRep(const KalRep* Krep, const char* Opt, const cha
 
 //-----------------------------------------------------------------------------
 void ObjectDumpUtils::printKalRepCollection(const art::Event* Event        ,
-					    const KalRepPtrCollection* Coll,
-					    int               PrintHits    ) {
+                                            const KalRepPtrCollection* Coll,
+                                            int               PrintHits    ) {
 
   art::Handle<mu2e::StrawDigiMCCollection> mcdigiH;
 

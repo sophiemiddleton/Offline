@@ -24,7 +24,6 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Persistency/Common/FindOne.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
@@ -38,7 +37,6 @@
 #include "Offline/ProtonBeamDumpGeom/inc/ProtonBeamDump.hh"
 #include "Offline/ExtinctionMonitorFNAL/Geometry/inc/ExtMonFNAL.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
 #include "Offline/MCDataProducts/inc/MARSInfo.hh"
@@ -539,4 +537,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFRoomFluxAnalyzer);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFRoomFluxAnalyzer)

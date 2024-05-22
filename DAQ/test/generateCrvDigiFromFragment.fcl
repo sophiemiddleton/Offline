@@ -5,33 +5,46 @@
 #
 # Contact person G. Pezzullo, R. Ehrlich
 
-#include "Offline/DAQ/fcl/prolog_trigger.fcl"
+#include "mu2e_trig_config/core/trigProducers.fcl"
+#include "Offline/fcl/standardServices.fcl"
 
 process_name : FragmentToDigi
 
-source : {
-  module_type : RootInput
-  fileNames   : @nil
-
-  # firstEvent  : 500
-  maxEvents   : -1
-#  inputCommands: ["keep *", 
-#                  "drop *Mu2eEventHeader*_*_*_*"]
-
+services :
+{
+  @table::Services.Core
 }
 
-physics : {
+source :
+{
+  module_type : RootInput
+  fileNames   : @nil
+  maxEvents   : -1
+}
 
-  producers : {
-    CrvDigi:
-      {
-	 @table::DAQ.producers.CrvDigi
-	 diagLevel: 0
-	 crvTag: "daq:crv"
-      }
+physics :
+{
+  producers :
+  {
+    genFrags :
+    {
+       module_type  : ArtFragmentsFromDTCEvents
+       diagLevel    : 10
+       makeCaloFrag : 0
+       makeTrkFrag  : 0
+       makeCRVFrag  : 1
+       makeSTMFrag  : 0
+
+    }
+    CrvDigi :
+    {
+      module_type : CrvDigisFromFragments
+      crvTag      : "genFrags"
+      diagLevel   : 2
+    }
   }
 
-  t1 : [ CrvDigi ] 
+  t1 : [ genFrags, CrvDigi]
   e1 : [ outfile ]
 
   trigger_paths  : [t1]
@@ -39,18 +52,12 @@ physics : {
 
 }
 
-outputs:  {
-  outfile :  {
+outputs:
+{
+  outfile :
+  {
     module_type   :   RootOutput
-    fileName      :   "digis_from_frags_crv.root"
-
-#    outputCommands: [ "drop *",
-#		       "keep mu2e::StrawDigis_makeSD_*_*",
-#		       "keep mu2e::CaloDigis_CaloDigiMaker_*_*",
-#                      "keep mu2e::DataBlocks_TrackerPacketProducer_*_*",
-#                      "keep mu2e::DataBlocks_CalorimeterPacketProducer_*_*",
-#                      "keep mu2e::DataBlocks_CosmicRayVetoPacketProducer_*_*"
-#                     ]
+    fileName      :   "digis_from_frags_crv.art"
   }
 }
 

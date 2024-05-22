@@ -39,11 +39,11 @@
 
 // G4 includes
 #include "Geant4/G4GeometryManager.hh"
-#include "Geant4/G4PhysicalVolumeStore.hh"
-#include "Geant4/G4LogicalVolumeStore.hh"
-#include "Geant4/G4SolidStore.hh"
+//#include "Geant4/G4PhysicalVolumeStore.hh"
+//#include "Geant4/G4LogicalVolumeStore.hh"
 
 #include "Geant4/G4Material.hh"
+#include "Geant4/G4MaterialTable.hh"
 #include "Geant4/G4Box.hh"
 #include "Geant4/G4Tubs.hh"
 #include "Geant4/G4LogicalVolume.hh"
@@ -72,7 +72,7 @@ namespace mu2e {
   void ConstructMaterials::construct(){
 
     if (!mu2eStandardDetector_) {
-      cout  << "Non standard mu2e configuration, Will NOT construct mu2e materials " << endl;
+      G4cout << __func__ << " Non standard mu2e configuration, Will NOT construct mu2e materials " << G4endl;
       // one could move this down to constructMu2eMaterials before using GeomHandle's
       return;
     }
@@ -80,6 +80,12 @@ namespace mu2e {
     // Construct the requested materials.
     constructMu2eMaterials();
     constructMu2eMaterials2();
+
+    setBirksConstant(config_);
+
+    // Turning on density effect correction in ionization loss calculations
+    // for selected materials deemed conductors
+    useDensityEffectInIonizationLossCorrectionIfRequested();
 
     // Print element table, if requested.
     if (printElements_){
@@ -376,6 +382,7 @@ namespace mu2e {
       StainlessSteel->AddMaterial(findMaterialOrThrow("G4_Fe"), 0.68);
     }
 
+
     // Stainless Steel 316 http://en.wikipedia.org/wiki/Marine_grade_stainless
     mat = uniqueMaterialOrThrow( "StainlessSteel316");
     {
@@ -544,6 +551,44 @@ namespace mu2e {
       A1100->AddMaterial(findMaterialOrThrow("G4_Cu"), 0.00100);
       A1100->AddMaterial(findMaterialOrThrow("G4_Mn"), 0.00025);
       A1100->AddMaterial(findMaterialOrThrow("G4_Zn"), 0.0005);
+    }
+
+    // 6105 Aluminum, "small" extrusion density
+    // 8020 T-Slotted Profile 3030
+    // https://en.wikipedia.org/wiki/6105_aluminium_alloy
+    // https://www.matweb.com/search/datasheet.aspx?matguid=9d1c81ac4e2b4e5590e5781f842b4446&ckck=1
+    // This has reduced density to make up for the fact that the Al extrusion is not a solid block
+    mat = uniqueMaterialOrThrow("A6105SmallExtrusion");
+    {
+      G4Material* A6105SmallExtrusion = new G4Material(mat.name, 2.69*0.51*CLHEP::g/CLHEP::cm3, 9);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Al"), 0.973);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Cr"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Cu"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Fe"), 0.0035);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Mg"), 0.008);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Mn"), 0.0015);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Si"), 0.01);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Ti"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Zn"), 0.001);
+    }
+
+    // 6105 Aluminum, "large" extrusion density
+    // 8020 T-Slotted Profile 3030
+    // https://en.wikipedia.org/wiki/6105_aluminium_alloy
+    // https://www.matweb.com/search/datasheet.aspx?matguid=9d1c81ac4e2b4e5590e5781f842b4446&ckck=1
+    // This has reduced density to make up for the fact that the Al extrusion is not a solid block
+    mat = uniqueMaterialOrThrow("A6105LargeExtrusion");
+    {
+      G4Material* A6105SmallExtrusion = new G4Material(mat.name, 2.69*0.36*CLHEP::g/CLHEP::cm3, 9);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Al"), 0.973);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Cr"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Cu"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Fe"), 0.0035);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Mg"), 0.008);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Mn"), 0.0015);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Si"), 0.01);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Ti"), 0.001);
+      A6105SmallExtrusion->AddMaterial(findMaterialOrThrow("G4_Zn"), 0.001);
     }
 
     // NbTi
@@ -917,7 +962,7 @@ namespace mu2e {
                        kStateGas, temperature, pressure);
 
       for (size_t i = 0 ; i < StrawLeak->GetNumberOfElements(); ++i) {
-        DSVacuum->AddElement(StrawLeak->GetElementVector()->at(i), StrawLeak->GetFractionVector()[i]);
+        DSVacuum->AddElement(const_cast<G4Element*>(StrawLeak->GetElementVector()->at(i)), StrawLeak->GetFractionVector()[i]);
       }
 
     }
@@ -943,7 +988,7 @@ namespace mu2e {
                        kStateGas, temperature, pressure);
 
       for (size_t i = 0 ; i < gas->GetNumberOfElements(); ++i) {
-        PSVacuum->AddElement(gas->GetElementVector()->at(i), gas->GetFractionVector()[i]);
+        PSVacuum->AddElement(const_cast<G4Element*>(gas->GetElementVector()->at(i)), gas->GetFractionVector()[i]);
       }
 
     }
@@ -1154,7 +1199,7 @@ namespace mu2e {
     }
 
     // Completed constructing Mu2e specific materials, first function.
-    // Now second function for Mu2e specific materials.
+    // Add new materials et the end of the  second function for Mu2e specific materials.
 
   }
 
@@ -1557,6 +1602,16 @@ namespace mu2e {
       wires->AddMaterial(findMaterialOrThrow("G4_Au"), 0.06);
     }
 
+    //Carbon steel
+    mat = uniqueMaterialOrThrow( "MildSteel"); // DocDB-42993
+    {
+      G4Material* MildSteel = new G4Material(mat.name, 7.86*CLHEP::g/CLHEP::cm3, 4); //used an example density of steel
+      MildSteel->AddMaterial(findMaterialOrThrow("G4_Mn"), 0.0100);
+      MildSteel->AddMaterial(findMaterialOrThrow("G4_Si"), 0.0025);
+      MildSteel->AddMaterial(findMaterialOrThrow("G4_C" ), 0.0025);
+      MildSteel->AddMaterial(findMaterialOrThrow("G4_Fe"), 0.9850);
+    }
+
     // Completed constructMu2eMaterials2(), second function for
     // building all Mu2e materials.
 
@@ -1582,7 +1637,33 @@ namespace mu2e {
      ProductionTargetTungstenLa2_O3->AddElement(getElementOrThrow("W"),wPercentage*CLHEP::perCent);
     }
 
-    setBirksConstant(config_);
+
+    mat = uniqueMaterialOrThrow("LaBr3Ce");
+    {
+     G4Material* LaBr3Ce = new G4Material(mat.name, 5.08*CLHEP::g/CLHEP::cm3, 2);
+     G4Material* LaBr3 = new G4Material("LaBr3", 5.06*CLHEP::g/CLHEP::cm3  ,2);
+     LaBr3->AddElement(getElementOrThrow("La"),1);
+     LaBr3->AddElement(getElementOrThrow("Br"),3);
+
+     G4Element* elCe  = new G4Element("Cerium"  ,"Ce" , 58., 140.116*CLHEP::g/CLHEP::mole);
+
+     LaBr3Ce -> AddElement(elCe, 1.9*CLHEP::perCent);
+     LaBr3Ce -> AddMaterial(LaBr3, 98.1*CLHEP::perCent);
+    }
+
+    mat = uniqueMaterialOrThrow("BP");   //Borated polyethylene
+    {
+     G4Material* BP  = new G4Material(mat.name, 1.04*CLHEP::g/CLHEP::cm3, 2);
+
+     G4Element* elB  = new G4Element("Boron"  ,"B" , 5., 10.81*CLHEP::g/CLHEP::mole);
+     G4Material* Poly = findMaterialOrThrow("G4_POLYETHYLENE");
+
+     BP -> AddElement(elB, 5*CLHEP::perCent);
+     BP -> AddMaterial(Poly, 95*CLHEP::perCent);
+
+    }
+
+    // Add new materials before this line
 
   }
 
@@ -1618,6 +1699,54 @@ namespace mu2e {
     }
 
     return answer;
+  }
+
+  // Turning on density effect correction in ionization loss calculations
+  // for selected materials deemed conductors
+  void ConstructMaterials::useDensityEffectInIonizationLossCorrectionIfRequested() {
+
+    if (config_.physics().useDensityEffectInIonizationLossCalc()) {
+
+      std::vector<std::string> conductors = config_.physics().conductingMaterials();
+
+      // conductor is defined as having GetFreeElectronDensity() > 0.0
+      // one can set that density with SetFreeElectronDensity(val)
+
+      if (config_.debug().diagLevel() > 0) {
+        G4cout << "ConstructMaterials::" << __func__
+               << " Using density effect correction in ionization loss calculations"
+               << " for selected materials deemed conductors "
+               << G4endl;
+      }
+      G4MaterialTable* theMaterialTable = G4Material::GetMaterialTable();
+      for(size_t i=0; i!=theMaterialTable->size(); ++i) {
+        G4Material* theMaterial = (*theMaterialTable)[i];
+        if (config_.debug().diagLevel() > 0) {
+          G4String cond( ( theMaterial->GetFreeElectronDensity() > 0. ) ?
+                             " conductor" : " not conductor" );
+          G4cout << "ConstructMaterials::" <<  __func__
+                 << " "
+                 << theMaterial->GetName()
+                 << ", has free electron density of "
+                 << theMaterial->GetFreeElectronDensity()
+                 << cond
+                 << G4endl;
+        }
+        if (std::find(conductors.begin(), conductors.end(), theMaterial->GetName())
+            != conductors.end() ) {
+          G4NistManager::Instance()->SetDensityEffectCalculatorFlag(theMaterial, true);
+          if (config_.debug().diagLevel() > 0) {
+            G4cout << "ConstructMaterials::" <<  __func__
+                   << " Using correction in calculations for "
+                   << theMaterial->GetName()
+                   << ", its free electron density is "
+                   << theMaterial->GetFreeElectronDensity()
+                   << G4endl;
+
+          }
+        }
+      }
+    }
   }
 
 } // end namespace mu2e

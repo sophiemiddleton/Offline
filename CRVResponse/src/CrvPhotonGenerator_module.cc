@@ -4,12 +4,15 @@
 //
 // Original Author: Ralf Ehrlich
 
+#include "Offline/CRVConditions/inc/CRVPhotonYield.hh"
 #include "Offline/CRVResponse/inc/MakeCrvPhotons.hh"
 #include "Offline/CosmicRayShieldGeom/inc/CosmicRayShield.hh"
 #include "Offline/DataProducts/inc/CRSScintillatorBarIndex.hh"
+#include "Offline/DataProducts/inc/CRVId.hh"
 
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
+#include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 #include "Offline/ConfigTools/inc/ConfigFileLookupPolicy.hh"
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
 #include "Offline/GeometryService/inc/GeomHandle.hh"
@@ -17,23 +20,17 @@
 #include "Offline/MCDataProducts/inc/CrvStep.hh"
 #include "Offline/MCDataProducts/inc/CrvPhotons.hh"
 #include "Offline/MCDataProducts/inc/ProtonBunchTimeMC.hh"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "Offline/SeedService/inc/SeedService.hh"
 
 #include "Offline/ProditionsService/inc/ProditionsHandle.hh"
 #include "Offline/DAQConditions/inc/EventTiming.hh"
-#include "Offline/ConditionsService/inc/AcceleratorParams.hh"
-#include "Offline/ConditionsService/inc/CrvParams.hh"
-#include "Offline/ConditionsService/inc/ConditionsHandle.hh"
 #include "Offline/DataProducts/inc/EventWindowMarker.hh"
 
 #include "canvas/Persistency/Common/Ptr.h"
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/Sequence.h"
@@ -41,6 +38,9 @@
 #include "CLHEP/Random/Randomize.h"
 
 #include <string>
+#include <filesystem>
+#include <set>
+#include <boost/functional/hash.hpp>
 
 #include <TDirectory.h>
 #include <TFile.h>
@@ -56,29 +56,25 @@ namespace mu2e
     public:
     using Name=fhicl::Name;
     using Comment=fhicl::Comment;
-    struct Config 
+    struct Config
     {
+      fhicl::Atom<int> debug{ Name("debugLevel"),Comment("Debug Level"), 0};
       fhicl::Sequence<std::string> moduleLabels{ Name("crvStepModuleLabels"), Comment("CrvStepModule labels")};
       fhicl::Sequence<std::string> processNames{ Name("crvStepProcessNames"), Comment("process names of CrvSteps")};
       fhicl::Sequence<std::string> CRVSectors{ Name("CRVSectors"), Comment("Crv sectors")};
       fhicl::Sequence<int> reflectors{ Name("reflectors"), Comment("location of reflectors at Crv sectors")};
       fhicl::Sequence<std::string> lookupTableFileNames{ Name("lookupTableFileNames"), Comment("lookup tables for Crv sectors")};
       fhicl::Sequence<double> scintillationYields{ Name("scintillationYields"), Comment("scintillation yields at Crv sectors")};
-      fhicl::Atom<double> scintillationYieldScaleFactor{ Name("scintillationYieldScaleFactor"), 
-                                                        Comment("scale factor for scintillation yield")};
-      fhicl::Atom<double> scintillationYieldVariation{ Name("scintillationYieldVariation"), 
-                                                      Comment("sigma of gaussian variation of scintillation yield")};
-      fhicl::Atom<double> scintillationYieldVariationCutoffLow{ Name("scintillationYieldVariationCutoffLow"), 
-                                                               Comment("lower cutoff at scintillation yield variation")};
-      fhicl::Atom<double> scintillationYieldVariationCutoffHigh{ Name("scintillationYieldVariationCutoffHigh"), 
-                                                                Comment("upper cutoff at scintillation yield variation")};
+      fhicl::Atom<double> photonYieldScaleFactor{ Name("photonYieldScaleFactor"), Comment("global scale factor for the photon yield")};
+      fhicl::Atom<double> photonYieldVariationScale{ Name("photonYieldVariationScale"),Comment("scale factor of the photon yield variation")};
+      fhicl::Atom<double> photonYieldVariationCutoffLow{ Name("photonYieldVariationCutoffLow"),Comment("lower cutoff at photon yield variation")};
+      fhicl::Atom<double> photonYieldVariationCutoffHigh{ Name("photonYieldVariationCutoffHigh"),Comment("upper cutoff at photon yield variation")};
       fhicl::Atom<double> digitizationStart{ Name("digitizationStart"), Comment("start of digitization")};
       fhicl::Atom<double> digitizationEnd{ Name("digitizationEnd"), Comment("end of digitization")};
-      fhicl::Atom<double> digitizationStartMargin{ Name("digitizationStartMargin"), 
+      fhicl::Atom<double> digitizationStartMargin{ Name("digitizationStartMargin"),
                                Comment("time window before digitization starts to account for photon travel time and electronics response.")};
       fhicl::Atom<art::InputTag> eventWindowMarkerTag{ Name("eventWindowMarkerTag"), Comment("EventWindowMarker producer"),"EWMProducer" };
       fhicl::Atom<art::InputTag> protonBunchTimeMCTag{ Name("protonBunchTimeMCTag"), Comment("ProtonBunchTimeMC producer"),"EWMProducer" };
-      fhicl::Sequence<art::InputTag> timeOffsets { Name("timeOffsets"), Comment("Sim Particle Time Offset Maps")};
     };
     using Parameters = art::EDProducer::Table<Config>;
     explicit CrvPhotonGenerator(const Parameters& conf);
@@ -86,6 +82,8 @@ namespace mu2e
     void beginRun(art::Run& r);
 
     private:
+
+    int _debug;
     std::vector<std::string> _moduleLabels;
     std::vector<std::string> _processNames;
     std::vector<std::unique_ptr<art::Selector> > _selectors;
@@ -97,19 +95,20 @@ namespace mu2e
     std::vector<double>                                        _scintillationYields;
     std::vector<boost::shared_ptr<mu2eCrv::MakeCrvPhotons> >   _makeCrvPhotons;
 
-    double      _scintillationYieldScaleFactor;
-    double      _scintillationYieldVariation;
-    double      _scintillationYieldVariationCutoffLow;
-    double      _scintillationYieldVariationCutoffHigh;
+    double                                       _photonYieldScaleFactor;
+    mu2e::ProditionsHandle<mu2e::CRVPhotonYield> _photonYieldVariationVector;
+    double                                       _photonYieldVariationScale;
+    double                                       _photonYieldVariationCutoffLow;
+    double                                       _photonYieldVariationCutoffHigh;
 
     //On-spill
-    //-Digitization window 
-    //---needs to start about 100ns before the tracker digitization 
+    //-Digitization window
+    //---needs to start about 100ns before the tracker digitization
     //   to catch cosmic ray muons which may cause signals in the tracker.
     //---nominal: 400ns ... 1750ns (in proton time frame)
     //---gets adjusted for jitter
     //-CrvSteps
-    //---start recording CrvSteps 50ns before digitzation window (i.e. at 350ns) 
+    //---start recording CrvSteps 50ns before digitzation window (i.e. at 350ns)
     //   to account for photon travel time and electroncs response time.
     //---stop recording CrvSteps at end of digitization window (i.e. at 1750ns).
     //---these digitization windows are repeated with the microbunch period (1695ns).
@@ -121,7 +120,7 @@ namespace mu2e
     //-CrvPhotons
     //---photons get time wrapped modulus microbunch period (1695ns).
     //---photons before the blind time (digitization end - microbunch period = 55ns)
-    //   get move the to the time interval between the end of the microbunch 
+    //   get move the to the time interval between the end of the microbunch
     //   period (1695ns) and the end the of the digitization period (1750ns).
     //---all other photons before digitization start will be removed.
     //
@@ -141,34 +140,30 @@ namespace mu2e
     art::InputTag _protonBunchTimeMCTag;
     double      _microBunchPeriod;
 
-    SimParticleTimeOffset _timeOffsets;
-
     CLHEP::HepRandomEngine& _engine;
     CLHEP::RandFlat       _randFlat;
     CLHEP::RandGaussQ     _randGaussQ;
     CLHEP::RandPoissonQ   _randPoissonQ;
-
-    std::map<CRSScintillatorBarIndex,double>  _scintillationYieldsAdjusted;
   };
 
   CrvPhotonGenerator::CrvPhotonGenerator(const Parameters& conf) :
     art::EDProducer{conf},
+    _debug(conf().debug()),
     _moduleLabels(conf().moduleLabels()),
     _processNames(conf().processNames()),
     _CRVSectors(conf().CRVSectors()),
     _reflectors(conf().reflectors()),
     _lookupTableFileNames(conf().lookupTableFileNames()),
     _scintillationYields(conf().scintillationYields()),
-    _scintillationYieldScaleFactor(conf().scintillationYieldScaleFactor()),
-    _scintillationYieldVariation(conf().scintillationYieldVariation()),
-    _scintillationYieldVariationCutoffLow(conf().scintillationYieldVariationCutoffLow()),
-    _scintillationYieldVariationCutoffHigh(conf().scintillationYieldVariationCutoffHigh()),
+    _photonYieldScaleFactor(conf().photonYieldScaleFactor()),
+    _photonYieldVariationScale(conf().photonYieldVariationScale()),
+    _photonYieldVariationCutoffLow(conf().photonYieldVariationCutoffLow()),
+    _photonYieldVariationCutoffHigh(conf().photonYieldVariationCutoffHigh()),
     _digitizationStart(conf().digitizationStart()),
     _digitizationEnd(conf().digitizationEnd()),
     _digitizationStartMargin(conf().digitizationStartMargin()),
     _eventWindowMarkerTag(conf().eventWindowMarkerTag()),
     _protonBunchTimeMCTag(conf().protonBunchTimeMCTag()),
-    _timeOffsets(conf().timeOffsets()),
     _engine{createEngine(art::ServiceHandle<SeedService>()->getSeed())},
     _randFlat(_engine),
     _randGaussQ(_engine),
@@ -191,10 +186,9 @@ namespace mu2e
     if(_reflectors.size()!=_CRVSectors.size()) throw std::logic_error("ERROR: mismatch between specified CRV sector names and reflector list");
     if(_scintillationYields.size()!=_CRVSectors.size()) throw std::logic_error("ERROR: mismatch between specified CRV sector names and scintillation yield list");
 
+    std::set<std::string> filedirs;
     for(size_t i=0; i<_lookupTableFileNames.size(); ++i)
     {
-      _scintillationYields[i]*=_scintillationYieldScaleFactor;
-
       bool tableLoaded=false;
       for(size_t j=0; j<i; ++j)
       {
@@ -202,7 +196,7 @@ namespace mu2e
         {
            tableLoaded=true;
            _makeCrvPhotons.emplace_back(_makeCrvPhotons[j]);
-           std::cout<<"CRV sector "<<i<<" ("<<_CRVSectors[i]<<") uses "<<_makeCrvPhotons.back()->GetFileName()<<std::endl;
+           if(_debug>0) std::cout<<"CRV sector "<<i<<" ("<<_CRVSectors[i]<<") uses "<<_makeCrvPhotons.back()->GetFileName()<<" with scintillation yield of "<<_scintillationYields[i]<<" photons/MeV"<<std::endl;
            break;
         }
       }
@@ -210,10 +204,23 @@ namespace mu2e
 
       _makeCrvPhotons.emplace_back(boost::shared_ptr<mu2eCrv::MakeCrvPhotons>(new mu2eCrv::MakeCrvPhotons(_randFlat, _randGaussQ, _randPoissonQ)));
       boost::shared_ptr<mu2eCrv::MakeCrvPhotons> &photonMaker=_makeCrvPhotons.back();
-      photonMaker->LoadLookupTable(_resolveFullPath(_lookupTableFileNames[i]));
+      std::string filespec = _resolveFullPath(_lookupTableFileNames[i]);
+      filedirs.insert( std::filesystem::path(filespec).parent_path() );
+      photonMaker->LoadLookupTable(filespec,_debug);
       photonMaker->SetScintillationYield(_scintillationYields[i]);
-      std::cout<<"CRV sector "<<i<<" ("<<_CRVSectors[i]<<") uses "<<_makeCrvPhotons.back()->GetFileName()<<" with scintillation yield of "<<_scintillationYields[i]<<" photons/MeV"<<std::endl;
+      if(_debug>0) std::cout<<"CRV sector "<<i<<" ("<<_CRVSectors[i]<<") uses "<<_makeCrvPhotons.back()->GetFileName()<<" with scintillation yield of "<<_scintillationYields[i]<<" photons/MeV"<<std::endl;
     }
+
+    std::cout << "CRV light files:";
+    for(auto const& dir : filedirs ){
+      std::cout << " " << dir;
+    }
+    std::cout << std::endl;
+    size_t hash = 0;
+    for(auto const& mcp: _makeCrvPhotons) {
+      boost::hash_combine<std::string>(hash,mcp->GetFileName());
+    }
+    std::cout << "CRV light sectors: " << _makeCrvPhotons.size() << " hash:" << hash <<std::endl;
 
     produces<CrvPhotonsCollection>();
   }
@@ -232,22 +239,19 @@ namespace mu2e
                             //substr(4) removes the "CRV_" part of the sector name
     }
 
-    mu2e::ConditionsHandle<mu2e::AcceleratorParams> accPar("ignored");
-    _microBunchPeriod = accPar->deBuncherPeriod;
+    _microBunchPeriod = GlobalConstantsHandle<PhysicsParams>()->getNominalDRPeriod();
   }
 
   void CrvPhotonGenerator::produce(art::Event& event)
   {
-    _timeOffsets.updateMap(event);
-
-    _scintillationYieldsAdjusted.clear();
-
     std::unique_ptr<CrvPhotonsCollection> crvPhotonsCollection(new CrvPhotonsCollection);
 
     std::map<std::pair<mu2e::CRSScintillatorBarIndex,int>,std::vector<CrvPhotons::SinglePhoton> > photonMap;
 
+    auto const& photonYieldVariationVector = _photonYieldVariationVector.get(event.id());
+
     GeomHandle<CosmicRayShield> CRS;
-    GlobalConstantsHandle<ParticleDataTable> particleDataTable;
+    GlobalConstantsHandle<ParticleDataList> particleDataList;
 
     art::Handle<EventWindowMarker> eventWindowMarker;
     event.getByLabel(_eventWindowMarkerTag,eventWindowMarker);
@@ -276,9 +280,8 @@ namespace mu2e
         {
           CrvStep const& step(CrvSteps->at(istep));
 
-          double timeOffset = _timeOffsets.totalTimeOffset(step.simParticle());
-          double t1 = step.startTime()+timeOffset;
-          double t2 = step.endTime()+timeOffset;
+          double t1 = step.startTime();
+          double t2 = step.endTime();
           if(isnan(t1) || isnan(t2)) continue;  //This situation was observed once. Not sure how it happened.
 
           //see explanation above
@@ -298,15 +301,9 @@ namespace mu2e
           CLHEP::Hep3Vector pos2 = step.endPosition();
 
           int PDGcode = step.simParticle()->pdgId();
-          ParticleDataTable::maybe_ref particle = particleDataTable->particle(PDGcode);
-          if(!particle)
-          {
-            std::cerr<<"Error in CrvPhotonGenerator: Found a PDG code which is not in the GEANT particle table: ";
-            std::cerr<<PDGcode<<std::endl;
-            continue;
-          }
-          double mass = particle.ref().mass();  //MeV/c^2
-          double charge = particle.ref().charge(); //in units of elementary charges
+          auto const& particle = particleDataList->particle(PDGcode);
+          double mass = particle.mass();  //MeV/c^2
+          double charge = particle.charge(); //in units of elementary charges
 
           double energy1   = sqrt(step.startMom().mag2() + mass*mass); //MeV
           double energy2   = sqrt(step.endMom()*step.endMom() + mass*mass);
@@ -320,22 +317,22 @@ namespace mu2e
 
           const CRSScintillatorBarId &barId = CRSbar.id();
           int CRVSectorNumber=barId.getShieldNumber();
-          if(_scintillationYieldsAdjusted.find(step.barIndex())==_scintillationYieldsAdjusted.end())
-          {
-            double sectorScintillationYield=_scintillationYields[CRVSectorNumber];
-            double adjustedYield=0;
-            do
-            {
-              adjustedYield=_randGaussQ.fire(sectorScintillationYield, sectorScintillationYield*_scintillationYieldVariation);
-            } while(adjustedYield<sectorScintillationYield*_scintillationYieldVariationCutoffLow ||
-                    adjustedYield>sectorScintillationYield*_scintillationYieldVariationCutoffHigh);
-
-            _scintillationYieldsAdjusted[step.barIndex()] = adjustedYield;
-          }
-          double currentAdjustedYield = _scintillationYieldsAdjusted[step.barIndex()];
 
           boost::shared_ptr<mu2eCrv::MakeCrvPhotons> &photonMaker=_makeCrvPhotons.at(CRVSectorNumber);
-          photonMaker->SetScintillationYield(currentAdjustedYield);
+
+          //get the channel-specific deviation of the light yield (total from scintillation and Cerenkov) from the nominal value,
+          //e.g. due to scintillator variations or SiPM misalignments
+          for(size_t SiPM=0; SiPM<CRVId::nChanPerBar; ++SiPM)
+          {
+            size_t channel = step.barIndex().asUint()*CRVId::nChanPerBar + SiPM;
+            float photonYieldDeviation = photonYieldVariationVector.photonYieldDeviation(channel);
+            photonYieldDeviation *= _photonYieldVariationScale;  //scale factor for the variation
+            if(photonYieldDeviation<_photonYieldVariationCutoffLow) photonYieldDeviation=_photonYieldVariationCutoffLow;
+            if(photonYieldDeviation>_photonYieldVariationCutoffHigh) photonYieldDeviation=_photonYieldVariationCutoffHigh;
+            photonYieldDeviation = (photonYieldDeviation+1.0)*_photonYieldScaleFactor;  //global photon yield scale factor for e.g. aging
+            photonMaker->SetPhotonYieldDeviation(photonYieldDeviation,SiPM);
+          }
+
           photonMaker->MakePhotons(pos1Local, pos2Local, t1, t2,
                                         avgBeta, charge,
                                         step.visibleEDep(),
@@ -343,7 +340,7 @@ namespace mu2e
                                         _reflectors[CRVSectorNumber]);
 
           art::Ptr<CrvStep> crvStepPtr(CrvSteps,istep);
-          for(int SiPM=0; SiPM<4; ++SiPM)
+          for(size_t SiPM=0; SiPM<CRVId::nChanPerBar; ++SiPM)
           {
             std::pair<CRSScintillatorBarIndex,int> barIndexSiPMNumber(step.barIndex(),SiPM);
             const std::vector<double> &times=photonMaker->GetArrivalTimes(SiPM);
@@ -355,15 +352,15 @@ namespace mu2e
               if(spillType==EventWindowMarker::SpillType::onspill)
               {
                 timeTmp = fmod(timeTmp,_microBunchPeriod);
-                //photons before the digitization start get removed except photons 
-                //in the first 55ns (digitization end - microbunch period) which get 
-                //moved to the interval between the end of the microbunch period and 
+                //photons before the digitization start get removed except photons
+                //in the first 55ns (digitization end - microbunch period) which get
+                //moved to the interval between the end of the microbunch period and
                 //the end of the digitization window.
-                if(timeTmp<digitizationEnd-_microBunchPeriod) timeTmp+=_microBunchPeriod;  
+                if(timeTmp<digitizationEnd-_microBunchPeriod) timeTmp+=_microBunchPeriod;
                 if(timeTmp<digitizationStart-_digitizationStartMargin) continue;
               }
               else
-              {              
+              {
                 //photons outside the eventWindow get removed
                 if(timeTmp<eventWindowStart-_digitizationStartMargin || timeTmp>eventWindowEnd) continue;
               }

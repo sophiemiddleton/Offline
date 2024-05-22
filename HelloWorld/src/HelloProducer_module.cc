@@ -10,7 +10,6 @@
 
 // Framework includes.
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 
 // Mu2e includes.
@@ -56,4 +55,4 @@ namespace mu2e {
 
 } // end namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::HelloProducer);
+DEFINE_ART_MODULE(mu2e::HelloProducer)

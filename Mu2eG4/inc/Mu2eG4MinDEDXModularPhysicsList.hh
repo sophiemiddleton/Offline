@@ -35,7 +35,7 @@
 
 #include "Geant4/globals.hh"
 #include "Geant4/G4VModularPhysicsList.hh"
-#include "CompileTimeConstraints.hh"
+#include "Geant4/CompileTimeConstraints.hh"
 
 template<class T>
 class TMu2eG4MinDEDXModularPhysicsList: public T
@@ -43,9 +43,9 @@ class TMu2eG4MinDEDXModularPhysicsList: public T
 public:
   TMu2eG4MinDEDXModularPhysicsList(G4int ver = 1);
   virtual ~TMu2eG4MinDEDXModularPhysicsList();
-  
+
 public:
-  // SetCuts() 
+  // SetCuts()
   virtual void SetCuts();
 
 private:

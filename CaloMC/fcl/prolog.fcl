@@ -2,14 +2,14 @@
 #------------------------------------------------------------------------------
 # this file is included by fcl/standardProducers.fcl inside the PROLOG section
 #------------------------------------------------------------------------------
-#include "Offline/CaloMC/fcl/common.fcl"
+#include "Offline/CaloReco/fcl/common.fcl"
 #include "Offline/CommonMC/fcl/prolog.fcl"
 
 
 
 BEGIN_PROLOG
 
-CaloShowerStepMaker  : 
+CaloShowerStepMaker  :
 {
     module_type             : CaloShowerStepMaker
     numZSlices              : 20
@@ -19,56 +19,56 @@ CaloShowerStepMaker  :
     physVolInfoInput        : "g4run"
     caloMaterial            : ["G4_CESIUM_IODIDE", "Polyethylene092","CarbonFiber"]
     compressData            : true
-    eDepThreshold           : 0 
+    eDepThreshold           : 0
     diagLevel               : 0
 }
 
 
-CaloShowerROMaker : 
+CaloShowerROMaker :
 {
     module_type              : CaloShowerROMaker
     caloShowerStepCollection : ["CaloShowerStepMaker"]
     eventWindowMarker        : EWMProducer
     protonBunchTimeMC        : EWMProducer
     digitizationStart        : @local::HitMakerDigitizationStart
+    digitizationEnd          : @local::HitMakerDigitizationEnd
+    digitizationBuffer       : 10
     LRUCorrection            : true
     BirksCorrection          : true
     PEStatCorrection         : true
-    addTravelTime            : true	    
+    addTravelTime            : true
     diagLevel                : 0
 }
 
 #See doc-db 35519 for noise level discussion
-NoiseGenerator : 
+NoiseGenerator :
 {
     noiseWFSize             : 10000
     elecNphotPerNs          : 0.18
     rinNphotPerNs           : 0.36
     darkNphotPerNs          : 0.60
     digiSampling            : @local::HitMakerDigiSampling
-    enableAR                : true
-    nParAR                  : 5
     nMaxFragment            : 1000
     minPeakADC              : @local::HitMakerMinPeakADC
     diagLevel               : 0
 }
 
-CaloDigiMaker : 
+CaloDigiMaker :
 {
     module_type             : CaloDigiMaker
     caloShowerROCollection  : CaloShowerROMaker
     eventWindowMarker       : EWMProducer
+    protonBunchTimeMC       : EWMProducer
     digitizationStart       : @local::HitMakerDigitizationStart
     digitizationEnd         : @local::HitMakerDigitizationEnd
     addNoise                : true
-    generateSpotNoise       : true
     addRandomNoise          : false
     NoiseGenerator          : { @table::NoiseGenerator  }
     digiSampling            : @local::HitMakerDigiSampling
     nBits                   : 12
     minPeakADC              : @local::HitMakerMinPeakADC
-    nBinsPeak		    : 2 
-    bufferDigi              : 16 
+    nBinsPeak               : 2
+    bufferDigi              : 16
     diagLevel               : 0
 }
 
@@ -94,7 +94,7 @@ CaloClusterTruthMatch:
 
 
 
-CaloMC : 
+CaloMC :
 {
    StepProducers : {
      CaloShowerStepMaker  : @local::CaloShowerStepMaker
@@ -114,7 +114,7 @@ CaloMC :
    TruthMatch : [ CaloHitTruthMatch, CaloClusterTruthMatch ]
 }
 
-CaloClusterMC : 
+CaloClusterMC :
 {
    producers  : { CaloClusterTruthMatch : @local::CaloClusterTruthMatch }
    TruthMatch : [ CaloClusterTruthMatch ]

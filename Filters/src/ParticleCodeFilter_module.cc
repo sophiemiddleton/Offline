@@ -10,7 +10,6 @@
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/Sequence.h"
 
-#include "art/Framework/Core/ModuleMacros.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "Offline/MCDataProducts/inc/SimParticle.hh"
 #include "fhiclcpp/types/Sequence.h"
@@ -87,4 +86,4 @@ namespace mu2e {
   }
 
 }
-DEFINE_ART_MODULE(mu2e::ParticleCodeFilter);
+DEFINE_ART_MODULE(mu2e::ParticleCodeFilter)

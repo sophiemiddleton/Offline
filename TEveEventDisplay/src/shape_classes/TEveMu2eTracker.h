@@ -16,13 +16,17 @@
 #include <TFile.h>
 //Tracker
 #include "Offline/TrackerGeom/inc/Tracker.hh"
-#include "Offline/GeometryService/inc/GeomHandle.hh"
 //TEveMu2e:
 #include "Offline/TEveEventDisplay/src/TEveMu2e_base_classes/TEveMu2e2DProjection.h"
 #include "Offline/TEveEventDisplay/src/dict_classes/GeomUtils.h"
+#include "Offline/StoppingTargetGeom/inc/StoppingTarget.hh"
+#include "Offline/StoppingTargetGeom/inc/TargetFoil.hh"
+#include "Offline/CalorimeterGeom/inc/DiskCalorimeter.hh"
+#include "Offline/CalorimeterGeom/inc/Calorimeter.hh"
+#include <string>
 
 namespace mu2e {
-	
+
 class TEveMu2eTracker{
   public:
     #ifndef __CINT__

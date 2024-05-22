@@ -11,7 +11,6 @@
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Persistency/Common/FindMany.h"
 #include "canvas/Utilities/InputTag.h"
 
@@ -394,4 +393,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFDetMCHistPatRec);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFDetMCHistPatRec)

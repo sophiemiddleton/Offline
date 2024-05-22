@@ -12,12 +12,9 @@
 #include "art/Framework/Principal/Handle.h"
 #include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 
 // conditions
-#include "Offline/ConditionsService/inc/AcceleratorParams.hh"
-#include "Offline/ConditionsService/inc/ConditionsHandle.hh"
 #include "Offline/TrackerGeom/inc/Tracker.hh"
 #include "Offline/BFieldGeom/inc/BFieldManager.hh"
 #include "Offline/GeometryService/inc/DetectorSystem.hh"
@@ -38,12 +35,12 @@
 #include "Offline/Mu2eUtilities/inc/ModuleHistToolBase.hh"
 #include "art/Utilities/make_tool.h"
 #include "Offline/Mu2eUtilities/inc/polyAtan2.hh"
+#include "Offline/Mu2eUtilities/inc/HelixTool.hh"
 
 #include "TVector2.h"
 #include "TSystem.h"
 #include "TInterpreter.h"
 
-using namespace std;
 using namespace boost::accumulators;
 using CLHEP::HepVector;
 using CLHEP::Hep3Vector;
@@ -58,23 +55,28 @@ namespace mu2e {
     _debugLevel         (pset.get<int>   ("debugLevel"                     )),
     _printfreq          (pset.get<int>   ("printFrequency"                 )),
     _useAsFilter        (pset.get<int>   ("useAsFilter"                    )),
-    _shLabel            (pset.get<string>("StrawHitCollectionLabel"        )),
-    _shfLabel           (pset.get<string>("StrawHitFlagCollectionLabel"    )),
-    _timeclLabel        (pset.get<string>("TimeClusterCollectionLabel"     )),
+    _shLabel            (pset.get<std::string>("StrawHitCollectionLabel"        )),
+    _timeclLabel        (pset.get<std::string>("TimeClusterCollectionLabel"     )),
     _minNHitsTimeCluster(pset.get<int>   ("minNHitsTimeCluster"            )),
     _tpart              ((TrkParticle::type)(pset.get<int>("fitparticle"))),
     _fdir               ((TrkFitDirection::FitDirection)(pset.get<int>("fitdirection"))),
+    _doSingleOutput     (pset.get<bool>  ("doSingleOutput")),
     _hfinder            (pset.get<fhicl::ParameterSet>("HelixFinderAlg",fhicl::ParameterSet())){
       consumes<ComboHitCollection>(_shLabel);
-      consumes<StrawHitFlagCollection>(_shfLabel);
       consumes<TimeClusterCollection>(_timeclLabel);
 
-      std::vector<int> helvals = pset.get<std::vector<int> >("Helicities",vector<int>{Helicity::neghel,Helicity::poshel}); //pset.get<std::vector<int> >("Helicities",vector<int>{Helicity::neghel,Helicity::poshel});
+      std::vector<int> helvals = pset.get<std::vector<int> >("Helicities",vector<int>{Helicity::neghel,Helicity::poshel});
       for(auto hv : helvals) {
-      Helicity hel(hv);
-      _hels.push_back(hel);
-      produces<HelixSeedCollection>(Helicity::name(hel));
-    }
+          Helicity hel(hv);
+          _hels.push_back(hel);
+      }
+      if (_doSingleOutput){
+        produces<HelixSeedCollection>();
+      } else {
+        for(auto hel : _hels) {
+          produces<HelixSeedCollection>(Helicity::name(hel));
+        }
+      }
 //-----------------------------------------------------------------------------
 // provide for interactive disanostics
 //-----------------------------------------------------------------------------
@@ -83,7 +85,7 @@ namespace mu2e {
 
       _data.shLabel     = _shLabel;
       _data.timeOffsets = _timeOffsets;
-   
+
       if (_debugLevel != 0) _printfreq = 1;
 
       if (_diagLevel != 0) _hmanager = art::make_tool  <ModuleHistToolBase>(pset.get<fhicl::ParameterSet>("diagPlugin"));
@@ -125,41 +127,41 @@ namespace mu2e {
     for (size_t ipl=0; ipl<_tracker->nPlanes(); ipl++) {
       const Plane*  pln = &_tracker->getPlane(ipl);
       for (size_t ipn=0; ipn<pln->nPanels(); ipn++) {
-	const Panel* panel = &pln->getPanel(ipn);
-	int face;
-	if (panel->id().getPanel() % 2 == 0) face = 0;
-	else                                 face = 1;
-	cx.Station = ipl/nPlanesPerStation;//ist;
-	cx.Plane   = ipl % nPlanesPerStation;
-	cx.Face    = face;
-	cx.Panel   = ipn;
-	//	    cx.Layer   = il;
-	_hfResult.orderID (&cx, &co);
-	int os = co.Station; 
-	int of = co.Face;
-	int op = co.Panel;
+        const Panel* panel = &pln->getPanel(ipn);
+        int face;
+        if (panel->id().getPanel() % 2 == 0) face = 0;
+        else                                 face = 1;
+        cx.Station = ipl/nPlanesPerStation;//ist;
+        cx.Plane   = ipl % nPlanesPerStation;
+        cx.Face    = face;
+        cx.Panel   = ipn;
+        //            cx.Layer   = il;
+        _hfResult.orderID (&cx, &co);
+        int os = co.Station;
+        int of = co.Face;
+        int op = co.Panel;
 
-	int       stationId = os;
-	int       faceId    = of + stationId*StrawId::_nfaces*FaceZ_t::kNPlanesPerStation;
-	_hfResult._zFace[faceId] = (panel->getStraw(0).getMidPoint().z()+panel->getStraw(1).getMidPoint().z())/2.;
-	//-----------------------------------------------------------------------------
-	// panel caches phi of its center and the z
-	//-----------------------------------------------------------------------------
-	_hfResult._phiPanel[faceId*FaceZ_t::kNPanels + op] = TVector2::Phi_0_2pi(polyAtan2(panel->straw0MidPoint().y(),panel->straw0MidPoint().x()));
-      }	
+        int       stationId = os;
+        int       faceId    = of + stationId*StrawId::_nfaces*FaceZ_t::kNPlanesPerStation;
+        _hfResult._zFace[faceId] = (panel->getStraw(0).getMidPoint().z()+panel->getStraw(1).getMidPoint().z())/2.;
+        //-----------------------------------------------------------------------------
+        // panel caches phi of its center and the z
+        //-----------------------------------------------------------------------------
+        _hfResult._phiPanel[faceId*FaceZ_t::kNPanels + op] = TVector2::Phi_0_2pi(polyAtan2(panel->straw0MidPoint().y(),panel->straw0MidPoint().x()));
+      }
     }
-	   
+
     if (_debugLevel > 10){
       printf("//----------------------------------------------//\n");
       printf("//     Face      Panel       PHI       Z        //\n");
       printf("//----------------------------------------------//\n");
 
       for (int f=0; f<StrawId::_ntotalfaces; ++f){
-	float z  =_hfResult._zFace[f];
-	for (int p=0; p<FaceZ_t::kNPanels; ++p){
-	  float  phi = _hfResult._phiPanel[f*FaceZ_t::kNPanels + p];
-	  printf("//  %5i      %5i     %5.3f    %10.3f //\n", f, p, phi, z);
-	}
+        float z  =_hfResult._zFace[f];
+        for (int p=0; p<FaceZ_t::kNPanels; ++p){
+          float  phi = _hfResult._phiPanel[f*FaceZ_t::kNPanels + p];
+          printf("//  %5i      %5i     %5.3f    %10.3f //\n", f, p, phi, z);
+        }
       }
       printf("//----------------------------------//\n");
 
@@ -192,17 +194,6 @@ namespace mu2e {
     //          _shpLabel.data());
     // }
 
-    art::Handle<mu2e::StrawHitFlagCollection> shflagH;
-    if (evt.getByLabel(_shfLabel,shflagH)) {
-      _shfcol = shflagH.product();
-    }
-    else {
-      _shfcol = 0;
-      printf(" >>> ERROR in CalHelixFinder::findData: StrawHitFlagCollection with label=%s not found.\n",
-             _shfLabel.data());
-    }
-
-
     if (evt.getByLabel(_timeclLabel, _timeclcolH)) {
       _timeclcol = _timeclcolH.product();
     }
@@ -214,7 +205,7 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
 // done
 //-----------------------------------------------------------------------------
-    return (_chcol != 0) && (_shfcol != 0) /*&& (_shpcol != 0) */&& (_timeclcol != 0);
+   return (_chcol != 0) /*&& (_shpcol != 0) */&& (_timeclcol != 0);
   }
 
 //-----------------------------------------------------------------------------
@@ -222,22 +213,25 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
   bool CalHelixFinder::filter(art::Event& event ) {
     const char*             oname = "CalHelixFinder::filter";
-    //    CalHelixFinderData      hf_result;
+
                                         // diagnostic info
     _data.event     = &event;
-    // _data.nseeds[0] = 0;
-    // _data.nseeds[1] = 0;
     _iev            = event.id().event();
     int   nGoodTClusterHits(0);
 
     if ((_debugLevel > 0) && (_iev%_printfreq) == 0) printf("[%s] : START event number %8i\n", oname,_iev);
 
-    std::map<Helicity,unique_ptr<HelixSeedCollection>> helcols;
+    std::map<Helicity,std::unique_ptr<HelixSeedCollection>> helcols;
     int counter(0);
-    for( auto const& hel : _hels) {
-      helcols[hel] = unique_ptr<HelixSeedCollection>(new HelixSeedCollection());
+    if (!_doSingleOutput)  {
+      for( auto const& hel : _hels) {
+        helcols[hel] = std::unique_ptr<HelixSeedCollection>(new HelixSeedCollection());
+        _data.nseeds [counter] = 0;
+        ++counter;
+      }
+    }else {
+      helcols[0] = std::unique_ptr<HelixSeedCollection>(new HelixSeedCollection());
       _data.nseeds [counter] = 0;
-      ++counter;
     }
     //    unique_ptr<HelixSeedCollection>    outseeds(new HelixSeedCollection);
 //-----------------------------------------------------------------------------
@@ -254,7 +248,7 @@ namespace mu2e {
     _hfResult._fdir   = _fdir;
     _hfResult._chcol  = _chcol;
     // _hfResult._shpos  = _shpcol;
-    _hfResult._shfcol = _shfcol;
+    //_hfResult._shfcol = _shfcol;
 
     _data.nTimePeaks  = _timeclcol->size();
     for (int ipeak=0; ipeak<_data.nTimePeaks; ipeak++) {
@@ -264,7 +258,7 @@ namespace mu2e {
 
       //      HelixSeed          helix_seed;
       std::vector<HelixSeed>          helix_seed_vec;
-      
+
 //-----------------------------------------------------------------------------
 // create track definitions for the helix fit from this initial information
 // track fitting objects for this peak
@@ -279,7 +273,7 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
       _hfinder.fillFaceOrderedHits(_hfResult);
 //-----------------------------------------------------------------------------
-// Step 1: now loop over the two possible helicities. 
+// Step 1: now loop over the two possible helicities.
 //         Find initial helical approximation of a track for both hypothesis
 //-----------------------------------------------------------------------------
       for (size_t i=0; i<_hels.size(); ++i){
@@ -287,44 +281,50 @@ namespace mu2e {
 // create track definitions for the helix fit from this initial information
 // track fitting objects for this peak
 //-----------------------------------------------------------------------------
-	CalHelixFinderData tmpResult(_hfResult);
-	tmpResult.clearHelixInfo();
+        CalHelixFinderData tmpResult(_hfResult);
+        tmpResult.clearHelixInfo();
 
-	tmpResult._helicity       = _hels[i];
+        tmpResult._helicity       = _hels[i];
 
-	int rc = _hfinder.findHelix(tmpResult);
-	
-	if (!rc)                         continue;
-	HelixSeed     tmp_helix_seed;
+        int rc = _hfinder.findHelix(tmpResult);
 
-	initHelixSeed(tmp_helix_seed, tmpResult);
-	helix_seed_vec.push_back(tmp_helix_seed);
+        if (!rc)                         continue;
+        HelixSeed     tmp_helix_seed;
+
+        initHelixSeed(tmp_helix_seed, tmpResult);
+        helix_seed_vec.push_back(tmp_helix_seed);
       }
-      
+
       if (helix_seed_vec.size() == 0)                       continue;
-      
+
 //-----------------------------------------------------------------------------
 // now select the best helix to avoid duplicates
 //-----------------------------------------------------------------------------
       int    index_best(-1);
       pickBestHelix(helix_seed_vec, index_best);
-      
+
 //-----------------------------------------------------------------------------
 // fill seed information
 //-----------------------------------------------------------------------------
       if ( (index_best>=0) && (index_best < 2) ){
-	Helicity              hel_best = helix_seed_vec[index_best]._helix._helicity;
-	HelixSeedCollection*  hcol     = helcols[hel_best].get();
-	helix_seed_vec[index_best]._status.merge(TrkFitFlag::helixOK);
-	hcol->push_back(helix_seed_vec[index_best]);
+        Helicity              hel_best = helix_seed_vec[index_best]._helix._helicity;
+        if (_doSingleOutput) {
+          hel_best = 0;
+        }
+        HelixSeedCollection*  hcol     = helcols[hel_best].get();
+        helix_seed_vec[index_best]._status.merge(TrkFitFlag::helixOK);
+        hcol->push_back(helix_seed_vec[index_best]);
       } else if (index_best == 2){//both helices need to be saved
-	
-	for (unsigned k=0; k<_hels.size(); ++k){
-	  helix_seed_vec[k]._status.merge(TrkFitFlag::helixOK);
-	  Helicity              hel_best = helix_seed_vec[k]._helix._helicity;
-	  HelixSeedCollection*  hcol     = helcols[hel_best].get();
-	  hcol->push_back(helix_seed_vec[k]);
-	}
+
+        for (unsigned k=0; k<_hels.size(); ++k){
+          helix_seed_vec[k]._status.merge(TrkFitFlag::helixOK);
+          Helicity              hel_best = helix_seed_vec[k]._helix._helicity;
+          if (_doSingleOutput) {
+            hel_best = 0;
+          }
+          HelixSeedCollection*  hcol     = helcols[hel_best].get();
+          hcol->push_back(helix_seed_vec[k]);
+        }
       }
 
       // helix_seed_vec[index_best]._status.merge(TrkFitFlag::helixOK);
@@ -333,103 +333,107 @@ namespace mu2e {
 //--------------------------------------------------------------------------------
 // fill diagnostic information
 //--------------------------------------------------------------------------------
-	int             nhitsMin(15);
-	double          mm2MeV = (3/10.)*_bz0;
+        int             nhitsMin(15);
+        double          mm2MeV = (3/10.)*_bz0;
 
-	int loc = _data.nseeds[0];
-	if (loc < _data.maxSeeds()) {
-	  int nhits          = helix_seed_vec[index_best]._hhits.size();
-	  _data.ntclhits[loc]= nGoodTClusterHits;
-	  _data.nhits[loc]   = nhits;
-	  _data.radius[loc]  = helix_seed_vec[index_best].helix().radius();
-	  _data.pT[loc]      = mm2MeV*_data.radius[loc];
-	  _data.p[loc]       = _data.pT[loc]/std::cos( std::atan(helix_seed_vec[index_best].helix().lambda()/_data.radius[loc]));
+        int loc = _data.nseeds[0];
+        if (loc < _data.maxSeeds()) {
+          if (index_best == 2){
+            index_best = 0;
+          }
+          int nhits          = helix_seed_vec[index_best]._hhits.size();
+          _data.ntclhits[loc]= nGoodTClusterHits;
+          _data.nhits[loc]   = nhits;
+          _data.radius[loc]  = helix_seed_vec[index_best].helix().radius();
+          _data.pT[loc]      = mm2MeV*_data.radius[loc];
+          _data.p[loc]       = _data.pT[loc]/std::cos( std::atan(helix_seed_vec[index_best].helix().lambda()/_data.radius[loc]));
 
-	  _data.chi2XY[loc]   = _hfResult._sxy.chi2DofCircle();
-	  _data.chi2ZPhi[loc] = _hfResult._szphi.chi2DofLine();
+          _data.chi2XY[loc]   = _hfResult._sxy.chi2DofCircle();
+          _data.chi2ZPhi[loc] = _hfResult._szphi.chi2DofLine();
 
-	  _data.nseeds[0]++;
-	  _data.good[loc] = 0;
-	  if (nhits >= nhitsMin) {
-	    _data.nseeds[1]++;
-	    _data.good[loc] = 1;
-	  }
-	  _data.nStationPairs[loc] = _hfResult._diag.nStationPairs;
+          _data.nseeds[0]++;
+          _data.good[loc] = 0;
+          if (nhits >= nhitsMin) {
+            _data.nseeds[1]++;
+            _data.good[loc] = 1;
+          }
+          _data.nStationPairs[loc] = _hfResult._diag.nStationPairs;
 
-	  _data.dr           [loc] = _hfResult._diag.dr;
-	  _data.shmeanr      [loc] = _hfResult._diag.straw_mean_radius;
-	  _data.chi2d_helix  [loc] = _hfResult._diag.chi2d_helix;
-	  if (_hfResult._diag.chi2d_helix>3) printf("[%s] : chi2Helix = %10.3f event number %8i\n", oname,_hfResult._diag.chi2d_helix,_iev);
+          _data.dr           [loc] = _hfResult._diag.dr;
+          _data.shmeanr      [loc] = _hfResult._diag.straw_mean_radius;
+          _data.chi2d_helix  [loc] = _hfResult._diag.chi2d_helix;
+          if (_hfResult._diag.chi2d_helix>3) printf("[%s] : chi2Helix = %10.3f event number %8i\n", oname,_hfResult._diag.chi2d_helix,_iev);
 //-----------------------------------------------------------------------------
 // info of the track candidate after the first loop with findtrack on CalHelixFinderAlg::doPatternRecognition
 //-----------------------------------------------------------------------------
-	  _data.loopId       [loc] = _hfResult._diag.loopId_4;
-	  if (_hfResult._diag.loopId_4 == 1) {
-	    _data.chi2d_loop0       [loc] = _hfResult._diag.chi2_dof_circle_12;
-	    _data.chi2d_line_loop0  [loc] = _hfResult._diag.chi2_dof_line_13;
-	    _data.npoints_loop0     [loc] = _hfResult._diag.n_active_11;
+          _data.loopId       [loc] = _hfResult._diag.loopId_4;
+          if (_hfResult._diag.loopId_4 == 1) {
+            _data.chi2d_loop0       [loc] = _hfResult._diag.chi2_dof_circle_12;
+            _data.chi2d_line_loop0  [loc] = _hfResult._diag.chi2_dof_line_13;
+            _data.npoints_loop0     [loc] = _hfResult._diag.n_active_11;
 
-	  }
-	  if (_hfResult._diag.loopId_4 == 2){
-	    _data.chi2d_loop1       [loc] = _hfResult._diag.chi2_dof_circle_12;
-	    _data.chi2d_line_loop1  [loc] = _hfResult._diag.chi2_dof_line_13;
-	    _data.npoints_loop1     [loc] = _hfResult._diag.n_active_11;
-	  }
+          }
+          if (_hfResult._diag.loopId_4 == 2){
+            _data.chi2d_loop1       [loc] = _hfResult._diag.chi2_dof_circle_12;
+            _data.chi2d_line_loop1  [loc] = _hfResult._diag.chi2_dof_line_13;
+            _data.npoints_loop1     [loc] = _hfResult._diag.n_active_11;
+          }
 
 //--------------------------------------------------------------------------------
 // info of the track candidate during the CAlHelixFinderAlg::findTrack loop
 //--------------------------------------------------------------------------------
-	  int   counter(0);
-	  for (unsigned i=0; i<_hfResult._hitsUsed.size(); ++i){
-	    if (_hfResult._hitsUsed[i] != 1)           continue;
-	    ++counter;
-	  }
-	  // for (int f=0; f<StrawId::_ntotalfaces; ++f){
-	  //   FaceZ_t* facez     = &_hfResult._oTracker[f];
-	  //   for (int p=0; p<FaceZ_t::kNPanels; ++p){//for (int p=0; p<CalHelixFinderData::kNTotalPanels; ++p){
-	  // 	PanelZ_t* panelz = &facez->panelZs[p];//&_hfResult._oTracker[p];
-	  // 	int       nhits  = panelz->fNHits;
-	  // 	if (nhits == 0)                                  continue;
-	      
-	  // 	for (int i=0; i<nhits; ++i){   
-	  // 	  //		  ComboHit*	hit = &panelz->_chHitsToProcess.at(i);
-	  // 	  int index = facez->evalUniqueHitIndex(f,p,i);//p*CalHelixFinderData::kNMaxHitsPerPanel + i;
-	  // 	  if (_hfResult._hitsUsed[index] != 1)           continue;
-		
-	  // 	  // double   dzFromSeed = hit->_dzFromSeed;     //distance form the hit used to seed the 3D-search
-	  // 	  // double   drFromPred = hit->_drFromPred;     //distance from prediction
-	  // 	  // _data.hitDzSeed[loc][counter] = dzFromSeed;
-	  // 	  // _data.hitDrPred[loc][counter] = drFromPred;
-	  // 	  ++counter;
-	  // 	}//end loop over the hits within a panel
-	  //   }//end panels loop
-	  // }//end faces loop
-	}
-	else {
-	  printf(" N(seeds) > %i, IGNORE SEED\n",_data.maxSeeds());
-	}
+          int   counter(0);
+          for (unsigned i=0; i<_hfResult._hitsUsed.size(); ++i){
+            if (_hfResult._hitsUsed[i] != 1)           continue;
+            ++counter;
+          }
+          // for (int f=0; f<StrawId::_ntotalfaces; ++f){
+          //   FaceZ_t* facez     = &_hfResult._oTracker[f];
+          //   for (int p=0; p<FaceZ_t::kNPanels; ++p){//for (int p=0; p<CalHelixFinderData::kNTotalPanels; ++p){
+          //         PanelZ_t* panelz = &facez->panelZs[p];//&_hfResult._oTracker[p];
+          //         int       nhits  = panelz->fNHits;
+          //         if (nhits == 0)                                  continue;
+
+          //         for (int i=0; i<nhits; ++i){
+          //           //                  ComboHit*        hit = &panelz->_chHitsToProcess.at(i);
+          //           int index = facez->evalUniqueHitIndex(f,p,i);//p*CalHelixFinderData::kNMaxHitsPerPanel + i;
+          //           if (_hfResult._hitsUsed[index] != 1)           continue;
+
+          //           // double   dzFromSeed = hit->_dzFromSeed;     //distance form the hit used to seed the 3D-search
+          //           // double   drFromPred = hit->_drFromPred;     //distance from prediction
+          //           // _data.hitDzSeed[loc][counter] = dzFromSeed;
+          //           // _data.hitDrPred[loc][counter] = drFromPred;
+          //           ++counter;
+          //         }//end loop over the hits within a panel
+          //   }//end panels loop
+          // }//end faces loop
+        }
+        else {
+          printf(" N(seeds) > %i, IGNORE SEED\n",_data.maxSeeds());
+        }
       }
-      
+
     }
 //--------------------------------------------------------------------------------
 // fill histograms
 //--------------------------------------------------------------------------------
-    if (_diagLevel > 0) _hmanager->fillHistograms(&_data);
+    if (_diagLevel > 0) {
+      _hmanager->fillHistograms(&_data);
+    }
 //-----------------------------------------------------------------------------
 // put reconstructed tracks into the event record
 //-----------------------------------------------------------------------------
   END:;
-    int    nseeds(0);// = outseeds->size();
-    for(auto const& hel : _hels ) {
-      nseeds += helcols[hel]->size();
-	// set the flag here: This should be set on initialization FIXME!
-      for(auto & helix : *helcols[hel] ) {
-	helix._status.merge(TrkFitFlag::CPRHelix);
+    int    nseeds(0);
+    if (_doSingleOutput) {
+      nseeds += helcols[0]->size();
+      event.put(std::move(helcols[0]));
+    }else    {
+      for(auto const& hel : _hels ) {
+        nseeds += helcols[hel]->size();
+        event.put(std::move(helcols[hel]),Helicity::name(hel));
       }
-
-      event.put(std::move(helcols[hel]),Helicity::name(hel));
-    }   
-    // event.put(std::move(outseeds));
+    }
 //-----------------------------------------------------------------------------
 // filtering
 //-----------------------------------------------------------------------------
@@ -473,7 +477,8 @@ namespace mu2e {
 
     HelSeed._helix._fz0      = phi0 - M_PI/2.*_hfinder._dfdzsign -z0*hel->omega()/hel->tanDip() ;
 
-    HelSeed._helix._helicity = HfResult._helicity;//_dfdzsign > 0 ? Helicity::poshel : Helicity::neghel;
+    HelSeed._helix._helicity = HfResult._helicity;
+    HelSeed._status.merge(TrkFitFlag::CPRHelix);
 
     //include also the values of the chi2d
     HelSeed._helix._chi2dXY   = HfResult._sxy.chi2DofCircle();
@@ -512,22 +517,31 @@ namespace mu2e {
 
       HelSeed._hhits.push_back(hhit);
     }
+
+    //now set the HelixRecoDir
+    HelixTool ht(&HelSeed, _tracker);
+    float     slope(0), slopeErr(0), chi2ndof(0);
+    ht.dirOfProp(slope, slopeErr, chi2ndof);
+    HelSeed._recoDir._slope    = slope;
+    HelSeed._recoDir._slopeErr = slopeErr;
+    HelSeed._recoDir._chi2ndof = chi2ndof;
   }
 
 //-----------------------------------------------------------------------------
   int CalHelixFinder::initHelixFinderData(CalHelixFinderData&                Data,
                                           const TrkParticle&                 TPart,
                                           const TrkFitDirection&             FDir,
-                                          const ComboHitCollection*          ComboCollection ,
+                                          // const ComboHitCollection*          ComboCollection ,
                                           // const StrawHitPositionCollection*  ShPosCollection ,
-                                          const StrawHitFlagCollection*      ShFlagCollection) {
+                                          // const StrawHitFlagCollection*      ShFlagCollection) {
+                                          const ComboHitCollection*          ComboCollection ) {
     Data._fit         = TrkErrCode::fail;
     Data._tpart       = TPart;
     Data._fdir        = FDir;
 
     Data._chcol       = ComboCollection;
     // Data._shpos       = ShPosCollection;
-    Data._shfcol      = ShFlagCollection;
+    // Data._shfcol      = ShFlagCollection;
 
     Data._radius      = -1.0;
     Data._dfdz        = 0.;
@@ -542,8 +556,9 @@ namespace mu2e {
     //    double     minT(500.), maxT(2000.);
     for (int i=0; i<nhits; ++i){
       int          index   = TCluster->hits().at(i);
-      StrawHitFlag flag    = _shfcol->at(index);
+      // StrawHitFlag flag    = _shfcol->at(index);
       ComboHit     sh      = _chcol ->at(index);
+      StrawHitFlag flag    = sh.flag();
       int          bkg_hit = flag.hasAnyProperty(StrawHitFlag::bkg);
       if (bkg_hit)                              continue;
       //       if ( (sh.time() < minT) || (sh.time() > maxT) )  continue;
@@ -562,12 +577,12 @@ namespace mu2e {
       Index_best = 0;
       return;
     }
-    
+
     const HelixSeed           *h1, *h2;
     const ComboHitCollection  *tlist, *clist;
     int                        nh1, nh2, natc(0);
     const mu2e::HelixHit      *hitt, *hitc;
-    
+
     h1     = &HelVec[0];
 //------------------------------------------------------------------------------
 // check if an AlgorithmID collection has been created by the process
@@ -585,14 +600,14 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
 // check the number of common hits
 //-----------------------------------------------------------------------------
-    for (int k=0; k<nh1; ++k){ 
+    for (int k=0; k<nh1; ++k){
       hitt = &tlist->at(k);
-      for (int l=0; l<nh2; l++){ 
-	hitc = &clist->at(l);
-	if (hitt->index() == hitc->index()) {
-	  natc += 1;
-	  break;
-	}
+      for (int l=0; l<nh2; l++){
+        hitc = &clist->at(l);
+        if (hitt->index() == hitc->index()) {
+          natc += 1;
+          break;
+        }
       }
     }
 
@@ -606,29 +621,29 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
 // h2 is a winner, no need to save h1
 //-----------------------------------------------------------------------------
-	Index_best = 1;
-	return;
+        Index_best = 1;
+        return;
       }
       else if (nh1 > nh2){
 //-----------------------------------------------------------------------------
 // h1 is a winner, mark h2 in hope that it will be OK, continue looping
 //-----------------------------------------------------------------------------
-	Index_best = 0;
-	return;
+        Index_best = 0;
+        return;
       }
 //-----------------------------------------------------------------------------
 // in case they have the exact amount of hits, pick the one with better chi2dZphi
 //-----------------------------------------------------------------------------
       if (nh1 == nh2) {
-	float   chi2dZphi_h1 = h1->helix().chi2dZPhi();
-	float   chi2dZphi_h2 = h2->helix().chi2dZPhi();
-	if (chi2dZphi_h1 < chi2dZphi_h2){
-	  Index_best = 0;
-	  return;
-	}else {
-	  Index_best = 1;
-	  return;      
-	}
+        float   chi2dZphi_h1 = h1->helix().chi2dZPhi();
+        float   chi2dZphi_h2 = h2->helix().chi2dZPhi();
+        if (chi2dZphi_h1 < chi2dZphi_h2){
+          Index_best = 0;
+          return;
+        }else {
+          Index_best = 1;
+          return;
+        }
       }
     }else {
 //-----------------------------------------------------------------------------
@@ -641,9 +656,9 @@ namespace mu2e {
 
 
   }
-  
+
 
 }
 
 using mu2e::CalHelixFinder;
-DEFINE_ART_MODULE(CalHelixFinder);
+DEFINE_ART_MODULE(CalHelixFinder)

@@ -20,7 +20,6 @@
 #include "CLHEP/Units/PhysicalConstants.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Handle.h"
@@ -30,7 +29,7 @@
 #include "Offline/ConfigTools/inc/ConfigFileLookupPolicy.hh"
 #include "Offline/SeedService/inc/SeedService.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
 #include "Offline/Mu2eUtilities/inc/RandomUnitSphere.hh"
@@ -95,7 +94,7 @@ namespace mu2e {
 
     CLHEP::HepRotation targetRotation_; // rotates target frame to Mu2e frame
     CLHEP::Hep3Vector  targetCenter_;
-  
+
     TF1 *f1;
     TF2 *fsig;
 
@@ -141,9 +140,8 @@ namespace mu2e {
   }
 
   //================================================================
-  double AntiProtonGun::zLambda(double *val, double *par) {
+  double AntiProtonGun::zLambda(double *val, double *) {
 
-    par = 0;
     double kLambda = 99.4;
     double kTgtHL = 80.0;
     double value=1/kLambda*exp(-(kTgtHL-val[0])/kLambda);
@@ -180,9 +178,8 @@ namespace mu2e {
   } // plmax
 
   //================================================================
-  double AntiProtonGun::dsigma(double *val, double *parm) {
+  double AntiProtonGun::dsigma(double *val, double *) {
 
-    parm=0;
     double x=1.9;
     double total=0;
     double theta=val[0];
@@ -191,7 +188,7 @@ namespace mu2e {
 
     double pLab=8.8;
     double Mp=0.938272029;
- 
+
     double kpar[10]={
     0.1699,  //___0
     10.28,   //___1
@@ -304,8 +301,8 @@ namespace mu2e {
 
     if(verbosityLevel_ > 2) std::cout << "pos " << pos_new << " mom " << mom_new << std::endl;
 
-    PDGCode::type pdgId = static_cast<PDGCode::type>(-2212);
-    const double mass = GlobalConstantsHandle<ParticleDataTable>()->particle(pdgId).ref().mass().value();
+    PDGCode::type pdgId = PDGCode::anti_proton;
+    const double mass = GlobalConstantsHandle<ParticleDataList>()->particle(pdgId).mass();
     const double energy = sqrt(mom_new.mag2() + mass*mass);
     CLHEP::HepLorentzVector fourmom(mom_new, energy);
 
@@ -318,4 +315,4 @@ namespace mu2e {
   //================================================================
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::AntiProtonGun);
+DEFINE_ART_MODULE(mu2e::AntiProtonGun)

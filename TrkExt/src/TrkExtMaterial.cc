@@ -26,18 +26,18 @@ namespace mu2e {
 
 
 
- 
+
   TrkExtMaterial::TrkExtMaterial( ) :
     _name("undefined")
   {
     _matid = Undefined;
   }
-    
-    
+
+
   TrkExtMaterial::TrkExtMaterial( string n) :
     _name(n)
   {
-    if (n.find("PE")>=0) {
+    if (n.find("PE")!=string::npos) {
       _dpmp[0] = -0.719604;
       _dpmp[1] = 0.904384;
       _dpmp[2] = -0.0136965;
@@ -56,7 +56,7 @@ namespace mu2e {
       _rho =  0.89; //g cm-3
       _matid = PE;
     }
-    else if (n.find("Al")>=0) {
+    else if (n.find("Al")!=string::npos) {
       _dpmp[0] = -0.435264;
       _dpmp[1] = 1.02322;
       _dpmp[2] = -0.00790427;
@@ -75,7 +75,7 @@ namespace mu2e {
       _rho = 2.699;
       _matid = Al;
     }
-    else if (n.find("Vac")>=0) {
+    else if (n.find("Vac")!=string::npos) {
       _dpmp[0] = 0;
       _dpmp[1] = 0;
       _dpmp[2] = 0;
@@ -129,7 +129,7 @@ namespace mu2e {
   double TrkExtMaterial::scatteringAngle (const CLHEP::Hep3Vector& p, double ds) {
     double fabsds = fabs(ds);
     if (fabsds <=0) return 0;
-    return _thpar[0] * safeSqrt(fabsds) / p.mag() * (_thpar[1] + _thpar[2] * log10(fabsds)) ; 
+    return _thpar[0] * safeSqrt(fabsds) / p.mag() * (_thpar[1] + _thpar[2] * log10(fabsds)) ;
   }
 
 

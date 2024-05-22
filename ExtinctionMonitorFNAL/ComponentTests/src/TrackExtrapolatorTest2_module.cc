@@ -16,7 +16,6 @@
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Utilities/InputTag.h"
 
 #include "Offline/RecoDataProducts/inc/ExtMonFNALRecoCluster.hh"
@@ -230,4 +229,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::TrackExtrapolatorTest2);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::TrackExtrapolatorTest2)

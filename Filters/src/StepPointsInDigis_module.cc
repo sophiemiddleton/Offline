@@ -4,7 +4,7 @@
 // File:        StepPointsInDigis_module.cc
 //
 // Creates new StrawDigiMC and CrvDigiMC collections after creating new
-// StepPointMC, SimParticle, GenParticle and SimParticleTimeMaps with all 
+// StepPointMC, SimParticle, GenParticle and SimParticleTimeMaps with all
 // unnecessary MC objects removed
 //
 // Generated at Wed Apr 12 16:10:46 2017 by Andrew Edmonds using cetskelgen
@@ -12,7 +12,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/Run.h"
@@ -31,7 +30,6 @@
 #include "Offline/MCDataProducts/inc/StepPointMC.hh"
 
 #include "Offline/MCDataProducts/inc/GenId.hh"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 
 namespace mu2e {
   class StepPointsInDigis;
@@ -80,7 +78,6 @@ private:
   double _digiTime;
   unsigned _digiProductId;
 
-  SimParticleTimeOffset _toff;
 };
 
 
@@ -88,8 +85,7 @@ mu2e::StepPointsInDigis::StepPointsInDigis(fhicl::ParameterSet const & pset)
   : art::EDAnalyzer(pset),
     _strawDigiMCTag(pset.get<art::InputTag>("strawDigiMCTag")),
     _crvDigiMCTag(pset.get<art::InputTag>("crvDigiMCTag")),
-    _diagLevel(pset.get<int>("diagLevel", 0)),
-    _toff(pset.get<fhicl::ParameterSet>("TimeOffsets"))
+    _diagLevel(pset.get<int>("diagLevel", 0))
 {
   // Call appropriate produces<>() functions here.
   art::ServiceHandle<art::TFileService> tfs;
@@ -113,7 +109,6 @@ mu2e::StepPointsInDigis::StepPointsInDigis(fhicl::ParameterSet const & pset)
 void mu2e::StepPointsInDigis::analyze(art::Event const& event)
 {
   // Implementation of required member function here.
-  _toff.updateMap(event);
 
   event.getByLabel(_strawDigiMCTag, _strawDigiMCsHandle);
   const auto& strawDigiMCs = *_strawDigiMCsHandle;
@@ -123,7 +118,7 @@ void mu2e::StepPointsInDigis::analyze(art::Event const& event)
       StrawEnd::End end = static_cast<StrawEnd::End>(i_end);
       auto const& old_step_point = i_strawDigiMC.strawGasStep(end);
       if (old_step_point.isAvailable()) {
-	fillTree( *old_step_point );
+        fillTree( *old_step_point );
       }
     }
 
@@ -138,7 +133,7 @@ void mu2e::StepPointsInDigis::analyze(art::Event const& event)
 
     for (const auto& i_step_mc : i_crvDigiMC.GetCrvSteps()) {
       if (i_step_mc.isAvailable()) {
-	fillTree(*i_step_mc);
+        fillTree(*i_step_mc);
       }
     }
   }
@@ -150,7 +145,7 @@ void mu2e::StepPointsInDigis::fillTree(const mu2e::StepPointMC& old_step) {
   _stepY = old_step.position().y();
   _stepZ = old_step.position().z();
   _stepRawTime = old_step.time();
-  _stepOffsettedTime = _toff.timeWithOffsetsApplied(old_step);
+  _stepOffsettedTime = old_step.time();
   _stepEDep = old_step.totalEDep();
   art::Ptr<SimParticle> simPtr = old_step.simParticle();
   while (simPtr->isSecondary()) {
@@ -167,7 +162,7 @@ void mu2e::StepPointsInDigis::fillTree(const mu2e::StrawGasStep& old_step) {
   _stepY = old_step.position().y();
   _stepZ = old_step.position().z();
   _stepRawTime = old_step.time();
-  _stepOffsettedTime = _toff.timeWithOffsetsApplied(old_step);
+  _stepOffsettedTime = old_step.time();
   _stepEDep = old_step.totalEDep();
   art::Ptr<SimParticle> simPtr = old_step.simParticle();
   while (simPtr->isSecondary()) {
@@ -184,8 +179,7 @@ void mu2e::StepPointsInDigis::fillTree(const mu2e::CrvStep& old_step) {
   _stepY = old_step.startPos().y();
   _stepZ = old_step.startPos().z();
   _stepRawTime = old_step.startTime();
-  double timeOffset = _toff.totalTimeOffset(old_step.simParticle());
-  _stepOffsettedTime = old_step.startTime()+timeOffset;
+  _stepOffsettedTime = old_step.startTime();
   _stepEDep = old_step.visibleEDep();
   art::Ptr<SimParticle> simPtr = old_step.simParticle();
   while (simPtr->isSecondary()) {

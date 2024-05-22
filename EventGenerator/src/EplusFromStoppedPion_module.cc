@@ -19,7 +19,7 @@
 
 // Mu2e includes.
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/GeneralUtilities/inc/TwoBodyKinematics.hh"
 #include "Offline/Mu2eUtilities/inc/RandomUnitSphere.hh"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
@@ -27,7 +27,6 @@
 
 // art includes.
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art_root_io/TFileService.h"
@@ -40,6 +39,7 @@
 // C++ includes.
 #include <iostream>
 #include <string>
+#include <vector>
 
 
 using namespace std;
@@ -123,12 +123,12 @@ namespace mu2e {
   void EplusFromStoppedPion::beginRun(art::Run& run){
 
     // Get the positron and pi+ masses from the particle data table.  See note 1.
-    GlobalConstantsHandle<ParticleDataTable> pdt;
-    const HepPDT::ParticleData& e_data = pdt->particle(PDGCode::e_plus).ref();
-    me_ = e_data.mass().value();
+    GlobalConstantsHandle<ParticleDataList> pdt;
+    auto e_data = pdt->particle(PDGCode::e_plus);
+    me_ = e_data.mass();
 
-    const HepPDT::ParticleData& pi_data = pdt->particle(PDGCode::pi_plus).ref();
-    double pimass = pi_data.mass().value();
+    auto pi_data = pdt->particle(PDGCode::pi_plus);
+    double pimass = pi_data.mass();
 
     // Compute the momentum of the decay positron.
     double mneutrino(0.);
@@ -193,7 +193,7 @@ namespace mu2e {
 
       GenParticle const& gen = output->back();
 
-      float buf[nt_->GetNvar()];
+      vector<float> buf(nt_->GetNvar());
 
       int itarget = findTarget(gen.position().z());
       double dz = 5071. + itarget*50. - gen.position().z();
@@ -207,7 +207,7 @@ namespace mu2e {
       buf[3] = gen.time();
       buf[4] = dz;
       buf[5] = sqrt(xl*xl + yl*yl);
-      nt_->Fill(buf);
+      nt_->Fill(buf.data());
 
       hzPos_->Fill(gen.position().z());
       hcz_->Fill(gen.momentum().cosTheta());
@@ -223,4 +223,4 @@ namespace mu2e {
 }
 
 using mu2e::EplusFromStoppedPion;
-DEFINE_ART_MODULE(EplusFromStoppedPion);
+DEFINE_ART_MODULE(EplusFromStoppedPion)

@@ -14,7 +14,6 @@
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Utilities/InputTag.h"
 
 #include "Offline/RecoDataProducts/inc/ExtMonFNALTrkParam.hh"
@@ -158,4 +157,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFDetHistPatRec);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFDetHistPatRec)

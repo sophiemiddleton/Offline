@@ -2,7 +2,7 @@
 // Free function to create a geant4 test environment geometry
 //
 //
-// Original author KLG 
+// Original author KLG
 //
 // Notes:
 //
@@ -37,24 +37,12 @@ namespace mu2e {
 
   class ConstructEnvBox: public InitEnvToolBase {
   public:
-    ConstructEnvBox(const fhicl::ParameterSet& PSet);
-    ~ConstructEnvBox();
+    ConstructEnvBox(const fhicl::ParameterSet& PSet) {}
 
     int construct(VolumeInfo const& ParentVInfo, SimpleConfig const& Config);
   };
 
-
-//-----------------------------------------------------------------------------
-  ConstructEnvBox::ConstructEnvBox(const fhicl::ParameterSet& PSet) {
-    _name = "Box";
-  }
-
-//-----------------------------------------------------------------------------
-  ConstructEnvBox::~ConstructEnvBox() {
-    _name = "Box";
-  }
-
-//-----------------------------------------------------------------------------
+  //-----------------------------------------------------------------------------
   int ConstructEnvBox::construct(VolumeInfo const& parentVInfo, SimpleConfig const& _config) {
 
     const bool forceAuxEdgeVisible = _config.getBool("g4.forceAuxEdgeVisible");
@@ -82,7 +70,7 @@ namespace mu2e {
                                  0, // no rotation
                                  boxCenterInWorld,
                                  parentVInfo,
-                                 _config.getInt("box.copyNumber",2), 
+                                 _config.getInt("box.copyNumber",2),
                                  // we assign a non 0 copy nuber for
                                  // volume tracking purposes
                                  boxVisible,

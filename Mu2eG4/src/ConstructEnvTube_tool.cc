@@ -2,7 +2,7 @@
 // Free function to create a geant4 test environment geometry
 //
 //
-// Original author KLG 
+// Original author KLG
 //
 // Notes:
 //
@@ -37,22 +37,9 @@ namespace mu2e {
 
   class ConstructEnvTube: public InitEnvToolBase {
   public:
-    ConstructEnvTube(const fhicl::ParameterSet& PSet);
-    ~ConstructEnvTube();
-
+    ConstructEnvTube(const fhicl::ParameterSet& PSet) {}
     int construct(VolumeInfo const& ParentVInfo, SimpleConfig const& Config);
   };
-
-
-//-----------------------------------------------------------------------------
-  ConstructEnvTube::ConstructEnvTube(const fhicl::ParameterSet& PSet) {
-    _name = "Tube";
-  }
-
-//-----------------------------------------------------------------------------
-  ConstructEnvTube::~ConstructEnvTube() {
-    _name = "Tube";
-  }
 
 //-----------------------------------------------------------------------------
   int ConstructEnvTube::construct(VolumeInfo const& parentVInfo, SimpleConfig const& _config) {
@@ -82,7 +69,7 @@ namespace mu2e {
                                  0, // no rotation
                                  boxCenterInWorld,
                                  parentVInfo,
-                                 _config.getInt("box.copyNumber",2), 
+                                 _config.getInt("box.copyNumber",2),
                                  // we assign a non 0 copy nuber for
                                  // volume tracking purposes
                                  boxVisible,
@@ -113,7 +100,7 @@ namespace mu2e {
                                    0, // no rotation
                                    tubeCenterInWorld,
                                    parentVInfo,
-                                   _config.getInt("tube.copyNumber",3), 
+                                   _config.getInt("tube.copyNumber",3),
                                    // we assign a non 0 copy nuber for
                                    // volume tracking purposes
                                    tubeVisible,

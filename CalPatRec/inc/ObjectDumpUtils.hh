@@ -1,6 +1,6 @@
 //
-#ifndef __CalPatRec_inc_ObjectDumpUtils_hh__
-#define __CalPatRec_inc_ObjectDumpUtils_hh__
+#ifndef CalPatRec_ObjectDumpUtils_hh
+#define CalPatRec_ObjectDumpUtils_hh
 
 #include "TObject.h"
 #include "TObjArray.h"
@@ -20,7 +20,6 @@ namespace art {
 class KalRep;
 
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "Offline/RecoDataProducts/inc/KalRepPtrCollection.hh"
 #include "Offline/RecoDataProducts/inc/CaloProtoCluster.hh"
 
@@ -41,7 +40,6 @@ namespace mu2e {
 
     static std::string                            _FlagBgrHitsModuleLabel;
     static const  StrawDigiMCCollection*          _ListOfMCStrawHits;
-    static const  SimParticleTimeOffset*          _TimeOffsets;
 
   public:
 //-----------------------------------------------------------------------------
@@ -54,10 +52,10 @@ namespace mu2e {
 
     static void printKalRep(const KalRep* Krep, const char* Opt = "", const char* Prefix = "");
 
-    static void printKalRepCollection(const art::Event*          Event        , 
-				      const KalRepPtrCollection* Coll         ,
-				      int                        PrintHits = 0); 
-    
+    static void printKalRepCollection(const art::Event*          Event        ,
+                                      const KalRepPtrCollection* Coll         ,
+                                      int                        PrintHits = 0);
+
     static void printCaloProtoCluster(const mu2e::CaloProtoCluster* Cluster, const char* Opt = "");
 
     static void printCaloProtoClusterCollection(const mu2e::CaloProtoClusterCollection* Coll);

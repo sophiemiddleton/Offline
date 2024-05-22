@@ -34,32 +34,34 @@ namespace mu2e {
     KinKal::VEC3 momentum3() const { return _pstate.momentum3(); }
     KinKal::VEC3 velocity() const { return _pstate.velocity(); }
     KinKal::VEC3 position3() const { return _pstate.position3(); }
- //   void mom(float fltlen, XYZVectorF& momvec) const { helix().direction(fltlen,momvec); momvec *= mom(); } // momentum as a function of local flightlength
     // convert content to a LoopHelix
-    KinKal::LoopHelix loopHelix() const { return KinKal::LoopHelix(_pstate, KKbnom(),KinKal::TimeRange(tmin(),tmax())); }
+    KinKal::LoopHelix loopHelix() const { return KinKal::LoopHelix(_pstate, KKbnom(),timeRange()); }
     // convert to a CentralHelix
-    KinKal::CentralHelix centralHelix() const { return KinKal::CentralHelix(_pstate, KKbnom(),KinKal::TimeRange(tmin(),tmax())); }
+    KinKal::CentralHelix centralHelix() const { return KinKal::CentralHelix(_pstate, KKbnom(),timeRange()); }
     // convert to a KinematicLine
-    KinKal::KinematicLine kinematicLine() const { return KinKal::KinematicLine(_pstate, KKbnom(),KinKal::TimeRange(tmin(),tmax())); }
+    KinKal::KinematicLine kinematicLine() const { return KinKal::KinematicLine(_pstate, KKbnom(),timeRange()); }
     Float_t tmin() const { return _tmin; }
     Float_t tmax() const { return _tmax; }
+    KinKal::TimeRange timeRange() const;
     auto tref() const { return _pstate.time(); }
-    // t0 = time (and error) for when particle goes through z=0; 
-    HitT0 t0() const;
     XYZVectorF const& bnom() const { return _bnom; }
     KinKal::VEC3 KKbnom() const { return KinKal::VEC3(_bnom); }
+// convenience function
+    double t0Val() const;
+
     Float_t _tmin, _tmax; // time range
 // main payload is the particle state estimate.  this includes all the kinematic information to
 // interpret as anything else.  BField is needed to interpret geometrically
     XYZVectorF _bnom; // Bfield associated with this segment, needed to reconstitute helix
     KinKal::ParticleStateEstimate _pstate; // particle state at this sample
- // the following are deprecated legacy functions specific to the BTrk fit and will go away eventually
+ // the following are deprecated legacy functions specific to the BTrk fit and will go away once we migrate to KinKal
     HelixVal helix() const;
     HelixCov covar() const;
+    HitT0 t0() const;
     void mom(double flt, XYZVectorF& momvec) const;
     double fmin() const { return timeToFlt(_tmin); } // local 3D flight range
     double fmax() const { return timeToFlt(_tmax); }
-    Float_t _dflt;    
+    Float_t _dflt;
     double localFlt(float globalflt) const { return globalflt + _dflt; }
     double globalFlt(float localflt) const { return localflt - _dflt; }
     double fltToTime(double flt) const; // local flight

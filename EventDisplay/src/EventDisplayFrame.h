@@ -12,7 +12,6 @@
 #include <TGFrame.h>
 #include "art/Framework/Principal/Event.h"
 #include "boost/shared_ptr.hpp"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "TVirtualX.h"
 
 class TBox;
@@ -34,6 +33,11 @@ namespace fhicl
   class ParameterSet;
 }
 
+namespace mu2e
+{
+  class CRVCalib;
+}
+
 namespace mu2e_eventdisplay
 {
   class ContentSelector;
@@ -51,7 +55,7 @@ namespace mu2e_eventdisplay
     EventDisplayFrame(const TGWindow* p, UInt_t w, UInt_t h, fhicl::ParameterSet const &pset);
     virtual          ~EventDisplayFrame();
     void             fillGeometry();
-    void             setEvent(const art::Event& event, bool firstLoop=false);
+    void             setEvent(const art::Event& event, bool firstLoop, const mu2e::CRVCalib &calib);
     boost::shared_ptr<RootFileManager> getRootFileManager() {return _rootFileManager;}
     std::vector<boost::shared_ptr<HistDraw> > &getHistDrawVector(){return _histDrawVector;}
     bool             isClosed() const;
@@ -105,6 +109,8 @@ namespace mu2e_eventdisplay
     bool                _whiteBackground, _useHitColors, _useTrackColors;
     bool                _showSupportStructures, _showCRV, _showOtherStructures;
     bool                _showMuonBeamStop, _showProtonAbsorber;
+    bool                _wideband;
+    bool                _extracted;
 
     //bare pointers needed since ROOT manages these objects
     TGHorizontalFrame   *_mainFrame, *_footLine;
@@ -127,8 +133,7 @@ namespace mu2e_eventdisplay
     TBox                *_legendBox[30];
     TPolyLine           *_legendParticleLine[30];
     std::string         _g4ModuleLabel, _physicalVolumesMultiLabel, _protonBunchTimeLabel;
-
-    mu2e::SimParticleTimeOffset _timeOffsets;
+    double              _kalStepSize;
 
     ClassDef(EventDisplayFrame,0);
   };

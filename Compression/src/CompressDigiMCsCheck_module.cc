@@ -7,11 +7,9 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Provenance.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art_root_io/TFileService.h"
 
 #include "Offline/MCDataProducts/inc/StrawDigiMC.hh"
-#include "Offline/Mu2eUtilities/inc/SimParticleTimeOffset.hh"
 #include "Offline/DataProducts/inc/IndexMap.hh"
 #include "Offline/MCDataProducts/inc/CrvDigiMC.hh"
 #include "Offline/MCDataProducts/inc/CaloShowerSim.hh"
@@ -29,8 +27,6 @@ namespace mu2e {
 
       fhicl::Atom<art::InputTag> oldStrawDigiMCTag{Name("oldStrawDigiMCTag"), Comment("InputTag for uncompressed StrawDigiMCCollection")};
       fhicl::Atom<art::InputTag> newStrawDigiMCTag{Name("newStrawDigiMCTag"), Comment("InputTag for compressed StrawDigiMCCollection")};
-      fhicl::Table<SimParticleTimeOffset::Config> oldTOff{Name("OldTimeOffsets"), Comment("TimeOffsets for uncompressed SimParticleCollection")};
-      fhicl::Table<SimParticleTimeOffset::Config> newTOff{Name("NewTimeOffsets"), Comment("TimeOffsets for compressed SimParticleCollection")};
       fhicl::Atom<art::InputTag> strawDigiMCIndexMapTag{Name("strawDigiMCIndexMapTag"), Comment("If a StrawDigiMCIndexMap was passed to the compression originally, then pass it here too")};
       fhicl::Atom<art::InputTag> oldCrvDigiMCTag{Name("oldCrvDigiMCTag"), Comment("InputTag for uncompressed CrvDigiMCCollection")};
       fhicl::Atom<art::InputTag> newCrvDigiMCTag{Name("newCrvDigiMCTag"), Comment("InputTag for compressed CrvDigiMCCollection")};
@@ -45,9 +41,6 @@ namespace mu2e {
 
     art::InputTag _oldStrawDigiMCTag;
     art::InputTag _newStrawDigiMCTag;
-
-    SimParticleTimeOffset _oldTOff;
-    SimParticleTimeOffset _newTOff;
 
     art::InputTag _strawDigiMCIndexMapTag;
     IndexMap _strawDigiMCIndexMap;
@@ -74,8 +67,6 @@ namespace mu2e {
     : art::EDAnalyzer(conf)
     , _oldStrawDigiMCTag(conf().oldStrawDigiMCTag())
     , _newStrawDigiMCTag(conf().newStrawDigiMCTag())
-    , _oldTOff(conf().oldTOff())
-    , _newTOff(conf().newTOff())
     , _strawDigiMCIndexMapTag(conf().strawDigiMCIndexMapTag())
     , _oldCrvDigiMCTag(conf().oldCrvDigiMCTag())
     , _newCrvDigiMCTag(conf().newCrvDigiMCTag())
@@ -107,9 +98,6 @@ namespace mu2e {
     if (oldStrawDigiMCHandle.isValid() && newStrawDigiMCHandle.isValid()) {
       const auto& oldStrawDigiMCs = *oldStrawDigiMCHandle;
       const auto& newStrawDigiMCs = *newStrawDigiMCHandle;
-
-      _oldTOff.updateMap(event);
-      _newTOff.updateMap(event);
 
       unsigned int n_old_straw_digi_mcs = oldStrawDigiMCs.size();
       unsigned int n_new_straw_digi_mcs = newStrawDigiMCs.size();
@@ -154,8 +142,8 @@ namespace mu2e {
           throw cet::exception("CompressDigiMCsCheck") << "New StrawDigiMC's StrawId is inconsistent with its StepPointMC's StrawId" << std::endl;
         }
 
-        double old_time = _oldTOff.timeWithOffsetsApplied(*i_oldStepPointMC);
-        double new_time = _newTOff.timeWithOffsetsApplied(*i_newStepPointMC);
+        double old_time = i_oldStepPointMC->time();
+        double new_time = i_newStepPointMC->time();
         if (std::fabs(old_time - new_time) > 1e-5) {
           throw cet::exception("CompressDigiMCsCheck") << "Old and new StepPointMC times with offsets applied do not match (StrawDigiMC)" << std::endl;
         }
@@ -193,9 +181,6 @@ namespace mu2e {
       const auto& oldCrvDigiMCs = *oldCrvDigiMCHandle;
       const auto& newCrvDigiMCs = *newCrvDigiMCHandle;
 
-      _oldTOff.updateMap(event);
-      _newTOff.updateMap(event);
-
       unsigned int n_old_crv_digi_mcs = oldCrvDigiMCs.size();
       unsigned int n_new_crv_digi_mcs = newCrvDigiMCs.size();
 
@@ -205,49 +190,47 @@ namespace mu2e {
       }
 
       for (unsigned int i_old_digi_mc = 0; i_old_digi_mc < n_old_crv_digi_mcs; ++i_old_digi_mc) {
-	const auto& i_oldCrvDigiMC = oldCrvDigiMCs.at(i_old_digi_mc);
-	unsigned int i_new_digi_mc = i_old_digi_mc;
-	if (_crvDigiMCIndexMapTag != "") {
-	  if (_crvDigiMCIndexMap.checkInMap(i_old_digi_mc)) {
-	    i_new_digi_mc = _crvDigiMCIndexMap.getCondensedIndex(i_old_digi_mc);
-	  }
-	  else {
-	    continue; // to next old digi MC, since this one was compressed out...
-	  }
-	}
-	const auto& i_newCrvDigiMC = newCrvDigiMCs.at(i_new_digi_mc);
+        const auto& i_oldCrvDigiMC = oldCrvDigiMCs.at(i_old_digi_mc);
+        unsigned int i_new_digi_mc = i_old_digi_mc;
+        if (_crvDigiMCIndexMapTag != "") {
+          if (_crvDigiMCIndexMap.checkInMap(i_old_digi_mc)) {
+            i_new_digi_mc = _crvDigiMCIndexMap.getCondensedIndex(i_old_digi_mc);
+          }
+          else {
+            continue; // to next old digi MC, since this one was compressed out...
+          }
+        }
+        const auto& i_newCrvDigiMC = newCrvDigiMCs.at(i_new_digi_mc);
 
-	if (i_oldCrvDigiMC.GetCrvSteps().size() > 0 && i_newCrvDigiMC.GetCrvSteps().size()>0) {
-	  const auto& i_oldCrvStep = *i_oldCrvDigiMC.GetCrvSteps().begin();
-	  if (!i_oldCrvStep.isAvailable()) {
-	    continue; // this is a null step point
-	  }
-	  const auto& i_newCrvStep = *i_newCrvDigiMC.GetCrvSteps().begin();
+        if (i_oldCrvDigiMC.GetCrvSteps().size() > 0 && i_newCrvDigiMC.GetCrvSteps().size()>0) {
+          const auto& i_oldCrvStep = *i_oldCrvDigiMC.GetCrvSteps().begin();
+          if (!i_oldCrvStep.isAvailable()) {
+            continue; // this is a null step point
+          }
+          const auto& i_newCrvStep = *i_newCrvDigiMC.GetCrvSteps().begin();
 
-	  const auto& i_old_digi_mc_barIndex = i_oldCrvDigiMC.GetScintillatorBarIndex();
-	  const auto& i_new_digi_mc_barIndex = i_newCrvDigiMC.GetScintillatorBarIndex();
-	  if (i_old_digi_mc_barIndex != i_new_digi_mc_barIndex) {
-	    throw cet::exception("CompressDigiMCsCheck") << "Old and new CrvDigiMC's ScintillatorBarIndexs do not match" << std::endl;
-	  }
+          const auto& i_old_digi_mc_barIndex = i_oldCrvDigiMC.GetScintillatorBarIndex();
+          const auto& i_new_digi_mc_barIndex = i_newCrvDigiMC.GetScintillatorBarIndex();
+          if (i_old_digi_mc_barIndex != i_new_digi_mc_barIndex) {
+            throw cet::exception("CompressDigiMCsCheck") << "Old and new CrvDigiMC's ScintillatorBarIndexs do not match" << std::endl;
+          }
 
-	  const auto& i_old_step_barIndex = i_oldCrvStep->barIndex();
-	  const auto& i_new_step_barIndex = i_newCrvStep->barIndex();
-	  if (i_old_step_barIndex != i_new_step_barIndex) {
-	    throw cet::exception("CompressDigiMCsCheck") << "Old and new CrvDigiMC's StepPointMC's BarIndexs do not match" << std::endl;
-	  }
+          const auto& i_old_step_barIndex = i_oldCrvStep->barIndex();
+          const auto& i_new_step_barIndex = i_newCrvStep->barIndex();
+          if (i_old_step_barIndex != i_new_step_barIndex) {
+            throw cet::exception("CompressDigiMCsCheck") << "Old and new CrvDigiMC's StepPointMC's BarIndexs do not match" << std::endl;
+          }
 
-	  if (i_new_step_barIndex != i_new_digi_mc_barIndex) {
-	    throw cet::exception("CompressDigiMCsCheck") << "New CrvDigiMC's BarIndex is inconsistent with its StepPointMC's BarIndex" << std::endl;
-	  }
+          if (i_new_step_barIndex != i_new_digi_mc_barIndex) {
+            throw cet::exception("CompressDigiMCsCheck") << "New CrvDigiMC's BarIndex is inconsistent with its StepPointMC's BarIndex" << std::endl;
+          }
 
-          double old_timeOffset = _oldTOff.totalTimeOffset(i_oldCrvStep->simParticle());
-          double new_timeOffset = _newTOff.totalTimeOffset(i_newCrvStep->simParticle());
-	  double old_time = i_oldCrvStep->startTime() + old_timeOffset;
-	  double new_time = i_newCrvStep->startTime() + new_timeOffset;
-	  if (std::fabs(old_time - new_time) > 1e-5) {
-	    throw cet::exception("CompressDigiMCsCheck") << "Old and new StepPointMC times with offsets applied do not match (CrvDigiMC)" << std::endl;
-	  }
-	}
+          double old_time = i_oldCrvStep->startTime();
+          double new_time = i_newCrvStep->startTime();
+          if (std::fabs(old_time - new_time) > 1e-5) {
+            throw cet::exception("CompressDigiMCsCheck") << "Old and new StepPointMC times with offsets applied do not match (CrvDigiMC)" << std::endl;
+          }
+        }
       }
     }
 
@@ -310,4 +293,4 @@ namespace mu2e {
 
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::CompressDigiMCsCheck);
+DEFINE_ART_MODULE(mu2e::CompressDigiMCsCheck)

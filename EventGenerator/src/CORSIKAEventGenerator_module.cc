@@ -9,16 +9,12 @@
 // Includes from art and its toolchain.
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Principal/Event.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/OptionalAtom.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-
-#include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
 
 // C++ includes.
 #include <iostream>
@@ -98,7 +94,7 @@ namespace mu2e {
 
       float _intDist = 0;
 
-      unsigned int _primaries = 0;
+      unsigned long long _primaries = 0;
       float _area = 0;
       float _lowE = 0;
       float _highE = 0;
@@ -135,7 +131,7 @@ namespace mu2e {
   {
     std::unique_ptr<CosmicLivetime> livetime(new CosmicLivetime(_primaries, _area, _lowE, _highE, _fluxConstant));
     std::cout << *livetime << std::endl;
-    subrun.put(std::move(livetime));
+    subrun.put(std::move(livetime), art::fullSubRun());
   }
 
   void CorsikaEventGenerator::produce(art::Event &evt)
@@ -290,4 +286,4 @@ namespace mu2e {
 
 
 using mu2e::CorsikaEventGenerator;
-DEFINE_ART_MODULE(CorsikaEventGenerator);
+DEFINE_ART_MODULE(CorsikaEventGenerator)

@@ -10,7 +10,6 @@
 
 // Includes from art and its tool chain
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "fhiclcpp/ParameterSet.h"
@@ -57,4 +56,4 @@ namespace mu2e {
 
 
 using mu2e::RanTest;
-DEFINE_ART_MODULE(RanTest);
+DEFINE_ART_MODULE(RanTest)

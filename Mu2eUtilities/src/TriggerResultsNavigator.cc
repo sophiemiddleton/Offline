@@ -32,13 +32,13 @@ namespace mu2e {
       auto nid = pset_pair.second.id();
       assert(nid == pset_pair.first);
 
-      if(nid == id) {  
-	pset = pset_pair.second; 
-	if (pset.has_key("trigger_paths")){
-	  _trigPathsNames = pset.get<std::vector<std::string>>("trigger_paths",std::vector<std::string>());
-	}
+      if(nid == id) {
+        pset = pset_pair.second;
+        if (pset.has_key("trigger_paths")){
+          _trigPathsNames = pset.get<std::vector<std::string>>("trigger_paths",std::vector<std::string>());
+        }
       }
-    }  
+    }
 
     //loop over trigResults to fill the map <string, unsigned int)
     std::string   delimeter=":";
@@ -59,6 +59,20 @@ namespace mu2e {
     size_t        pos       = _trigPathsNames[i].find(delimeter);
     if (pos > _trigPathsNames[i].length()) return "TRIG PATH NOT FOUND";
     return _trigPathsNames[i].substr(pos+1, _trigPathsNames[i].length());
+  }
+
+  size_t
+  TriggerResultsNavigator::getTrigBit(unsigned int const i) const
+  {
+    if (i>_trigPathsNames.size()) {
+      throw cet::exception("TRIG PATHID NOT FOUND");
+      //std::cout << "TRIG PATHID "<< i <<" NOT FOUND" <<std::endl;
+      return 0;
+    }
+    std::string   delimeter =":";
+    size_t        pos       = _trigPathsNames[i].find(delimeter);
+    unsigned int  bit       = std::stoi(_trigPathsNames[i].substr(0, pos));
+    return bit;
   }
 
   size_t
@@ -89,7 +103,9 @@ namespace mu2e {
   TriggerResultsNavigator::accepted(std::string const& name) const
   {
     size_t index = findTrigPath(name);
-    return _trigResults->accept(index);
+    //    return _trigResults->accept(index);
+    if (index == _trigResults->size()) return false;
+    else                             return _trigResults->accept(index);
   }
 
   bool
@@ -106,9 +122,9 @@ namespace mu2e {
     for ( auto const& i : fhicl::ParameterSetRegistry::get() ){
       auto const  id = i.first;
       if (i.second.has_key(name)){
-	auto const &pset = fhicl::ParameterSetRegistry::get(id);
-	modules = pset.get<std::vector<std::string>>(name);
-	break;
+        auto const &pset = fhicl::ParameterSetRegistry::get(id);
+        modules = pset.get<std::vector<std::string>>(name);
+        break;
       }
     }
     return modules;

@@ -15,9 +15,6 @@
 #include "Offline/RecoDataProducts/inc/TimeCluster.hh"
 #include "Offline/RecoDataProducts/inc/HelixSeed.hh"
 
-#include "Offline/RecoDataProducts/inc/StrawHitPosition.hh"
-#include "Offline/RecoDataProducts/inc/StereoHit.hh"
-#include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"
 #include "Offline/RecoDataProducts/inc/StrawHit.hh"
 
 #include "Offline/DataProducts/inc/Helicity.hh"
@@ -42,7 +39,7 @@
 
 //CLHEP
 #include "CLHEP/Units/PhysicalConstants.h"
-// root 
+// root
 #include "TROOT.h"
 #include "TFolder.h"
 #include "TMath.h"
@@ -80,8 +77,8 @@ namespace mu2e {
 // data members
 //-----------------------------------------------------------------------------
     unsigned                              _iev;
-					                // configuration parameters
-    int                                   _diagLevel; 
+                                                        // configuration parameters
+    int                                   _diagLevel;
     int                                   _debugLevel;
     int                                   _printfreq;
     int                                   _useAsFilter; //allows to use the module as a produer or as a filter
@@ -90,13 +87,13 @@ namespace mu2e {
 //-----------------------------------------------------------------------------
     std::string                           _shLabel ; // MakeStrawHit label (makeSH)
     // std::string                           _shpLabel;
-    std::string                           _shfLabel;
     std::string                           _timeclLabel;
-    
+
     int                                   _minNHitsTimeCluster; //min nhits within a TimeCluster after check of Delta-ray hits
 
-    TrkParticle                           _tpart;	        // particle type being searched for
-    TrkFitDirection                       _fdir;		// fit direction in search
+    TrkParticle                           _tpart;                // particle type being searched for
+    TrkFitDirection                       _fdir;                // fit direction in search
+    bool                                  _doSingleOutput;
 //-----------------------------------------------------------------------------
 // cache of event objects
 //-----------------------------------------------------------------------------
@@ -106,12 +103,10 @@ namespace mu2e {
     fhicl::ParameterSet*                  _timeOffsets;
 
     const ComboHitCollection*             _chcol;
-    const StrawHitFlagCollection*         _shfcol;
-    // const StrawHitPositionCollection*     _shpcol;
     const TimeClusterCollection*          _timeclcol;
 
     HelixTraj*                            _helTraj;
-    CalHelixFinderAlg                     _hfinder;	
+    CalHelixFinderAlg                     _hfinder;
     CalHelixFinderData                    _hfResult;
     std::vector<mu2e::Helicity>           _hels; // helicity values to fit
 
@@ -119,7 +114,7 @@ namespace mu2e {
     const Tracker*                        _tracker     ; // straw tracker geometry
     const Calorimeter*                    _calorimeter ; // cached pointer to the calorimeter geometry
 //-----------------------------------------------------------------------------
-// diagnostics 
+// diagnostics
 //-----------------------------------------------------------------------------
     CalHelixFinderTypes::Data_t           _data;
 
@@ -133,10 +128,10 @@ namespace mu2e {
 
     explicit CalHelixFinder(const fhicl::ParameterSet& PSet);
     virtual ~CalHelixFinder();
-    
+
     virtual void beginJob();
     virtual bool beginRun(art::Run&   run   );
-    virtual bool filter  (art::Event& event ); 
+    virtual bool filter  (art::Event& event );
     virtual void endJob();
 //-----------------------------------------------------------------------------
 // helper functions
@@ -148,16 +143,13 @@ namespace mu2e {
     void initHelixSeed      (HelixSeed &TrackSeed, CalHelixFinderData &HfResult);
 
     int  initHelixFinderData(CalHelixFinderData&                Data,
-			     const TrkParticle&                 TPart,
-			     const TrkFitDirection&             FDir,
-			     const ComboHitCollection*          ComboCollection ,
-			     // const StrawHitPositionCollection*  ShPosCollection , 
-			     const StrawHitFlagCollection*      ShFlagCollection);
-    
+                             const TrkParticle&                 TPart,
+                             const TrkFitDirection&             FDir,
+                             const ComboHitCollection*          ComboCollection);
+
     int  goodHitsTimeCluster(const TimeCluster* TimeCluster);
-    
+
     void pickBestHelix(std::vector<HelixSeed>& HelVec, int &Index_best);
   };
 }
 #endif
-

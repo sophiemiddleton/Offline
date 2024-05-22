@@ -1,15 +1,15 @@
-#ifndef __CalPatRec_CalTimePeakFinder_types_hh__
-#define __CalPatRec_CalTimePeakFinder_types_hh__
+#ifndef CalPatRec_CalTimePeakFinder_types_hh
+#define CalPatRec_CalTimePeakFinder_types_hh
 
 #include <vector>
 
 namespace art {
   class Event;
-};
+}
 
 namespace fhicl {
   class ParameterSet;
-};
+}
 
 #include "Offline/RecoDataProducts/inc/StrawHitFlag.hh"
 #include "Offline/RecoDataProducts/inc/StrawHit.hh"
@@ -20,13 +20,13 @@ namespace fhicl {
 namespace mu2e {
 
   class KalFitResultNew;
-  
+
   namespace CalTimePeakFinderTypes {
     enum { kMaxTimePeaks = 100 };
 //-----------------------------------------------------------------------------
 // data structure shared by CalTimePeakFinder with its plugins
 //-----------------------------------------------------------------------------
-    struct Data_t {                        
+    struct Data_t {
       const art::Event*               _event;
       const TimeCluster*              _timeCluster;
       const CaloClusterCollection*    ccCollection;

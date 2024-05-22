@@ -20,13 +20,12 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 
 #include "Offline/SeedService/inc/SeedService.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 #include "Offline/Mu2eUtilities/inc/RandomUnitSphere.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
@@ -76,7 +75,7 @@ namespace mu2e {
   //================================================================
   CeEndpoint::CeEndpoint(const Parameters& conf)
     : EDProducer{conf}
-    , electronMass_(GlobalConstantsHandle<ParticleDataTable>()->particle(electronId_).ref().mass().value())
+    , electronMass_(GlobalConstantsHandle<ParticleDataList>()->particle(electronId_).mass())
     , endPointEnergy_()
     , endPointMomentum_ ()
     , muonLifeTime_{GlobalConstantsHandle<PhysicsParams>()->getDecayTime(conf().stoppingTargetMaterial())}
@@ -89,13 +88,13 @@ namespace mu2e {
   {
     produces<mu2e::StageParticleCollection>();
     pid = static_cast<PDGCode::type>(pdgId_);
-    
-    if (pid == PDGCode::e_minus) { 
-      process = ProcessCode::mu2eCeMinusEndpoint; 
+
+    if (pid == PDGCode::e_minus) {
+      process = ProcessCode::mu2eCeMinusEndpoint;
       endPointEnergy_ = GlobalConstantsHandle<PhysicsParams>()->getEndpointEnergy(conf().stoppingTargetMaterial());
-    } 
-    else if (pid == PDGCode::e_plus) { 
-      process = ProcessCode::mu2eCePlusEndpoint; 
+    }
+    else if (pid == PDGCode::e_plus) {
+      process = ProcessCode::mu2eCePlusEndpoint;
       endPointEnergy_ = GlobalConstantsHandle<PhysicsParams>()->getePlusEndpointEnergy(conf().stoppingTargetMaterial());
     }
     else {
@@ -118,7 +117,7 @@ namespace mu2e {
 
     const auto simh = event.getValidHandle<SimParticleCollection>(simsToken_);
     const auto mus = stoppedMuMinusList(simh);
-    
+
     if(mus.empty()) {
       throw   cet::exception("BADINPUT")
         <<"CeEndpoint::produce(): no suitable stopped muon in the input SimParticleCollection\n";
@@ -146,4 +145,4 @@ namespace mu2e {
   //================================================================
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::CeEndpoint);
+DEFINE_ART_MODULE(mu2e::CeEndpoint)

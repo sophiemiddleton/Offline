@@ -10,7 +10,6 @@
 #include "CLHEP/Units/PhysicalConstants.h"
 
 #include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
 #include "canvas/Persistency/Common/FindOne.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
@@ -271,4 +270,4 @@ namespace mu2e {
   } // namespace ExtMonFNAL
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFBoxMuonAnalyzer);
+DEFINE_ART_MODULE(mu2e::ExtMonFNAL::EMFBoxMuonAnalyzer)

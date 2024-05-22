@@ -17,7 +17,6 @@
 #include "CLHEP/Units/PhysicalConstants.h"
 
 #include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/ModuleMacros.h"  
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/Handle.h"
@@ -26,7 +25,7 @@
 #include "Offline/ConfigTools/inc/ConfigFileLookupPolicy.hh"
 #include "Offline/SeedService/inc/SeedService.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 #include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "Offline/MCDataProducts/inc/GenParticle.hh"
@@ -38,6 +37,7 @@
 #include "Offline/Mu2eUtilities/inc/BinnedSpectrum.hh"
 #include "Offline/Mu2eUtilities/inc/Table.hh"
 #include "Offline/Mu2eUtilities/inc/RootTreeSampler.hh"
+#include "Offline/Mu2eUtilities/inc/ReSeedByEventID.hh"
 #include "Offline/GeneralUtilities/inc/RSNTIO.hh"
 
 #include "TH1.h"
@@ -58,6 +58,7 @@ namespace mu2e {
     GenId             genId_;
     int               verbosityLevel_;
 
+    SeedService::seed_t seed_;
     art::RandomNumberGenerator::base_engine_t& eng_;
     CLHEP::RandGeneral randSpectrum_;
     RandomUnitSphere   randomUnitSphere_;
@@ -72,11 +73,13 @@ namespace mu2e {
     TH1F*   _hGenId;
     TH1F*   _hTime;
     TH1F*   _hZ;
-  
+
+    ReSeedByEventID reseeder_;
+
   private:
     static SpectrumVar    parseSpectrumVar(const std::string& name);
     double                generateEnergy();
-    
+
   public:
     explicit StoppedParticleReactionGun(const fhicl::ParameterSet& pset);
 
@@ -88,16 +91,18 @@ namespace mu2e {
     : EDProducer{pset}
     , psphys_(pset.get<fhicl::ParameterSet>("physics"))
     , pdgId_(PDGCode::type(psphys_.get<int>("pdgId")))
-    , mass_(GlobalConstantsHandle<ParticleDataTable>()->particle(pdgId_).ref().mass().value())
+    , mass_(GlobalConstantsHandle<ParticleDataList>()->particle(pdgId_).mass())
     , spectrumVariable_(parseSpectrumVar(psphys_.get<std::string>("spectrumVariable")))
     , spectrum_(BinnedSpectrum(psphys_))
     , genId_(GenId::findByName(psphys_.get<std::string>("genId")))
     , verbosityLevel_(pset.get<int>("verbosityLevel", 0))
-    , eng_(createEngine(art::ServiceHandle<SeedService>()->getSeed()))
+    , seed_(art::ServiceHandle<SeedService>()->getSeed())
+    , eng_(createEngine(seed_))
     , randSpectrum_(eng_, spectrum_.getPDF(), spectrum_.getNbins())
     , randomUnitSphere_(eng_)
     , stops_(eng_, pset.get<fhicl::ParameterSet>("muonStops"))
     , doHistograms_       (pset.get<bool>("doHistograms",false ) )
+    , reseeder_(eng_,seed_,verbosityLevel_)
   {
     produces<mu2e::GenParticleCollection>();
 
@@ -118,11 +123,11 @@ namespace mu2e {
       std::cout<<"StoppedParticleReactionGun: producing particle "<< pdgId_ << ", mass = "<< mass_ << std::endl;
 
       std::cout <<"StoppedParticleReactionGun: spectrum shape = "
-		<<psphys_.get<std::string>("spectrumShape") << std::endl;
+                <<psphys_.get<std::string>("spectrumShape") << std::endl;
       if (psphys_.get<std::string>("spectrumShape")  == "tabulated")
-	std::cout << " Spectrum file = "
-		  << psphys_.get<std::string>("spectrumFileName")
-		  << std::endl;
+        std::cout << " Spectrum file = "
+                  << psphys_.get<std::string>("spectrumFileName")
+                  << std::endl;
     }
     if (verbosityLevel_ > 1){
       std::cout <<"StoppedParticleReactionGun: spectrum: " << std::endl;
@@ -151,6 +156,8 @@ namespace mu2e {
 
   //================================================================
   void StoppedParticleReactionGun::produce(art::Event& event) {
+
+    reseeder_.reseed(event.id());
 
     std::unique_ptr<GenParticleCollection> output(new GenParticleCollection);
 
@@ -183,8 +190,8 @@ namespace mu2e {
   }
 
 //-----------------------------------------------------------------------------
-// generate (pseudo-)random particle energy 
-// the spectrum itself doesn't know whether is stored momentum, kinetic or full 
+// generate (pseudo-)random particle energy
+// the spectrum itself doesn't know whether is stored momentum, kinetic or full
 // energy
 //-----------------------------------------------------------------------------
   double StoppedParticleReactionGun::generateEnergy() {
@@ -205,4 +212,4 @@ namespace mu2e {
   //================================================================
 } // namespace mu2e
 
-DEFINE_ART_MODULE(mu2e::StoppedParticleReactionGun);
+DEFINE_ART_MODULE(mu2e::StoppedParticleReactionGun)

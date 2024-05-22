@@ -22,6 +22,7 @@
 #include "Offline/GeometryService/inc/WorldG4.hh"
 #include "Offline/Mu2eG4/inc/WorldMaker.hh"
 #include "Offline/Mu2eG4/inc/Mu2eWorld.hh"
+#include "Offline/Mu2eG4/inc/Mu2eStudyWorld.hh"
 #include "Offline/Mu2eG4/inc/physicsListDecider.hh"
 #include "Offline/Mu2eG4/inc/preG4InitializeTasks.hh"
 #include "Offline/Mu2eG4/inc/Mu2eG4MasterRunAction.hh"
@@ -89,7 +90,9 @@ namespace mu2e {
 
     G4StateManager* stateManager = G4StateManager::GetStateManager();
     G4String currentState = stateManager->GetStateString(stateManager->GetCurrentState());
-    G4cout << "Current G4State is : " << currentState << G4endl;
+    if(rmvlevel_>0) {
+      G4cout << "Current G4State is : " << currentState << G4endl;
+    }
 
     if (GetCurrentRun()) {
       delete currentRun;
@@ -99,8 +102,10 @@ namespace mu2e {
       currentRun->SetRunID(art_runnumber);
     }
 
-    G4cout << "Art Run Number is: " << art_runnumber << G4endl;
-    G4cout << "Current Run is " << GetCurrentRun()->GetRunID() << G4endl;
+    if(rmvlevel_>0) {
+      G4cout << "Art Run Number is: " << art_runnumber << G4endl;
+      G4cout << "Current Run is " << GetCurrentRun()->GetRunID() << G4endl;
+    }
 
     currentRun->SetDCtable(DCtable);
     G4SDManager* fSDM = G4SDManager::GetSDMpointerIfExist();
@@ -167,8 +172,8 @@ namespace mu2e {
                                            make_unique<ConstructMaterials>(conf_)));
     }
     else {
-      throw cet::exception("CONFIG")
-        << "Error: You are trying to run in MT mode without the Standard Mu2e Detector!\n";
+      allMu2e = (new WorldMaker<Mu2eStudyWorld>(make_unique<Mu2eStudyWorld>(conf_, &sensitiveDetectorHelper_),
+                                           make_unique<ConstructMaterials>(conf_)));
     }
 
     preG4InitializeTasks(conf_);
@@ -213,7 +218,9 @@ namespace mu2e {
     masterRunAction_->MasterEndRunAction();
 
     if ((G4MTRunManager::GetMTMasterRunManagerKernel()!=nullptr) && !m_runTerminated) {
-      std::cerr << "CALLING RunTermination() from MTRunManager\n";
+      if(rmvlevel_>0) {
+        G4cerr << "CALLING RunTermination() from MTRunManager\n";
+      }
       G4RunManager::TerminateEventLoop();
       G4RunManager::RunTermination();
     }
@@ -221,12 +228,12 @@ namespace mu2e {
   }
 
   G4bool Mu2eG4MTRunManager::SetUpEvent() {
-    
+
     if( numberOfEventProcessed < numberOfEventToBeProcessed ) {
       numberOfEventProcessed++;
       return true;
     }
-    
+
     return false;
   }
 

@@ -15,7 +15,6 @@
 //ROOT
 #include <TFile.h>
 //CRV/CRS:
-#include "Offline/GeometryService/inc/GeomHandle.hh"
 #include "Offline/CosmicRayShieldGeom/inc/CosmicRayShield.hh"
 #include "Offline/CosmicRayShieldGeom/inc/CRSScintillatorShield.hh"
 #include "Offline/CosmicRayShieldGeom/inc/CRSScintillatorModule.hh"
@@ -23,9 +22,11 @@
 #include "Offline/TEveEventDisplay/src/TEveMu2e_base_classes/TEveMu2e2DProjection.h"
 #include "Offline/TEveEventDisplay/src/dict_classes/GeomUtils.h"
 
+namespace art { class Run; }
+
 namespace mu2e{
-	class TEveMu2eCRV 
-	{
+        class TEveMu2eCRV
+        {
     public:
       #ifndef __CINT__
       explicit TEveMu2eCRV();

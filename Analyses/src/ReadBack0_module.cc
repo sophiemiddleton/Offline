@@ -10,13 +10,13 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <vector>
 
 // Framework includes.
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art_root_io/TFileService.h"
-#include "art/Framework/Core/ModuleMacros.h"
 
 // Mu2e includes.
 #include "Offline/GeometryService/inc/GeomHandle.hh"
@@ -134,7 +134,7 @@ namespace mu2e {
     _hNstraw->Fill(hits.size());
 
     // ntuple buffer.
-    float nt[_ntup->GetNvar()];
+    vector<float> nt(_ntup->GetNvar());
 
     // Loop over all hits.
     for ( size_t i=0; i<hits.size(); ++i ){
@@ -164,7 +164,7 @@ namespace mu2e {
       nt[6]  = straw.id().getLayer();
       nt[7]  = hit.eDep()/CLHEP::keV;
 
-      _ntup->Fill(nt);
+      _ntup->Fill(nt.data());
 
     } // end loop over hits.
 
@@ -175,4 +175,4 @@ namespace mu2e {
 // Part of the magic that makes this class a module.
 // create an instance of the module.  It also registers
 using mu2e::ReadBack0;
-DEFINE_ART_MODULE(ReadBack0);
+DEFINE_ART_MODULE(ReadBack0)

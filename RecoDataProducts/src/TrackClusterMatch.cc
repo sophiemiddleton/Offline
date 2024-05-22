@@ -19,7 +19,7 @@ namespace mu2e {
   TrackClusterMatch::TrackClusterMatch() {
   }
 
-  TrackClusterMatch::TrackClusterMatch(TrkCaloIntersectPtr& Tex, CaloClusterPtr& Cluster, Data_t* Data) 
+  TrackClusterMatch::TrackClusterMatch(TrkCaloIntersectPtr& Tex, CaloClusterPtr& Cluster, Data_t* Data)
   {
     _icl       = Data->icl;
     _iex       = Data->iex;
@@ -53,9 +53,6 @@ namespace mu2e {
     _ds        = Data->ds;
     _dr        = Data->dr;
     _sint      = Data->sint;
-  }
-
-  TrackClusterMatch::~TrackClusterMatch() {
   }
 
 

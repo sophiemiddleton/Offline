@@ -6,10 +6,9 @@
 #include <vector>
 
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
-#include "Offline/GlobalConstantsService/inc/ParticleDataTable.hh"
+#include "Offline/GlobalConstantsService/inc/ParticleDataList.hh"
 
 // Framework includes
-#include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
@@ -216,7 +215,7 @@ namespace mu2e {
           {9900, 22}          // Cherenkov gamma
       };
 
-      virtual bool generate(GenParticleCollection &, unsigned int &);
+      virtual bool generate(GenParticleCollection &, unsigned long long &);
       void openFile(ifstream *f, unsigned &run, float &lowE, float &highE);
 
     private:
@@ -227,7 +226,7 @@ namespace mu2e {
       std::vector<CLHEP::Hep3Vector> _worldIntersections;
       std::map<std::pair<int,int>, GenParticleCollection> _particles_map;
 
-      GlobalConstantsHandle<ParticleDataTable> pdt;
+      GlobalConstantsHandle<ParticleDataList> pdt;
 
       static constexpr float _GeV2MeV = CLHEP::GeV / CLHEP::MeV;
       static constexpr float _cm2mm = CLHEP::cm / CLHEP::mm;
@@ -253,7 +252,7 @@ namespace mu2e {
       unsigned _current_event_number = -1;
       unsigned _event_count = 0;
       unsigned _run_number = -1;
-      unsigned int _primaries = 0;
+      unsigned long long _primaries = 0;
 
       Format _infmt{Format::UNDEFINED};
 

@@ -15,7 +15,9 @@ namespace mu2e {
     fhicl::Atom<int> verbose{
       Name("verbose"), Comment("verbosity: 0,1,2")};
     fhicl::Atom<bool> useDb{
-      Name("useDb"), Comment("use database or fcl")}; 
+      Name("useDb"), Comment("use database or fcl")};
+    fhicl::Atom<bool> wireOnly{
+      Name("onlyWireOffsets"), Comment("sim geometry only includes wire offsets")};
   };
 
 }

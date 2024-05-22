@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 
 #include "Offline/Mu2eG4Helper/inc/VolumeInfo.hh"
 
@@ -92,7 +93,7 @@ namespace mu2e {
                         bool const doSurfaceCheck
                         );
 
- 
+
   // Alternate argument list (and different behavior)
   // using VolumeInfo object for the parameters.
   VolumeInfo nestCons ( std::string const& name,
@@ -103,8 +104,8 @@ namespace mu2e {
                         VolumeInfo const & parent,
                         int copyNo,
                         G4Colour const color,
-			std::string const& lookupToken
-                        ); 
+                        std::string const& lookupToken
+                        );
 
   inline VolumeInfo nestCons ( std::string const& name,
                         std::array<double,consDim> const& params,
@@ -114,40 +115,40 @@ namespace mu2e {
                         VolumeInfo const & parent,
                         int copyNo,
                         G4Colour const color,
-			std::string const& lookupToken
+                        std::string const& lookupToken
                         ) {
     return nestCons ( name,
-		      &params[0],
-		      material,
-		      rot,
-		      offset,
-		      parent,
-		      copyNo,
-		      color,
-		      lookupToken
-		      ); 
+                      &params[0],
+                      material,
+                      rot,
+                      offset,
+                      parent,
+                      copyNo,
+                      color,
+                      lookupToken
+                      );
   }
 
   inline VolumeInfo nestCons ( std::string const& name,
-			       std::vector<double> const& params,
-			       G4Material* material,
-			       G4RotationMatrix const* rot,
-			       G4ThreeVector const & offset,
-			       VolumeInfo const & parent,
-			       int copyNo,
-			       G4Colour const color,
-			       std::string const& lookupToken
-			       ) {
+                               std::vector<double> const& params,
+                               G4Material* material,
+                               G4RotationMatrix const* rot,
+                               G4ThreeVector const & offset,
+                               VolumeInfo const & parent,
+                               int copyNo,
+                               G4Colour const color,
+                               std::string const& lookupToken
+                               ) {
     return nestCons ( name,
-		      &params[0],
-		      material,
-		      rot,
-		      offset,
-		      parent,
-		      copyNo,
-		      color,
-		      lookupToken
-		      ); 
+                      &params[0],
+                      material,
+                      rot,
+                      offset,
+                      parent,
+                      copyNo,
+                      color,
+                      lookupToken
+                      );
   }
 
 }
