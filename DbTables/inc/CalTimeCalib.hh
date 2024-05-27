@@ -1,5 +1,5 @@
-#ifndef DbTables_CalEnergyCalib_hh
-#define DbTables_CalEnergyCalib_hh
+#ifndef DbTables_CalTimeCalib_hh
+#define DbTables_CalTimeCalib_hh
 
 
 /*
@@ -18,25 +18,25 @@ S Middleton 2023
 
 namespace mu2e {
 
-  class CalEnergyCalib : public DbTable {
+  class CalTimeCalib : public DbTable {
   public:
-  typedef std::shared_ptr<CalEnergyCalib> ptr_t;
-  typedef std::shared_ptr<const CalEnergyCalib> cptr_t;
+  typedef std::shared_ptr<CalTimeCalib> ptr_t;
+  typedef std::shared_ptr<const CalTimeCalib> cptr_t;
 
     class Row {
     public:
-      Row(CaloSiPMId  roid, float ADC2MeV):_roid(roid),_ADC2MeV(ADC2MeV) {}
+      Row(CaloSiPMId  roid, float T0):_roid(roid),_T0(T0) {}
       CaloSiPMId   roid() const { return _roid;}
-      float ADC2MeV() const { return _ADC2MeV; }
+      float T0() const { return _T0; }
 
     private:
       CaloSiPMId   _roid;
-      float _ADC2MeV;
+      float _T0;
     };
 
-    constexpr static const char* cxname = "CalEnergyCalib";
+    constexpr static const char* cxname = "CalTimeCalib";
 
-    CalEnergyCalib():DbTable(cxname,"cal.energycalib","roid,adc2mev"){}
+    CalTimeCalib():DbTable(cxname,"cal.energycalib","roid,t0"){}
 
     const Row& row(CaloSiPMId id) const {
                 return _rows[id.id()];
@@ -51,7 +51,7 @@ namespace mu2e {
       std::uint16_t index = std::stoul(columns[0]);
     // enforce order, so channels can be looked up by index
     if (index!=int(_rows.size())) {
-        throw cet::exception("CALOENERGYCALIB_BAD_INDEX")<<"CalEnergyCalib::addRow found index out of order:"<<index << " != " << int(_rows.size()) <<"\n";
+        throw cet::exception("CALOTIMECALIB_BAD_INDEX")<<"CalTimeCalib::addRow found index out of order:"<<index << " != " << int(_rows.size()) <<"\n";
       }
        _rows.emplace_back(CaloSiPMId(index),std::stof(columns[1]));
 
@@ -62,7 +62,7 @@ namespace mu2e {
       Row const& r = _rows.at(irow);
       sstream << std::fixed << std::setprecision(5);
       sstream << r.roid()<<",";
-      sstream << r.ADC2MeV()<<",";
+      sstream << r.T0()<<",";
     }
 
     virtual void clear() override { baseClear(); _rows.clear();}

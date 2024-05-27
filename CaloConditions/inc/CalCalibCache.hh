@@ -20,7 +20,7 @@ namespace mu2e {
     void initialize() {
      if(_useDb) {
         _calenergycalib_p = std::make_unique<DbHandle<CalEnergyCalib>>();
-        //_caltimecalib_p = std::make_unique<DbHandle<CalTimeCalib>>(); TODO - time calibration
+        _caltimecalib_p = std::make_unique<DbHandle<CalTimeCalib>>();
       }
     }
 
@@ -47,7 +47,7 @@ namespace mu2e {
 
     ProditionsEntity::ptr makeEntity(art::EventID const& eid) {
       if(_useDb) {
-        return _maker.fromDb( _calenergycalib_p->getPtr(eid));
+        return _maker.fromDb( _calenergycalib_p->getPtr(eid),  _caltimecalib_p->getPtr(eid));
       } else {
         return _maker.fromFcl();
       }
@@ -57,7 +57,7 @@ namespace mu2e {
     bool _useDb;
     CalCalibMaker _maker;
     std::unique_ptr<DbHandle<CalEnergyCalib>> _calenergycalib_p;
-    //std::unique_ptr<DbHandle<CalTimeCalib>> _caltimecalib_p;
+    std::unique_ptr<DbHandle<CalTimeCalib>> _caltimecalib_p;
   };
 }
 

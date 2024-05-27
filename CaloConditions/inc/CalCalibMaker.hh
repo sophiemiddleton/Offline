@@ -10,7 +10,7 @@
 #include "Offline/CaloConditions/inc/CalCalib.hh"
 #include "Offline/CaloConfig/inc/CalCalibConfig.hh"
 #include "Offline/DbTables/inc/CalEnergyCalib.hh"
-
+#include "Offline/DbTables/inc/CalTimeCalib.hh"
 namespace mu2e {
 
   class CalCalibMaker {
@@ -19,7 +19,7 @@ namespace mu2e {
     public:
       CalCalibMaker(CalCalibConfig const& config):_config(config) {};
       ptr_t fromFcl();
-      ptr_t fromDb(CalEnergyCalib::cptr_t ecalib0);//TODO CalTimeCalib::cptr_t tcalib0
+      ptr_t fromDb(CalEnergyCalib::cptr_t ecalib0, CalTimeCalib::cptr_t tcalib0);
 
     private:
 
