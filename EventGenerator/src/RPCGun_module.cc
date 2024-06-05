@@ -97,6 +97,7 @@ namespace mu2e {
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
     TH1F* _hy;                          // splitting function
+    TH1F* _htime;
 
   };
 
@@ -136,6 +137,7 @@ namespace mu2e {
           _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
           _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
           _hy        = tfdir.make<TH1F>("hy"       , "y = (ee-ep)/|pe+pp|", 200,-1.,1.);
+           _htime        = tfdir.make<TH1F>("htime"       , "end global time", 200,0,1700);
         }
       }
   }
@@ -180,6 +182,7 @@ namespace mu2e {
   void RPCGun::addParticles(StageParticleCollection* output,
                             art::Ptr<SimParticle> pistop)
   {
+    
     //Photon energy and four mom:
     double energy = spectrum_.sample(randSpectrum_.fire());
     const CLHEP::Hep3Vector p3 = randomUnitSphere_.fire(energy);
@@ -224,7 +227,7 @@ namespace mu2e {
 
           CLHEP::Hep3Vector p = mome.vect()+momp.vect();
           double y = (mome.e()-momp.e())/p.mag();
-
+          _htime->Fill(pistop->endGlobalTime());
           _hy->Fill(y);
         }
       } else {

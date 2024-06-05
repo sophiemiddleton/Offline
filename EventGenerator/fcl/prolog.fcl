@@ -171,10 +171,28 @@ GenFilter : {
         isNull : true
 }
 
+PionFilter : {
+        module_type : PionFilter
+        SimParticleCollection : "TargetPiStopResampler"
+        tmin : 350
+        isNull : false
+
+}
+
+PionPreFilter : {
+        module_type : PionPreFilter
+        StageParticleCollection : "TargetPiStopFilter"
+        tmin : 350
+        isNull : false
+
+}
+
 genFilters : # in case we want to add more here
 {
    filters : {
         GenFilter: @local::GenFilter
+        PionFilter: @local::PionFilter
+        PionPreFilter: @local::PionPreFilter
    }
 }
 
