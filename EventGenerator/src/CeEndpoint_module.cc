@@ -31,7 +31,8 @@
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "Offline/MCDataProducts/inc/StageParticle.hh"
 #include "Offline/Mu2eUtilities/inc/simParticleList.hh"
-
+#include "TTree.h"
+#include "art_root_io/TFileService.h"
 namespace mu2e {
 
   //================================================================
@@ -70,6 +71,8 @@ namespace mu2e {
     ProcessCode process;
     int pdgId_;
     PDGCode::type pid;
+    TTree* genTree;
+    Float_t _mom;
   };
 
   //================================================================
@@ -86,6 +89,9 @@ namespace mu2e {
     , randomUnitSphere_{eng_}
     , pdgId_(conf().pdgId())
   {
+    art::ServiceHandle<art::TFileService> tfs;
+    genTree  = tfs->make<TTree>("GenAna", "GenAna");
+    genTree->Branch("mom", &_mom, "mom/F");
     produces<mu2e::StageParticleCollection>();
     pid = static_cast<PDGCode::type>(pdgId_);
 
@@ -129,7 +135,8 @@ namespace mu2e {
     // Note that Rmue normalization is per muon, not per primary proton.
 
     const auto mustop = mus.at(eng_.operator unsigned int() % mus.size());
-
+    _mom = endPointMomentum_;
+    genTree->Fill();
     output->emplace_back(mustop,
                          process,
                          pid,

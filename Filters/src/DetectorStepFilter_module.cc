@@ -25,6 +25,10 @@
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
 #include <map>
+#include <algorithm>
+#include <random>
+
+
 namespace mu2e {
 
   class DetectorStepFilter : public art::EDFilter {
@@ -131,11 +135,15 @@ namespace mu2e {
     double mbtime = GlobalConstantsHandle<PhysicsParams>()->getNominalDRPeriod();
     bool selecttrk(false), selectcalo(false), selectcrv(false);
     ++nEvt_;
+
     // Count Trk step from same particle
     using CT = std::map<const SimParticle*,unsigned>;
     for(const auto& trkcoltag : trkStepCols_) {
       CT counttrk;
       auto sgscolH = event.getValidHandle<StrawGasStepCollection>(trkcoltag);
+      //auto rd = std::random_device {}; 
+      //auto rng = std::default_random_engine { rd() };
+      //std::random_shuffle(sgscolH.begin(), sgscolH.end(),rng);
       for(const auto& sgs : *sgscolH ) {
         double mom = sgs.momentum().R();
         if(sgs.ionizingEdep() > minTrkE_ &&
@@ -155,6 +163,31 @@ namespace mu2e {
           break;
         }
       }
+     /* bool isFirst = false;
+      int initialPart = 0;
+      bool hasBoth = false;
+      bool isElectron = false;
+      for (size_t k = 0; k < sgscolH->size(); k++){
+  	    StrawGasStep strawgas = (*sgscolH)[k];
+  	    art::Ptr<SimParticle> const& simpart = strawgas.simParticle();
+  	    if(simpart->creationCode() == 179){
+  	    double mom = strawgas.momentum().R();
+  	    double _startmom = sqrt(simpart->startMomXYZT().x()*simpart->startMomXYZT().x() + simpart->startMomXYZT().y()*simpart->startMomXYZT().y() + simpart->startMomXYZT().z()*simpart->startMomXYZT().z());
+  	    if(k==0) isFirst = true;
+  	    if(k!=0) isFirst = false;
+
+  	    if(k==0){
+  	      initialPart = simpart->pdgId();
+	      }
+  	    if(simpart->pdgId()==11) isElectron = true;
+  	    if(simpart->pdgId()!=11) isElectron = false;
+  	    if(k==0 or simpart->pdgId()!= initialPart){
+  	      hasBoth = true;
+  	      std::cout<<k<<","<<isFirst<<","<<sgscolH->size()<<","<<isElectron<<","<<hasBoth<<","<<selecttrk<<","<<_startmom<<","<<mom<<std::endl;
+  	    }
+  	    }
+	    
+	    }*/
       if(selecttrk)break;
     }
     // sum Calo energy from same particle
@@ -212,6 +245,7 @@ namespace mu2e {
     bool retval =( (or_ && (selecttrk || selectcalo || selectcrv)) ||
         ((!or_) && ( selecttrk && selectcalo && selectcrv)) );
     if(retval)nPassed_++;
+    //std::cout<<"passes "<<retval<<std::endl;
     return retval;
   }
 

@@ -200,13 +200,7 @@ namespace mu2e {
       //Need to compute e-e+ pair momentum spectrum from the photon (use Kroll-Wada)
       CLHEP::HepLorentzVector mome, momp;
       pionCaptureSpectrum_.getElecPosiVectors(energy,mome,momp);
-      output->emplace_back(pistop,
-                           process_,
-                           PDGCode::e_minus,
-                           pistop->endPosition(),
-                           mome,
-                           pistop->endGlobalTime()
-                           );
+     
 
        output->emplace_back(pistop,
                            process_,
@@ -215,7 +209,13 @@ namespace mu2e {
                            momp,
                            pistop->endGlobalTime()
                            );
-
+         output->emplace_back(pistop,
+                           process_,
+                           PDGCode::e_minus,
+                           pistop->endPosition(),
+                           mome,
+                           pistop->endGlobalTime()
+                           );
         if(doHistograms_){
           _hElecMom ->Fill(mome.vect().mag());
           _hPosiMom ->Fill(momp.vect().mag());

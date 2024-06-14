@@ -72,6 +72,14 @@ VirtualDetectorDefaults: {
 
 }
 
+PhotonAna : {
+        module_type : PhotonAna
+        diag : 1
+        #StrawGasStepCollection : compressDigiMCs
+        #MCTrajectoryCollection : compressDigiMCs
+        SimParticleCollection : compressDetStepMCs
+}
+
 # Many configurations use "readvd"
 readvd: @local::VirtualDetectorDefaults
 ClusterCompareNew :

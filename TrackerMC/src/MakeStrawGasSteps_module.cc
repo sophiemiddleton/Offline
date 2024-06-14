@@ -45,7 +45,7 @@ namespace mu2e {
         fhicl::Atom<int> debug{ Name("debugLevel"),
           Comment("Debug Level"), 0};
         fhicl::Atom<int> diag{ Name("diagLevel"),
-          Comment("Diag Level"), 0};
+          Comment("Diag Level"), 10};
         fhicl::Atom<bool> combineDeltas{ Name("CombineDeltas"),
           Comment("Compress short delta-rays into the primary step"),true};
         fhicl::Atom<float> maxDeltaLength{ Name("MaxDeltaLength"),
@@ -184,6 +184,8 @@ namespace mu2e {
   }
 
   void MakeStrawGasSteps::produce(art::Event& event) {
+  
+    //std::cout<<"============================"<<std::endl;
     // setup conditions, etc
     const Tracker& tracker = *GeomHandle<Tracker>();
     GlobalConstantsHandle<ParticleDataList> pdt;
@@ -241,6 +243,9 @@ namespace mu2e {
         auto const& straw = tracker.getStraw(ispsmap->first.first);
         auto const& simptr = spmcptrs.front()->simParticle();
         auto pdata = pdt->particle(simptr->pdgId());
+        //double _startmom = sqrt(simptr->startMomXYZT().x()*simptr->startMomXYZT().x() + simptr->startMomXYZT().y()*simptr->startMomXYZT().y() + simptr->startMomXYZT().z()*simptr->startMomXYZT().z());
+  	    
+        //std::cout<<"PDG "<<simptr->pdgId()<<" creation code "<<simptr->creationCode()<<" mom "<<_startmom<<" time "<<simptr->startGlobalTime()<<std::endl;
         StrawGasStep sgs;
         fillStep(spmcptrs,straw,pdata,pid,sgs);
         sgsc->push_back(sgs);

@@ -23,7 +23,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Utilities/make_tool.h"
-
+#include "art_root_io/TFileService.h"
 #include "Offline/SeedService/inc/SeedService.hh"
 #include "Offline/GlobalConstantsService/inc/GlobalConstantsHandle.hh"
 #include "Offline/GlobalConstantsService/inc/PhysicsParams.hh"
@@ -39,6 +39,7 @@
 #include "CLHEP/Random/RandPoissonQ.h"
 #include "CLHEP/Random/RandGeneral.h"
 
+#include "TTree.h"
 namespace mu2e {
 
   //================================================================
@@ -78,7 +79,8 @@ namespace mu2e {
     RandomUnitSphere*   randomUnitSphere_;
     CLHEP::RandGeneral* randSpectrum_;
     double endPointEnergy_;
-
+    TTree* genTree;
+    Float_t _mom;
   };
 
   //================================================================
@@ -93,6 +95,9 @@ namespace mu2e {
     , spectrum_(BinnedSpectrum(conf().spectrum.get<fhicl::ParameterSet>()))
 
   {
+    art::ServiceHandle<art::TFileService> tfs;
+    genTree  = tfs->make<TTree>("GenAna", "GenAna");
+    genTree->Branch("mom", &_mom, "mom/F");
     produces<mu2e::StageParticleCollection>();
     pid_ = static_cast<PDGCode::type>(pdgId_);
 
@@ -139,7 +144,8 @@ namespace mu2e {
     const double p = sqrt((energy + _mass) * (energy - _mass));
     CLHEP::Hep3Vector p3 = randomUnitSphere_->fire(p);
     CLHEP::HepLorentzVector fourmom(p3, energy);
-
+    _mom = p;
+    genTree->Fill();
 
     output->emplace_back(mustop,
                        process_,

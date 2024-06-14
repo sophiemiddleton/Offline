@@ -64,10 +64,8 @@ namespace mu2e {
     bool passed = false;
 
      std::vector<art::Handle<SimParticleCollection>> vah = evt.getMany<SimParticleCollection>();
-      // loop over the list of instances of products of this type
       int n = 0;
       for (auto const& ah : vah) { //always one collection
-        //const art::Provenance* prov = ah.provenance();
         for(const auto& aParticle : *ah){
           
           art::Ptr<SimParticle> pp(ah, aParticle.first.asUint());
@@ -76,7 +74,7 @@ namespace mu2e {
           if( (abs(pp->pdgId())  == 211 and _endtime > tmin_ )){
             passed = true; 
           }
-          if(n==2 and (abs(pp->pdgId())  == 211)){
+          if(n==2 and (abs(pp->pdgId())  == 211)){ //geneolgy means we want the last pion (the stop)
             genTree->Fill();
           }
           n++;
