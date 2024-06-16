@@ -92,6 +92,12 @@ namespace mu2e {
 
     TH1F* _hmomentum;
     TH1F* _hElecMom {nullptr};
+    TH1F* _hElecMom_x;
+    TH1F* _hElecMom_y;
+    TH1F* _hElecMom_z;
+    TH1F* _hPosMom_x;
+    TH1F* _hPosMom_y;
+    TH1F* _hPosMom_z;
     TH1F* _hPosiMom {nullptr};
     TH1F* _hMee;
     TH2F* _hMeeVsE;
@@ -133,6 +139,12 @@ namespace mu2e {
         if(RPCType_ == "mu2eInternalRPC"){
           _hElecMom  = tfdir.make<TH1F>("hElecMom" , "Produced electron momentum", 140,  0. , 140.);
           _hPosiMom  = tfdir.make<TH1F>("hPosiMom" , "Produced positron momentum", 140,  0. , 140.);
+          _hElecMom_x = tfdir.make<TH1F>("hElecMom_x" , "Produced electron momentum_x", 140,  0. , 140.);
+          _hPosMom_x  = tfdir.make<TH1F>("hPosMom_x" , "Produced positron momentum_x", 140,  0. , 140.);
+          _hElecMom_y  = tfdir.make<TH1F>("hElecMom_y" , "Produced electron momentum_y", 140,  0. , 140.);
+          _hPosMom_y  = tfdir.make<TH1F>("hPosMom_y" , "Produced positron momentum_y", 140,  0. , 140.);
+          _hElecMom_z  = tfdir.make<TH1F>("hElecMom_z" , "Produced electron momentum_z", 140,  0. , 140.);
+          _hPosMom_z  = tfdir.make<TH1F>("hPosMom_z" , "Produced positron momentum_z", 140,  0. , 140.);
           _hMee      = tfdir.make<TH1F>("hMee"     , "M(e+e-) "           , 200,0.,200.);
           _hMeeVsE   = tfdir.make<TH2F>("hMeeVsE"  , "M(e+e-) vs E"       , 200,0.,200.,200,0,200);
           _hMeeOverE = tfdir.make<TH1F>("hMeeOverE", "M(e+e-)/E "         , 200, 0.,1);
@@ -199,8 +211,9 @@ namespace mu2e {
     } else if(process_ == ProcessCode::mu2eInternalRPC) {
       //Need to compute e-e+ pair momentum spectrum from the photon (use Kroll-Wada)
       CLHEP::HepLorentzVector mome, momp;
+      
       pionCaptureSpectrum_.getElecPosiVectors(energy,mome,momp);
-     
+      std::cout<<" electron "<<mome<<" positron "<<momp<<std::endl;
 
        output->emplace_back(pistop,
                            process_,
@@ -219,7 +232,12 @@ namespace mu2e {
         if(doHistograms_){
           _hElecMom ->Fill(mome.vect().mag());
           _hPosiMom ->Fill(momp.vect().mag());
-
+          _hPosMom_x->Fill(momp.vect().getX());
+          _hPosMom_y->Fill(momp.vect().getY());
+          _hPosMom_z->Fill(momp.vect().getZ());
+          _hElecMom_x->Fill(mome.vect().getX());
+          _hElecMom_y->Fill(mome.vect().getY());
+          _hElecMom_z->Fill(mome.vect().getZ());
           double mee = (mome+momp).m();
           _hMee->Fill(mee);
           _hMeeVsE->Fill(energy,mee);
