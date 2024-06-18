@@ -13,12 +13,11 @@ process_name: CaloCalibExample
 
 source: {
    module_type: EmptyEvent
-   //maxEvents : 1000
 }
 
 
 services : @local::Services.SimAndReco
-services.TFileService : { fileName : "nts.owner.CaloCalib.version.sequencer.root"}
+services.TFileService : { fileName : "nts.owner.CaloSourceCalib.version.sequencer.root"}
 services.SeedService.baseSeed : 99
 services.SeedService.maxUniqueEngines : 20
 
@@ -56,8 +55,8 @@ physics: {
 
       CaloExample: {
         module_type           : CaloCalibAna
-        caloHitCollection     : CaloHitMaker
-        caloHitTruthCollection    : CaloHitTruthMatch
+        CaloHitCollection     : CaloHitMaker
+        CaloHitMCCollection    : CaloHitTruthMatch
       }
 
     }
