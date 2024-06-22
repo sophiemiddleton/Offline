@@ -208,7 +208,7 @@ namespace mu2e {
 
     // Produce electron momentum
     CLHEP::Hep3Vector p3electron = _rnUnitSphere->fire( pElectron );
-
+    std::cout<<"electron 3 mom "<<p3electron<<std::endl;
     // Get positron momentum
     CLHEP::Hep3Vector p3positron( p3electron );
     p3positron.setMag( pPositron );
@@ -218,6 +218,7 @@ namespace mu2e {
 
     double cosTheta = 1/(2*pElectron*pPositron)*( cet::square(ePhoton) - cet::sum_of_squares( x, pElectron, pPositron) );
     double phi = 2*M_PI*_rnFlat->fire();
+
     // - find a vector that is not collinear with the electron direction
     CLHEP::Hep3Vector n1 = (std::abs(p3electron.x()) < std::abs(p3electron.y())) ?
       ((std::abs(p3electron.x()) < std::abs(p3electron.z())) ? CLHEP::Hep3Vector(1,0,0) : CLHEP::Hep3Vector(0,0,1)) :

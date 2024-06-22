@@ -25,7 +25,6 @@ namespace mu2e {
   class RPCAna : public art::EDAnalyzer {
 
      public:
-
       struct Config {
         using Name=fhicl::Name;
         using Comment=fhicl::Comment;
@@ -36,8 +35,6 @@ namespace mu2e {
 
       explicit RPCAna(const Parameters& conf);
       virtual ~RPCAna() {}
-
-
       virtual void beginJob();
       virtual void endJob();
       virtual void analyze(const art::Event& e) override;
@@ -51,8 +48,7 @@ namespace mu2e {
       TTree* genTree;
       Float_t _startmom;
       Float_t _startCode;
-};
-
+  };
 
   RPCAna::RPCAna(const Parameters& conf):
   art::EDAnalyzer(conf)
@@ -67,11 +63,8 @@ namespace mu2e {
       genTree->Branch("startCode", &_startCode, "startCode/F");
   }
 
-
   void RPCAna::analyze(const art::Event& evt) {
-
      std::vector<art::Handle<SimParticleCollection>> vah = evt.getMany<SimParticleCollection>();
-
       for (auto const& ah : vah) { //always one collection
         for(const auto& aParticle : *ah){
           
@@ -86,11 +79,8 @@ namespace mu2e {
       }
     //return passed;
   }
-
-
-
+  
  void RPCAna::endJob(){}
-
 }  // end namespace mu2e
 
 DEFINE_ART_MODULE(mu2e::RPCAna)

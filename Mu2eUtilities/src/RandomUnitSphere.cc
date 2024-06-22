@@ -42,6 +42,7 @@ namespace mu2e{
   CLHEP::Hep3Vector RandomUnitSphere::fire(){
     double  cz = _czmin  + ( _czmax  - _czmin  )*_randFlat.fire();
     double phi = _phimin + ( _phimax - _phimin )*_randFlat.fire();
+    std::cout<<"random vector "<<cz<<" "<<phi<<std::endl;
     return polar3Vector ( 1., cz, phi);
   }
 
