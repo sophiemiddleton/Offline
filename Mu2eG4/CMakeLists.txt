@@ -18,6 +18,7 @@ cet_make_library(
       src/constructDummyStoppingTarget.cc
       src/constructExternalShielding.cc
       src/constructExtMonFNALBuilding.cc
+      src/constructExtMonFNALInfrastructure.cc
       src/constructExtMonFNAL.cc
       src/constructHall.cc
       src/constructHaymanRings.cc
@@ -50,6 +51,7 @@ cet_make_library(
       src/CRVSD.cc
       src/customizeChargedPionDecay.cc
       src/DuplicateLogicalVolumeChecker.cc
+      src/ElementSamplerTool.cc
       src/EventNumberList.cc
       src/exportG4PDT.cc
       src/ExtMonFNALPixelSD.cc
@@ -120,6 +122,7 @@ cet_make_library(
       src/TrackerWireSD.cc
       src/validGeometryOrThrow.cc
       src/validPolyCones.cc
+      src/WeightedElementSamplerTool.cc
       src/WorldMaker.cc
       src/writePhysicalVolumes.cc
     LIBRARIES PUBLIC
@@ -159,6 +162,36 @@ cet_make_library(
       Geant4::G4physicslists
       Geant4::G4persistency
       Geant4::G4error_propagation
+      CLHEP::CLHEP
+)
+
+
+
+cet_build_plugin(AtomicVolumeSamplerTool art::tool
+    REG_SOURCE src/AtomicVolumeSamplerTool_tool.cc
+    LIBRARIES REG
+        Offline::Mu2eG4
+)
+
+cet_build_plugin(BoundMuonDecayFractionSamplerTool art::tool
+    REG_SOURCE src/BoundMuonDecayFractionSamplerTool_tool.cc
+    LIBRARIES REG
+        Offline::Mu2eG4
+)
+
+cet_build_plugin(CompositeMaterialGenerator art::tool
+    REG_SOURCE src/CompositeMaterialGenerator_module.cc
+    LIBRARIES REG
+        Offline::Mu2eG4
+)
+
+
+cet_build_plugin(CompositeMaterialGenerator art::module
+    REG_SOURCE src/CompositeMaterialGenerator_module.cc
+    LIBRARIES REG
+      Offline::Mu2eG4
+      
+      Offline::MCDataProducts
 )
 
 cet_build_plugin(ConstructEnvEmpty art::tool
