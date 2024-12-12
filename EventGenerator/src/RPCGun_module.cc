@@ -115,7 +115,7 @@ namespace mu2e {
     , randExp_{eng_}
     , randomFlat_{eng_}
     , RPCType_{conf().RPCType()}
-    , spectrum_{BinnedSpectrum(conf().spectrum.get<fhicl::ParameterSet>())}
+    , spectrum_{BinnedSpectrum(conf().spectrum.get<fhicl::ParameterSet>())}//what is the mx/mn?
     , pionDecayOff_{conf().pionDecayOff()}
     , doHistograms_{conf().doHistograms()}
     , randomUnitSphere_ {eng_}

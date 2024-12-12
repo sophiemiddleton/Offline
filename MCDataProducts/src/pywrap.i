@@ -14,8 +14,10 @@
 %{
 #include "Offline/MCDataProducts/inc/ProcessCode.hh"
 #include "Offline/MCDataProducts/inc/GenId.hh"
+#include "Offline/MCDataProducts/inc/EventWeight.hh"
 %}
 
 %include "Offline/MCDataProducts/inc/ProcessCode.hh"
 %include "Offline/MCDataProducts/inc/GenId.hh"
+%include "Offline/MCDataProducts/inc/EventWeight.hh"
 

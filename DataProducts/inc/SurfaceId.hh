@@ -20,9 +20,13 @@ namespace mu2e {
         IPA=90, IPA_Front, IPA_Back,
         OPA=95, TSDA, // Absorbers in the DS
         ST_Front=100,ST_Back, ST_Inner, ST_Outer, ST_Foils, ST_Wires, // stopping target bounding surfaces and components
-        TCRV=200 // CRV test planes
+        TCRV=200, // CRV test planes
+        lastEnum
       };
-
+    // Number of valid codes, not including lastEnum, but including "unknown".
+    static std::size_t size(){
+      return lastEnum;
+    }
     static std::string const& typeName();
     static std::map<enum_type,std::string> const& names();
   };
@@ -36,9 +40,9 @@ namespace mu2e {
       SurfaceId(enum_type sid, int index=0) : sid_(sid), index_(index) {}
 
       // forward some accessors
-      auto const& id() const { return sid_; }
+      SurfaceIdEnum const& id() const { return sid_; }
       int index() const { return index_; }
-      auto const& name() const { return sid_.name(); }
+      std::string const& name() const { return sid_.name(); }
 
       bool indexMatch(SurfaceId const& other) const { return index_ == other.index_ || index_ < 0 || other.index_ < 0; }
       bool indexCompare(SurfaceId const& other) const { return index_<0 || other.index_ < 0 ? false : index_ < other.index_; }
