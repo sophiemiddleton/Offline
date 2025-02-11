@@ -22,6 +22,8 @@ double PS.coilRefZ  = -7929;
 // coordinate as used for placing the PS enclosure.
 // Per Mu2e-Solenoid-Main-Assembly-2012-01-31.pdf and PSE-Layout_JSB_16-Feb-12.pdf
 // in docdb-2066, confirmed by e-mail from Tom Page 2012-03-27
+
+
 double PS.cryostatRefZ  = -7943;
 
 int    PS.verbosityLevel      = 0;
