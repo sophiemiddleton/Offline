@@ -60,7 +60,7 @@ namespace mu2e {
     const double p = energy * sqrt(1 - std::pow(_mass/energy,2));
     CLHEP::HepLorentzVector fourmom(_randomUnitSphere->fire(p), energy);
 
-    ParticleGeneratorTool::Kinematic k{_pdgId, ProcessCode::mu2ePrimary, fourmom};
+    ParticleGeneratorTool::Kinematic k{_pdgId, ProcessCode::mu2eMuonDecayAtRest, fourmom};
     res.emplace_back(k);
 
     return res;

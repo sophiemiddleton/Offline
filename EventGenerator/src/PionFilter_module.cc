@@ -57,6 +57,22 @@ namespace mu2e {
       bool isNull_;
       SumOfWeights total_;
       SumOfWeights selected_;
+      double testTotal = 0;
+      double testSelected = 0;
+      
+      TTree *_Ntup_all;
+      Float_t _endglobaltime;
+      Float_t _startglobaltime;
+      Float_t _parentendtime;
+      Float_t _parentstarttime;
+      Float_t           _weight;
+      
+      TTree *_Ntup_select;
+      Float_t _endglobaltime_select;
+      Float_t _startglobaltime_select;
+      Float_t _parentendtime_select;
+      Float_t _parentstarttime_select;
+
   };
 
   PionFilter::PionFilter(const art::EDFilter::Table<Config>& config) :
@@ -69,11 +85,27 @@ namespace mu2e {
     if(!config().tmin(tmin_)) tmin_ = -1.e10;
     if(!config().tmax(tmax_)) tmax_ =  1.e10;
     if(!config().maxPions(maxPions_)) maxPions_ = -1;
+    std::cout<<"[Pion Filter] set tmin to "<<tmin_<<std::endl;
     produces<SumOfWeights, art::InSubRun>("total");
     produces<SumOfWeights, art::InSubRun>("selected");
   }
 
   void PionFilter::beginJob(){
+  art::ServiceHandle<art::TFileService> tfs;
+    _Ntup_all  = tfs->make<TTree>("GenAna_all", "GenAna_all");
+    _Ntup_all->Branch("endglobaltime",        &_endglobaltime,     "endglobaltime/F");
+    _Ntup_all->Branch("startglobaltime",        &_startglobaltime,     "startglobaltime/F");
+    _Ntup_all->Branch("weight",        &_weight,     "weight/F");
+    _Ntup_all->Branch("parentendtime",        &_parentendtime,     "parentendtime/F");
+    _Ntup_all->Branch("parentstarttime",        &_parentstarttime,     "parentstarttime/F");
+    
+    
+    _Ntup_select  = tfs->make<TTree>("GenAna_select", "GenAna_select");
+    _Ntup_select->Branch("endglobaltime_select",        &_endglobaltime_select,     "endglobaltime_select/F");
+    _Ntup_select->Branch("startglobaltime_select",        &_startglobaltime_select,     "startglobaltime_select/F");
+    _Ntup_select->Branch("parentendtime_select",        &_parentendtime_select,     "parentendtime_select/F");
+    _Ntup_select->Branch("parentstarttime_select",        &_parentstarttime_select,     "parentstarttime_select/F");
+    
   }
 
   bool PionFilter::filter(art::Event& evt) {
@@ -89,9 +121,29 @@ namespace mu2e {
         // check if this is a pion of interest
         if( pp->stoppingCode() == processCode_ and std::abs(pp->pdgId()) == PDGCode::pi_plus){
           const float globalTime = pp->endGlobalTime();
+
           const float tau = SimParticleGetTau::calculate(pp, decayOffCodes, gc);
           const float weight = std::exp(-tau);
+          
+          _endglobaltime = globalTime;
+          _startglobaltime = pp->startGlobalTime();
+          
+          _weight = weight;
 
+          art::Ptr<mu2e::SimParticle> particle = pp;
+          while(!particle->isPrimary()){
+            particle = particle->parent();
+            if(std::abs(particle->pdgId()) == PDGCode::proton){
+              _parentendtime = particle->endGlobalTime();
+              _parentstarttime = particle->startGlobalTime();
+            }else {
+              _startglobaltime = particle->startGlobalTime();
+            }
+          }
+          
+          _Ntup_all->Fill();
+          
+          testTotal +=weight;
           // count found pions
           total_.add(weight);
           ++npions;
@@ -99,7 +151,25 @@ namespace mu2e {
           // check additional filters
           if(globalTime > tmin_ and globalTime < tmax_ ){
             passed = true;
+            _endglobaltime_select = globalTime;
+          _startglobaltime_select = pp->startGlobalTime();
+         
+
+          art::Ptr<mu2e::SimParticle> particle = pp;
+          while(!particle->isPrimary()){
+            particle = particle->parent();
+            if(std::abs(particle->pdgId()) == PDGCode::proton){
+              _parentendtime_select = particle->endGlobalTime();
+              _parentstarttime_select = particle->startGlobalTime();
+            }else {
+              _startglobaltime_select = particle->startGlobalTime();
+            }
+          }
+          
+          _Ntup_select->Fill();
             selected_.add(weight);
+            
+        testSelected +=weight;
           }
         }
       }
@@ -110,6 +180,8 @@ namespace mu2e {
       // return the result
       return passed;
   }
+
+
 
   bool PionFilter::beginSubRun(art::SubRun&) {
     total_   .reset();
@@ -130,6 +202,7 @@ namespace mu2e {
        std::cout<<"Selected weight for chosen stops "<<selected_.sum()<<std::endl;
        std::cout<<"Selected stops "<<selected_.count()<<std::endl;
     }
+    std::cout<<"total "<<testTotal << " selected "<<testSelected <<std::endl;
   }
 }
 

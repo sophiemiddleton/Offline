@@ -65,12 +65,14 @@ namespace mu2e {
       var tmax_;
       StopCuts() : tmin_(var(false, 0.)), tmax_(var(false, 0.)) {}
       StopCuts(StopConfig config) : StopCuts(){
+        
         tmin_.first = config.tmin(tmin_.second);
         tmax_.first = config.tmax(tmax_.second);
       }
       bool apply_cuts(art::Ptr<SimParticle> sim) {
         if(sim.isNull()) return false;
         const double t = sim->endGlobalTime();
+        std::cout<<"STOPS TIME "<<tmin_.second<<std::endl;
         if(tmin_.first && t < tmin_.second) return false;
         if(tmax_.first && t > tmax_.second) return false;
         return true;

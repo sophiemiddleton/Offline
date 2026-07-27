@@ -31,7 +31,8 @@
 #include "Offline/DataProducts/inc/PDGCode.hh"
 #include "Offline/MCDataProducts/inc/StageParticle.hh"
 #include "Offline/Mu2eUtilities/inc/simParticleList.hh"
-
+#include "art_root_io/TFileService.h"
+#include "TTree.h"
 namespace mu2e {
 
   //================================================================
@@ -51,7 +52,7 @@ namespace mu2e {
 
     using Parameters= art::EDProducer::Table<Config>;
     explicit CeEndpoint(const Parameters& conf);
-
+virtual void beginJob();
     virtual void produce(art::Event& event) override;
 
     //----------------------------------------------------------------
@@ -74,6 +75,8 @@ namespace mu2e {
     ProcessCode process;
     int pdgId_;
     PDGCode::type pid;
+        TTree *_Ntup;
+    Float_t genE;
   };
 
   //================================================================
@@ -118,6 +121,12 @@ namespace mu2e {
          <<std::endl;
     }
   }
+  
+    void CeEndpoint::beginJob(){
+    art::ServiceHandle<art::TFileService> tfs;
+    _Ntup  = tfs->make<TTree>("GenAna", "GenAna");
+    _Ntup->Branch("genE",    &genE,    "genE/F");
+  }
 
   //================================================================
   void CeEndpoint::produce(art::Event& event) {
@@ -146,7 +155,9 @@ namespace mu2e {
                          mustop->endGlobalTime() + randExp_.fire(muonLifeTime_)
                          );
 
+genE = endPointEnergy_;
 
+  _Ntup->Fill();
     event.put(std::move(output));
   }
 

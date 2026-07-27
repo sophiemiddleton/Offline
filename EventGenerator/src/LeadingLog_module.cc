@@ -37,9 +37,10 @@
 #include "Offline/Mu2eUtilities/inc/RandomUnitSphere.hh"
 #include "Offline/Mu2eUtilities/inc/BinnedSpectrum.hh"
 #include "fhiclcpp/types/DelegatedParameter.h"
+#include "art_root_io/TFileService.h"
 #include "CLHEP/Random/RandPoissonQ.h"
 #include "CLHEP/Random/RandGeneral.h"
-
+#include "TTree.h"
 namespace mu2e {
 
   //================================================================
@@ -58,7 +59,7 @@ namespace mu2e {
 
     using Parameters= art::EDProducer::Table<Config>;
     explicit LeadingLog(const Parameters& conf);
-
+    virtual void beginJob();
     virtual void produce(art::Event& event) override;
 
     void addParticles(StageParticleCollection* output, art::Ptr<SimParticle> mustop, double time);
@@ -81,6 +82,8 @@ namespace mu2e {
     std::unique_ptr<RandomUnitSphere>   randomUnitSphere_;
     std::unique_ptr<CLHEP::RandGeneral> randSpectrum_;
     double endPointEnergy_;
+    TTree *_Ntup;
+    Float_t genE;
 
   };
 
@@ -112,6 +115,12 @@ namespace mu2e {
     randomUnitSphere_ = std::make_unique<RandomUnitSphere>(eng_);
     randSpectrum_ = std::make_unique<CLHEP::RandGeneral>(eng_, spectrum_.getPDF(), spectrum_.getNbins());
   }
+  
+  void LeadingLog::beginJob(){
+    art::ServiceHandle<art::TFileService> tfs;
+    _Ntup  = tfs->make<TTree>("GenAna", "GenAna");
+    _Ntup->Branch("genE",    &genE,    "genE/F");
+  }
 
   //================================================================
   void LeadingLog::produce(art::Event& event) {
@@ -142,7 +151,7 @@ namespace mu2e {
     const double p = sqrt((energy + _mass) * (energy - _mass));
     CLHEP::Hep3Vector p3 = randomUnitSphere_->fire(p);
     CLHEP::HepLorentzVector fourmom(p3, energy);
-
+    genE = energy;
     output->emplace_back(mustop,
                        process_,
                        pid_,
@@ -150,7 +159,7 @@ namespace mu2e {
                        fourmom,
                        time
                        );
-
+  _Ntup->Fill();
   }
 
 

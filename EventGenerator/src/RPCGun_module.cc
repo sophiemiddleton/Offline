@@ -42,6 +42,7 @@
 #include "CLHEP/Random/RandPoissonQ.h"
 #include "CLHEP/Random/RandGeneral.h"
 
+#include "TTree.h"
 // ROOT includes
 #include "TFile.h"
 #include "TH1F.h"
@@ -67,7 +68,7 @@ namespace mu2e {
 
     using Parameters= art::EDProducer::Table<Config>;
     explicit RPCGun(const Parameters& conf);
-
+virtual void beginJob();
     virtual void produce(art::Event& event) override;
     void addParticles(StageParticleCollection* output,art::Ptr<SimParticle> pistop);
     double MakeEventWeight(art::Ptr<SimParticle> p);
@@ -110,6 +111,11 @@ namespace mu2e {
     TH2F* _hMeeVsE;
     TH1F* _hMeeOverE;                   // M(ee)/E(gamma)
     TH1F* _hy;                          // splitting function
+    
+    TTree *_Ntup;
+    Float_t genE_photon;
+    Float_t genE_pos;
+    Float_t genE_elec;
 
   };
 
@@ -182,6 +188,15 @@ namespace mu2e {
     if(verbosity_ > 1) printf(" Tau = %.3f, Weight = %.3g, t(end) = %.3g\n", tau, weight, part->endGlobalTime());
     return weight;
   }
+  
+   void RPCGun::beginJob(){
+    art::ServiceHandle<art::TFileService> tfs;
+    _Ntup  = tfs->make<TTree>("GenAna", "GenAna");
+    _Ntup->Branch("genE_photon",    &genE_photon,    "genE_photon/F");
+    _Ntup->Branch("genE_pos",    &genE_pos,    "genE_pos/F");
+    _Ntup->Branch("genE_elec",    &genE_elec,    "genE_elec/F");
+  }
+
 
   //================================================================
   void RPCGun::produce(art::Event& event) {
@@ -232,6 +247,7 @@ namespace mu2e {
                          fourmom,
                          pistop->endGlobalTime()
                          );
+     genE_photon = energy;
 
     } else if(process_ == ProcessCode::mu2eInternalRPC) {
       //Need to compute e-e+ pair momentum spectrum from the photon (use Kroll-Wada)
@@ -244,7 +260,8 @@ namespace mu2e {
                            mome,
                            pistop->endGlobalTime()
                            );
-
+      genE_elec = mome.vect().mag();
+      genE_pos = momp.vect().mag();
        output->emplace_back(pistop,
                            process_,
                            PDGCode::e_plus,
@@ -252,7 +269,7 @@ namespace mu2e {
                            momp,
                            pistop->endGlobalTime()
                            );
-
+        
         if(doHistograms_){
           _hElecMom ->Fill(mome.vect().mag());
           _hElecPx ->Fill(mome.vect().x());
@@ -285,6 +302,7 @@ namespace mu2e {
         _hStopZ->Fill(pistop->endPosition().z());
         _hWeight->Fill((weight > 0.) ? std::log10(weight) : -1.e3);
       }
+      _Ntup->Fill();
 
    }
 
