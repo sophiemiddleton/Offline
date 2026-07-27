@@ -480,7 +480,7 @@ Mu2eKinKal : {
     }
     ExtrapolationSettings : @local::Mu2eKinKal.LHSEEDXTRAP
     UsePDGCharge: false
-    #MakeValidationPlots : false
+    MakeValidationPlots : true
     HelixMask: {
       MinHelixMom : 0
     }
@@ -506,7 +506,7 @@ Mu2eKinKal : {
     }
     ExtrapolationSettings : @local::Mu2eKinKal.LHDRIFTXTRAP
     UsePDGCharge: false
-    #MakeValidationPlots : false
+    MakeValidationPlots : true
     HelixMask: {
       MinHelixMom : 0
     }
@@ -564,7 +564,7 @@ Mu2eKinKal : {
       @table::Mu2eKinKal.CENTRALHELIX
       @table::Mu2eKinKal.KKPrecursors
     }
-    MakeValidationPlots : false
+    MakeValidationPlots : true
   }
 
   CHDriftFit : {
@@ -581,7 +581,7 @@ Mu2eKinKal : {
       @table::Mu2eKinKal.CENTRALHELIX
       @table::Mu2eKinKal.KKPrecursors
     }
-    MakeValidationPlots : false
+    MakeValidationPlots : true
   }
 }
 

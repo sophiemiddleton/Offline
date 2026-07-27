@@ -136,7 +136,7 @@ namespace mu2e {
     fhicl::OptionalAtom<std::string> fitDirection { Name("FitDirection"), Comment("Particle direction to fit, either \"upstream\" or \"downstream\"")};
     fhicl::Atom<bool> pdgCharge { Name("UsePDGCharge"), Comment("Use particle charge from fitParticle")};
     fhicl::OptionalTable<HelixMaskConfig> HelixMask { Name("HelixMask"), Comment("Selections applied to input helices")};
-    //fhicl::Atom<bool> makeValidationPlots { Name("MakeValidationPlots"), Comment("Enable creation of validation plots for calorimeter material effects") };
+    fhicl::Atom<bool> makeValidationPlots { Name("MakeValidationPlots"), Comment("Enable creation of validation plots for calorimeter material effects"), false };
   };
 
   class LoopHelixFit : public art::EDProducer {
@@ -190,7 +190,7 @@ namespace mu2e {
       int nAmbiguous_ = 0;
       int nDownstream_ = 0;
       int nUpstream_ = 0;
-      bool makeValidationPlots_ = false;
+      bool makeValidationPlots_;
       // validation histograms for calorimeter material intersection
       TH2F* h_intersection_efficiency_ = nullptr;
       TH2F* h_frontpanel_hits_ = nullptr;
@@ -217,8 +217,8 @@ namespace mu2e {
     kkmat_(settings().matSettings()),
     config_(Mu2eKinKal::makeConfig(settings().fitSettings())),
     exconfig_(Mu2eKinKal::makeConfig(settings().extSettings())),
-    fixedfield_(false)//,
-    //makeValidationPlots_(settings().makeValidationPlots())
+    fixedfield_(false),
+    makeValidationPlots_(settings().makeValidationPlots())
     {
       std::string fdir;
       if(settings().fitDirection(fdir))fdir_ = fdir;
