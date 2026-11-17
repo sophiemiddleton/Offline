@@ -20,6 +20,16 @@ cet_build_plugin(MixBackgroundFrames art::module
       Offline::SimulationConditions
 )
 
+cet_build_plugin(MuonCaptureNormMC art::module
+    REG_SOURCE src/MuonCaptureNormMC_module.cc
+    LIBRARIES REG
+      Offline::DataProducts
+      Offline::GlobalConstantsService
+      Offline::MCDataProducts
+      Offline::ProditionsService
+      Offline::SimulationConditions
+)
+
 cet_build_plugin(MixDigis art::module
     REG_SOURCE src/MixDigis_module.cc
     LIBRARIES REG

@@ -74,6 +74,12 @@
 <class name="map<string,map<art::SubRunID,mu2e::StageNormalization> >"/>
 <class name="art::Sampled<mu2e::StageNormalization>"/>
 <class name="art::Wrapper<art::Sampled<mu2e::StageNormalization> >"/>
+<class name="mu2e::MuonCaptureNormalization"/>
+<class name="art::Wrapper<mu2e::MuonCaptureNormalization>" />
+<class name="map<art::SubRunID,mu2e::MuonCaptureNormalization>"/>
+<class name="map<string,map<art::SubRunID,mu2e::MuonCaptureNormalization> >"/>
+<class name="art::Sampled<mu2e::MuonCaptureNormalization>"/>
+<class name="art::Wrapper<art::Sampled<mu2e::MuonCaptureNormalization> >"/>
 
 <!--  ********* general  ********* -->
  <class name="mu2e::SurfaceIdDetail"/>
